@@ -11,6 +11,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# paths-filter は pull_request で GitHub API の listFiles を呼ぶため、
+# 既定の制限された GITHUB_TOKEN では "Resource not accessible by integration" になる。
+permissions:
+  contents: read
+  pull-requests: read
+
 env:
   CARGO_TERM_COLOR: always
 
