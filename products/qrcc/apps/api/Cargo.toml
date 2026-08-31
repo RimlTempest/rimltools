@@ -10,9 +10,9 @@ publish.workspace = true
 crate-type = ["cdylib"]
 
 [dependencies]
-qrcc-core.workspace = true
-qrcc-render.workspace = true
-qrcc-decode.workspace = true
+qrcc-kernel.workspace = true
+qrcc-generate.workspace = true
+qrcc-scan.workspace = true
 qrcc-print.workspace = true
 worker.workspace = true
 serde.workspace = true

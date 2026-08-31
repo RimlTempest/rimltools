@@ -31,6 +31,8 @@ qrcc.riml4i.com
 - **markuplint** による HTML / アクセシビリティ検査
 - **Playwright + axe-core** による WCAG 2.2 AAA 相当の自動チェック
 - **Bun workspaces** + **Cargo workspace** の monorepo
+- **機能単位の co-location**: 1 機能の型・ロジック・UI・ルート・Rust エンジンが
+  `features/<name>/` に集まる（[ADR-0007](docs/adr/0007-feature-colocation.md)）
 - **lefthook** による staged ファイル単位のフック
 
 同一の Rust コードが Worker とブラウザの両方で動く。生成と読み取りは既定で
@@ -60,11 +62,12 @@ bun run wt list       # 並行作業レーン一覧
 
 ## 並行開発
 
-機能は 14 のレーンに分かれ、それぞれが所有ディレクトリを持つ。
+機能は 12 のレーンに分かれ、**1 レーン = 1 トップレベルディレクトリ**。
+co-location により所有範囲がディレクトリ境界と一致するため、競合が起きない。
 
 ```bash
 bun run wt list                # レーンと依存関係を表示
-bun run wt new feat/scan-ui    # worktree を作成（依存インストール・フックまで）
+bun run wt new feat/generate   # worktree を作成（依存インストール・フックまで）
 bun run wt sync                # main を rebase で取り込む
 bun run wt pr                  # check を通してから PR
 ```

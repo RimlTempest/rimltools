@@ -69,7 +69,7 @@ optional ではなく union のメンバーとして持つ。
 
 ## 3. エラーは値。`Result<T, E>`
 
-ドメイン層（`packages/core`, `packages/contracts`）では `throw` 禁止
+ドメイン層（`features/<name>/core`, `shared/contract`）では `throw` 禁止
 （`qrcc/no-throw-in-domain`）。失敗は戻り値で表す。
 
 ```ts
@@ -116,8 +116,8 @@ export const createCode =
 ## 6. モジュール境界
 
 ```
-packages/contracts  … 型と Result のみ。実装依存ゼロ。誰からも import される
-packages/core       … 純粋ドメインロジック。I/O 禁止
+shared/contract  … 型と Result のみ。実装依存ゼロ。誰からも import される
+features/<name>/core       … 純粋ドメインロジック。I/O 禁止
 apps/*/src/server   … I/O（D1・R2・service binding）と composition root
 apps/*/src/routes   … UI。ドメイン型をそのまま使う
 ```

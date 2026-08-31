@@ -1325,31 +1325,32 @@ name = "qrcc-api"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
- "qrcc-core",
- "qrcc-decode",
+ "qrcc-generate",
+ "qrcc-kernel",
  "qrcc-print",
- "qrcc-render",
+ "qrcc-scan",
  "serde",
  "serde_json",
  "worker",
 ]
 
 [[package]]
-name = "qrcc-core"
+name = "qrcc-generate"
 version = "0.1.0"
 dependencies = [
+ "barcoders",
+ "qrcc-kernel",
+ "qrcode",
  "serde",
- "serde_json",
  "thiserror 2.0.20",
 ]
 
 [[package]]
-name = "qrcc-decode"
+name = "qrcc-kernel"
 version = "0.1.0"
 dependencies = [
- "image",
- "qrcc-core",
- "rxing",
+ "serde",
+ "serde_json",
  "thiserror 2.0.20",
 ]
 
@@ -1358,20 +1359,19 @@ name = "qrcc-print"
 version = "0.1.0"
 dependencies = [
  "krilla",
- "qrcc-core",
- "qrcc-render",
+ "qrcc-generate",
+ "qrcc-kernel",
  "thiserror 2.0.20",
  "usvg",
 ]
 
 [[package]]
-name = "qrcc-render"
+name = "qrcc-scan"
 version = "0.1.0"
 dependencies = [
- "barcoders",
- "qrcc-core",
- "qrcode",
- "serde",
+ "image",
+ "qrcc-kernel",
+ "rxing",
  "thiserror 2.0.20",
 ]
 
@@ -1380,9 +1380,9 @@ name = "qrcc-wasm"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
- "qrcc-core",
- "qrcc-decode",
- "qrcc-render",
+ "qrcc-generate",
+ "qrcc-kernel",
+ "qrcc-scan",
  "serde",
  "serde_json",
  "wasm-bindgen",

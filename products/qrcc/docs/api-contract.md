@@ -5,9 +5,9 @@
 
 契約の定義元:
 
-- TypeScript: `packages/contracts/src/api/`
-- Rust: `crates/qrcc-core/src/api/`
-- 共有フィクスチャ: `packages/contracts/fixtures/*.json`
+- TypeScript: `shared/contract/src/api/`
+- Rust: `shared/kernel/engine/src/api/`
+- 共有フィクスチャ: `shared/contract/fixtures/*.json`
   （TS と Rust の両方のテストがこの同じファイルを読む）
 
 ## 1. 呼び出し形式
@@ -76,7 +76,7 @@ UI が「読み取れない可能性がある」と表示する。ユーザー�
 ## 4. 契約を変更する手順
 
 1. このファイルを先に更新する
-2. `packages/contracts/fixtures/` にケースを追加する
+2. `shared/contract/fixtures/` にケースを追加する
    → この時点で TS 側と Rust 側の両方のテストが落ちる（red）
 3. Rust 側を実装 → TS 側の型を更新（green）
 4. 破壊的変更なら、メソッド名に `v2` を付けて並走させ、

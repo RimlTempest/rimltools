@@ -10,25 +10,25 @@ description: qrcc2 の構成と拡張手順。どこに何を置くか迷った�
 
 ## 1. 置き場所の判断
 
-| 書こうとしているもの               | 置き場所                                                  |
-| ---------------------------------- | --------------------------------------------------------- |
-| 型・API 契約・`Result`             | `packages/contracts` （実装依存ゼロ。誰もが import する） |
-| I/O のない TS ロジック             | `packages/core`                                           |
-| 生成・デコード・PDF のアルゴリズム | `crates/qrcc-*`（Rust）                                   |
-| D1 / R2 / KV に触るコード          | `apps/api`（Rust）または `apps/web/src/server`            |
-| 画面                               | `apps/web/src/features/<feature>`                         |
-| 再利用する UI 部品                 | `packages/ui`                                             |
-| ブラウザで動かす Rust              | `crates/qrcc-wasm` → `packages/wasm`                      |
+| 書こうとしているもの               | 置き場所                                               |
+| ---------------------------------- | ------------------------------------------------------ |
+| 型・API 契約・`Result`             | `shared/contract` （実装依存ゼロ。誰もが import する） |
+| I/O のない TS ロジック             | `features/<name>/core`                                 |
+| 生成・デコード・PDF のアルゴリズム | `features/*/engine`（Rust）                            |
+| D1 / R2 / KV に触るコード          | `apps/api`（Rust）または `apps/web/src/server`         |
+| 画面                               | `apps/web/src/features/<feature>`                      |
+| 再利用する UI 部品                 | `shared/ui`                                            |
+| ブラウザで動かす Rust              | `shared/wasm/engine` → `shared/wasm/src`               |
 
 **判断基準**: 「計算」は Rust、「配線と画面」は TypeScript。
 迷ったら計算を Rust に寄せる（CPU 10ms 制限とブラウザ実行の両方で効く）。
 
 ## 2. 越えてはいけない境界
 
-- `packages/contracts` は**何にも依存しない**。ここに実装を書かない。
-- `packages/core` と `crates/qrcc-core|render|decode|print` に **I/O を書かない**。
+- `shared/contract` は**何にも依存しない**。ここに実装を書かない。
+- `features/<name>/core` と `shared/kernel/engine|render|decode|print` に **I/O を書かない**。
   時計・乱数・fetch・ストレージはすべて引数で受け取る。
-- `crates/qrcc-core|render|decode|print` は `worker` crate に依存しない
+- `shared/kernel/engine|render|decode|print` は `worker` crate に依存しない
   （ブラウザ向けビルドが壊れる）。
 - `apps/api` の `wrangler.jsonc` に **`routes` を追加しない**。
   公開すると認可が二重になり、権限昇格の穴になる（[ADR-0002](../../../docs/adr/0002-auxiliary-worker-split.md)）。
@@ -40,15 +40,15 @@ CI の `guard` ジョブがこれらを検査する。
 
 ### 新しい symbology を追加する（例: MaxiCode）
 
-1. `packages/contracts/src/symbology.ts` の `Symbology` union に
+1. `shared/contract/src/symbology.ts` の `Symbology` union に
    `{ kind: 'maxicode'; mode: MaxicodeMode; … }` を足す
 2. → **ここで TS も Rust もコンパイルエラーになる**。以下を潰していく:
-   - `packages/contracts/src/symbology-meta.ts` のレジストリ（Mapped Type）に
+   - `shared/contract/src/symbology-meta.ts` のレジストリ（Mapped Type）に
      表示名・既定値・対応 payload を追加
-   - `crates/qrcc-render/src/symbology/maxicode.rs` を新規作成し、
+   - `features/generate/engine/src/symbology/maxicode.rs` を新規作成し、
      `mod.rs` の `match` に 1 アーム追加
-   - `crates/qrcc-decode` は rxing が対応していれば feature フラグを足すだけ
-3. `crates/qrcc-render/src/symbology/maxicode.rs` にゴールデンテストを書く
+   - `features/scan/engine` は rxing が対応していれば feature フラグを足すだけ
+3. `features/generate/engine/src/symbology/maxicode.rs` にゴールデンテストを書く
    （既知の入力 → 既知のモジュール行列）
 4. UI は自動で選択肢に出る（レジストリを引いて描画しているため）
 
@@ -58,22 +58,22 @@ CI の `guard` ジョブがこれらを検査する。
 
 ### 新しい payload 種別を追加する（例: 決済コード）
 
-1. `packages/contracts/src/payload.ts` の `CodePayload` union にメンバー追加
-2. `packages/core/src/payload/<kind>.ts` に `encode` / `parse` / `describe` を実装
-3. `packages/core/src/payload/registry.ts`（Mapped Type）に 1 行追加
+1. `shared/contract/src/payload.ts` の `CodePayload` union にメンバー追加
+2. `features/generate/core/payload/<kind>.ts` に `encode` / `parse` / `describe` を実装
+3. `features/generate/core/payload/registry.ts`（Mapped Type）に 1 行追加
 4. `apps/web/src/features/generate/payload-forms/<kind>.tsx` にフォームを追加
    （フォームもレジストリ引き）
 5. Small テスト: 正常系・境界値・エンコード後にデコードして元に戻ること
 
 ### 新しいラベル台紙を追加する
 
-`packages/core/src/print/sheets/<vendor>-<model>.ts` に `LabelSheet` を 1 つ
+`features/print/core/sheets/<vendor>-<model>.ts` に `LabelSheet` を 1 つ
 export し、`sheets/index.ts` に追加するだけ。面付けアルゴリズムも CSS も
 PDF ジェネレータも変更不要（[ADR-0005](../../../docs/adr/0005-pdf-and-label-printing.md)）。
 
 ### 新しい出力形式を追加する（例: EPS）
 
-`crates/qrcc-render/src/output/<name>.rs` に
+`features/generate/engine/src/output/<name>.rs` に
 `fn render(matrix: &Matrix, style: &RenderStyle) -> Result<Vec<u8>, RenderError>`
 を実装し、`output/mod.rs` の `match` に追加。`OutputFormat` union にも追加。
 
@@ -106,9 +106,9 @@ Better Auth のプラグインを `apps/web/src/server/auth.ts` に追加し、
 
 `qrcc-web` → `qrcc-api` の呼び出しは
 [docs/api-contract.md](../../../docs/api-contract.md) が唯一の定義。
-TS 側の型は `packages/contracts/src/api/`、Rust 側は
-`crates/qrcc-core/src/api/`。**同じフィクスチャ JSON を両側のテストが読む**
-ことで乖離を検出する（`packages/contracts/fixtures/`）。
+TS 側の型は `shared/contract/src/api/`、Rust 側は
+`shared/kernel/engine/src/api/`。**同じフィクスチャ JSON を両側のテストが読む**
+ことで乖離を検出する（`shared/contract/fixtures/`）。
 
 契約を変えるときは:
 

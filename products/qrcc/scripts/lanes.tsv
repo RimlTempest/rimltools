@@ -1,15 +1,13 @@
 # branch	depends_on	owned_paths	summary
-feat/contracts	-	packages/contracts	型・Result・API契約の唯一の定義元。他の全レーンの先行条件
-feat/rust-core	feat/contracts	crates/qrcc-core,crates/qrcc-render,Cargo.toml	ドメイン型と生成エンジン(symbology→モジュール行列→SVG/PNG)
-feat/decode	feat/rust-core	crates/qrcc-decode	rxing による画像デコード
-feat/print-core	feat/rust-core	crates/qrcc-print,packages/core/src/print	PDF生成とラベル面付け、台紙定義
-feat/api-worker	feat/rust-core	apps/api	workers-rs の auxiliary Worker と D1 CRUD
-feat/wasm-bridge	feat/rust-core	crates/qrcc-wasm,packages/wasm	ブラウザ向け wasm-bindgen バインディング
-feat/design-system	feat/contracts	packages/ui	WCAG AAA / ダークモード / レスポンシブのデザインシステム
-feat/web-shell	feat/contracts	apps/web/src/routes,apps/web/src/styles,apps/web/src/server,apps/web/vite.config.ts,apps/web/wrangler.jsonc	TanStack Start のルーティング・RSC・レイアウト・composition root
-feat/auth	feat/web-shell	apps/web/src/features/auth,apps/api/migrations	Better Auth によるゲスト/Googleログインとアカウント昇格
-feat/generate-ui	feat/wasm-bridge,feat/design-system,feat/web-shell	apps/web/src/features/generate	生成画面と詳細設定UI
-feat/scan-ui	feat/decode,feat/wasm-bridge,feat/design-system,feat/web-shell	apps/web/src/features/scan	カメラ読み取り・画像読み込みUI
-feat/manage-ui	feat/api-worker,feat/auth,feat/design-system,feat/web-shell	apps/web/src/features/manage	一覧・編集・共有・フォルダ管理
-feat/print-ui	feat/print-core,feat/manage-ui	apps/web/src/features/print	印刷プレビュー・ラベル面付け・PDF出力UI
+feat/shared-contract	-	shared/contract	Result・Brand・共通ID・エラー型。全レーンの先行条件
+feat/shared-kernel	feat/shared-contract	shared/kernel	Rust 共有プリミティブ (qrcc-kernel)。TS 側 contract と対になる
+feat/shared-ui	feat/shared-contract	shared/ui	デザイントークン・基本コンポーネント (WCAG AAA / ダークモード)
+feat/shell	feat/shared-ui	features/shell,apps/web	ルートドキュメント・レイアウト・ナビ・テーマ切替、apps/web の配線
+feat/generate	feat/shared-kernel,feat/shared-ui	features/generate	生成: contract/core/ui/engine。QR・バーコードの詳細設定
+feat/scan	feat/generate	features/scan	読み取り: カメラ・画像読み込み・rxing デコーダ
+feat/print	feat/generate	features/print	印刷: ラベル面付け・PDF 生成・台紙定義
+feat/auth	feat/shell	features/auth	Better Auth によるゲスト/Googleログインとアカウント昇格
+feat/manage	feat/auth,feat/generate	features/manage	一覧・編集・共有・フォルダ管理
+feat/wasm-bridge	feat/generate	shared/wasm	ブラウザ向け wasm-bindgen バインディングと動的ロード
+feat/api-worker	feat/shared-kernel	apps/api	workers-rs の auxiliary Worker と D1 CRUD
 chore/devops	-	.github,scripts,docs	CI/CD・デプロイ・運用ドキュメント

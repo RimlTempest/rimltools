@@ -1,11 +1,15 @@
 [workspace]
 resolver = "3"
+# 機能ごとに co-location しているため、Rust crate も feature ディレクトリの中にある。
+# 規約:
+#   features/<name>/engine … 純粋 Rust。`worker` crate に依存しない（ブラウザ wasm にも載る）
+#   features/<name>/worker … I/O アダプタ。`worker` 依存可。apps/api からのみ使う
+#   shared/<name>/engine   … 全 feature が使う共有 Rust
 members = [
-  "crates/qrcc-core",
-  "crates/qrcc-render",
-  "crates/qrcc-decode",
-  "crates/qrcc-print",
-  "crates/qrcc-wasm",
+  "shared/*/engine",
+  "features/*/engine",
+  # features/*/worker は最初の 1 つを作るときにここへ追加する
+  # （Cargo は一致しない glob をエラーにするため、事前登録できない）
   "apps/api",
 ]
 
@@ -17,10 +21,10 @@ publish = false
 
 # 追加は feat/rust-core レーンのみが行う（docs/parallel-lanes.md）
 [workspace.dependencies]
-qrcc-core = { path = "crates/qrcc-core" }
-qrcc-render = { path = "crates/qrcc-render" }
-qrcc-decode = { path = "crates/qrcc-decode" }
-qrcc-print = { path = "crates/qrcc-print" }
+qrcc-kernel = { path = "shared/kernel/engine" }
+qrcc-generate = { path = "features/generate/engine" }
+qrcc-scan = { path = "features/scan/engine" }
+qrcc-print = { path = "features/print/engine" }
 
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1", default-features = false, features = ["alloc"] }

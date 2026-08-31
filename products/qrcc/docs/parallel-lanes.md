@@ -5,71 +5,90 @@ worktree で複数の作業（人／エージェント）を同時に走らせ�
 
 ## 1. 依存グラフ
 
+**1 レーン = 1 トップレベルディレクトリ。** [ADR-0007](adr/0007-feature-colocation.md) の
+co-location により、レーンの所有範囲がディレクトリ境界と一致する。
+
 ```
-        L0 foundation (main に取り込み済み)
-                 │
-        ┌────────▼────────┐
-        │  L1 contracts   │  ← すべてのレーンの先行条件。最優先で main にマージ
-        └────────┬────────┘
-     ┌───────────┼────────────┬──────────────┬───────────────┐
-     ▼           ▼            ▼              ▼               ▼
- L2 rust-core  L7 ui     L8 web-shell    L9 auth        L14 devops
-     │           │            │              │
-  ┌──┼──┬────┐   │            │              │
-  ▼  ▼  ▼    ▼   │            │              │
- L3 L4 L5   L6   │            │              │
-decode print api wasm         │              │
-     │       │    │           │              │
-     └───┬───┴────┴─────┬─────┴──────┬───────┘
-         ▼              ▼            ▼
-   L11 scan-ui   L10 generate-ui  L12 manage-ui
-                        │
-                        ▼
-                  L13 print-ui
+                 feat/shared-contract          ← 最優先。全レーンの先行条件
+                 （shared/contract）
+                    ┌───────┴────────┐
+                    ▼                ▼
+          feat/shared-kernel   feat/shared-ui
+          （shared/kernel）    （shared/ui）
+                    │                │
+                    │                ▼
+                    │           feat/shell ──────────▶ feat/auth
+                    │        （features/shell,        （features/auth）
+                    │          apps/web）                    │
+                    ▼                                        │
+              feat/generate ◀──────────────────┘             │
+             （features/generate）                            │
+              ┌────┬────┬──────────┐                         │
+              ▼    ▼    ▼          ▼                         ▼
+        feat/scan  │  feat/print  feat/wasm-bridge      feat/manage
+                   │                                （features/manage）
+                   └──────────────────────────────────────┘
+
+          feat/api-worker（apps/api）… feat/shared-kernel の後、他とは独立
+          chore/devops（.github, scripts, docs）… 随時
 ```
 
-- **L1 は必ず単独で先に終わらせる。** ここが動くと全レーンが壊れる。
-- L2〜L9 は互いに独立。同時に走らせてよい。
-- L10〜L13 は L1 + L7 + L8 がマージ済みであることが前提。
+- **`feat/shared-contract` は必ず単独で先に終わらせる。** ここが動くと全レーンが壊れる
+- `feat/shared-kernel` / `feat/shared-ui` は並行してよい
+- feature レーン同士は独立。`@qrcc/<name>` の公開サブパス越しにしか依存しない
 
 ## 2. レーン一覧と所有ディレクトリ
 
-**自分のレーンが所有していないファイルを編集しない。** 必要なら
+**自分のレーンが所有していないディレクトリを編集しない。** 必要なら
 「先にそのレーンにお願いする」か「main にマージしてから rebase する」。
 
-| レーン           | ブランチ             | 所有ディレクトリ（ここだけ触る）                                                                                                   | 依存            |
-| ---------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| L1 contracts     | `feat/contracts`     | `packages/contracts/**`                                                                                                            | —               |
-| L2 rust-core     | `feat/rust-core`     | `crates/qrcc-core/**`, `crates/qrcc-render/**`, ルート `Cargo.toml`                                                                | L1              |
-| L3 decode        | `feat/decode`        | `crates/qrcc-decode/**`                                                                                                            | L2              |
-| L4 print-core    | `feat/print-core`    | `crates/qrcc-print/**`, `packages/core/src/print/**`                                                                               | L2              |
-| L5 api-worker    | `feat/api-worker`    | `apps/api/**`                                                                                                                      | L2              |
-| L6 wasm-bridge   | `feat/wasm-bridge`   | `crates/qrcc-wasm/**`, `packages/wasm/**`                                                                                          | L2              |
-| L7 design-system | `feat/design-system` | `packages/ui/**`                                                                                                                   | L1              |
-| L8 web-shell     | `feat/web-shell`     | `apps/web/src/routes/**`, `apps/web/src/styles/**`, `apps/web/src/server/**`, `apps/web/vite.config.ts`, `apps/web/wrangler.jsonc` | L1              |
-| L9 auth          | `feat/auth`          | `apps/web/src/features/auth/**`, `apps/api/migrations/**`                                                                          | L1, L8          |
-| L10 generate-ui  | `feat/generate-ui`   | `apps/web/src/features/generate/**`                                                                                                | L1,L6,L7,L8     |
-| L11 scan-ui      | `feat/scan-ui`       | `apps/web/src/features/scan/**`                                                                                                    | L1,L3,L6,L7,L8  |
-| L12 manage-ui    | `feat/manage-ui`     | `apps/web/src/features/manage/**`                                                                                                  | L1,L5,L7,L8,L9  |
-| L13 print-ui     | `feat/print-ui`      | `apps/web/src/features/print/**`                                                                                                   | L1,L4,L7,L8,L12 |
-| L14 devops       | `chore/devops`       | `.github/**`, `scripts/**`, `docs/**`                                                                                              | —               |
+| レーン          | ブランチ               | 所有ディレクトリ                      | 依存                     |
+| --------------- | ---------------------- | ------------------------------------- | ------------------------ |
+| shared-contract | `feat/shared-contract` | `shared/contract/**`                  | —                        |
+| shared-kernel   | `feat/shared-kernel`   | `shared/kernel/**`                    | shared-contract          |
+| shared-ui       | `feat/shared-ui`       | `shared/ui/**`                        | shared-contract          |
+| shell           | `feat/shell`           | `features/shell/**`, `apps/web/**`    | shared-ui                |
+| generate        | `feat/generate`        | `features/generate/**`                | shared-kernel, shared-ui |
+| scan            | `feat/scan`            | `features/scan/**`                    | generate                 |
+| print           | `feat/print`           | `features/print/**`                   | generate                 |
+| auth            | `feat/auth`            | `features/auth/**`                    | shell                    |
+| manage          | `feat/manage`          | `features/manage/**`                  | auth, generate           |
+| wasm-bridge     | `feat/wasm-bridge`     | `shared/wasm/**`                      | generate                 |
+| api-worker      | `feat/api-worker`      | `apps/api/**`                         | shared-kernel            |
+| devops          | `chore/devops`         | `.github/**`, `scripts/**`, `docs/**` | —                        |
 
-`packages/core/**`（print 以外）は L1 完了後に L2/L10 が分担して触るため、
-**ファイル単位で事前に owner を宣言する**（PR 冒頭に書く）。
+機械可読な定義は `scripts/lanes.tsv`。
+
+各 feature ディレクトリの中は次の構成に従う（[ADR-0007](adr/0007-feature-colocation.md)）。
+
+```
+features/<name>/
+├─ contract/   型・API 契約（TS）        ├─ engine/   純粋 Rust（worker 非依存）
+├─ core/       純粋ロジック（TS）        └─ worker/   Rust I/O アダプタ（worker 可）
+├─ ui/         React・CSS・テスト・<name>.route.tsx
+└─ server/     server functions
+```
+
+### ルートを足すとき
+
+ルートの実体は feature 内（`features/<name>/ui/<name>.route.tsx`）に置くが、
+**URL 構造の宣言だけは `apps/web/src/routes.ts`（`feat/shell` の所有）に集まる。**
+新しいルートが必要なレーンは、その 1 行の追加を `feat/shell` に依頼するか、
+shell がマージされたあとに追記する。ここが唯一の横断点になるよう設計している。
 
 ## 3. 共有ファイルの扱い（コンフリクト回避規約）
 
-| ファイル                          | 規約                                                                                                                       |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| ルート `package.json`             | **触らない。** 依存は各ワークスペースの `package.json` に足す（Wrangler がアプリ単位で解決するため、そもそもこれが正しい） |
-| `bun.lock`                        | 競合したら解決せず `git checkout --ours bun.lock && bun install` で再生成                                                  |
-| ルート `Cargo.toml`               | L2 が最初にすべての `members` と `[workspace.dependencies]` を登録しておく。他レーンは追記しない                           |
-| `Cargo.lock`                      | 競合したら `cargo update -w` で再生成                                                                                      |
-| ルート `tsconfig.json`            | L1 が全 references を先に登録しておく                                                                                      |
-| `routeTree.gen.ts`                | **git 管理しない**（`.gitignore` 済み）。`vite dev` / `build` で生成する                                                   |
-| `worker-configuration.d.ts`       | 同上。`bun run cf-typegen` で生成                                                                                          |
-| `.oxlintrc.json` / `lefthook.yml` | L14 のみ変更可。他レーンは Issue で依頼                                                                                    |
-| `docs/**`                         | 各レーンは**自分の章のみ**追記。表への行追加は競合しにくい                                                                 |
+| ファイル                                                 | 規約                                                                                                                      |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| ルート `package.json`                                    | **触らない。** 依存は各ワークスペースの `package.json` に足す                                                             |
+| `bun.lock`                                               | 競合したら解決せず `git checkout --ours bun.lock && bun install` で再生成                                                 |
+| ルート `Cargo.toml`                                      | `[workspace.dependencies]` の追加は `feat/shared-kernel` のみ。`features/*/worker` の初回追加だけ例外（該当レーンが行う） |
+| `Cargo.lock`                                             | 競合したら `cargo update -w` で再生成                                                                                     |
+| ルート `tsconfig.json`                                   | `feat/shared-contract` が全 references を先に登録しておく                                                                 |
+| `apps/web/src/routes.ts`                                 | `feat/shell` が所有。URL 1 行の追加のみ他レーンから依頼                                                                   |
+| `routeTree.gen.ts` / `worker-configuration.d.ts`         | **git 管理しない**。`bun run --filter @qrcc/web gen` で生成                                                               |
+| `.oxlintrc.json` / `lefthook.yml` / `.markuplintrc.json` | `chore/devops` のみ変更可                                                                                                 |
+| `docs/**`                                                | 各レーンは**自分の章のみ**追記                                                                                            |
 
 ## 4. 手順
 
@@ -121,10 +140,10 @@ PR ごとに **変更されたレーンの範囲だけ**を実行して時間を
 | ------------------------- | --------------------------------------------------------------- |
 | `fmt-lint`                | 常に                                                            |
 | `typecheck`               | `**/*.ts(x)`, `tsconfig*`                                       |
-| `test-ts`                 | `packages/**`, `apps/web/**`                                    |
+| `test-ts`                 | `features/**`, `shared/**`, `apps/web/**`                       | `bun test`（Small/Medium） |
 | `test-rust`               | `crates/**`, `apps/api/**`                                      |
 | `markuplint`              | `**/*.tsx`                                                      |
-| `a11y` (Playwright + axe) | `apps/web/**`, `packages/ui/**`                                 |
+| `a11y` (Playwright + axe) | `apps/web/**`, `shared/ui/**`                                   |
 | `wasm-size`               | `crates/**`（バンドルサイズ上限を守る）                         |
 | `guard`                   | 常に（`qrcc-api` に `routes` が生えていないか等の不変条件検査） |
 

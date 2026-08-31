@@ -9,9 +9,23 @@
   },
   "rules": {
     "require-accessible-name": true,
-    "wai-aria": { "options": { "checkingValue": true, "checkingDeprecatedProps": true } },
-    "landmark-roles": { "options": { "ignoreRoles": [] } },
-    "required-h1": { "options": { "expectedOnce": true, "inDocumentFragment": false } },
+    "wai-aria": {
+      "options": {
+        "checkingValue": true,
+        "checkingDeprecatedProps": true
+      }
+    },
+    "landmark-roles": {
+      "options": {
+        "ignoreRoles": []
+      }
+    },
+    "required-h1": {
+      "options": {
+        "expectedOnce": true,
+        "inDocumentFragment": false
+      }
+    },
     "heading-levels": true,
     "no-refer-to-non-existent-id": true,
     "label-has-control": true,
@@ -25,22 +39,35 @@
     "invalid-attr": {
       "options": {
         "disallowAttrs": ["accesskey"],
-        "allowAttrs": [{ "name": "tabindex", "value": { "enum": ["-1", "0"] } }]
+        "allowAttrs": [
+          {
+            "name": "tabindex",
+            "value": {
+              "enum": ["-1", "0"]
+            }
+          }
+        ]
       }
     }
   },
   "nodeRules": [
     {
       "selector": ":where(html)",
-      "rules": { "required-attr": ["lang"] }
+      "rules": {
+        "required-attr": ["lang"]
+      }
     },
     {
       "selector": "img",
-      "rules": { "required-attr": ["alt"] }
+      "rules": {
+        "required-attr": ["alt"]
+      }
     },
     {
       "selector": ":where(video, audio)",
-      "rules": { "required-element": ["track"] }
+      "rules": {
+        "required-element": ["track"]
+      }
     }
   ],
   "excludeFiles": ["**/node_modules/**", "**/dist/**", "**/.output/**", "**/routeTree.gen.ts"]

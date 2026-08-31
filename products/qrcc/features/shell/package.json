@@ -1,0 +1,17 @@
+{
+  "name": "@qrcc/shell",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./ui": "./ui/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@qrcc/contract": "workspace:*",
+    "@qrcc/ui": "workspace:*"
+  }
+}

@@ -1,0 +1,17 @@
+[package]
+name = "qrcc-generate"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+qrcc-kernel.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+qrcode.workspace = true
+barcoders.workspace = true
+
+[lints]
+workspace = true

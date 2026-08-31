@@ -32,7 +32,7 @@
 - [ ] 新しい symbology / payload 種別を「新ファイル + レジストリ 1 行」で足せる（OCP）
 - [ ] 抽象を「2 回目の重複」より前に導入していない（KISS / YAGNI）
 - [ ] 消した重複が「形」ではなく「知識」の重複である（DRY）
-- [ ] `packages/core` に I/O が漏れていない、`import/no-cycle` を踏んでいない
+- [ ] `features/<name>/core` に I/O が漏れていない、`import/no-cycle` を踏んでいない
 
 ## テスト
 

@@ -22,8 +22,9 @@
       "name": "@qrcc/web",
       "version": "0.1.0",
       "dependencies": {
-        "@qrcc/contracts": "workspace:*",
-        "@qrcc/core": "workspace:*",
+        "@qrcc/contract": "workspace:*",
+        "@qrcc/generate": "workspace:*",
+        "@qrcc/shell": "workspace:*",
         "@qrcc/ui": "workspace:*",
         "@qrcc/wasm": "workspace:*",
         "@tanstack/react-router": "1.170.32",
@@ -34,6 +35,7 @@
       "devDependencies": {
         "@cloudflare/vite-plugin": "1.54.2",
         "@tanstack/router-cli": "1.167.33",
+        "@tanstack/virtual-file-routes": "1.162.0",
         "@types/react": "19.2.7",
         "@types/react-dom": "19.2.4",
         "@vitejs/plugin-react": "6.1.1",
@@ -50,28 +52,69 @@
         "@playwright/test": "1.62.1",
       },
     },
-    "packages/contracts": {
-      "name": "@qrcc/contracts",
-      "version": "0.1.0",
-    },
-    "packages/core": {
-      "name": "@qrcc/core",
+    "features/auth": {
+      "name": "@qrcc/auth",
       "version": "0.1.0",
       "dependencies": {
-        "@qrcc/contracts": "workspace:*",
+        "@qrcc/contract": "workspace:*",
+        "@qrcc/ui": "workspace:*",
       },
     },
-    "packages/ui": {
+    "features/generate": {
+      "name": "@qrcc/generate",
+      "version": "0.1.0",
+      "dependencies": {
+        "@qrcc/contract": "workspace:*",
+        "@qrcc/ui": "workspace:*",
+      },
+    },
+    "features/manage": {
+      "name": "@qrcc/manage",
+      "version": "0.1.0",
+      "dependencies": {
+        "@qrcc/contract": "workspace:*",
+        "@qrcc/ui": "workspace:*",
+      },
+    },
+    "features/print": {
+      "name": "@qrcc/print",
+      "version": "0.1.0",
+      "dependencies": {
+        "@qrcc/contract": "workspace:*",
+        "@qrcc/ui": "workspace:*",
+      },
+    },
+    "features/scan": {
+      "name": "@qrcc/scan",
+      "version": "0.1.0",
+      "dependencies": {
+        "@qrcc/contract": "workspace:*",
+        "@qrcc/ui": "workspace:*",
+      },
+    },
+    "features/shell": {
+      "name": "@qrcc/shell",
+      "version": "0.1.0",
+      "dependencies": {
+        "@qrcc/contract": "workspace:*",
+        "@qrcc/ui": "workspace:*",
+      },
+    },
+    "shared/contract": {
+      "name": "@qrcc/contract",
+      "version": "0.1.0",
+    },
+    "shared/ui": {
       "name": "@qrcc/ui",
       "version": "0.1.0",
       "dependencies": {
-        "@qrcc/contracts": "workspace:*",
+        "@qrcc/contract": "workspace:*",
       },
       "peerDependencies": {
         "react": "^19.2.0",
       },
     },
-    "packages/wasm": {
+    "shared/wasm": {
       "name": "@qrcc/wasm",
       "version": "0.1.0",
     },
@@ -355,15 +398,25 @@
 
     "@qrcc/api": ["@qrcc/api@workspace:apps/api"],
 
-    "@qrcc/contracts": ["@qrcc/contracts@workspace:packages/contracts"],
+    "@qrcc/auth": ["@qrcc/auth@workspace:features/auth"],
 
-    "@qrcc/core": ["@qrcc/core@workspace:packages/core"],
+    "@qrcc/contract": ["@qrcc/contract@workspace:shared/contract"],
 
     "@qrcc/e2e": ["@qrcc/e2e@workspace:e2e"],
 
-    "@qrcc/ui": ["@qrcc/ui@workspace:packages/ui"],
+    "@qrcc/generate": ["@qrcc/generate@workspace:features/generate"],
 
-    "@qrcc/wasm": ["@qrcc/wasm@workspace:packages/wasm"],
+    "@qrcc/manage": ["@qrcc/manage@workspace:features/manage"],
+
+    "@qrcc/print": ["@qrcc/print@workspace:features/print"],
+
+    "@qrcc/scan": ["@qrcc/scan@workspace:features/scan"],
+
+    "@qrcc/shell": ["@qrcc/shell@workspace:features/shell"],
+
+    "@qrcc/ui": ["@qrcc/ui@workspace:shared/ui"],
+
+    "@qrcc/wasm": ["@qrcc/wasm@workspace:shared/wasm"],
 
     "@qrcc/web": ["@qrcc/web@workspace:apps/web"],
 

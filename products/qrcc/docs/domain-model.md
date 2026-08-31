@@ -1,6 +1,6 @@
 # ドメインモデル
 
-型は `packages/contracts/src/` に置き、TS と Rust の両方がこの定義に従う。
+型は `shared/contract/src/` に置き、TS と Rust の両方がこの定義に従う。
 「不正な状態を表現できない」ことを最優先する。
 
 ## 1. エンティティ
@@ -87,7 +87,7 @@ export type CodePayload =
 ```
 
 各 kind は `encode(payload): Result<EncodedData, PayloadError>` を持ち、
-`packages/core/src/payload/<kind>.ts` に 1 ファイルずつ実装する。
+`features/generate/core/payload/<kind>.ts` に 1 ファイルずつ実装する。
 レジストリは Mapped Type なので**追加漏れがコンパイルエラーになる**。
 
 ## 5. `Symbology`（判別可能ユニオン）
@@ -211,7 +211,7 @@ export type LabelSheet = {
 }
 ```
 
-台紙定義はデータ。新しい型番の追加は `packages/core/src/print/sheets/` に
+台紙定義はデータ。新しい型番の追加は `features/print/core/sheets/` に
 1 ファイル足すだけで、面付けアルゴリズムは触らない。
 
 ## 9. 永続化（D1 スキーマ方針）

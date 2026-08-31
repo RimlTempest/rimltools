@@ -1,6 +1,6 @@
 # Result — 失敗を値として扱う
 
-## 定義（`packages/contracts/src/result.ts`）
+## 定義（`shared/contract/src/result.ts`）
 
 ```ts
 export type Ok<T> = { readonly ok: true; readonly value: T }
@@ -68,8 +68,8 @@ export const renderCode = createServerFn().handler(async (input) => {
 
 ## Rust 側との対応
 
-`crates/qrcc-*` は Rust の `Result<T, E>` をそのまま使い、`E` は `thiserror` の enum。
+`features/*/engine` は Rust の `Result<T, E>` をそのまま使い、`E` は `thiserror` の enum。
 Worker 境界で `{ "ok": false, "error": { "kind": "...", ... } }` の JSON にシリアライズし、
 TS 側の `RenderError` と **同じ `kind` 文字列**で対応させる。
-対応表は `packages/contracts/src/api/errors.ts` に置き、Rust 側テストと TS 側テストの
+対応表は `shared/contract/src/api/errors.ts` に置き、Rust 側テストと TS 側テストの
 両方で同じフィクスチャ JSON を読む。

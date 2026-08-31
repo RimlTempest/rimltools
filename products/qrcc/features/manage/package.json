@@ -1,0 +1,18 @@
+{
+  "name": "@qrcc/manage",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./contract": "./contract/index.ts",
+    "./ui": "./ui/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@qrcc/contract": "workspace:*",
+    "@qrcc/ui": "workspace:*"
+  }
+}

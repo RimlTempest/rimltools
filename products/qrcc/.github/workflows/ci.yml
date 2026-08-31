@@ -30,14 +30,17 @@ jobs:
           filters: |
             ts:
               - 'apps/web/**'
-              - 'packages/**'
+              - 'features/**'
+              - 'shared/**'
               - 'e2e/**'
               - 'tsconfig*.json'
               - '.oxlintrc.json'
               - 'package.json'
               - 'bun.lock'
             rust:
-              - 'crates/**'
+              - 'features/*/engine/**'
+              - 'features/*/worker/**'
+              - 'shared/*/engine/**'
               - 'apps/api/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
@@ -47,7 +50,8 @@ jobs:
               - '.markuplintrc.json'
             web:
               - 'apps/web/**'
-              - 'packages/ui/**'
+              - 'features/**'
+              - 'shared/ui/**'
               - 'e2e/**'
 
   guard:
@@ -61,18 +65,30 @@ jobs:
             echo "::error file=apps/api/wrangler.jsonc::qrcc-api must not be reachable from the internet. Remove 'routes' (ADR-0002)."
             exit 1
           fi
-      - name: 純粋 crate は worker crate に依存しないこと (ADR-0003)
+      - name: engine crate は worker crate に依存しないこと (ADR-0003)
         run: |
-          for c in qrcc-core qrcc-render qrcc-decode qrcc-print qrcc-wasm; do
-            if grep -qE '^\s*worker(\s|\.|=)' "crates/$c/Cargo.toml"; then
-              echo "::error file=crates/$c/Cargo.toml::$c must not depend on the 'worker' crate (ADR-0003)."
+          for f in features/*/engine/Cargo.toml shared/*/engine/Cargo.toml; do
+            if grep -qE '^\s*worker(\s|\.|=)' "$f"; then
+              echo "::error file=$f::engine crates must not depend on the 'worker' crate; put I/O in features/<name>/worker (ADR-0003)."
               exit 1
             fi
           done
       - name: ドメイン層に I/O が漏れていないこと
         run: |
-          if grep -rnE '\b(fetch|localStorage|process\.env)\b' packages/contracts/src packages/core/src --include='*.ts' | grep -v '\.test\.ts'; then
-            echo "::error::packages/contracts and packages/core must stay I/O free. Inject dependencies instead."
+          hits=$(find shared/contract/src features/*/contract features/*/core -name '*.ts' ! -name '*.test.ts' 2>/dev/null \
+            | xargs -r grep -nE '\b(fetch|localStorage|process\.env)\b' || true)
+          if [ -n "$hits" ]; then
+            echo "$hits"
+            echo "::error::contract and core layers must stay I/O free. Inject dependencies instead."
+            exit 1
+          fi
+      - name: feature 同士が内部を直接 import していないこと (ADR-0007)
+        run: |
+          hits=$(find features -name '*.ts' -o -name '*.tsx' 2>/dev/null \
+            | xargs -r grep -nE "from '\\.\\./\\.\\./[a-z-]+/(contract|core|ui|server)/" || true)
+          if [ -n "$hits" ]; then
+            echo "$hits"
+            echo "::error::features must not reach into each other by relative path. Import via the '@qrcc/<feature>' entry points."
             exit 1
           fi
 

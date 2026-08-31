@@ -2,19 +2,31 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/contracts"
+      "path": "./shared/contract"
     },
     {
-      "path": "./packages/core"
+      "path": "./shared/ui"
     },
     {
-      "path": "./packages/wasm"
+      "path": "./shared/wasm"
     },
     {
-      "path": "./packages/ui"
+      "path": "./features/shell"
     },
     {
-      "path": "./apps/web"
+      "path": "./features/generate"
+    },
+    {
+      "path": "./features/scan"
+    },
+    {
+      "path": "./features/print"
+    },
+    {
+      "path": "./features/manage"
+    },
+    {
+      "path": "./features/auth"
     }
   ]
 }

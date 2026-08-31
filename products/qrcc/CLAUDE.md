@@ -22,14 +22,16 @@ Bun workspaces の monorepo。
 
 - **`any` / `as` / `!` / `class` / `enum` を書かない。** `.oxlintrc.json` の
   `qrcc/*` ルールが落とす。回避せず設計を直す。
-- **ドメイン層（`packages/contracts`, `packages/core`, `crates/qrcc-*`）で
-  `throw` しない。** 失敗は `Result<T, E>` で返す。
+- **ドメイン層（`shared/contract` / `features/*/contract` / `features/*/core` /
+  `*/engine`）で `throw` しない。** 失敗は `Result<T, E>` で返す。
 - **依存（時計・乱数・fetch・D1・R2・KV）は関数引数で受け取る。**
   配線は composition root だけ。
 - **`apps/api` の `wrangler.jsonc` に `routes` を足さない。**
   公開すると認可が二重化して権限昇格の穴になる（ADR-0002）。
-- **`crates/qrcc-core|render|decode|print` は `worker` crate に依存しない。**
-  ブラウザ向け wasm ビルドが壊れる（ADR-0003）。
+- **`*/engine`（Rust）は `worker` crate に依存しない。** ブラウザ向け wasm が壊れる。
+  I/O が要るなら `features/<name>/worker` を作る（ADR-0003 / ADR-0007）。
+- **feature 同士は `@qrcc/<name>` の公開サブパス経由でのみ依存する。**
+  相対パスで他 feature の内部に手を伸ばさない（ADR-0007）。
 - **実装より先に失敗するテストを書く。**
 - **自分のレーンが所有していないファイルを編集しない**（`scripts/lanes.tsv`）。
 

@@ -84,7 +84,12 @@
   },
   "overrides": [
     {
-      "files": ["packages/core/src/**/*.ts", "packages/contracts/src/**/*.ts"],
+      "files": [
+        "shared/contract/src/**/*.ts",
+        "shared/kernel/**/*.ts",
+        "features/*/contract/**/*.ts",
+        "features/*/core/**/*.ts"
+      ],
       "rules": { "qrcc/no-throw-in-domain": "error" }
     },
     {
@@ -101,7 +106,7 @@
         "**/*.config.ts",
         "**/*.config.js",
         "**/vite.config.ts",
-        "**/routes/**/*.tsx",
+        "**/*.route.tsx",
         "**/routeTree.gen.ts"
       ],
       "rules": { "import/no-default-export": "off" }

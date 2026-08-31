@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "jsx": "react-jsx",
+    "lib": ["es2024", "dom", "dom.iterable"]
+  },
+  "include": ["contract/**/*", "core/**/*", "ui/**/*", "server/**/*"],
+  "references": [
+    {
+      "path": "../../shared/contract"
+    },
+    {
+      "path": "../../shared/ui"
+    }
+  ],
+  "exclude": ["**/*.route.tsx", "dist"]
+}

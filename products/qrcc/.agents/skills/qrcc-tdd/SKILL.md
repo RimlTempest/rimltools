@@ -33,7 +33,7 @@ description: qrcc2 のテスト規約。機能追加・バグ修正の実装を�
 
 ### Small に落とすための道具
 
-`packages/core` は I/O を一切持たないので全部 Small で書ける。
+`features/<name>/core` は I/O を一切持たないので全部 Small で書ける。
 時計・乱数・ID 生成は必ず引数で受け取る（`qrcc-typescript` の関数DI）。
 
 ```ts
@@ -74,16 +74,16 @@ fn qr_m_level_encodes_known_matrix() {
 
 ## 4. レイヤ別の指針
 
-| 対象                                  | サイズ     | 方針                                                |
-| ------------------------------------- | ---------- | --------------------------------------------------- |
-| `packages/core`, `packages/contracts` | Small のみ | 純粋関数。フェイクは素のオブジェクト                |
-| `crates/qrcc-*`                       | Small      | `cargo test`。wasm 依存を core に持ち込まない       |
-| ユースケース関数 (`makeXxx`)          | Small      | 依存はインメモリのフェイク実装                      |
-| D1 リポジトリ                         | Medium     | Miniflare の実 D1 にマイグレーションを当てて検証    |
-| server function / API ルート          | Medium     | `vitest-pool-workers` で service binding ごと起動   |
-| React コンポーネント                  | Small      | Testing Library。ロールとアクセシブル名で取得する   |
-| 画面フロー・カメラ・印刷              | Large      | Playwright。カメラは fake device で代替             |
-| アクセシビリティ                      | Large      | Playwright + `@axe-core/playwright`（AAA タグ込み） |
+| 対象                                      | サイズ     | 方針                                                |
+| ----------------------------------------- | ---------- | --------------------------------------------------- |
+| `features/<name>/core`, `shared/contract` | Small のみ | 純粋関数。フェイクは素のオブジェクト                |
+| `features/*/engine`                       | Small      | `cargo test`。wasm 依存を core に持ち込まない       |
+| ユースケース関数 (`makeXxx`)              | Small      | 依存はインメモリのフェイク実装                      |
+| D1 リポジトリ                             | Medium     | Miniflare の実 D1 にマイグレーションを当てて検証    |
+| server function / API ルート              | Medium     | `vitest-pool-workers` で service binding ごと起動   |
+| React コンポーネント                      | Small      | Testing Library。ロールとアクセシブル名で取得する   |
+| 画面フロー・カメラ・印刷                  | Large      | Playwright。カメラは fake device で代替             |
+| アクセシビリティ                          | Large      | Playwright + `@axe-core/playwright`（AAA タグ込み） |
 
 ### React コンポーネントの取得方法
 
@@ -116,7 +116,7 @@ flaky を見つけたら **skip せずその日のうちに直す**。skip し�
 
 ```
 bun run test                 # 全ワークスペースの Small/Medium
-bun test packages/core       # Small だけ高速に回す
+bun test features/<name>/core       # Small だけ高速に回す
 cargo test --workspace       # Rust Small
 bun run --filter '@qrcc/web' test:integration   # Medium (Miniflare)
 bun run --filter '@qrcc/web' e2e                # Large (Playwright)
