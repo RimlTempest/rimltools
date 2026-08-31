@@ -43,3 +43,8 @@ playwright-report/
 .env.*.local
 LANE.md
 routeTree.gen.ts
+
+# tanstack / wrangler generated
+apps/web/src/routeTree.gen.ts
+apps/web/src/worker-configuration.d.ts
+apps/*/build/

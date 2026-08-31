@@ -30,7 +30,6 @@
     "typescript/no-unnecessary-type-assertion": "error",
     "typescript/consistent-type-imports": "error",
     "typescript/consistent-type-definitions": ["error", "type"],
-    "typescript/explicit-module-boundary-types": "error",
     "typescript/no-extraneous-class": "error",
     "typescript/switch-exhaustiveness-check": "error",
     "typescript/no-floating-promises": "error",
@@ -51,6 +50,8 @@
 
     "import/no-cycle": "error",
     "import/no-default-export": "error",
+
+    "react/react-in-jsx-scope": "off",
 
     "jsx-a11y/alt-text": "error",
     "jsx-a11y/anchor-has-content": "error",
@@ -108,6 +109,7 @@
   ],
   "ignorePatterns": [
     "**/dist/**",
+    "**/*.d.ts",
     "**/.output/**",
     "**/target/**",
     "**/node_modules/**",

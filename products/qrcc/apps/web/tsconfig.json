@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "jsx": "react-jsx",
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "types": ["bun", "vite/client"],
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "rootDir": "."
+  },
+  "include": ["src/**/*", "vite.config.ts"],
+  "references": [
+    {
+      "path": "../../packages/contracts"
+    },
+    {
+      "path": "../../packages/core"
+    },
+    {
+      "path": "../../packages/ui"
+    },
+    {
+      "path": "../../packages/wasm"
+    }
+  ]
+}

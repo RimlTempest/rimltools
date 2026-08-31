@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "qrcc-web",
+  "main": "@tanstack/react-start/server-entry",
+  "compatibility_date": "2026-08-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+
+  "routes": [{ "pattern": "qrcc.riml4i.com", "custom_domain": true }],
+
+  // qrcc-api は routes を持たない auxiliary Worker。ここからのみ到達できる。
+  "services": [{ "binding": "API", "service": "qrcc-api" }],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "qrcc",
+      "database_id": "REPLACE_ME",
+      "migrations_dir": "../api/migrations",
+    },
+  ],
+  "kv_namespaces": [{ "binding": "CACHE", "id": "REPLACE_ME" }],
+  "r2_buckets": [{ "binding": "ARTIFACTS", "bucket_name": "qrcc-artifacts" }],
+
+  "vars": { "APP_ORIGIN": "https://qrcc.riml4i.com" },
+  // BETTER_AUTH_SECRET / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET は
+  // wrangler secret put で設定する。.dev.vars はコミットしない。
+}

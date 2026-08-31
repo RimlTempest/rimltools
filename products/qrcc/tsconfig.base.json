@@ -9,7 +9,6 @@
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
-
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -23,13 +22,14 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "erasableSyntaxOnly": true,
-
     "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "composite": true,
     "incremental": true,
-    "noEmit": false
+    "types": ["bun"]
   }
 }
