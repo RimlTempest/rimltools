@@ -1,9 +1,11 @@
 name: Deploy
 
+# Cloudflare のリソース(D1/KV/R2 の ID と secrets)を用意するまでは手動実行のみ。
+# 用意できたら push トリガーを有効化する（chore/devops レーン）。
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+  # push:
+  #   branches: [main]
 
 concurrency:
   group: deploy-production
