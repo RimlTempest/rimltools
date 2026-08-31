@@ -70,5 +70,13 @@
       }
     }
   ],
-  "excludeFiles": ["**/node_modules/**", "**/dist/**", "**/.output/**", "**/routeTree.gen.ts"]
+  "excludeFiles": ["**/node_modules/**", "**/dist/**", "**/.output/**", "**/routeTree.gen.ts"],
+  "overrides": {
+    "./shared/ui/src/**/*.tsx": {
+      "$comment": "汎用コンポーネントは中身を props で受け取るため、静的解析からは常に空に見える。ページ側では有効なままにする。",
+      "rules": {
+        "no-empty-palpable-content": false
+      }
+    }
+  }
 }

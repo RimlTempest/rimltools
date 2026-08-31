@@ -9,3 +9,6 @@ linker = "hoisted"
 
 [test]
 coverage = true
+# @qrcc/ui のコンポーネントテストは DOM を要る。bunfig は cwd 基準でしか
+# 解決されないため、ルートで一度だけ happy-dom を登録する。
+preload = ["./shared/ui/test-setup.ts"]

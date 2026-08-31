@@ -53,6 +53,10 @@
 
     "react/react-in-jsx-scope": "off",
 
+    // インラインハンドラは React 19 では通常の書き方であり、この規則を守ると
+    // useCallback だらけになって読みにくくなる。メモ化が要る箇所は計測してから入れる。
+    "react-perf/jsx-no-new-function-as-prop": "off",
+
     "jsx-a11y/alt-text": "error",
     "jsx-a11y/anchor-has-content": "error",
     "jsx-a11y/anchor-is-valid": "error",
