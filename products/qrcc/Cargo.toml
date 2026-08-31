@@ -1,0 +1,62 @@
+[workspace]
+resolver = "3"
+members = [
+  "crates/qrcc-core",
+  "crates/qrcc-render",
+  "crates/qrcc-decode",
+  "crates/qrcc-print",
+  "crates/qrcc-wasm",
+  "apps/api",
+]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.98"
+license = "MIT"
+publish = false
+
+# 追加は feat/rust-core レーンのみが行う（docs/parallel-lanes.md）
+[workspace.dependencies]
+qrcc-core   = { path = "crates/qrcc-core" }
+qrcc-render = { path = "crates/qrcc-render" }
+qrcc-decode = { path = "crates/qrcc-decode" }
+qrcc-print  = { path = "crates/qrcc-print" }
+
+serde       = { version = "1", default-features = false, features = ["derive", "alloc"] }
+serde_json  = { version = "1", default-features = false, features = ["alloc"] }
+thiserror   = { version = "2", default-features = false }
+base64      = { version = "0.22", default-features = false, features = ["alloc"] }
+
+# 生成 / デコード / 印刷
+qrcode      = { version = "0.14", default-features = false }
+barcoders   = { version = "2", default-features = false, features = ["std"] }
+rxing       = { version = "0.9", default-features = false, features = [
+  "encoding_rs", "decoders", "encoders", "full_barcode_format_support", "image", "image_formats",
+] }  # client_support は wasm サイズ削減のため除外（ADR-0003）
+image       = { version = "=0.25.8", default-features = false, features = ["png", "jpeg", "webp"] }  # rxing 0.9.2 が =0.25.8 に固定
+krilla      = { version = "0.8", default-features = false }
+usvg        = { version = "0.48", default-features = false }
+
+# wasm / worker
+wasm-bindgen        = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys              = "0.3"
+web-sys             = "0.3"
+worker              = "0.8"
+console_error_panic_hook = "0.1"
+
+# ドメイン crate はパニックしない。opt-in は各 crate の [lints] workspace = true。
+# apps/api は worker マクロの展開に unwrap が含まれるため opt-in しない。
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "warn"
+todo = "allow"
+
+[profile.release]
+opt-level = "z"       # wasm バンドルサイズ優先（ADR-0003 のサイズ目標を守る）
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

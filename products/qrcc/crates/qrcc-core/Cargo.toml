@@ -1,0 +1,18 @@
+[package]
+name = "qrcc-core"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# I/O 禁止・worker 非依存。ブラウザ向け wasm ビルドを壊さないこと（ADR-0003）
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[lints]
+workspace = true
