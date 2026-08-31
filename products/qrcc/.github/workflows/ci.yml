@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # 手動実行では paths-filter を無視して全ジョブを走らせる
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -88,7 +90,7 @@ jobs:
   typecheck:
     name: typecheck (TypeScript 7)
     needs: changes
-    if: needs.changes.outputs.ts == 'true'
+    if: needs.changes.outputs.ts == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -100,7 +102,7 @@ jobs:
   test-ts:
     name: test (bun)
     needs: changes
-    if: needs.changes.outputs.ts == 'true'
+    if: needs.changes.outputs.ts == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -112,7 +114,7 @@ jobs:
   markuplint:
     name: markuplint (a11y)
     needs: changes
-    if: needs.changes.outputs.markup == 'true'
+    if: needs.changes.outputs.markup == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -124,7 +126,7 @@ jobs:
   rust:
     name: rust (fmt / clippy / test)
     needs: changes
-    if: needs.changes.outputs.rust == 'true'
+    if: needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -142,7 +144,7 @@ jobs:
   build-and-a11y:
     name: build + axe (WCAG AAA)
     needs: changes
-    if: needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
