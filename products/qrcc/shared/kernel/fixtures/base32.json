@@ -1,0 +1,37 @@
+{
+  "$comment": "Crockford base32 の適合ベクタ。TS(shared/contract) と Rust(qrcc-kernel) の両方のテストが読む。",
+  "vectors": [
+    {
+      "bytes": [],
+      "encoded": ""
+    },
+    {
+      "bytes": [0],
+      "encoded": "00"
+    },
+    {
+      "bytes": [255],
+      "encoded": "zw"
+    },
+    {
+      "bytes": [0, 0, 0, 0, 0],
+      "encoded": "00000000"
+    },
+    {
+      "bytes": [255, 255, 255, 255, 255],
+      "encoded": "zzzzzzzz"
+    },
+    {
+      "bytes": [1, 2, 3, 4, 5],
+      "encoded": "04106105"
+    },
+    {
+      "bytes": [72, 101, 108, 108, 111],
+      "encoded": "91jprv3f"
+    },
+    {
+      "bytes": [0, 17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238],
+      "encoded": "008j4ct4ank7f24snaxwsqfe"
+    }
+  ]
+}

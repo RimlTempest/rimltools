@@ -1,0 +1,116 @@
+{
+  "$comment": "ID の適合ケース。kind は user|code|folder|share_token|spec_hash。",
+  "cases": [
+    {
+      "kind": "code",
+      "value": "cd_0123456789abcdefghjkmnpq",
+      "valid": true,
+      "note": "24 文字の Crockford base32"
+    },
+    { "kind": "user", "value": "usr_0123456789abcdefghjkmnpq", "valid": true },
+    { "kind": "folder", "value": "fld_0123456789abcdefghjkmnpq", "valid": true },
+    {
+      "kind": "code",
+      "value": "usr_0123456789abcdefghjkmnpq",
+      "valid": false,
+      "note": "接頭辞違い。型だけでなくデータでも取り違えを弾く"
+    },
+    {
+      "kind": "user",
+      "value": "cd_0123456789abcdefghjkmnpq",
+      "valid": false,
+      "note": "接頭辞違い"
+    },
+    { "kind": "code", "value": "cd_0123", "valid": false, "note": "本体が短い" },
+    {
+      "kind": "code",
+      "value": "cd_0123456789abcdefghjkmnpqr",
+      "valid": false,
+      "note": "本体が長い"
+    },
+    {
+      "kind": "code",
+      "value": "cd_i123456789abcdefghjkmnp",
+      "valid": false,
+      "note": "i は Crockford base32 にない"
+    },
+    {
+      "kind": "code",
+      "value": "cd_l123456789abcdefghjkmnp",
+      "valid": false,
+      "note": "l は Crockford base32 にない"
+    },
+    {
+      "kind": "code",
+      "value": "cd_o123456789abcdefghjkmnp",
+      "valid": false,
+      "note": "o は Crockford base32 にない"
+    },
+    {
+      "kind": "code",
+      "value": "cd_u123456789abcdefghjkmnp",
+      "valid": false,
+      "note": "u は Crockford base32 にない"
+    },
+    {
+      "kind": "code",
+      "value": "cd_A123456789abcdefghjkmnp",
+      "valid": false,
+      "note": "大文字は使わない"
+    },
+    {
+      "kind": "code",
+      "value": "cd0123456789abcdefghjkmnpq",
+      "valid": false,
+      "note": "区切りの _ がない"
+    },
+    { "kind": "code", "value": "", "valid": false },
+    {
+      "kind": "share_token",
+      "value": "0123456789abcdefghjkmnpqrstvwxyz",
+      "valid": true,
+      "note": "32 文字・接頭辞なし"
+    },
+    {
+      "kind": "share_token",
+      "value": "0123456789abcdefghjkmnpqrstvwxy",
+      "valid": false,
+      "note": "31 文字"
+    },
+    {
+      "kind": "share_token",
+      "value": "0123456789abcdefghjkmnpqrstvwxyzz",
+      "valid": false,
+      "note": "33 文字"
+    },
+    {
+      "kind": "share_token",
+      "value": "0123456789abcdefghijkmnpqrstvwxy",
+      "valid": false,
+      "note": "i を含む"
+    },
+    {
+      "kind": "spec_hash",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000",
+      "valid": true
+    },
+    {
+      "kind": "spec_hash",
+      "value": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+      "valid": true
+    },
+    {
+      "kind": "spec_hash",
+      "value": "ABCDEF0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+      "valid": false,
+      "note": "大文字は使わない"
+    },
+    { "kind": "spec_hash", "value": "abcdef", "valid": false, "note": "64 桁でない" },
+    {
+      "kind": "spec_hash",
+      "value": "g000000000000000000000000000000000000000000000000000000000000000",
+      "valid": false,
+      "note": "16 進でない文字"
+    }
+  ]
+}

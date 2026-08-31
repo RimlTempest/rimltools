@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "resolveJsonModule": true
+  },
+  "include": ["conformance/**/*", "fixtures/**/*.json"],
+  "exclude": ["dist"],
+  "references": [
+    {
+      "path": "../contract"
+    }
+  ]
+}
