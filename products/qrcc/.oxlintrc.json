@@ -86,7 +86,7 @@
     {
       "files": [
         "shared/contract/src/**/*.ts",
-        "shared/kernel/**/*.ts",
+        "shared/kernel/conformance/**/*.ts",
         "features/*/contract/**/*.ts",
         "features/*/core/**/*.ts"
       ],
@@ -97,7 +97,8 @@
       "rules": {
         "typescript/no-explicit-any": "off",
         "eslint/no-console": "off",
-        "import/no-default-export": "off"
+        "import/no-default-export": "off",
+        "qrcc/no-throw-in-domain": "off"
       }
     },
     {

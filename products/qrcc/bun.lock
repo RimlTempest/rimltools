@@ -104,6 +104,13 @@
       "name": "@qrcc/contract",
       "version": "0.1.0",
     },
+    "shared/kernel": {
+      "name": "@qrcc/kernel",
+      "version": "0.1.0",
+      "dependencies": {
+        "@qrcc/contract": "workspace:*",
+      },
+    },
     "shared/ui": {
       "name": "@qrcc/ui",
       "version": "0.1.0",
@@ -405,6 +412,8 @@
     "@qrcc/e2e": ["@qrcc/e2e@workspace:e2e"],
 
     "@qrcc/generate": ["@qrcc/generate@workspace:features/generate"],
+
+    "@qrcc/kernel": ["@qrcc/kernel@workspace:shared/kernel"],
 
     "@qrcc/manage": ["@qrcc/manage@workspace:features/manage"],
 
