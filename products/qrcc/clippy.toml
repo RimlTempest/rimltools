@@ -1,0 +1,7 @@
+# Keep the wasm bundle small and the domain layer panic-free.
+avoid-breaking-exported-api = false
+disallowed-methods = [
+  { path = "std::option::Option::unwrap", reason = "domain failures are values: return Result and let the caller decide" },
+  { path = "std::result::Result::unwrap", reason = "domain failures are values: return Result and let the caller decide" },
+  { path = "std::option::Option::expect", reason = "prefer an explicit error variant over a panic in a Worker" },
+]

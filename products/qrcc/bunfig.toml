@@ -1,0 +1,8 @@
+[install]
+exact = true
+# Wrangler resolves dependencies from each app's own package.json, so every app
+# declares what it needs directly instead of relying on root hoisting.
+linkWorkspacePackages = true
+
+[test]
+coverage = true

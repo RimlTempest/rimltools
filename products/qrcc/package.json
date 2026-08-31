@@ -1,0 +1,44 @@
+{
+  "name": "qrcc2",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --filter '@qrcc/web' dev",
+    "build": "bun run --filter '*' build",
+    "test": "bun run --filter '*' test",
+    "typecheck": "tsc --build --verbose",
+    "lint": "oxlint --type-aware",
+    "lint:fix": "oxlint --type-aware --fix",
+    "fmt": "oxfmt .",
+    "fmt:check": "oxfmt --check .",
+    "lint:html": "markuplint \"apps/**/src/**/*.{tsx,html}\" \"packages/ui/src/**/*.tsx\"",
+    "a11y": "bun run --filter '@qrcc/web' a11y",
+    "rust:fmt": "cargo fmt --all",
+    "rust:fmt:check": "cargo fmt --all -- --check",
+    "rust:lint": "cargo clippy --workspace --all-targets -- -D warnings",
+    "rust:test": "cargo test --workspace",
+    "check": "bun run fmt:check && bun run lint && bun run typecheck && bun run lint:html && bun run rust:fmt:check && bun run rust:lint",
+    "wt": "./scripts/wt.sh",
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "@markuplint/jsx-parser": "4.7.20",
+    "@markuplint/react-spec": "4.5.20",
+    "lefthook": "2.1.12",
+    "markuplint": "4.18.3",
+    "oxfmt": "0.65.0",
+    "oxlint": "1.80.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "typescript": "7.0.2",
+    "wrangler": "4.127.1"
+  },
+  "engines": {
+    "bun": ">=1.4.0",
+    "node": ">=26"
+  },
+  "packageManager": "bun@1.4.0"
+}
