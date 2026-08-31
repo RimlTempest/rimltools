@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --filter '@qrcc/web' dev",
-    "build": "bun run --filter '*' build",
+    "build": "bun run --filter '@qrcc/api' build && bun run --filter '@qrcc/web' build",
     "test": "bun test packages apps",
     "typecheck": "bun run --filter '@qrcc/web' gen && tsc --build",
     "lint": "oxlint --type-aware",
