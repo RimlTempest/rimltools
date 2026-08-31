@@ -3,20 +3,21 @@
   "private": true,
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "e2e"
   ],
   "type": "module",
   "scripts": {
     "dev": "bun run --filter '@qrcc/web' dev",
     "build": "bun run --filter '*' build",
-    "test": "bun run --filter '*' test",
+    "test": "bun test packages apps",
     "typecheck": "bun run --filter '@qrcc/web' gen && tsc --build",
     "lint": "oxlint --type-aware",
     "lint:fix": "oxlint --type-aware --fix",
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
     "lint:html": "node tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json 'apps/**/src/**/*.tsx' 'packages/ui/src/**/*.tsx'",
-    "a11y": "bun run --filter '@qrcc/web' a11y",
+    "a11y": "bun run --filter '@qrcc/e2e' a11y",
     "rust:fmt": "cargo fmt --all",
     "rust:fmt:check": "cargo fmt --all -- --check",
     "rust:lint": "cargo clippy --workspace --all-targets -- -D warnings",
@@ -24,7 +25,9 @@
     "check": "bun run fmt:check && bun run lint && bun run typecheck && bun run lint:html && bun run rust:fmt:check && bun run rust:lint",
     "wt": "./scripts/wt.sh",
     "prepare": "lefthook install",
-    "postinstall": "bun install --cwd tools/markuplint --frozen-lockfile || bun install --cwd tools/markuplint"
+    "postinstall": "bun install --cwd tools/markuplint --frozen-lockfile || bun install --cwd tools/markuplint",
+    "e2e": "bun run --filter '@qrcc/e2e' test",
+    "test:all": "bun run test && bun run e2e"
   },
   "devDependencies": {
     "@types/bun": "1.4.0",
