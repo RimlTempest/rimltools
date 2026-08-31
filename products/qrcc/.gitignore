@@ -41,3 +41,5 @@ playwright-report/
 .env
 .env.local
 .env.*.local
+LANE.md
+routeTree.gen.ts

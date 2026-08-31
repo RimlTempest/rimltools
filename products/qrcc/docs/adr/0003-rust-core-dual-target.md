@@ -1,0 +1,49 @@
+# ADR-0003: Rust コアを Worker とブラウザの 2 ターゲットに配る
+
+- 状態: Accepted
+- 日付: 2026-09-01
+
+## 文脈
+
+無料枠の制約は **Workers 100k リクエスト/日** が最も厳しい。
+生成プレビューはユーザーが設定を触るたびに走るため、これをサーバで処理すると
+1 ユーザーが数十リクエストを消費してしまう。
+
+一方、生成・デコードのロジックをクライアントとサーバで二重実装すると、
+出力が食い違い、テストも二重になる。
+
+## 決定
+
+`crates/qrcc-core` / `qrcc-render` / `qrcc-decode` を **プラットフォーム非依存**に保ち、
+2 つの薄いアダプタから使う。
+
+```
+crates/qrcc-core, qrcc-render, qrcc-decode, qrcc-print   … 純粋ロジック
+   ├─ apps/api        (workers-rs)      → Worker で実行
+   └─ crates/qrcc-wasm (wasm-bindgen)   → packages/wasm → ブラウザで実行
+```
+
+**既定の実行場所はブラウザ。** サーバ実行は次の場合だけ:
+
+- 保存・共有・一覧など永続化が絡む操作
+- PDF 生成（フォントを含むため wasm バンドルが大きい）
+- ブラウザが対応していない symbology のデコード（フォールバック）
+
+## 理由
+
+- 生成プレビューが Worker リクエストを 1 件も消費しない。無料枠を守る最大の手段。
+- オフラインでも生成と読み取りが動く（PWA 化の余地）。
+- ロジックが 1 つなので、サーバとクライアントの出力が定義上一致する。
+- 同じテストスイート（`cargo test`）が両方を検証する。
+
+## 帰結
+
+- `qrcc-core` / `qrcc-render` / `qrcc-decode` は `worker` crate に依存してはならない。
+  依存の向きは Cargo の workspace で強制し、CI で `cargo tree` を検査する。
+- wasm バンドルサイズが UX に直結する。目標:
+  - 生成のみ（`qrcc-render`）: **gzip 200KB 以下**
+  - デコード込み（rxing）: **gzip 800KB 以下**、動的 import で分割し
+    読み取り画面に入ったときだけロードする
+- `wasm-opt -Oz` を CI のビルドに入れる。symbology は Cargo の feature フラグで
+  絞れるようにし、ブラウザ向けビルドは利用頻度の高いものだけを含める。
+- PDF（`qrcc-print`）はフォント埋め込みでサイズが大きいためブラウザには配らない。
