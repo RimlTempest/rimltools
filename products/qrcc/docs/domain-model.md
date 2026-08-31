@@ -24,16 +24,25 @@ User ──┬── Folder ──┐
 
 ## 2. 識別子（Branded）
 
+実装は `shared/contract/src/id.ts`。
+
 ```ts
-export type UserId = Brand<string, 'UserId'> // usr_…
-export type CodeId = Brand<string, 'CodeId'> // cd_…
-export type FolderId = Brand<string, 'FolderId'> // fld_…
-export type ShareToken = Brand<string, 'ShareToken'> // 32 文字の URL-safe 乱数
-export type SpecHash = Brand<string, 'SpecHash'> // 生成仕様の SHA-256（R2 キー）
+export type UserId = Brand<string, 'UserId'> // usr_ + 24 文字
+export type CodeId = Brand<string, 'CodeId'> // cd_  + 24 文字
+export type FolderId = Brand<string, 'FolderId'> // fld_ + 24 文字
+export type ShareToken = Brand<string, 'ShareToken'> // 32 文字（接頭辞なし）
+export type SpecHash = Brand<string, 'SpecHash'> // 生成仕様の SHA-256（64 桁小文字16進）
 ```
 
-生成は必ずパース関数経由（`as` 禁止）。詳細は
-`.claude/skills/qrcc-typescript/references/type-patterns.md`。
+- 本体は **Crockford base32**（`0-9` `a-z` から `i` `l` `o` `u` を除いた 32 文字）。
+  読み上げても取り違えにくく、大文字小文字の揺れも起きない。
+  ID は 120 bit、ShareToken は 160 bit の乱数。
+- **接頭辞で種類を実行時にも判別する。** `parseUserId('cd_…')` は失敗する。
+  型（Branded）とデータ（接頭辞）の両方で取り違えを止める。
+- 生成は必ずパース関数を通す（`as` 禁止のため唯一の生成手段であり、
+  同時にエンコーダの健全性チェックになる）。
+- **乱数は引数で受け取る**（`RandomBytes`）。この層に I/O はなく、
+  `crypto.getRandomValues` の注入は composition root の仕事。
 
 ## 3. `Code`
 
