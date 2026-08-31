@@ -5,7 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles/index.css"
   },
   "scripts": {
     "build": "tsc --build",
@@ -14,7 +14,18 @@
   "dependencies": {
     "@qrcc/contract": "workspace:*"
   },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "20.12.0",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.6",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
   "peerDependencies": {
-    "react": "^19.2.0"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   }
 }

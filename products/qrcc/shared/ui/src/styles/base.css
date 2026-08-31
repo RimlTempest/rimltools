@@ -1,0 +1,61 @@
+html {
+  /* 拡大時にフォーカス対象が sticky ヘッダに隠れないようにする（AAA 2.4.12） */
+  scroll-padding-block-start: 6rem;
+}
+
+body {
+  background: var(--qrcc-surface);
+  color: var(--qrcc-text);
+  font-family: var(--qrcc-font-sans);
+  /* AAA 1.4.8: 行間 1.5 以上・両端揃えにしない */
+  line-height: 1.6;
+  text-align: start;
+  margin: 0;
+  padding: var(--qrcc-space-6);
+  /* 日本語の折り返しを読みやすくする */
+  line-break: strict;
+  overflow-wrap: anywhere;
+}
+
+:where(h1, h2, h3, h4) {
+  line-height: 1.3;
+  text-wrap: balance;
+  margin-block: var(--qrcc-space-8) var(--qrcc-space-4);
+}
+
+h1 {
+  font-size: clamp(1.6rem, 1.4rem + 1vi, 2.2rem);
+}
+
+:where(p, li) {
+  max-inline-size: var(--qrcc-measure);
+  text-wrap: pretty;
+}
+
+p {
+  /* AAA 1.4.8: 段落間は行間の 1.5 倍以上 */
+  margin-block-end: 1.5em;
+}
+
+:where(a) {
+  color: var(--qrcc-accent);
+  text-underline-offset: 0.2em;
+}
+
+/* AAA 2.4.13: 2px 以上・周囲と 3:1 以上のフォーカスインジケータ */
+:focus-visible {
+  outline: var(--qrcc-focus-width) solid var(--qrcc-focus-ring);
+  outline-offset: var(--qrcc-focus-offset);
+  border-radius: var(--qrcc-radius-sm);
+}
+
+:where(:target, [tabindex='-1']:focus) {
+  scroll-margin-block-start: 6rem;
+}
+
+/* Windows ハイコントラストで情報が消えないようにする */
+@media (forced-colors: active) {
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}
