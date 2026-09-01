@@ -54,6 +54,19 @@ bunx wrangler secret put GOOGLE_CLIENT_SECRET --config apps/web/wrangler.jsonc
 
 `BETTER_AUTH_SECRET` は `openssl rand -base64 32` などで生成する。
 
+> **端末が対話的でないときは値を渡せない。** `wrangler secret put` は値を
+> プロンプトで訊くので、非対話で実行すると**値を入力しないまま成功扱いで
+> 登録される**（ワーカー作成の確認だけが既定の yes で答えられる）。
+> 登録済みの値は API から読み出せないため、空で入ったことに後から気づけない。
+> 非対話で入れるときは標準入力から渡す:
+>
+> ```bash
+> printf '%s' "$VALUE" | bunx wrangler secret put NAME --config apps/web/wrangler.jsonc
+> ```
+
+> **初回デプロイ前に `secret put` すると、空のワーカーが先に作られる。**
+> ルートは付かないので公開はされないが、順番としてはデプロイを先にするほうが素直。
+
 Google OAuth の設定（Google Cloud Console）:
 
 - 承認済みリダイレクト URI: `https://qrcc.riml4i.com/api/auth/callback/google`
