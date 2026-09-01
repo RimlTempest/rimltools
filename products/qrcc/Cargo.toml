@@ -10,6 +10,7 @@ members = [
   "features/*/engine",
   # features/*/worker は最初の 1 つを作るときにここへ追加する
   # （Cargo は一致しない glob をエラーにするため、事前登録できない）
+  "features/*/worker",
   "apps/api",
 ]
 
@@ -25,6 +26,7 @@ qrcc-kernel = { path = "shared/kernel/engine" }
 qrcc-generate = { path = "features/generate/engine" }
 qrcc-scan = { path = "features/scan/engine" }
 qrcc-print = { path = "features/print/engine" }
+qrcc-manage-worker = { path = "features/manage/worker" }
 
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1", default-features = false, features = ["alloc"] }

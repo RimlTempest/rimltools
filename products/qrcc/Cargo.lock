@@ -1327,6 +1327,7 @@ dependencies = [
  "console_error_panic_hook",
  "qrcc-generate",
  "qrcc-kernel",
+ "qrcc-manage-worker",
  "qrcc-print",
  "qrcc-scan",
  "serde",
@@ -1354,6 +1355,17 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.20",
+]
+
+[[package]]
+name = "qrcc-manage-worker"
+version = "0.1.0"
+dependencies = [
+ "qrcc-kernel",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "worker",
 ]
 
 [[package]]

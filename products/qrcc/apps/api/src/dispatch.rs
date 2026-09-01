@@ -8,8 +8,10 @@
 //! 混在するため、振り分け層では型を 1 つに畳まず、封筒に載る形にして返す。
 
 use qrcc_kernel::CommonRpcError;
+use qrcc_manage_worker::{D1Store, ManageRequest};
 use serde::Serialize;
 use serde_json::{Value, json};
+use worker::Env;
 
 use crate::request::{RpcRequest, require_actor};
 
@@ -36,11 +38,39 @@ pub fn dispatch(request: &RpcRequest) -> DispatchResult {
         "render" => render(request),
         // TODO(feat/scan): decode
         // TODO(feat/print): print
-        // TODO(feat/manage): codes.*, folders.*, shares.*
+        // codes.* / folders.* / shares.* は D1 が要るので `dispatch_stored` 側にある
         unknown => Err(common(CommonRpcError::NotFound {
             resource: alloc_method(unknown),
         })),
     }
+}
+
+/// D1 を要するメソッドを含む、Worker からの唯一の入口。
+///
+/// 純粋な `dispatch` を内側に残しているのは、計算だけのメソッドを
+/// 同期・I/O なしのまま単体テストできる形に保つため。
+/// 保存系の判断は `qrcc-manage-worker` 側にあり、そちらも
+/// フェイクの `Sql` で単体テストできる（ADR-0002 / ADR-0007）。
+pub async fn dispatch_stored(request: &RpcRequest, env: &Env, now: i64) -> DispatchResult {
+    if !qrcc_manage_worker::handles(&request.method) {
+        return dispatch(request);
+    }
+    let Ok(db) = env.d1("DB") else {
+        return Err(common(CommonRpcError::Internal));
+    };
+    let store = D1Store::new(db);
+    let outcome = qrcc_manage_worker::handle(
+        &store,
+        &ManageRequest {
+            method: &request.method,
+            actor: request.actor.as_ref(),
+            idempotency_key: request.idempotency_key.as_deref(),
+            body: &request.body,
+            now,
+        },
+    )
+    .await;
+    outcome.map_err(|error| to_error(&error))
 }
 
 fn render(request: &RpcRequest) -> DispatchResult {
@@ -106,6 +136,21 @@ mod tests {
             dispatch(&request("nope")),
             Err(json!({ "kind": "not_found", "resource": "method nope" }))
         );
+    }
+
+    /// 保存系は D1 が要るので、純粋な `dispatch` は引き受けない。
+    /// どちらが引き受けるかの境界を、一覧そのもので確かめる。
+    #[test]
+    fn stateful_methods_are_left_to_the_stored_dispatch() {
+        for method in qrcc_manage_worker::METHODS {
+            assert!(qrcc_manage_worker::handles(method), "method: {method}");
+            assert_eq!(
+                dispatch(&request(method)),
+                Err(json!({ "kind": "not_found", "resource": format!("method {method}") })),
+                "method: {method}"
+            );
+        }
+        assert!(!qrcc_manage_worker::handles("render"));
     }
 
     #[test]

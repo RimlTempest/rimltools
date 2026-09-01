@@ -18,7 +18,21 @@ pub struct RpcRequest {
     /// qrcc-web が検証済みの呼び出し元。匿名なら `None`。
     pub actor: Option<UserId>,
     pub request_id: Option<String>,
+    /// 作成系メソッドの二重実行を防ぐ鍵（docs/api-contract.md 5 節）。
+    pub idempotency_key: Option<String>,
     pub body: Value,
+}
+
+impl RpcRequest {
+    /// `Idempotency-Key` を後付けする。
+    ///
+    /// `build` の引数に足さないのは、この鍵を見るのが作成系メソッドだけで、
+    /// 残りの経路には無関係だから。空文字は「付いていない」と同じに扱う
+    /// （空の鍵で全ての作成が同一視されると、作成が 1 回しかできなくなる）。
+    pub fn with_idempotency_key(mut self, key: Option<&str>) -> Self {
+        self.idempotency_key = key.filter(|key| !key.is_empty()).map(str::to_owned);
+        self
+    }
 }
 
 /// 受け付けられない要求。`status` はトランスポート層の応答コードに使う。
@@ -101,6 +115,7 @@ pub fn build(
         method: method.to_owned(),
         actor: parse_actor(actor_header)?,
         request_id: request_id_header.map(str::to_owned),
+        idempotency_key: None,
         body: parsed,
     })
 }
@@ -206,6 +221,25 @@ mod tests {
             413
         );
         assert_eq!(RequestError::MalformedBody("x".into()).status(), 400);
+    }
+
+    #[test]
+    fn carries_an_idempotency_key_when_one_is_sent() {
+        let request = build("POST", "/rpc/codes.create", Some(ACTOR), None, b"{}")
+            .expect("must build")
+            .with_idempotency_key(Some("key-1"));
+        assert_eq!(request.idempotency_key, Some("key-1".to_owned()));
+    }
+
+    /// 空の鍵で全ての作成が同一視されると、2 件目が永遠に作れなくなる。
+    #[test]
+    fn treats_a_missing_or_empty_idempotency_key_as_absent() {
+        let request = build("POST", "/rpc/codes.create", None, None, b"{}").expect("must build");
+        assert_eq!(
+            request.clone().with_idempotency_key(None).idempotency_key,
+            None
+        );
+        assert_eq!(request.with_idempotency_key(Some("")).idempotency_key, None);
     }
 
     #[test]

@@ -1,0 +1,22 @@
+[package]
+name = "qrcc-manage-worker"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# features/<name>/worker は I/O アダプタ。`worker` に依存してよい（ADR-0007）。
+# ただし依存するのは d1.rs だけで、判断（SQL 組み立て・行の読み取り・
+# カーソル・入力検証）はすべて worker 非依存の純粋モジュールに置く。
+[dependencies]
+qrcc-kernel.workspace = true
+# D1 は worker の feature の裏にある。features は加算的なので、
+# ルートの [workspace.dependencies] を書き換えずにここで足す。
+worker = { workspace = true, features = ["d1"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

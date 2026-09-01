@@ -14,7 +14,7 @@ mod request;
 
 use qrcc_kernel::RpcDecodeError;
 use qrcc_kernel::rpc::{encode_envelope, header};
-use worker::{Context, Env, Request, Response, Result, event};
+use worker::{Context, Date, Env, Request, Response, Result, event};
 
 #[event(start)]
 fn start() {
@@ -22,11 +22,12 @@ fn start() {
 }
 
 #[event(fetch)]
-async fn fetch(mut req: Request, _env: Env, _ctx: Context) -> Result<Response> {
+async fn fetch(mut req: Request, env: Env, _ctx: Context) -> Result<Response> {
     let path = req.path();
     let http_method = req.method().to_string();
     let actor = req.headers().get(header::ACTOR).ok().flatten();
     let request_id = req.headers().get(header::REQUEST_ID).ok().flatten();
+    let idempotency_key = req.headers().get(header::IDEMPOTENCY_KEY).ok().flatten();
     let body = req.bytes().await.unwrap_or_default();
 
     let built = request::build(
@@ -38,12 +39,15 @@ async fn fetch(mut req: Request, _env: Env, _ctx: Context) -> Result<Response> {
     );
 
     let rpc_request = match built {
-        Ok(rpc_request) => rpc_request,
+        Ok(rpc_request) => rpc_request.with_idempotency_key(idempotency_key.as_deref()),
         // トランスポート層の失敗だけが 200 以外になる。
         Err(cause) => return Response::error(cause.to_string(), cause.status()),
     };
 
-    let outcome = dispatch::dispatch(&rpc_request);
+    // 時計はここで 1 度だけ読む。下の層は現在時刻を引数で受け取るので、
+    // 判断がすべて単体テストできる（作成日時も期限の判定も再現できる）。
+    let now = (Date::now().as_millis() / 1000) as i64;
+    let outcome = dispatch::dispatch_stored(&rpc_request, &env, now).await;
     let envelope = encode_envelope(&outcome).map_err(|cause| {
         worker::Error::RustError(
             RpcDecodeError::MalformedValue {
