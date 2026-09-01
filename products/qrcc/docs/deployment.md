@@ -26,6 +26,25 @@ bunx wrangler r2 bucket lifecycle add qrcc-artifacts \
   --prefix uploads/ --expire-days 1
 ```
 
+### D1 のマイグレーション
+
+`database_id` を書き込んだら、本番の D1 にスキーマを当てる。
+
+```bash
+bunx wrangler d1 migrations apply qrcc --remote --config apps/api/wrangler.jsonc
+```
+
+ローカル（Miniflare）側は **e2e の起動手順に組み込まれている**ので手で当てる必要はない
+（`e2e/playwright.config.ts` の `webServer` が `bun run --filter @qrcc/web db:local` を実行する）。
+手で当てたい場合は:
+
+```bash
+cd apps/web && bunx wrangler d1 migrations apply qrcc --local
+```
+
+> マイグレーションを手順書に頼ると「CI では落ちるが手元では通る」差が生まれる。
+> 一度当てた手元だけ通ってしまうため、起動手順に含めてある。
+
 ### シークレット
 
 ```bash
@@ -34,10 +53,21 @@ bunx wrangler secret put GOOGLE_CLIENT_ID     --config apps/web/wrangler.jsonc
 bunx wrangler secret put GOOGLE_CLIENT_SECRET --config apps/web/wrangler.jsonc
 ```
 
+`BETTER_AUTH_SECRET` は `openssl rand -base64 32` などで生成する。
+
 Google OAuth の設定（Google Cloud Console）:
 
 - 承認済みリダイレクト URI: `https://qrcc.riml4i.com/api/auth/callback/google`
-- ローカル用: `http://localhost:3000/api/auth/callback/google`
+- ローカル用（`vite dev`）: `http://localhost:5173/api/auth/callback/google`
+- ローカル用（`vite preview` / e2e）: `e2e/playwright.config.ts` が決めるポート
+
+**Google の資格情報が未設定の環境では、Google のボタンを出さずゲストのみになる**
+（実装済みのフォールバック）。開発中はそのままで困らない。
+
+### 未実装の運用タスク
+
+- 期限切れゲストの掃除（[ADR-0004](adr/0004-auth-guest-and-google.md) の Cron）。
+  `session.expires_at` にインデックスは張ってあるので、Cron トリガーを足すときに使う。
 
 ### カスタムドメイン
 

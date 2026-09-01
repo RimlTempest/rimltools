@@ -64,6 +64,9 @@
     // メモ化は計測してから入れる。
     "react-perf/jsx-no-new-function-as-prop": "off",
     "react-perf/jsx-no-new-object-as-prop": "off",
+    // JSX を prop で渡す「スロット」は React の標準的な合成パターン。
+    // これを避けると、slot ごとにコンポーネントを切り出す羽目になる。
+    "react-perf/jsx-no-jsx-as-prop": "off",
 
     "jsx-a11y/alt-text": "error",
     "jsx-a11y/anchor-has-content": "error",

@@ -79,7 +79,24 @@ test('ゲストで使い始めると、状態と期限が画面に出る', async
 
   // セッションが立つと、選択肢がサインアウトに変わる
   await expect(page.getByRole('button', { name: 'サインアウト' })).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByText('ゲストとして利用中です')).toBeVisible()
+  // 同じ文言はヘッダーにも常駐するので、本文側に絞って見る
+  await expect(page.getByRole('main').getByText('ゲストとして利用中です')).toBeVisible()
+})
+
+/** ヘッダーは全画面に出る。どのページからでも自分の状態が分かること。 */
+test('サインイン状態がヘッダーにも出る', async ({ page }) => {
+  await page.goto('/sign-in')
+  await page.getByRole('button', { name: '登録せずに使う（ゲスト）' }).click()
+  await expect(page.getByRole('button', { name: 'サインアウト' })).toBeVisible({ timeout: 15_000 })
+
+  await page.goto('/generate')
+  await expect(page.getByRole('banner').getByText('ゲストとして利用中です')).toBeVisible()
+})
+
+/** 常駐する live region は遷移のたびに読み上げられ、ページ側の通知とも競合する。 */
+test('ヘッダーの状態表示は読み上げ領域にしない @a11y', async ({ page }) => {
+  await page.goto('/generate')
+  await expect(page.getByRole('banner').locator('[role="status"], output')).toHaveCount(0)
 })
 
 test('ゲストのセッションは再読み込みしても続く（HttpOnly Cookie）', async ({ page }) => {

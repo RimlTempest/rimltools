@@ -2,14 +2,13 @@ import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
-import { drizzle } from 'drizzle-orm/d1'
 import { useState } from 'react'
 // ルートは apps/web 側の配線なので、feature の公開サブパス越しに使う。
 // routeTree.gen.ts が loader の型を書けるようにするため（相対パスだと名前を付けられない）
 import type { ActorWire } from '@qrcc/auth/contract'
-import { parseActorWire, toActorWire } from '@qrcc/auth/contract'
-import { isGoogleConfigured, makeAuthFromEnv } from '../server/from-env.ts'
-import { makeD1SqlRunner } from '../server/sql.ts'
+import { parseActorWire } from '@qrcc/auth/contract'
+import { currentActorWire } from './auth-env.route.ts'
+import { isGoogleConfigured } from '../server/from-env.ts'
 import { makeBrowserAuthActions } from './browser-auth-client.ts'
 import { SignInScreen } from './sign-in-screen.tsx'
 
@@ -25,18 +24,10 @@ type SignInState = {
  * 画面には検証済みの値だけを渡す。
  */
 const signInStateFn = createServerFn({ method: 'GET' }).handler(async (): Promise<SignInState> => {
-  const isGoogleAvailable = isGoogleConfigured(env)
-  if (env.DB === undefined) {
-    // D1 が無い環境でも画面は出す（生成と読み取りはサインイン不要）
-    return { actor: { kind: 'visitor' }, isGoogleAvailable }
+  return {
+    actor: await currentActorWire(env, getRequest()),
+    isGoogleAvailable: isGoogleConfigured(env),
   }
-  const request = getRequest()
-  const auth = makeAuthFromEnv(env, {
-    makeDb: () => drizzle(env.DB),
-    sql: makeD1SqlRunner(env.DB),
-    origin: new URL(request.url).origin,
-  })
-  return { actor: toActorWire(await auth.currentActor(request)), isGoogleAvailable }
 })
 
 const SignIn = () => {

@@ -56,3 +56,17 @@ describe('サインイン状態の表示', () => {
     expect(screen.getAllByTestId('custom')).toHaveLength(1)
   })
 })
+
+describe('AuthStatus（常駐表示）', () => {
+  /** 常駐する live region は画面遷移のたびに読み上げられ、ページ側の通知とも競合する。 */
+  test('announce=false では live region にしない', () => {
+    render(<AuthStatus actor={{ kind: 'visitor' }} announce={false} />)
+    expect(screen.queryByRole('status')).toBeNull()
+    expect(screen.getByText(/サインインしていません/)).toBeDefined()
+  })
+
+  test('既定では live region として読み上げる', () => {
+    render(<AuthStatus actor={{ kind: 'visitor' }} />)
+    expect(screen.getByRole('status')).toBeDefined()
+  })
+})

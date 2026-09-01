@@ -15,5 +15,5 @@
       "path": "../../shared/ui"
     }
   ],
-  "exclude": ["**/*.route.tsx", "dist"]
+  "exclude": ["**/*.route.*", "dist"]
 }

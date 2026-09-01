@@ -12,6 +12,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@qrcc/auth": "workspace:*",
     "@qrcc/contract": "workspace:*",
     "@qrcc/ui": "workspace:*"
   }

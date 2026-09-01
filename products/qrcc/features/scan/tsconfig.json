@@ -18,5 +18,5 @@
       "path": "../../shared/wasm"
     }
   ],
-  "exclude": ["**/*.route.tsx", "dist"]
+  "exclude": ["**/*.route.*", "dist"]
 }

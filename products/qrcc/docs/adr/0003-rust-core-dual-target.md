@@ -43,10 +43,23 @@ crates/qrcc-core, qrcc-render, qrcc-decode, qrcc-print   … 純粋ロジック
 
 - `qrcc-core` / `qrcc-render` / `qrcc-decode` は `worker` crate に依存してはならない。
   依存の向きは Cargo の workspace で強制し、CI で `cargo tree` を検査する。
-- wasm バンドルサイズが UX に直結する。目標:
-  - 生成のみ（`qrcc-render`）: **gzip 200KB 以下**
-  - デコード込み（rxing）: **gzip 800KB 以下**、動的 import で分割し
-    読み取り画面に入ったときだけロードする
+- wasm バンドルサイズが UX に直結する。目標と**実測（2026-09-01 時点）**:
+
+  | チャンク                        | 目標       | 実測 (gzip) |
+  | ------------------------------- | ---------- | ----------- |
+  | 生成（`qrcc-generate`）         | 200KB 以下 | **86KB**    |
+  | デコード（`qrcc-scan` / rxing） | 800KB 以下 | **781KB**   |
+
+  Cargo の feature で 2 つの wasm に焼き分け、デコード側は読み取り画面に入って、
+  かつ `BarcodeDetector` が使えないときだけ動的に読み込む。1 つにまとめると
+  生成しか使わない利用者にも 9 倍を配ることになる。
+  CI はチャンクごとに上限を検査し、**チャンクが見つからない場合も失敗**させる
+  （名前を変えた瞬間に検査が消えるのを防ぐ）。
+
 - `wasm-opt -Oz` を CI のビルドに入れる。symbology は Cargo の feature フラグで
   絞れるようにし、ブラウザ向けビルドは利用頻度の高いものだけを含める。
 - PDF（`qrcc-print`）はフォント埋め込みでサイズが大きいためブラウザには配らない。
+- **rxing は wasm32 でそのままだと panic する。** 検出結果に `chrono::Utc::now()` が
+  入っており、wasm32 にはプラットフォーム時計が無い。`wasm_support` feature
+  （`chrono/wasmbind`）で解決する。`bun test`（ホスト）では露見せず、
+  実ブラウザで初めて分かった。Worker 側でデコードする場合も同じ対応が要る。

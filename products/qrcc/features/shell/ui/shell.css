@@ -14,6 +14,11 @@
   margin: 0;
 }
 
+.qrcc-header__status {
+  /* ナビの右に寄せる。狭い画面では折り返して下の行に落ちる */
+  margin-inline-start: auto;
+}
+
 .qrcc-global-nav ul {
   display: flex;
   flex-wrap: wrap;

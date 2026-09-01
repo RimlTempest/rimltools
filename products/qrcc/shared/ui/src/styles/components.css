@@ -70,6 +70,10 @@
 /* --- フォーム ---------------------------------------------------------- */
 .qrcc-field {
   display: grid;
+  /* 既定の暗黙列は max-content で、ファイル入力のように内在幅が大きい要素を
+     置くと列がそのまま広がり、狭い画面で横スクロールが出る（WCAG 1.4.10）。
+     0 まで縮められる 1 列に固定する。 */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--qrcc-space-1);
   margin-block-end: var(--qrcc-space-4);
   max-inline-size: var(--qrcc-measure);

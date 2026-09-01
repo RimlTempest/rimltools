@@ -18,5 +18,5 @@
       "path": "../generate"
     }
   ],
-  "exclude": ["**/*.route.tsx", "dist"]
+  "exclude": ["**/*.route.*", "dist"]
 }

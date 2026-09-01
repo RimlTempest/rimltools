@@ -110,6 +110,7 @@
       "name": "@qrcc/shell",
       "version": "0.1.0",
       "dependencies": {
+        "@qrcc/auth": "workspace:*",
         "@qrcc/contract": "workspace:*",
         "@qrcc/ui": "workspace:*",
       },

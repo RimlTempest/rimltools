@@ -11,7 +11,7 @@
     "emitDeclarationOnly": false,
     "noEmit": true
   },
-  "include": ["src/**/*", "vite.config.ts", "../../features/*/ui/*.route.tsx"],
+  "include": ["src/**/*", "vite.config.ts", "../../features/*/ui/*.route.*"],
   "references": [
     {
       "path": "../../shared/contract"
