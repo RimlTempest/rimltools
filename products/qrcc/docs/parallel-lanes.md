@@ -69,12 +69,21 @@ features/<name>/
 └─ server/     server functions
 ```
 
-### ルートを足すとき
+### 横断点は「1 行追記」に限る
 
-ルートの実体は feature 内（`features/<name>/ui/<name>.route.tsx`）に置くが、
-**URL 構造の宣言だけは `apps/web/src/routes.ts`（`feat/shell` の所有）に集まる。**
-新しいルートが必要なレーンは、その 1 行の追加を `feat/shell` に依頼するか、
-shell がマージされたあとに追記する。ここが唯一の横断点になるよう設計している。
+feature の実体はディレクトリ内に閉じるが、アプリに組み込むための宣言だけは
+横断ファイルに集まる。設計上、いずれも **append-only の 1 行**で済むようにしてある。
+
+| 何を足すか     | どこに 1 行                      |
+| -------------- | -------------------------------- |
+| 画面の URL     | `apps/web/src/routes.ts`         |
+| 画面のスタイル | `apps/web/src/styles/app.css`    |
+| ナビの項目     | `features/shell/ui/nav-items.ts` |
+| RPC メソッド   | `apps/api/src/dispatch.rs`       |
+
+複数レーンを並行させると、この 4 ファイルは rebase で競合しうる。
+**競合したら解決せず、両方の行を残す**（順序は問わない）。それ以外の場所で
+競合したなら、レーンの切り方が間違っている。
 
 ## 3. 共有ファイルの扱い（コンフリクト回避規約）
 
