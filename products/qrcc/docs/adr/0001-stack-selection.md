@@ -60,7 +60,8 @@ QR / バーコードの生成・読み取り・管理・印刷を行う Web ア�
 ## 帰結
 
 - Vite 7+ / Node 互換フラグが必須（RSC と Cloudflare plugin の要件）。
-- RSC は TanStack Start でまだ experimental。API 変更に追随するコストを許容する。
-  影響範囲を `apps/web/src/features/*/server/` に閉じ、UI から直接触らせない。
+- RSC は TanStack Start でまだ experimental。**実際に server function と
+  組み合わせると本番ビルドが壊れたため、[ADR-0008](0008-defer-rsc.md) で
+  当面無効にした。** SSR とハイドレーションは従来どおり動く。
 - Rust と TypeScript の 2 言語になるため、API 契約を `packages/contracts` に
   一元化し、両側のテストが同じフィクスチャを読む運用にする。

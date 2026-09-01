@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { cloudflare } from '@cloudflare/vite-plugin'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
-import rsc from '@vitejs/plugin-rsc'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -19,6 +18,10 @@ const tsrConfig: { routesDirectory: string; virtualRouteConfig: string } = JSON.
 const fromHere = (relative: string) => fileURLToPath(new URL(relative, import.meta.url))
 
 export default defineConfig({
+  // TanStack Start が server function を切り出したモジュールは、
+  // Cloudflare プラグインが外部化する環境の外でも解析される。
+  // `cloudflare:*` は Workers ランタイムが供給するので、常に外部扱いにする。
+  build: { rollupOptions: { external: [/^cloudflare:/] } },
   plugins: [
     // cloudflare() は tanstackStart() より前に置く（Cloudflare 公式手順）。
     // auxiliaryWorkers に Rust の qrcc-api を含めることで、同一デプロイ単位・
@@ -27,8 +30,10 @@ export default defineConfig({
       viteEnvironment: { name: 'ssr' },
       auxiliaryWorkers: [{ configPath: '../api/wrangler.jsonc' }],
     }),
+    // RSC は当面無効（ADR-0008）。有効にすると server function を切り出した
+    // チャンクが "No such module rsc/assets/..." で 500 になる。
+    // 実際に RSC が必要になったタイミングで再検証する。
     tanstackStart({
-      rsc: { enabled: true },
       // ルートは feature の中に置く（co-location）。routesDirectory をリポジトリ
       // ルートの features/ に向け、URL 構成だけを src/routes.ts に集約する。
       router: {
@@ -36,7 +41,6 @@ export default defineConfig({
         virtualRouteConfig: tsrConfig.virtualRouteConfig,
       },
     }),
-    rsc(),
     viteReact(),
   ],
 })

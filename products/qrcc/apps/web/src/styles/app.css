@@ -8,4 +8,4 @@
  */
 @import '@qrcc/ui/styles.css';
 @import '@qrcc/shell/ui/shell.css' layer(components);
-/* TODO(feat/generate): @import '@qrcc/generate/ui/generate.css' layer(components); */
+@import '@qrcc/generate/ui/generate.css' layer(components);

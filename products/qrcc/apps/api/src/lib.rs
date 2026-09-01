@@ -12,8 +12,8 @@
 mod dispatch;
 mod request;
 
+use qrcc_kernel::RpcDecodeError;
 use qrcc_kernel::rpc::{encode_envelope, header};
-use qrcc_kernel::{CommonRpcError, RpcDecodeError};
 use worker::{Context, Env, Request, Response, Result, event};
 
 #[event(start)]
@@ -44,7 +44,7 @@ async fn fetch(mut req: Request, _env: Env, _ctx: Context) -> Result<Response> {
     };
 
     let outcome = dispatch::dispatch(&rpc_request);
-    let envelope = encode_envelope::<_, CommonRpcError>(&outcome).map_err(|cause| {
+    let envelope = encode_envelope(&outcome).map_err(|cause| {
         worker::Error::RustError(
             RpcDecodeError::MalformedValue {
                 detail: cause.to_string(),

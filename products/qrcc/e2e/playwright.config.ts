@@ -30,6 +30,8 @@ export default defineConfig({
     // api(Rust) → web の順にビルドしてから preview する。
     // apps/api/build と apps/web/dist は git 管理外なので、必ずここで作る。
     command: 'bun run --cwd ../ build && bun run --filter @qrcc/web preview',
+    stdout: 'pipe',
+    stderr: 'pipe',
     url: baseURL,
     reuseExistingServer: !process.env['CI'],
     timeout: 180_000,

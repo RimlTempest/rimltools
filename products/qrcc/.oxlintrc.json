@@ -32,6 +32,11 @@
     "typescript/consistent-type-definitions": ["error", "type"],
     "typescript/no-extraneous-class": "error",
     "typescript/switch-exhaustiveness-check": "error",
+    // union を網羅した switch は TS が「全経路が返る」と理解するが、この規則は
+    // 理解しない。default を足すと網羅チェックが効かなくなり、拡張性の担保
+    // （メンバー追加でコンパイルエラー）が壊れる。tsconfig の noImplicitReturns
+    // が本当の返し忘れを検出するので、こちらは無効にする。
+    "typescript/consistent-return": "off",
     "typescript/no-floating-promises": "error",
     "typescript/no-misused-promises": "error",
 
@@ -53,9 +58,12 @@
 
     "react/react-in-jsx-scope": "off",
 
-    // インラインハンドラは React 19 では通常の書き方であり、この規則を守ると
-    // useCallback だらけになって読みにくくなる。メモ化が要る箇所は計測してから入れる。
+    // インラインハンドラやオブジェクトリテラルは React 19 では通常の書き方であり、
+    // この規則を守ると useCallback / useMemo だらけになって読みにくくなる。
+    // dangerouslySetInnerHTML のように毎回オブジェクトが要る API もある。
+    // メモ化は計測してから入れる。
     "react-perf/jsx-no-new-function-as-prop": "off",
+    "react-perf/jsx-no-new-object-as-prop": "off",
 
     "jsx-a11y/alt-text": "error",
     "jsx-a11y/anchor-has-content": "error",
