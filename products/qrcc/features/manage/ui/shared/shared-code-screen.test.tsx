@@ -69,7 +69,7 @@ describe('共有リンクを開く', () => {
     const { asked } = setup({ actor: visitor })
 
     await screen.findByRole('heading', { level: 1, name: '在庫ラベル' })
-    expect(asked).toEqual([TOKEN])
+    expect(asked.map(String)).toEqual([TOKEN])
     expect(screen.queryByText(/サインインが必要/)).toBeNull()
   })
 

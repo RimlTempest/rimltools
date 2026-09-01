@@ -18,4 +18,5 @@ export const routes = rootRoute('shell/ui/root.route.tsx', [
   route('/sign-in', 'auth/ui/sign-in.route.tsx'),
   // Better Auth の HTTP 入口（Google のコールバックを含む）
   route('/api/auth/$', 'auth/ui/auth-api.route.tsx'),
+  route('/shared/$token', 'manage/ui/shared/shared.route.tsx'),
 ])

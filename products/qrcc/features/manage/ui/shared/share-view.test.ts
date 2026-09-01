@@ -14,7 +14,7 @@ const TOKEN = 'abcdefghjkmnpqrstvwxyz0123456789'
 describe('URL から受け取ったトークン', () => {
   test('32 文字の Crockford base32 なら共有トークンとして読める', () => {
     const token = readShareToken(TOKEN)
-    expect(token.ok && token.value).toBe(TOKEN)
+    expect(token.ok ? String(token.value) : token.error.kind).toBe(TOKEN)
   })
 
   test('短い・記号が混じるものは「形が違う」として断る', () => {
