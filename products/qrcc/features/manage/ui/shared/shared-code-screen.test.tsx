@@ -85,7 +85,7 @@ describe('共有リンクを開く', () => {
     setup()
 
     const link = await screen.findByRole('link', { name: /自分でコードを作る/ })
-    expect(link.getAttribute('href')).toBe('/generate')
+    expect(link.getAttribute('href')).toBe('/')
   })
 
   test('絵を描けなくても、名前と理由が読める', async () => {

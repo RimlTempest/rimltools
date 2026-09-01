@@ -42,6 +42,13 @@ type GenerateScreenProps = {
   readonly mode?: GenerateMode
   /** ライブ更新の待ち時間（ms）。テストでは 0 にする。 */
   readonly debounceMs?: number
+  /**
+   * この画面の最上位見出しのレベル。
+   *
+   * 単独のページなら 1。トップページのように**他の画面と並べて置く**ときは
+   * 2 にして、ページの h1 を主題ひとつに保つ（AAA 2.4.10）。
+   */
+  readonly headingLevel?: 1 | 2
 }
 
 type FormState = {
@@ -166,7 +173,11 @@ export const GenerateScreen = ({
   render,
   mode = 'manual',
   debounceMs = 300,
+  headingLevel = 1,
 }: GenerateScreenProps) => {
+  // 見出しは常に 1 段ずつ。飛ばすと構造が読めなくなる（AAA 2.4.10）
+  const Title = headingLevel === 2 ? 'h2' : 'h1'
+  const Section = headingLevel === 2 ? 'h3' : 'h2'
   const [state, setState] = useState<FormState>(INITIAL)
   const [result, setResult] = useState<RenderResponse | undefined>(undefined)
   const [message, setMessage] = useState<string | undefined>(undefined)
@@ -228,7 +239,7 @@ export const GenerateScreen = ({
 
   return (
     <>
-      <h1>コードを作る</h1>
+      <Title>コードを作る</Title>
       <p>
         内容と見た目を決めて生成します。生成した内容はコードの下にテキストでも表示されるので、
         画像を読み取れない場合でも確認できます。
@@ -404,7 +415,7 @@ export const GenerateScreen = ({
 
       <LiveRegion message={message} />
 
-      <h2>生成したコード</h2>
+      <Section>生成したコード</Section>
       {result === undefined ? (
         <p>
           {mode === 'manual'

@@ -14,6 +14,8 @@
   "dependencies": {
     "@qrcc/auth": "workspace:*",
     "@qrcc/contract": "workspace:*",
+    "@qrcc/generate": "workspace:*",
+    "@qrcc/scan": "workspace:*",
     "@qrcc/ui": "workspace:*"
   }
 }

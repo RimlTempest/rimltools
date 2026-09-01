@@ -40,6 +40,13 @@ type ScanScreenProps = {
   readonly startCamera: StartCamera | undefined
   readonly decodeImageFile: DecodeImageFile
   readonly copyText: CopyText | undefined
+  /**
+   * この画面の最上位見出しのレベル。
+   *
+   * 単独のページなら 1。トップページのように**他の画面と並べて置く**ときは
+   * 2 にして、ページの h1 を主題ひとつに保つ（AAA 2.4.10）。
+   */
+  readonly headingLevel?: 1 | 2
 }
 
 /** ボタンの名前に入れる長さ。長い内容でも名前が一意になれば十分。 */
@@ -112,7 +119,15 @@ const DetectionItem = ({
  * - 開始・成功・失敗・権限拒否をすべて読み上げる。同じ値の連続検出は抑制する
  * - カメラが無くても画像読み取りだけで完結し、キーボードだけで全機能に届く
  */
-export const ScanScreen = ({ startCamera, decodeImageFile, copyText }: ScanScreenProps) => {
+export const ScanScreen = ({
+  startCamera,
+  decodeImageFile,
+  copyText,
+  headingLevel = 1,
+}: ScanScreenProps) => {
+  // 見出しは常に 1 段ずつ。飛ばすと構造が読めなくなる（AAA 2.4.10）
+  const Title = headingLevel === 2 ? 'h2' : 'h1'
+  const Section = headingLevel === 2 ? 'h3' : 'h2'
   const [state, dispatch] = useReducer(reduceScan, INITIAL_SCAN_STATE)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const sessionRef = useRef<ScanSession | undefined>(undefined)
@@ -168,7 +183,7 @@ export const ScanScreen = ({ startCamera, decodeImageFile, copyText }: ScanScree
 
   return (
     <>
-      <h1>コードを読み取る</h1>
+      <Title>コードを読み取る</Title>
       <p>
         カメラか、保存してある画像から QR コード・バーコードを読み取ります。
         読み取りは端末の中だけで行い、カメラの映像も選んだ画像もサーバには送信しません。
@@ -177,7 +192,7 @@ export const ScanScreen = ({ startCamera, decodeImageFile, copyText }: ScanScree
       <LiveRegion message={state.message} />
 
       <section className="qrcc-scan__panel" aria-labelledby={cameraHeadingId}>
-        <h2 id={cameraHeadingId}>カメラで読み取る</h2>
+        <Section id={cameraHeadingId}>カメラで読み取る</Section>
         {startCamera === undefined ? (
           <p>
             このブラウザではカメラを使えません。下の「画像から読み取る」で、
@@ -215,7 +230,7 @@ export const ScanScreen = ({ startCamera, decodeImageFile, copyText }: ScanScree
       </section>
 
       <section className="qrcc-scan__panel" aria-labelledby={fileHeadingId}>
-        <h2 id={fileHeadingId}>画像から読み取る</h2>
+        <Section id={fileHeadingId}>画像から読み取る</Section>
         <Field
           label="コードが写っている画像"
           type="file"
@@ -227,7 +242,7 @@ export const ScanScreen = ({ startCamera, decodeImageFile, copyText }: ScanScree
       </section>
 
       <section className="qrcc-scan__panel" aria-labelledby={resultsHeadingId}>
-        <h2 id={resultsHeadingId}>読み取った内容</h2>
+        <Section id={resultsHeadingId}>読み取った内容</Section>
         {state.history.length === 0 ? (
           <p>まだ読み取っていません。カメラを起動するか、画像を選んでください。</p>
         ) : (

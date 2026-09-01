@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { AxeBuilder } from '@axe-core/playwright'
+import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag2aaa', 'wcag21a', 'wcag21aa', 'wcag22aa'] as const
@@ -15,9 +16,15 @@ const FIXTURE_TEXT = 'https://qrcc.riml4i.com/scan-fixture'
 /** wasm デコーダは読み取り画面に入ってから取りに行くので、初回は時間がかかる。 */
 const DECODE_TIMEOUT = 30_000
 
+/**
+ * トップページは生成と読み取りを並べて置く。読み上げ領域もボタンも
+ * 両方にあるので、この spec は**読み取り側のランドマークに限定**して見る。
+ */
+const scan = (page: Page) => page.getByRole('region', { name: 'コードを読み取る' })
+
 test('画像を選ぶと内容がテキストで出る', async ({ page }) => {
-  await page.goto('/scan')
-  await page.getByLabel('コードが写っている画像').setInputFiles(FIXTURE)
+  await page.goto('/')
+  await scan(page).getByLabel('コードが写っている画像').setInputFiles(FIXTURE)
 
   await expect(page.getByRole('link', { name: FIXTURE_TEXT })).toBeVisible({
     timeout: DECODE_TIMEOUT,
@@ -26,13 +33,13 @@ test('画像を選ぶと内容がテキストで出る', async ({ page }) => {
 })
 
 test('読み取った内容が読み上げ領域に出る', async ({ page }) => {
-  await page.goto('/scan')
-  await page.getByLabel('コードが写っている画像').setInputFiles(FIXTURE)
+  await page.goto('/')
+  await scan(page).getByLabel('コードが写っている画像').setInputFiles(FIXTURE)
 
-  await expect(page.getByRole('status')).toContainText('読み取りました', {
+  await expect(scan(page).getByRole('status')).toContainText('読み取りました', {
     timeout: DECODE_TIMEOUT,
   })
-  await expect(page.getByRole('status')).toContainText(FIXTURE_TEXT)
+  await expect(scan(page).getByRole('status')).toContainText(FIXTURE_TEXT)
 })
 
 /**
@@ -46,9 +53,9 @@ test('読み取りでサーバに問い合わせない', async ({ page }) => {
     if (url.includes('/_serverFn/') || request.method() === 'POST') serverCalls.push(url)
   })
 
-  await page.goto('/scan')
-  await page.getByLabel('コードが写っている画像').setInputFiles(FIXTURE)
-  await expect(page.getByRole('status')).toContainText('読み取りました', {
+  await page.goto('/')
+  await scan(page).getByLabel('コードが写っている画像').setInputFiles(FIXTURE)
+  await expect(scan(page).getByRole('status')).toContainText('読み取りました', {
     timeout: DECODE_TIMEOUT,
   })
 
@@ -56,35 +63,35 @@ test('読み取りでサーバに問い合わせない', async ({ page }) => {
 })
 
 test('カメラを起動すると状態が読み上げられる', async ({ page }) => {
-  await page.goto('/scan')
-  await page.getByRole('button', { name: 'カメラを起動する' }).click()
+  await page.goto('/')
+  await scan(page).getByRole('button', { name: 'カメラを起動する' }).click()
 
-  await expect(page.getByRole('status')).toContainText('カメラで読み取っています', {
+  await expect(scan(page).getByRole('status')).toContainText('カメラで読み取っています', {
     timeout: DECODE_TIMEOUT,
   })
-  await expect(page.getByRole('button', { name: 'カメラを停止する' })).toBeVisible()
+  await expect(scan(page).getByRole('button', { name: 'カメラを停止する' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'カメラを停止する' }).click()
-  await expect(page.getByRole('status')).toContainText('カメラを停止しました')
-  await expect(page.getByRole('button', { name: 'カメラを起動する' })).toBeVisible()
+  await scan(page).getByRole('button', { name: 'カメラを停止する' }).click()
+  await expect(scan(page).getByRole('status')).toContainText('カメラを停止しました')
+  await expect(scan(page).getByRole('button', { name: 'カメラを起動する' })).toBeVisible()
 })
 
 /** カメラの映像は情報を持たない。支援技術には見せない（状態は live region に集約）。 */
 test('カメラの映像は支援技術に見せない @a11y', async ({ page }) => {
-  await page.goto('/scan')
+  await page.goto('/')
   await expect(page.locator('video')).toHaveAttribute('aria-hidden', 'true')
 })
 
 test('読み取り画面に axe の違反がない @a11y', async ({ page }) => {
-  await page.goto('/scan')
+  await page.goto('/')
   const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
   expect(results.violations).toEqual([])
 })
 
 test('読み取った結果が出たあとも axe の違反がない @a11y', async ({ page }) => {
-  await page.goto('/scan')
-  await page.getByLabel('コードが写っている画像').setInputFiles(FIXTURE)
-  await expect(page.getByRole('status')).toContainText('読み取りました', {
+  await page.goto('/')
+  await scan(page).getByLabel('コードが写っている画像').setInputFiles(FIXTURE)
+  await expect(scan(page).getByRole('status')).toContainText('読み取りました', {
     timeout: DECODE_TIMEOUT,
   })
 
@@ -94,7 +101,7 @@ test('読み取った結果が出たあとも axe の違反がない @a11y', asy
 
 /** マウスが使えなくても、カメラ起動から画像選択まで届くこと（AAA 2.1.3）。 */
 test('キーボードだけでカメラと画像の両方に到達できる @a11y', async ({ page }) => {
-  await page.goto('/scan')
+  await page.goto('/')
 
   const describeFocus = () =>
     page.evaluate(() => {
@@ -118,25 +125,27 @@ test('キーボードだけでカメラと画像の両方に到達できる @a11
   expect(reachable.some((entry) => entry.startsWith('input:file'))).toBe(true)
 })
 
-test('読み取り画面の見出しが h1 から始まる @a11y', async ({ page }) => {
-  await page.goto('/scan')
-  await expect(page.getByRole('heading', { level: 1, name: 'コードを読み取る' })).toHaveCount(1)
+test('読み取りはトップの h2 として置かれる @a11y', async ({ page }) => {
+  await page.goto('/')
+  // h1 はページの主題ひとつ。読み取りはその下の節になる（AAA 2.4.10）
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+  await expect(page.getByRole('heading', { level: 2, name: 'コードを読み取る' })).toHaveCount(1)
 })
 
 test('読み取り画面が 320px 幅で横スクロールしない @a11y', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 })
-  await page.goto('/scan')
+  await page.goto('/')
   const overflows = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
   )
   expect(overflows).toBe(false)
 })
 
-test('グローバルナビから読み取り画面に行ける @a11y', async ({ page }) => {
-  await page.goto('/')
+test('グローバルナビからトップに戻ると読み取りがある @a11y', async ({ page }) => {
+  await page.goto('/settings')
   await page
     .getByRole('navigation', { name: 'グローバル' })
-    .getByRole('link', { name: 'コードを読み取る' })
+    .getByRole('link', { name: 'コードを作る・読み取る' })
     .click()
-  await expect(page.getByRole('heading', { level: 1, name: 'コードを読み取る' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 2, name: 'コードを読み取る' })).toBeVisible()
 })

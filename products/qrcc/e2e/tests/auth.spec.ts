@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { AxeBuilder } from '@axe-core/playwright'
 import type { Locator, Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
@@ -14,6 +15,9 @@ const tabUntilFocused = async (page: Page, target: Locator, remaining = 20): Pro
 }
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag2aaa', 'wcag21a', 'wcag21aa', 'wcag22aa'] as const
+
+/** 読み取りの固定画像（scan.spec と同じもの）。 */
+const SCAN_FIXTURE = fileURLToPath(new URL('../fixtures/qr-url.png', import.meta.url))
 
 /**
  * Google OAuth は本物の資格情報が要るのでここでは通せない。
@@ -89,13 +93,13 @@ test('サインイン状態がヘッダーにも出る', async ({ page }) => {
   await page.getByRole('button', { name: '登録せずに使う（ゲスト）' }).click()
   await expect(page.getByRole('button', { name: 'サインアウト' })).toBeVisible({ timeout: 15_000 })
 
-  await page.goto('/generate')
+  await page.goto('/')
   await expect(page.getByRole('banner').getByText('ゲストとして利用中です')).toBeVisible()
 })
 
 /** 常駐する live region は遷移のたびに読み上げられ、ページ側の通知とも競合する。 */
 test('ヘッダーの状態表示は読み上げ領域にしない @a11y', async ({ page }) => {
-  await page.goto('/generate')
+  await page.goto('/')
   await expect(page.getByRole('banner').locator('[role="status"], output')).toHaveCount(0)
 })
 
@@ -134,6 +138,38 @@ test('ゲストの制約を選ぶ前に伝える', async ({ page }) => {
 })
 
 test('サインインしなくても生成は使える（ADR-0004）', async ({ page }) => {
-  await page.goto('/generate')
+  await page.goto('/')
   await expect(page.locator('.qrcc-code-preview')).toBeVisible({ timeout: 15_000 })
+})
+
+/**
+ * 既定の状態は**未ログイン**。訪問しただけでセッションを発行しない。
+ *
+ * 自動でゲストを作ると 1 訪問につき user と session で D1 に 2 行書き込みが
+ * 発生し、クローラーの分まで無料枠（100k 行/日）を食う。生成も読み取りも
+ * 端末内で完結するので、アカウントは**保存を始めるまで作らない**
+ * （docs/free-tier-budget.md / ADR-0004）。
+ */
+test('トップを使ってもセッションを発行しない（D1 に書き込まない）', async ({ page }) => {
+  await page.goto('/')
+
+  const generate = page.getByRole('region', { name: 'コードを作る' })
+  await generate.getByLabel('リンク先の URL').fill('https://example.com/anonymous')
+  await expect(generate.locator('.qrcc-code-preview')).toContainText(
+    'https://example.com/anonymous',
+    { timeout: 15_000 },
+  )
+
+  const scan = page.getByRole('region', { name: 'コードを読み取る' })
+  await scan.getByLabel('コードが写っている画像').setInputFiles(SCAN_FIXTURE)
+  await expect(scan.getByRole('status')).toContainText('読み取りました', { timeout: 30_000 })
+
+  // セッション Cookie が無い = D1 の session に 1 行も書いていない
+  const cookies = await page.context().cookies()
+  expect(
+    cookies.map((cookie) => cookie.name).filter((name) => name.includes('session_token')),
+  ).toEqual([])
+
+  // 画面も「使えます」と伝えていて、サインインを促す作りになっていない
+  await expect(page.getByRole('banner')).toContainText('生成と読み取りはこのまま使えます')
 })

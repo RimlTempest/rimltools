@@ -1,6 +1,12 @@
 import type { ReactNode } from 'react'
 
 type HomeScreenProps = {
+  /**
+   * 生成と読み取りの中身。shell はこの 2 つの feature を知らずに置き場所だけ決める。
+   * 実際の配線は `home.route.tsx`（アプリ側の composition root）が行う。
+   */
+  readonly generate?: ReactNode
+  readonly scan?: ReactNode
   readonly renderLink?: (props: { readonly to: string; readonly label: string }) => ReactNode
 }
 
@@ -9,37 +15,33 @@ const defaultRenderLink = ({ to, label }: { readonly to: string; readonly label:
 )
 
 /**
- * トップページ。
+ * トップページ。**作る**と**読み取る**をこの 1 ページに置く。
  *
- * 見出しの一覧だけでページ構造が分かるように、節ごとに見出しを置く（AAA 2.4.10）。
- * リンク文言は単体で行き先が分かるものにする（AAA 2.4.9）。
+ * 別ページに分けていたものを統合したのは、この 2 つがこのアプリの本体で、
+ * どちらもサインインなしで完結するため。入口で選ばせず、来たらすぐ使える形にする。
+ *
+ * 中身の見出しは h2 で始める（`headingLevel={2}`）。h1 はページの主題ひとつに
+ * 使い、見出しの一覧だけでページ構造が読めるようにする（AAA 2.4.10）。
  */
-export const HomeScreen = ({ renderLink = defaultRenderLink }: HomeScreenProps) => (
+export const HomeScreen = ({ generate, scan, renderLink = defaultRenderLink }: HomeScreenProps) => (
   <>
-    <h1>QR コードとバーコードを、作って読んで管理する</h1>
+    <h1>QR コードとバーコードを、作って読む</h1>
     <p>
-      生成と読み取りはお使いの端末の中で動きます。ログインしなくても使えて、
-      読み取った画像がサーバに送られることもありません。
+      <strong>サインインしなくても使えます。</strong>
+      生成も読み取りもお使いの端末の中で動くので、入力した内容や読み取った画像が
+      サーバに送られることはありません。
+    </p>
+    <p>
+      作ったコードを保存・整理・共有したいときだけ、
+      {renderLink({ to: '/sign-in', label: 'サインインの方法を見る' })}。
+      {renderLink({ to: '/print', label: 'ラベル台紙への印刷' })}も用意しています。
     </p>
 
-    <h2>できること</h2>
-    <ul>
-      <li>
-        <strong>作る</strong> — QR
-        コードやバーコードを、誤り訂正レベルや配色まで細かく設定して生成します。
-      </li>
-      <li>
-        <strong>読み取る</strong> — カメラでも、保存済みの画像ファイルからでも読み取れます。
-      </li>
-      <li>
-        <strong>管理する</strong> — ログインすると、作ったコードを保存・編集・共有できます。
-      </li>
-      <li>
-        <strong>印刷する</strong> — 市販のラベル台紙に合わせて面付けし、PDF でも出力できます。
-      </li>
-    </ul>
-
-    <h2>はじめる</h2>
-    <p>{renderLink({ to: '/generate', label: 'コードを作る画面へ進む' })}</p>
+    {/*
+     * それぞれをランドマークにして、支援技術が「作る」「読み取る」を
+     * 行き来できるようにする。名前は中の見出しと同じ文言にする。
+     */}
+    <section aria-label="コードを作る">{generate}</section>
+    <section aria-label="コードを読み取る">{scan}</section>
   </>
 )

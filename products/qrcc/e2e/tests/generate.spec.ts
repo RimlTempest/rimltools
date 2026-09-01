@@ -4,11 +4,17 @@ import { expect, test } from '@playwright/test'
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag2aaa', 'wcag21a', 'wcag21aa', 'wcag22aa'] as const
 
-const preview = (page: Page) => page.locator('.qrcc-code-preview')
+/**
+ * トップページは生成と読み取りを並べて置く。同じ役割の要素が
+ * 両方にあるので、この spec は**生成側のランドマークに限定**して見る。
+ */
+const generate = (page: Page) => page.getByRole('region', { name: 'コードを作る' })
+
+const preview = (page: Page) => generate(page).locator('.qrcc-code-preview')
 
 test('設定を入れるとその場で QR コードが出る', async ({ page }) => {
-  await page.goto('/generate')
-  await page.getByLabel('リンク先の URL').fill('https://qrcc.riml4i.com')
+  await page.goto('/')
+  await generate(page).getByLabel('リンク先の URL').fill('https://qrcc.riml4i.com')
 
   await expect(preview(page)).toBeVisible({ timeout: 15_000 })
   await expect(preview(page).locator('svg')).toBeVisible()
@@ -26,19 +32,21 @@ test('生成でサーバに問い合わせない', async ({ page }) => {
     if (request.url().includes('/_serverFn/')) serverCalls.push(request.url())
   })
 
-  await page.goto('/generate')
+  await page.goto('/')
   await expect(preview(page)).toBeVisible({ timeout: 15_000 })
 
-  await page.getByLabel('リンク先の URL').fill('https://example.com/1')
+  await generate(page).getByLabel('リンク先の URL').fill('https://example.com/1')
   await expect(preview(page)).toContainText('https://example.com/1')
-  await page.getByRole('radio', { name: /H（最高）/ }).click()
+  await generate(page)
+    .getByRole('radio', { name: /H（最高）/ })
+    .click()
   await expect(preview(page)).toBeVisible()
 
   expect(serverCalls).toEqual([])
 })
 
 test('生成結果が支援技術に伝わる @a11y', async ({ page }) => {
-  await page.goto('/generate')
+  await page.goto('/')
   await expect(preview(page)).toBeVisible({ timeout: 15_000 })
   await expect(preview(page).locator('svg')).toHaveAttribute('role', 'img')
 
@@ -47,48 +55,50 @@ test('生成結果が支援技術に伝わる @a11y', async ({ page }) => {
 })
 
 test('誤り訂正レベルを上げるとコードが大きくなる', async ({ page }) => {
-  await page.goto('/generate')
+  await page.goto('/')
   const caption = preview(page).locator('figcaption')
   await expect(caption).toContainText('ピクセル', { timeout: 15_000 })
   const low = await caption.textContent()
 
-  await page.getByRole('radio', { name: /H（最高）/ }).click()
+  await generate(page)
+    .getByRole('radio', { name: /H（最高）/ })
+    .click()
   await expect(caption).not.toHaveText(low ?? '', { timeout: 15_000 })
 })
 
 test('低コントラストでも生成し、警告を読み上げる', async ({ page }) => {
-  await page.goto('/generate')
+  await page.goto('/')
   await expect(preview(page)).toBeVisible({ timeout: 15_000 })
 
-  await page.getByLabel('前景色').fill('#777777')
-  await page.getByLabel('背景色').fill('#888888')
+  await generate(page).getByLabel('前景色').fill('#777777')
+  await generate(page).getByLabel('背景色').fill('#888888')
 
   await expect(preview(page)).toContainText('コントラスト', { timeout: 15_000 })
   await expect(preview(page).locator('svg')).toBeVisible()
 })
 
 test('SVG と PNG で保存できる', async ({ page }) => {
-  await page.goto('/generate')
+  await page.goto('/')
   await expect(preview(page)).toBeVisible({ timeout: 15_000 })
 
   const svg = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'SVG で保存' }).click()
+  await generate(page).getByRole('button', { name: 'SVG で保存' }).click()
   expect((await svg).suggestedFilename()).toMatch(/\.svg$/)
 
   const png = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'PNG で保存' }).click()
+  await generate(page).getByRole('button', { name: 'PNG で保存' }).click()
   expect((await png).suggestedFilename()).toMatch(/\.png$/)
 })
 
 test('内容とコードの種類が合わないと、その場で理由が出る', async ({ page }) => {
-  await page.goto('/generate')
-  await page.getByRole('radio', { name: 'EAN-13 / JAN' }).click()
-  await expect(page.getByRole('alert')).toContainText('表せません')
+  await page.goto('/')
+  await generate(page).getByRole('radio', { name: 'EAN-13 / JAN' }).click()
+  await expect(generate(page).getByRole('alert')).toContainText('表せません')
 })
 
 test('1D バーコードでは 2D 専用の設定が消える', async ({ page }) => {
-  await page.goto('/generate')
-  await expect(page.getByRole('group', { name: 'モジュールの形' })).toBeVisible()
-  await page.getByRole('radio', { name: 'Code 128' }).click()
-  await expect(page.getByRole('group', { name: 'モジュールの形' })).toBeHidden()
+  await page.goto('/')
+  await expect(generate(page).getByRole('group', { name: 'モジュールの形' })).toBeVisible()
+  await generate(page).getByRole('radio', { name: 'Code 128' }).click()
+  await expect(generate(page).getByRole('group', { name: 'モジュールの形' })).toBeHidden()
 })

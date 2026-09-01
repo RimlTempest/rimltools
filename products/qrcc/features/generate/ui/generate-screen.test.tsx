@@ -28,6 +28,24 @@ const recording = (result: Awaited<ReturnType<RenderFn>>) => {
 }
 
 describe('GenerateScreen', () => {
+  test('既定では h1 で始まる', () => {
+    const { fn } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    expect(screen.getByRole('heading', { level: 1, name: 'コードを作る' })).toBeDefined()
+  })
+
+  /**
+   * トップページは生成と読み取りを 1 ページに並べる。h1 はページの主題に
+   * 使うので、埋め込まれた側は 1 段下げる（AAA 2.4.10）。
+   */
+  test('埋め込むと h2 で始まり、下位の見出しも 1 段下がる', () => {
+    const { fn } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} headingLevel={2} />)
+    expect(screen.getByRole('heading', { level: 2, name: 'コードを作る' })).toBeDefined()
+    expect(screen.getByRole('heading', { level: 3, name: '生成したコード' })).toBeDefined()
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
+  })
+
   test('主要な設定がラベルで取得できる', () => {
     const { fn } = recording({ ok: true, value: response() })
     render(<GenerateScreen render={fn} />)

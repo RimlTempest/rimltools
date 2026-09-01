@@ -59,6 +59,27 @@ const pngFile = () =>
   new File([new Uint8Array([137, 80, 78, 71])], 'code.png', { type: 'image/png' })
 
 describe('ScanScreen', () => {
+  /**
+   * トップページは生成と読み取りを 1 ページに並べる。h1 はページの主題に
+   * 使うので、埋め込まれた側は 1 段下げる（AAA 2.4.10）。
+   */
+  test('埋め込むと h2 で始まり、下位の見出しも 1 段下がる', () => {
+    const camera = fakeCamera()
+    render(
+      <ScanScreen
+        startCamera={camera.startCamera}
+        decodeImageFile={neverDecodes}
+        copyText={undefined}
+        headingLevel={2}
+      />,
+    )
+    expect(screen.getByRole('heading', { level: 2, name: 'コードを読み取る' })).toBeDefined()
+    expect(screen.getByRole('heading', { level: 3, name: 'カメラで読み取る' })).toBeDefined()
+    expect(screen.getByRole('heading', { level: 3, name: '画像から読み取る' })).toBeDefined()
+    expect(screen.getByRole('heading', { level: 3, name: '読み取った内容' })).toBeDefined()
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
+  })
+
   test('2 つの読み取り手段が見出しで取れる', () => {
     const camera = fakeCamera()
     render(

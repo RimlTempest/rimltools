@@ -12,9 +12,7 @@ export type NavItem = {
 }
 
 export const NAV_ITEMS: readonly NavItem[] = [
-  { to: '/', label: 'ホーム' },
-  { to: '/generate', label: 'コードを作る' },
-  { to: '/scan', label: 'コードを読み取る' },
+  { to: '/', label: 'コードを作る・読み取る' },
   { to: '/print', label: '印刷とラベル' },
   { to: '/codes', label: '保存したコード' },
   { to: '/sign-in', label: 'サインイン' },

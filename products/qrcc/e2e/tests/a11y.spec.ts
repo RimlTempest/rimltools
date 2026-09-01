@@ -8,8 +8,8 @@ import { expect, test } from '@playwright/test'
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag2aaa', 'wcag21a', 'wcag21aa', 'wcag22aa'] as const
 
 const PAGES = [
+  // トップが生成と読み取りを兼ねる
   { path: '/', name: 'トップ' },
-  { path: '/generate', name: '生成' },
   { path: '/settings', name: '設定' },
 ] as const
 
@@ -54,7 +54,7 @@ test('グローバルナビが現在地を示す @a11y', async ({ page }) => {
   await page.goto('/settings')
   const nav = page.getByRole('navigation', { name: 'グローバル' })
   await expect(nav.getByRole('link', { name: '設定' })).toHaveAttribute('aria-current', 'page')
-  await expect(nav.getByRole('link', { name: 'ホーム' })).not.toHaveAttribute(
+  await expect(nav.getByRole('link', { name: 'コードを作る・読み取る' })).not.toHaveAttribute(
     'aria-current',
     'page',
   )

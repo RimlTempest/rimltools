@@ -17,14 +17,15 @@ describe('GlobalNav', () => {
   })
 
   test('現在地に aria-current="page" が付く（AAA 2.4.8）', () => {
-    render(<GlobalNav currentPath="/generate" />)
-    const current = screen.getByRole('link', { name: 'コードを作る' })
+    render(<GlobalNav currentPath="/print" />)
+    const current = screen.getByRole('link', { name: '印刷とラベル' })
     expect(current.getAttribute('aria-current')).toBe('page')
   })
 
   test('現在地以外には aria-current を付けない', () => {
-    render(<GlobalNav currentPath="/generate" />)
-    expect(screen.getByRole('link', { name: 'ホーム' }).getAttribute('aria-current')).toBeNull()
+    render(<GlobalNav currentPath="/print" />)
+    const other = screen.getByRole('link', { name: 'コードを作る・読み取る' })
+    expect(other.getAttribute('aria-current')).toBeNull()
   })
 
   test('リンク文言は単体で行き先が分かる（AAA 2.4.9）', () => {

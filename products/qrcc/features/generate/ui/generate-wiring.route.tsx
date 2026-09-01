@@ -1,4 +1,3 @@
-import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 // `cloudflare:workers` は Workers ランタイムの組み込みモジュール。
 // 動的 import では workerd が解決できないので静的に読む
@@ -67,7 +66,13 @@ const renderInBrowser = async (
 
 const neverChanges = () => () => {}
 
-const Generate = () => {
+/**
+ * 配線済みの生成画面。
+ *
+ * 単独のルートは持たない。トップページが読み取りと並べて置く
+ * （`features/shell/ui/home.route.tsx`）。
+ */
+export const GenerateSection = ({ headingLevel = 1 }: { readonly headingLevel?: 1 | 2 }) => {
   // wasm が使えるのはハイドレーション後だけ。SSR の出力と食い違わせない
   const isHydrated = useSyncExternalStore(
     neverChanges,
@@ -80,8 +85,7 @@ const Generate = () => {
     <GenerateScreen
       render={inBrowser ? renderInBrowser : (request) => renderOnServer({ data: request })}
       mode={inBrowser ? 'live' : 'manual'}
+      headingLevel={headingLevel}
     />
   )
 }
-
-export const Route = createFileRoute('/generate')({ component: Generate })

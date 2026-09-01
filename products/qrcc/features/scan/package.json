@@ -6,7 +6,8 @@
   "exports": {
     "./contract": "./contract/index.ts",
     "./ui": "./ui/index.ts",
-    "./ui/scan.css": "./ui/scan.css"
+    "./ui/scan.css": "./ui/scan.css",
+    "./ui/wiring": "./ui/scan-wiring.route.tsx"
   },
   "scripts": {
     "build": "tsc --build",

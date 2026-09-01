@@ -341,7 +341,7 @@ export const CodeEditorScreen = ({
             {preview === undefined ? (
               <p>設定を読み込むと、ここにコードのプレビューが出ます。</p>
             ) : (
-              /* 保存はこの画面の仕事。書き出しは生成画面（/generate）に任せる */
+              /* 保存はこの画面の仕事。書き出しはトップの生成画面に任せる */
               <CodePreview response={preview} showDownloads={false} />
             )}
           </section>

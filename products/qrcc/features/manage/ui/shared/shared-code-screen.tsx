@@ -109,7 +109,7 @@ export const SharedCodeScreen = ({
     }
   }, [token, deps])
 
-  const makeYourOwn = <p>{renderLink({ to: '/generate', label: '自分でコードを作る' })}</p>
+  const makeYourOwn = <p>{renderLink({ to: '/', label: '自分でコードを作る' })}</p>
 
   if (state.kind === 'loading') {
     return (

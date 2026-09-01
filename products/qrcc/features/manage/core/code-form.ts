@@ -21,7 +21,7 @@ import type { CodeDraft, SavedCode } from '@qrcc/manage/contract'
  * 画面で扱う「内容」。
  *
  * テキストと URL は編集できる。それ以外は**そのまま保つ**だけで、
- * 中身は生成画面（/generate）で作り直してもらう。
+ * 中身はトップの生成画面で作り直してもらう。
  * optional の寄せ集めにせず union にすることで、
  * 「編集できない内容を編集しようとする」経路が型で消える。
  */
