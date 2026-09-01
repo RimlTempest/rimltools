@@ -10,4 +10,5 @@ import { index, rootRoute, route } from '@tanstack/virtual-file-routes'
 export const routes = rootRoute('shell/ui/root.route.tsx', [
   index('shell/ui/home.route.tsx'),
   route('/generate', 'generate/ui/generate.route.tsx'),
+  route('/settings', 'shell/ui/settings.route.tsx'),
 ])

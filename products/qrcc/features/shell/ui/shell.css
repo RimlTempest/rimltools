@@ -1,0 +1,108 @@
+.qrcc-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--qrcc-space-4);
+  padding-block-end: var(--qrcc-space-4);
+  border-block-end: 1px solid var(--qrcc-border);
+  margin-block-end: var(--qrcc-space-6);
+}
+
+.qrcc-header__brand {
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.qrcc-global-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qrcc-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qrcc-global-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* AAA 2.5.5 */
+  min-block-size: var(--qrcc-target-min);
+  min-inline-size: var(--qrcc-target-min);
+  padding-inline: var(--qrcc-space-3);
+  border-radius: var(--qrcc-radius);
+  text-decoration: none;
+}
+
+.qrcc-global-nav a:hover {
+  background: var(--qrcc-surface-raised);
+  text-decoration: underline;
+}
+
+/* 現在地は色だけで示さない。下線と背景でも区別できるようにする（1.4.1） */
+.qrcc-global-nav a[aria-current='page'] {
+  background: var(--qrcc-surface-raised);
+  color: var(--qrcc-text);
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 var(--qrcc-accent);
+}
+
+@media (forced-colors: active) {
+  .qrcc-global-nav a[aria-current='page'] {
+    box-shadow: inset 0 -3px 0 Highlight;
+  }
+}
+
+.qrcc-breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--qrcc-space-2);
+  margin: 0 0 var(--qrcc-space-4);
+  padding: 0;
+  list-style: none;
+  font-size: 0.925rem;
+}
+
+.qrcc-breadcrumbs li {
+  display: flex;
+  align-items: center;
+  gap: var(--qrcc-space-2);
+}
+
+.qrcc-breadcrumbs a {
+  display: inline-flex;
+  align-items: center;
+  /* AAA 2.5.5。ナビゲーション内の対象は本文中のリンクと違い例外にならない。
+     短い文言でも 44x44 を満たすよう、幅にも下限を置く */
+  min-block-size: var(--qrcc-target-min);
+  min-inline-size: var(--qrcc-target-min);
+  justify-content: center;
+  padding-inline: var(--qrcc-space-2);
+  border-radius: var(--qrcc-radius-sm);
+}
+
+.qrcc-breadcrumbs [aria-current='page'] {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--qrcc-target-min);
+  font-weight: 700;
+}
+
+.qrcc-breadcrumbs [data-separator] {
+  color: var(--qrcc-text-muted);
+}
+
+.qrcc-footer {
+  margin-block-start: var(--qrcc-space-8);
+  padding-block-start: var(--qrcc-space-4);
+  border-block-start: 1px solid var(--qrcc-border);
+  color: var(--qrcc-text-muted);
+}
+
+/* 画面が広いときは本文を中央に寄せる。読み幅は base.css が担保する */
+body > :is(header, main, footer) {
+  max-inline-size: 60rem;
+  margin-inline: auto;
+}
