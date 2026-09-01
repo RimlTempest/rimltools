@@ -60,6 +60,14 @@ bun run build         # 本番ビルド
 bun run wt list       # 並行作業レーン一覧
 ```
 
+## 困ったとき
+
+| 症状                                                     | 対処                                                                                                      |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `ENOENT reading ".../node_modules/react"` などリンク切れ | `bun run clean`（node_modules を消して入れ直す）。ブランチ間の移動で入れ子の symlink が古くなることがある |
+| `routeTree.gen.ts` が無いと言われる                      | `bun run --filter '@qrcc/web' gen`（git 管理外の生成物）                                                  |
+| `worker-build` が見つからない                            | `cargo install worker-build --locked`                                                                     |
+
 ## 並行開発
 
 機能は 12 のレーンに分かれ、**1 レーン = 1 トップレベルディレクトリ**。
