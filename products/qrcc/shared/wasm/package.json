@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "wasm-pack build engine --target web --out-dir ../pkg --out-name qrcc_wasm --release",
-    "test": "bun test"
+    "test": "bun test",
+    "build:types": "test -f pkg/qrcc_wasm.d.ts || wasm-pack build engine --target web --out-dir ../pkg --out-name qrcc_wasm --dev"
   },
   "dependencies": {
     "@qrcc/contract": "workspace:*"
