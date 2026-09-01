@@ -12,6 +12,8 @@ export const routes = rootRoute('shell/ui/root.route.tsx', [
   route('/generate', 'generate/ui/generate.route.tsx'),
   route('/print', 'print/ui/print.route.tsx'),
   route('/scan', 'scan/ui/scan.route.tsx'),
+  route('/codes', 'manage/ui/codes.route.tsx'),
+  route('/codes/$codeId', 'manage/ui/code-detail.route.tsx'),
   route('/settings', 'shell/ui/settings.route.tsx'),
   route('/sign-in', 'auth/ui/sign-in.route.tsx'),
   // Better Auth の HTTP 入口（Google のコールバックを含む）

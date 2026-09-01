@@ -1,0 +1,155 @@
+/*
+ * 一覧・編集・共有の見た目。
+ *
+ * レイアウトは Grid と Container Queries で組み、JS で寸法を計算しない。
+ * 色はセマンティックトークンだけを参照するので、ダークモードは自動で付いてくる。
+ */
+
+.qrcc-manage-filters {
+  display: grid;
+  gap: var(--qrcc-space-4);
+  align-items: end;
+  margin-block-end: var(--qrcc-space-6);
+  container-type: inline-size;
+}
+
+@container (inline-size >= 40rem) {
+  .qrcc-manage-filters {
+    grid-template-columns: 2fr 1fr auto;
+  }
+}
+
+/* 広い表は画面ごとではなく、表だけを横スクロールさせる（1.4.10） */
+.qrcc-code-table__scroll {
+  overflow-x: auto;
+}
+
+.qrcc-code-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  /* 日本語の見出しが折り返して読みにくくならない程度に確保する */
+  min-inline-size: 40rem;
+}
+
+.qrcc-code-table caption {
+  text-align: start;
+  padding-block-end: var(--qrcc-space-2);
+  color: var(--qrcc-text-muted);
+}
+
+.qrcc-code-table :where(th, td) {
+  text-align: start;
+  padding: var(--qrcc-space-3);
+  border-block-end: 1px solid var(--qrcc-border);
+  vertical-align: top;
+}
+
+.qrcc-code-table thead th {
+  border-block-end: 2px solid var(--qrcc-border-strong);
+  white-space: nowrap;
+}
+
+.qrcc-code-table__sort,
+.qrcc-code-table__delete {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--qrcc-space-2);
+  /* AAA 2.5.5: クリック対象は 44x44 以上 */
+  min-block-size: var(--qrcc-target-min);
+  min-inline-size: var(--qrcc-target-min);
+  padding-inline: var(--qrcc-space-2);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--qrcc-radius-sm);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.qrcc-code-table__sort:hover,
+.qrcc-code-table__delete:hover {
+  background: var(--qrcc-surface-raised);
+  border-color: var(--qrcc-border);
+  text-decoration: underline;
+}
+
+.qrcc-code-table__delete {
+  color: var(--qrcc-danger);
+}
+
+/* 並べ替えの向きは記号でも示す（色だけに頼らない / 1.4.1） */
+.qrcc-code-table__mark {
+  font-size: 0.8em;
+}
+
+.qrcc-manage-undo {
+  display: flex;
+  gap: var(--qrcc-space-4);
+  align-items: center;
+  /* 取り消しは時間で消さない（AAA 2.2.6）。次の操作まで置いておく */
+  padding: var(--qrcc-space-3);
+  border: 1px solid var(--qrcc-border);
+  border-radius: var(--qrcc-radius);
+  background: var(--qrcc-surface-raised);
+  max-inline-size: var(--qrcc-measure);
+}
+
+.qrcc-share-list {
+  display: grid;
+  gap: var(--qrcc-space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.qrcc-share-list > li {
+  display: grid;
+  gap: var(--qrcc-space-2);
+  padding: var(--qrcc-space-4);
+  border: 1px solid var(--qrcc-border);
+  border-radius: var(--qrcc-radius);
+  background: var(--qrcc-surface-raised);
+}
+
+.qrcc-share-list__url {
+  font-family: var(--qrcc-font-mono);
+  /* URL は途中で折り返してよい。横スクロールを出さない */
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.qrcc-share-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qrcc-space-2);
+}
+
+.qrcc-confirm-dialog {
+  max-inline-size: min(32rem, 90vi);
+  padding: var(--qrcc-space-6);
+  border: 1px solid var(--qrcc-border-strong);
+  border-radius: var(--qrcc-radius);
+  background: var(--qrcc-surface);
+  color: var(--qrcc-text);
+}
+
+.qrcc-confirm-dialog::backdrop {
+  background: rgb(0 0 0 / 50%);
+}
+
+.qrcc-confirm-dialog h2 {
+  margin-block-start: 0;
+}
+
+.qrcc-confirm-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qrcc-space-4);
+}
+
+/* Windows ハイコントラストでも境界が消えないようにする */
+@media (forced-colors: active) {
+  .qrcc-code-table :where(th, td),
+  .qrcc-confirm-dialog {
+    border-color: CanvasText;
+  }
+}

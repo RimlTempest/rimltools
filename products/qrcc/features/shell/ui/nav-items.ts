@@ -16,7 +16,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { to: '/generate', label: 'コードを作る' },
   { to: '/scan', label: 'コードを読み取る' },
   { to: '/print', label: '印刷とラベル' },
+  { to: '/codes', label: '保存したコード' },
   { to: '/sign-in', label: 'サインイン' },
   { to: '/settings', label: '設定' },
-  // TODO(feat/manage): { to: '/codes', label: '保存したコード' }
 ]

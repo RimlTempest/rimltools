@@ -20,6 +20,7 @@
     "@qrcc/auth": "workspace:*",
     "@qrcc/contract": "workspace:*",
     "@qrcc/generate": "workspace:*",
+    "@qrcc/manage": "workspace:*",
     "@qrcc/print": "workspace:*",
     "@qrcc/scan": "workspace:*",
     "@qrcc/shell": "workspace:*",

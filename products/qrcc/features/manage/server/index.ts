@@ -13,10 +13,11 @@ export type {
   ManageTransportError,
 } from './manage-api.ts'
 export { describeManageFailure, makeManageApi } from './manage-api.ts'
-export type { ManageMethod } from './manage-rpc.ts'
+export type { JsonValue, ManageContext, ManageMethod } from './manage-rpc.ts'
 export {
   MANAGE_METHODS,
   PUBLIC_MANAGE_METHODS,
   decodeManageEnvelope,
   isManageMethod,
+  toJsonValue,
 } from './manage-rpc.ts'

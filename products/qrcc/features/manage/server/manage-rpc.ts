@@ -9,7 +9,20 @@
  */
 import type { CommonRpcError, Result } from '@qrcc/contract'
 import { decodeCommonRpcError, err, ok } from '@qrcc/contract'
+import type { ActorWire } from '@qrcc/auth/contract'
 import type { ManageTransportError } from './manage-api.ts'
+
+/**
+ * 画面を組み立てるのに要る、サーバでしか分からないこと。
+ *
+ * ルートの loader の戻り値になるので、**公開サブパスから import できる場所**に
+ * 置く必要がある（`routeTree.gen.ts` が型に名前を付けられなくなるため）。
+ */
+export type ManageContext = {
+  readonly actor: ActorWire
+  /** 共有リンクの URL を組み立てるためのオリジン。 */
+  readonly origin: string
+}
 
 /** 転送してよい RPC メソッド（docs/api-contract.md 2 節）。 */
 export const MANAGE_METHODS = [
@@ -37,6 +50,35 @@ export const isManageMethod = (value: string): value is ManageMethod =>
  * 共有リンクの解決は「リンクを知っていること」が鍵なので、所有者を要求しない。
  */
 export const PUBLIC_MANAGE_METHODS: readonly ManageMethod[] = ['shares.resolve']
+
+/**
+ * server function の戻り値に載せられる形。
+ *
+ * `unknown` のままだと TanStack Start の直列化検査が通らない
+ * （「送れない値かもしれない」と正しく指摘してくる）。JSON に載る形だと
+ * 型で言い切るために、境界で 1 度だけ写し取る。
+ */
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly JsonValue[]
+  | { readonly [key: string]: JsonValue }
+
+/** JSON に載らないもの（関数・undefined・symbol）は null に畳む。 */
+export const toJsonValue = (value: unknown): JsonValue => {
+  if (value === null) return null
+  if (typeof value === 'string' || typeof value === 'boolean') return value
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (Array.isArray(value)) return value.map(toJsonValue)
+  if (typeof value === 'object') {
+    const copied: Record<string, JsonValue> = {}
+    for (const [key, item] of Object.entries(value)) copied[key] = toJsonValue(item)
+    return copied
+  }
+  return null
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
