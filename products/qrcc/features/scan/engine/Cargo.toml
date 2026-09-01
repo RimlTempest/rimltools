@@ -10,9 +10,12 @@ publish.workspace = true
 qrcc-kernel.workspace = true
 serde.workspace = true
 thiserror.workspace = true
-# 1 枚の画像から複数のコードを読むために multi_barcode_readers を足す。
 # ルートの [workspace.dependencies] は他レーンの所有なので、features はここで積む。
-rxing = { workspace = true, features = ["multi_barcode_readers"] }
+#   multi_barcode_readers … 1 枚の画像から複数のコードを読む
+#   wasm_support          … rxing は結果に現在時刻を入れる。wasm32 では
+#                           chrono がプラットフォーム時計を持たず panic するので、
+#                           js-sys の Date を使わせる（ブラウザと Worker の両方で必要）
+rxing = { workspace = true, features = ["multi_barcode_readers", "wasm_support"] }
 image.workspace = true
 
 [dev-dependencies]

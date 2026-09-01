@@ -6,6 +6,9 @@
  */
 .qrcc-scan__panel {
   display: grid;
+  /* minmax(0, 1fr) が無いと、ファイル選択欄の max-content 幅で列が広がり、
+     320px 幅で横スクロールが出る（AAA 1.4.10） */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--qrcc-space-3);
   justify-items: start;
   margin-block-end: var(--qrcc-space-6);
@@ -20,6 +23,18 @@
 .qrcc-scan__panel > p {
   max-inline-size: var(--qrcc-measure);
   margin: 0;
+}
+
+.qrcc-scan__panel .qrcc-field {
+  inline-size: 100%;
+  /* 暗黙の列は max-content。ファイル選択欄の内在幅（ボタン + ファイル名）が
+     そのまま列幅になり、320px の画面で横スクロールが出る（AAA 1.4.10） */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ファイル選択欄はボタンとファイル名の分だけ内在幅を持つ。狭い画面では縮める */
+.qrcc-scan__panel input[type='file'] {
+  max-inline-size: 100%;
 }
 
 /*
