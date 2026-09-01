@@ -1372,8 +1372,11 @@ name = "qrcc-scan"
 version = "0.1.0"
 dependencies = [
  "image",
+ "qrcc-generate",
  "qrcc-kernel",
  "rxing",
+ "serde",
+ "serde_json",
  "thiserror 2.0.20",
 ]
 
