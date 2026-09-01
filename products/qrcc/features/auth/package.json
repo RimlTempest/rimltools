@@ -7,7 +7,8 @@
     "./contract": "./contract/index.ts",
     "./server": "./server/index.ts",
     "./ui": "./ui/index.ts",
-    "./ui/auth.css": "./ui/auth.css"
+    "./ui/auth.css": "./ui/auth.css",
+    "./ui/auth-env": "./ui/auth-env.route.ts"
   },
   "scripts": {
     "build": "tsc --build",
