@@ -11,5 +11,6 @@ export const routes = rootRoute('shell/ui/root.route.tsx', [
   index('shell/ui/home.route.tsx'),
   route('/generate', 'generate/ui/generate.route.tsx'),
   route('/print', 'print/ui/print.route.tsx'),
+  route('/scan', 'scan/ui/scan.route.tsx'),
   route('/settings', 'shell/ui/settings.route.tsx'),
 ])

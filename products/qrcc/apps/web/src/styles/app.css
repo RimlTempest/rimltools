@@ -10,3 +10,4 @@
 @import '@qrcc/shell/ui/shell.css' layer(components);
 @import '@qrcc/generate/ui/generate.css' layer(components);
 @import '@qrcc/print/ui/print.css';
+@import '@qrcc/scan/ui/scan.css' layer(components);

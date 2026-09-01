@@ -13,6 +13,9 @@
     },
     {
       "path": "../../shared/ui"
+    },
+    {
+      "path": "../../shared/wasm"
     }
   ],
   "exclude": ["**/*.route.tsx", "dist"]

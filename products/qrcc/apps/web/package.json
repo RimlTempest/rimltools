@@ -19,6 +19,7 @@
     "@qrcc/contract": "workspace:*",
     "@qrcc/generate": "workspace:*",
     "@qrcc/print": "workspace:*",
+    "@qrcc/scan": "workspace:*",
     "@qrcc/shell": "workspace:*",
     "@qrcc/ui": "workspace:*",
     "@qrcc/wasm": "workspace:*",
