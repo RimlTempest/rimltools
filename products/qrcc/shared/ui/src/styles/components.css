@@ -1,6 +1,11 @@
 /* --- スキップリンク ---------------------------------------------------- */
 .qrcc-skip-link {
   position: absolute;
+  display: inline-flex;
+  align-items: center;
+  /* AAA 2.5.5。padding だけだと行高次第で 44px をわずかに割る */
+  min-block-size: var(--qrcc-target-min);
+  min-inline-size: var(--qrcc-target-min);
   inset-block-start: var(--qrcc-space-2);
   inset-inline-start: var(--qrcc-space-2);
   z-index: 100;
