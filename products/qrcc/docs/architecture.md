@@ -23,15 +23,15 @@ Cloudflare の無料枠内で運用しきることを絶対条件とする。
                       │  shared/kernel/engine     共有プリミティブ  │
                       │  features/generate/engine 生成 (SVG/PNG)    │
                       │  features/scan/engine     デコード (rxing)  │
-                      │  features/print/engine    PDF / ラベル面付け│
+                      │  features/print/engine    ラベル面付け     │
                       │  codes / folders / shares の CRUD        │
-                      └────┬──────────────┬──────────────┬───────┘
-                           │              │              │
-                        ┌──▼──┐        ┌──▼──┐       ┌───▼───┐
-                        │ D1  │        │ KV  │       │  R2   │
-                        │メタ  │        │短命 │       │生成物 │
-                        │データ│        │キャッシュ│    │/一時画像│
-                        └─────┘        └─────┘       └───────┘
+                      └────────────────┬─────────────────────────┘
+                                       │
+                                    ┌──▼──┐
+                                    │ D1  │   ※KV / R2 は使わない
+                                    │メタ  │     （ADR-0009）
+                                    │データ│
+                                    └─────┘
 ```
 
 `qrcc-api` は **ルートを持たない**（インターネットから直接叩けない）。
@@ -115,9 +115,9 @@ shared/contract ◀── shared/ui ◀──┐
 
 1. ブラウザが `@qrcc/wasm` で即時プレビュー（Worker を呼ばない）
 2. 保存を押したときだけ `qrcc-web` の server function → `qrcc-api` へ
-3. `qrcc-api` が D1 に保存、R2 に成果物をキャッシュ（キーは仕様のハッシュ）
+3. `qrcc-api` が D1 に保存する（成果物そのものは保存しない）
 
-同じ仕様の再生成は R2 のキャッシュヒットで D1 も CPU も使わない。
+同じ仕様の再描画はブラウザ内の wasm で済むので、Worker も D1 も消費しない。
 
 ### 読み取り
 
@@ -129,17 +129,18 @@ shared/contract ◀── shared/ui ◀──┐
 ### 印刷
 
 1. ラベル印刷は `@media print` + `@page` によるブラウザ印刷が主経路（フォント問題なし）
-2. PDF ダウンロードは `qrcc-api` の `qrcc-print` で生成（[ADR-0005](adr/0005-pdf-and-label-printing.md)）
+2. PDF はスコープ外。ブラウザの「PDF として保存」に任せる（[ADR-0005](adr/0005-pdf-and-label-printing.md)）
 
 ## 5. Cloudflare リソース
 
-| バインディング          | 用途                                                    | 無料枠                                 | 想定使用量               |
-| ----------------------- | ------------------------------------------------------- | -------------------------------------- | ------------------------ |
-| `DB` (D1)               | codes / folders / shares / users / sessions             | 5GB, 5M rows read/day, 100k writes/day | 1 コード ≒ 1KB           |
-| `KV`                    | 共有リンク解決キャッシュ、レート制限カウンタ            | 1GB, 100k reads/day, 1k writes/day     | 書き込みが少ない用途のみ |
-| `R2`                    | 生成物 (PNG/PDF) キャッシュ、アップロード画像の一時保管 | 10GB, Class A 1M/月                    | ハッシュキーで重複排除   |
-| `ASSETS`                | 静的アセット                                            | 無制限                                 | wasm もここから配信      |
-| `API` (service binding) | qrcc-web → qrcc-api                                     | 追加課金なし                           | —                        |
+| バインディング          | 用途                                        | 無料枠                                 | 想定使用量          |
+| ----------------------- | ------------------------------------------- | -------------------------------------- | ------------------- |
+| `DB` (D1)               | codes / folders / shares / users / sessions | 5GB, 5M rows read/day, 100k writes/day | 1 コード ≒ 1KB      |
+| `ASSETS`                | 静的アセット                                | 無制限                                 | wasm もここから配信 |
+| `API` (service binding) | qrcc-web → qrcc-api                         | 追加課金なし                           | —                   |
+
+**KV と R2 は使わない**（[ADR-0009](adr/0009-stay-on-workers-free.md)）。
+R2 だけは利用上限を設定できず従量課金が止められないため、有効化もしない。
 
 予算設計と超過時の縮退は [free-tier-budget.md](free-tier-budget.md)。
 

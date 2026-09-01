@@ -24,7 +24,7 @@ Bun workspaces の monorepo。
   `qrcc/*` ルールが落とす。回避せず設計を直す。
 - **ドメイン層（`shared/contract` / `features/*/contract` / `features/*/core` /
   `*/engine`）で `throw` しない。** 失敗は `Result<T, E>` で返す。
-- **依存（時計・乱数・fetch・D1・R2・KV）は関数引数で受け取る。**
+- **依存（時計・乱数・fetch・D1）は関数引数で受け取る。**
   配線は composition root だけ。
 - **`apps/api` の `wrangler.jsonc` に `routes` を足さない。**
   公開すると認可が二重化して権限昇格の穴になる（ADR-0002）。
@@ -37,11 +37,13 @@ Bun workspaces の monorepo。
 
 ## 無料枠の制約（機能を足すたびに確認する）
 
-先に枯れるのは **Workers 100k req/日** と **KV 書き込み 1,000/日**。
+**Workers Free プランに留まる。R2 も KV も使わない**（ADR-0009）。
+Workers Free は上限に達しても課金されず、エラーになって止まるだけ。
+先に枯れるのは **Workers 100k req/日**、次が **D1 行書き込み 100k/日**。
 
 - 生成・読み取りは既定でブラウザの wasm で実行する（Worker を消費しない）
-- KV に書き込む設計にしない。D1 か Cache API を先に検討する
-- 生成物は `SpecHash` をキーに R2 でキャッシュする
+- **R2 を使う設計にしない。** R2 は利用上限を設定できず、従量課金が止められない
+- キャッシュが要るなら Cache API か D1。KV は使わない
 
 詳細と縮退動作は `docs/free-tier-budget.md`。
 

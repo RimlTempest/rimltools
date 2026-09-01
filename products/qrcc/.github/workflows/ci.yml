@@ -72,6 +72,17 @@ jobs:
             echo "::error file=apps/api/wrangler.jsonc::qrcc-api must not be reachable from the internet. Remove 'routes' (ADR-0002)."
             exit 1
           fi
+      - name: 従量課金されるバインディングを足していないこと (ADR-0009)
+        run: |
+          # R2 は Cloudflare 側で利用上限を設定できず、超過分が従量課金される。
+          # 「無料で運用する」を構造的に守るため、宣言そのものを禁じる。
+          # KV は課金されないが、用途が無いので併せて弾く（ADR-0009）。
+          for f in apps/web/wrangler.jsonc apps/api/wrangler.jsonc; do
+            if grep -qE '^\s*"(r2_buckets|kv_namespaces)"\s*:' "$f"; then
+              echo "::error file=$f::R2/KV bindings are forbidden. R2 has no spending cap and would break free-tier operation (ADR-0009)."
+              exit 1
+            fi
+          done
       - name: engine crate は worker crate に依存しないこと (ADR-0003)
         run: |
           for f in features/*/engine/Cargo.toml shared/*/engine/Cargo.toml; do

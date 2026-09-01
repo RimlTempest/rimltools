@@ -17,14 +17,13 @@ bunx wrangler r2 bucket create qrcc-artifacts
 
 **D1 の `database_id` は両方で同じもの**を指す（同一 DB を 2 つの Worker から使う）。
 
-### R2 のライフサイクル
+### R2 と KV は作らない
 
-一時アップロード画像を 24 時間で消す（`docs/free-tier-budget.md`）。
+**R2 を有効化してはならない**（[ADR-0009](adr/0009-stay-on-workers-free.md)）。
+R2 だけは利用上限を設定できず、超過分が従量課金される。有効化には支払い方法の
+登録が要るので、**登録しない限り構造的に課金されない**。KV も用途が無いので作らない。
 
-```bash
-bunx wrangler r2 bucket lifecycle add qrcc-artifacts \
-  --prefix uploads/ --expire-days 1
-```
+必要なのは **D1 だけ**。
 
 ### D1 のマイグレーション
 
@@ -79,10 +78,10 @@ DNS は Cloudflare が自動で CNAME を作る。
 
 リポジトリの Secrets に登録する。
 
-| Secret                  | 内容                                                    |
-| ----------------------- | ------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Workers Scripts:Edit / D1:Edit / R2:Edit / KV:Edit 権限 |
-| `CLOUDFLARE_ACCOUNT_ID` | アカウント ID                                           |
+| Secret                  | 内容                                                 |
+| ----------------------- | ---------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Workers Scripts:Edit / D1:Edit 権限（R2・KV は不要） |
+| `CLOUDFLARE_ACCOUNT_ID` | アカウント ID                                        |
 
 登録後、`.github/workflows/deploy.yml` の `push` トリガーのコメントを外す。
 

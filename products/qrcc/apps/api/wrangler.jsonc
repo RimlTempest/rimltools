@@ -21,6 +21,4 @@
       "migrations_dir": "migrations",
     },
   ],
-  "r2_buckets": [{ "binding": "ARTIFACTS", "bucket_name": "qrcc-artifacts" }],
-  "kv_namespaces": [{ "binding": "CACHE", "id": "c198d02618bb42f6bbf5dab1a62b9f51" }],
 }

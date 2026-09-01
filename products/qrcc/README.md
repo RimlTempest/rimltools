@@ -20,10 +20,10 @@ QR コード・バーコードの **生成 / 読み取り / 管理 / 印刷** �
 
 ```
 qrcc.riml4i.com
- ├─ Worker (TypeScript): TanStack Start SSR/RSC + Better Auth + 認可
+ ├─ Worker (TypeScript): TanStack Start SSR + Better Auth + 認可
  │    └─ service binding（追加のリクエスト課金なし）
- └─ Worker (Rust→WASM):  生成 / デコード / PDF / D1 CRUD ※非公開
-       └─ D1 (メタデータ) / KV (短命キャッシュ) / R2 (生成物)
+ └─ Worker (Rust→WASM):  生成 / デコード / D1 CRUD ※非公開
+       └─ D1 (メタデータ)  ※KV / R2 は使わない（ADR-0009）
 ```
 
 - **TypeScript 7.0**（Go 実装のネイティブコンパイラ）

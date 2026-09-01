@@ -8,19 +8,17 @@
 ```
 User ──┬── Folder ──┐
        │            ├── Code ──┬── ShareLink
-       └── ScanEntry            └── RenderArtifact (R2)
-                                └── PrintPreset
+       └── ScanEntry            └── PrintPreset
 ```
 
-| エンティティ     | 説明                                     | 所有                 |
-| ---------------- | ---------------------------------------- | -------------------- |
-| `User`           | Google または匿名（ゲスト）ユーザー      | —                    |
-| `Folder`         | コードの入れ物。ネスト 1 段まで（YAGNI） | User                 |
-| `Code`           | 保存された QR / バーコード 1 件          | User (+ Folder)      |
-| `ShareLink`      | 閲覧/編集用の共有トークン                | Code                 |
-| `ScanEntry`      | 読み取り履歴                             | User                 |
-| `PrintPreset`    | ラベル台紙 + 面付け設定                  | User                 |
-| `RenderArtifact` | R2 上の生成済み成果物（キャッシュ）      | Code（仕様ハッシュ） |
+| エンティティ  | 説明                                     | 所有            |
+| ------------- | ---------------------------------------- | --------------- |
+| `User`        | Google または匿名（ゲスト）ユーザー      | —               |
+| `Folder`      | コードの入れ物。ネスト 1 段まで（YAGNI） | User            |
+| `Code`        | 保存された QR / バーコード 1 件          | User (+ Folder) |
+| `ShareLink`   | 閲覧/編集用の共有トークン                | Code            |
+| `ScanEntry`   | 読み取り履歴                             | User            |
+| `PrintPreset` | ラベル台紙 + 面付け設定                  | User            |
 
 ## 2. 識別子（Branded）
 
@@ -197,7 +195,8 @@ export type SharePermission = 'view' | 'edit'
 
 - ゲスト（匿名）ユーザーも共有リンクを作れる。ただし有効期限は必須（既定 30 日）。
 - `edit` 共有はログイン済みユーザーのみが作成できる。
-- 共有リンクの解決は KV キャッシュ（TTL 60s）→ D1 の順。
+- 共有リンクの解決は D1 の 1 行読み取り（`share_link_code_idx`）。
+  キャッシュは置かない（[ADR-0009](adr/0009-stay-on-workers-free.md)）。
 
 ## 8. 印刷 / ラベル
 
