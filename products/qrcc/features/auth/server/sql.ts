@@ -34,20 +34,22 @@ export type SqlRunner = {
   ) => Promise<Result<readonly number[], SqlError>>
 }
 
-/** D1 のうち、ここで使う部分だけの形。 */
+/**
+ * D1 のうち、ここで使う部分だけの形。
+ *
+ * **メソッド記法で書く。** アロー記法（プロパティ）だと引数が反変になり、
+ * 実物の `D1Database` をこの型として渡せなくなる。
+ */
+type D1ResultLike = { readonly meta?: { readonly changes?: number } | undefined }
+
 type D1PreparedLike = {
-  readonly bind: (...values: SqlValue[]) => D1PreparedLike
-  readonly all: () => Promise<{
-    readonly results?: unknown
-    readonly meta?: { readonly changes?: number } | undefined
-  }>
+  bind(...values: SqlValue[]): D1PreparedLike
+  all(): Promise<D1ResultLike & { readonly results?: unknown }>
 }
 
 type D1Like = {
-  readonly prepare: (query: string) => D1PreparedLike
-  readonly batch: (
-    statements: D1PreparedLike[],
-  ) => Promise<readonly { readonly meta?: { readonly changes?: number } | undefined }[]>
+  prepare(query: string): D1PreparedLike
+  batch(statements: D1PreparedLike[]): Promise<readonly D1ResultLike[]>
 }
 
 const isRow = (value: unknown): value is SqlRow => typeof value === 'object' && value !== null

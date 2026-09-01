@@ -22,6 +22,7 @@
       "name": "@qrcc/web",
       "version": "0.1.0",
       "dependencies": {
+        "@qrcc/auth": "workspace:*",
         "@qrcc/contract": "workspace:*",
         "@qrcc/generate": "workspace:*",
         "@qrcc/print": "workspace:*",

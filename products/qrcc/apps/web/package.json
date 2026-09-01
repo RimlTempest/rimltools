@@ -16,6 +16,7 @@
     "typecheck": "bun run gen && tsc --build"
   },
   "dependencies": {
+    "@qrcc/auth": "workspace:*",
     "@qrcc/contract": "workspace:*",
     "@qrcc/generate": "workspace:*",
     "@qrcc/print": "workspace:*",

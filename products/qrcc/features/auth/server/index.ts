@@ -1,8 +1,11 @@
 /**
  * @qrcc/auth のサーバ側。qrcc-web（TypeScript Worker）でだけ動く。
  */
+export { apiActorOptions, readEnvString } from './api-actor.ts'
 export type { Auth, AuthDeps } from './auth.ts'
 export { makeAuth } from './auth.ts'
+export type { AuthFromEnvDeps } from './from-env.ts'
+export { makeAuthFromEnv } from './from-env.ts'
 export type { AuthOptionsDeps, GoogleCredentials, LinkedAccounts } from './auth-options.ts'
 export { GUEST_SESSION_DAYS, buildAuthOptions } from './auth-options.ts'
 export type { AuthSessionSnapshot, GetSession } from './current-actor.ts'

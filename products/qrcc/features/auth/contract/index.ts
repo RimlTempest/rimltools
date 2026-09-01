@@ -5,6 +5,8 @@
  * 実装（Better Auth・D1）には依存しない。
  */
 export type { Actor, Capability } from './actor.ts'
+export type { ActorWire } from './actor-wire.ts'
+export { parseActorWire, toActorWire } from './actor-wire.ts'
 export { CAPABILITIES, actorUserId, canUse, isSignedIn } from './actor.ts'
 export type {
   ShareExpiry,
