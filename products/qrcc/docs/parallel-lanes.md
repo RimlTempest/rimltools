@@ -122,6 +122,15 @@ bun run wt done feat/scan-ui       # マージ後に worktree を破棄
 - `.dev.vars` をルートからコピー（gitignore 済み）
 - レーンの所有ディレクトリと依存を書いた `LANE.md` を worktree 直下に配置
 
+### マージ済みブランチの片付け
+
+リモートのブランチを消すときは、フックを止める。送るものが無いのに
+pre-push の typecheck とテストが毎回走ってしまう。
+
+```bash
+LEFTHOOK=0 git push origin --delete feat/xxx
+```
+
 ## 5. マージ順序
 
 1. **L1 contracts** — 単独でマージ。以降の全レーンが rebase する
