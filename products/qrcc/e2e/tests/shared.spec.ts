@@ -23,14 +23,25 @@ test.beforeAll(async ({ request }) => {
   ).toBe(true)
 })
 
+/**
+ * ハイドレーションが終わるまで待ってから開く。
+ *
+ * SSR された HTML には入力もボタンもあるので、待たずに触れてしまう。
+ * その入力は React の state に載らないまま、ハイドレーションで消える
+ * （実際「名前を入力してください」で落ちた）。読み込みが静まるまで待つ。
+ */
+const open = async (page: Page, path: string) => {
+  await page.goto(path, { waitUntil: 'networkidle' })
+}
+
 const signInAsGuest = async (page: Page) => {
-  await page.goto('/sign-in')
+  await open(page, '/sign-in')
   await page.getByRole('button', { name: '登録せずに使う（ゲスト）' }).click()
   await expect(page.getByRole('button', { name: 'サインアウト' })).toBeVisible(SLOW)
 }
 
 const signOut = async (page: Page) => {
-  await page.goto('/sign-in')
+  await open(page, '/sign-in')
   await page.getByRole('button', { name: 'サインアウト' }).click()
   await expect(page.getByRole('button', { name: '登録せずに使う（ゲスト）' })).toBeVisible(SLOW)
 }
@@ -39,8 +50,15 @@ const signOut = async (page: Page) => {
 const uniqueName = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 10)}`
 
 const saveCode = async (page: Page, name: string, url = 'https://example.com') => {
-  await page.getByLabel('名前', { exact: true }).fill(name)
-  await page.getByLabel('リンク先の URL').fill(url)
+  const nameField = page.getByLabel('名前', { exact: true })
+  const urlField = page.getByLabel('リンク先の URL')
+
+  await nameField.fill(name)
+  await urlField.fill(url)
+  // 入力が React に届いたことを確かめてから押す
+  await expect(nameField).toHaveValue(name)
+  await expect(urlField).toHaveValue(url)
+
   await page.getByRole('button', { name: '保存する' }).click()
   await expect(page.getByRole('rowheader', { name })).toBeVisible(SLOW)
 }
@@ -48,7 +66,7 @@ const saveCode = async (page: Page, name: string, url = 'https://example.com') =
 /** ゲストで保存し、そのコードの共有リンクを 1 本作って URL を返す。 */
 const shareANewCode = async (page: Page, name: string, url?: string): Promise<string> => {
   await signInAsGuest(page)
-  await page.goto('/codes')
+  await open(page, '/codes')
   await saveCode(page, name, url)
 
   await page.getByRole('link', { name }).click()
@@ -65,7 +83,7 @@ test('サインアウトした人でも、共有リンクからコードを見�
   const shareUrl = await shareANewCode(page, name)
   await signOut(page)
 
-  await page.goto(shareUrl)
+  await open(page, shareUrl)
 
   // サインインしていないことを確かめたうえで開けている
   await expect(page.getByRole('banner')).toContainText('サインインしていません')
@@ -89,7 +107,7 @@ test('取り消したリンクは、作り直しを頼むよう案内する', as
   await expect(page.getByRole('status')).toContainText('取り消しました', SLOW)
   await signOut(page)
 
-  await page.goto(shareUrl)
+  await open(page, shareUrl)
 
   await expect(
     page.getByRole('heading', { level: 1, name: 'この共有リンクは使えません' }),
@@ -100,7 +118,7 @@ test('取り消したリンクは、作り直しを頼むよう案内する', as
 })
 
 test('形の違うトークンは、URL を確かめるよう案内する', async ({ page }) => {
-  await page.goto('/shared/not-a-share-token')
+  await open(page, '/shared/not-a-share-token')
 
   await expect(
     page.getByRole('heading', { level: 1, name: 'この共有リンクは形が違います' }),
@@ -110,7 +128,7 @@ test('形の違うトークンは、URL を確かめるよう案内する', asyn
 })
 
 test('存在しないトークンは、取り消し・不在として案内する', async ({ page }) => {
-  await page.goto('/shared/abcdefghjkmnpqrstvwxyz0123456789')
+  await open(page, '/shared/abcdefghjkmnpqrstvwxyz0123456789')
 
   await expect(
     page.getByRole('heading', { level: 1, name: 'この共有リンクは使えません' }),
@@ -122,7 +140,7 @@ test('共有された画面に axe の違反がない @a11y', async ({ page }) =
   const shareUrl = await shareANewCode(page, name)
   await signOut(page)
 
-  await page.goto(shareUrl)
+  await open(page, shareUrl)
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible(SLOW)
 
   const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
@@ -130,7 +148,7 @@ test('共有された画面に axe の違反がない @a11y', async ({ page }) =
 })
 
 test('開けなかった画面にも axe の違反がない @a11y', async ({ page }) => {
-  await page.goto('/shared/not-a-share-token')
+  await open(page, '/shared/not-a-share-token')
   await expect(
     page.getByRole('heading', { level: 1, name: 'この共有リンクは形が違います' }),
   ).toBeVisible(SLOW)
