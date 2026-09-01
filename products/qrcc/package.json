@@ -10,7 +10,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --filter '@qrcc/web' dev",
-    "build": "bun run --filter '@qrcc/api' build && bun run --filter '@qrcc/web' build",
+    "build": "bun run --filter '@qrcc/wasm' build && bun run --filter '@qrcc/api' build && bun run --filter '@qrcc/web' build",
     "test": "bun test shared features apps",
     "typecheck": "bun run --filter '@qrcc/web' gen && tsc --build && tsc -p apps/web --noEmit",
     "lint": "oxlint --type-aware",

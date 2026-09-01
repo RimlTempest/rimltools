@@ -45,6 +45,7 @@ jobs:
               - 'bun.lock'
             rust:
               - 'features/*/engine/**'
+              - 'shared/*/engine/**'
               - 'features/*/worker/**'
               - 'shared/*/engine/**'
               - 'apps/api/**'
@@ -175,14 +176,21 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: bun install --frozen-lockfile
       - run: cargo install worker-build --locked
-      - run: bun run --filter '@qrcc/api' build
-      - run: bun run --filter '@qrcc/web' build
+      - run: cargo install wasm-pack --locked
+      # wasm(ブラウザ) → api(Worker) → web の順に依存している
+      - run: bun run build
       - name: wasm バンドルサイズの上限を守ること (ADR-0003)
         run: |
-          size=$(find apps/web/dist/qrcc_api -name '*.wasm' -exec wc -c {} + | tail -1 | awk '{print $1}')
-          echo "wasm size: ${size} bytes"
-          if [ "$size" -gt 3000000 ]; then
+          worker=$(find apps/web/dist/qrcc_api -name '*.wasm' -exec wc -c {} + | tail -1 | awk '{print $1}')
+          browser=$(find apps/web/dist/client -name '*.wasm' -exec gzip -c {} + | wc -c)
+          echo "worker wasm: ${worker} bytes / browser wasm: ${browser} bytes gzip"
+          if [ "$worker" -gt 3000000 ]; then
             echo "::error::Worker wasm exceeded 3MB. See ADR-0003."
+            exit 1
+          fi
+          # ブラウザに配る分は体感に直結する。生成のみで gzip 200KB 以内（ADR-0003）
+          if [ "$browser" -gt 204800 ]; then
+            echo "::error::Browser wasm exceeded 200KB gzip. See ADR-0003."
             exit 1
           fi
       - run: bun run --filter '@qrcc/e2e' install-browsers
