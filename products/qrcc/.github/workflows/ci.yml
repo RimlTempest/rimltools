@@ -162,6 +162,8 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
+      # デコードは feature の裏にあるので、既定のワークスペーステストでは走らない
+      - run: cargo test -p qrcc-wasm --features decode
       - name: ブラウザ向け wasm がビルドできること (ADR-0003)
         run: |
           cargo check -p qrcc-wasm --target wasm32-unknown-unknown
