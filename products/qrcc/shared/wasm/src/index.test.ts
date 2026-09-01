@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { ok } from '@qrcc/contract'
-import type { WasmModule } from './index.ts'
-import { makeWasmRenderer } from './index.ts'
+import type { WasmDecoderModule, WasmModule } from './index.ts'
+import { makeWasmDecoder, makeWasmRenderer } from './index.ts'
 
 const anyValue = (value: unknown) => ok(value)
 
@@ -69,5 +69,60 @@ describe('wasm レンダラ', () => {
     const second = await renderer.render({}, anyValue, anyValue)
     expect(second.ok).toBe(true)
     expect(attempts).toBe(2)
+  })
+})
+
+const decoderReturning = (response: string): WasmDecoderModule => ({ decode: () => response })
+
+describe('wasm デコーダ', () => {
+  test('検出結果を封筒の中から返す', async () => {
+    const decoder = makeWasmDecoder(async () =>
+      decoderReturning(envelope({ ok: true, value: { detections: [] } })),
+    )
+    const result = await decoder.decode(new Uint8Array([1]), {}, anyValue, anyValue)
+    expect(result).toEqual({ ok: true, value: { ok: true, value: { detections: [] } } })
+  })
+
+  test('エンジンのエラーは内側の Result になる', async () => {
+    const decoder = makeWasmDecoder(async () =>
+      decoderReturning(envelope({ ok: false, error: { kind: 'not_found' } })),
+    )
+    const result = await decoder.decode(new Uint8Array(), {}, anyValue, anyValue)
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.value).toEqual({ ok: false, error: { kind: 'not_found' } })
+  })
+
+  test('読み込みに失敗しても例外を投げず値で返す', async () => {
+    const decoder = makeWasmDecoder(() => Promise.reject(new Error('offline')))
+    const result = await decoder.decode(new Uint8Array(), {}, anyValue, anyValue)
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.error.kind).toBe('wasm_unavailable')
+  })
+
+  /** 画像とヒントがそのまま wasm に渡ること（サーバには送らない）。 */
+  test('画像バイト列とヒントの JSON を渡す', async () => {
+    const calls: { image: Uint8Array; hints: string }[] = []
+    const decoder = makeWasmDecoder(async () => ({
+      decode: (image, hints) => {
+        calls.push({ image, hints })
+        return envelope({ ok: true, value: { detections: [] } })
+      },
+    }))
+    const bytes = new Uint8Array([137, 80, 78, 71])
+    await decoder.decode(bytes, { multiple: true }, anyValue, anyValue)
+    expect(calls[0]?.image).toBe(bytes)
+    expect(calls[0]?.hints).toBe('{"multiple":true}')
+  })
+
+  /** 800KB 近い wasm を毎コマ取りに行かせない。 */
+  test('wasm の読み込みは 1 度だけ', async () => {
+    let loads = 0
+    const decoder = makeWasmDecoder(async () => {
+      loads += 1
+      return decoderReturning(envelope({ ok: true, value: null }))
+    })
+    await decoder.decode(new Uint8Array(), {}, anyValue, anyValue)
+    await decoder.decode(new Uint8Array(), {}, anyValue, anyValue)
+    expect(loads).toBe(1)
   })
 })

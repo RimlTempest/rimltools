@@ -9,14 +9,17 @@ publish.workspace = true
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+# 生成とデコードは**別々の wasm に焼く**。rxing を含むデコード側は
+# 生成側の 5 倍以上あり、同じバイナリに入れると生成プレビューの体感が落ちる
+# （ADR-0003 のサイズ目標）。`shared/wasm/package.json` が両方をビルドする。
 [features]
 default = ["render"]
-render = []
+render = ["dep:qrcc-generate"]
 decode = ["dep:qrcc-scan"]
 
 [dependencies]
 qrcc-kernel.workspace = true
-qrcc-generate.workspace = true
+qrcc-generate = { workspace = true, optional = true }
 qrcc-scan = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
