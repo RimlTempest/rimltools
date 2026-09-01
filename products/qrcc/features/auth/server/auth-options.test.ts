@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { parseUserId } from '@qrcc/contract'
-import { GUEST_SESSION_DAYS, buildAuthOptions } from './auth-options.ts'
+import { GUEST_DISPLAY_NAME, GUEST_SESSION_DAYS, buildAuthOptions } from './auth-options.ts'
 
 /** 決定的な乱数。ID 発行の形だけを見たいので中身は固定でよい。 */
 const fixedBytes = (byteLength: number) => new Uint8Array(byteLength).fill(7)
@@ -78,6 +78,10 @@ describe('Better Auth の設定（ADR-0004 のセキュリティ上の決め事�
       onLinkAccount: async () => {},
     })
     expect(withoutGoogle.socialProviders.google).toBeUndefined()
+  })
+
+  test('ゲストには読める名前を付ける', () => {
+    expect(GUEST_DISPLAY_NAME).toBe('ゲスト')
   })
 
   test('リダイレクト先は自分のオリジンだけを信頼する', () => {

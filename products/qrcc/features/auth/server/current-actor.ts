@@ -5,8 +5,9 @@
  * ID は必ず `parseUserId` を通し、通らないものは未ログイン扱いにする
  * （壊れた ID をそのまま qrcc-api の actor に流さない / ADR-0002）。
  */
-import type { Actor } from '../contract/actor.ts'
 import { parseUserId } from '@qrcc/contract'
+import type { Actor } from '../contract/actor.ts'
+import { GUEST_DISPLAY_NAME } from './auth-options.ts'
 
 /** Better Auth の `getSession` が返す形のうち、ここで使う部分だけ。 */
 export type AuthSessionSnapshot = {
@@ -18,7 +19,6 @@ export type AuthSessionSnapshot = {
   readonly session: { readonly expiresAt: Date }
 }
 
-const GUEST_FALLBACK_NAME = 'ゲスト'
 const USER_FALLBACK_NAME = 'サインイン中'
 
 export const toActor = (snapshot: AuthSessionSnapshot | null | undefined): Actor => {
@@ -31,7 +31,7 @@ export const toActor = (snapshot: AuthSessionSnapshot | null | undefined): Actor
     ? {
         kind: 'guest',
         userId: userId.value,
-        displayName: name === '' ? GUEST_FALLBACK_NAME : name,
+        displayName: name === '' ? GUEST_DISPLAY_NAME : name,
         sessionExpiresAt: snapshot.session.expiresAt,
       }
     : {

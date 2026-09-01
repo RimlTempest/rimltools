@@ -16,6 +16,9 @@ import { encodeCrockfordBase32, newUserId } from '@qrcc/contract'
  */
 export const GUEST_SESSION_DAYS = 30
 
+/** ゲストの表示名。画面の既定値（`toActor`）と合わせる。 */
+export const GUEST_DISPLAY_NAME = 'ゲスト'
+
 const DAY_SECONDS = 24 * 60 * 60
 /** ID 本体 24 文字ぶんの乱数（5bit/文字 → 15 バイト）。 */
 const ID_RANDOM_BYTES = 15
@@ -98,5 +101,11 @@ export const buildAuthOptions = (deps: AuthOptionsDeps) =>
       },
       database: { generateId: makeGenerateId(deps.randomBytes) },
     },
-    plugins: [anonymous({ onLinkAccount: deps.onLinkAccount })],
+    plugins: [
+      anonymous({
+        // 既定は 'Anonymous'。画面に出たときに意味が通る名前にしておく
+        generateName: () => GUEST_DISPLAY_NAME,
+        onLinkAccount: deps.onLinkAccount,
+      }),
+    ],
   }) satisfies BetterAuthOptions
