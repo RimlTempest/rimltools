@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "bun run --filter '@qrcc/web' dev",
     "build": "bun run --filter '@qrcc/wasm' build && bun run --filter '@qrcc/api' build && bun run --filter '@qrcc/web' build",
-    "test": "bun test shared features apps",
+    "test": "bun test shared/ features/ apps/",
     "typecheck": "bun run --filter '@qrcc/wasm' build:types && bun run --filter '@qrcc/web' gen && tsc --build && tsc -p apps/web --noEmit",
     "lint": "oxlint --type-aware",
     "lint:fix": "oxlint --type-aware --fix",
