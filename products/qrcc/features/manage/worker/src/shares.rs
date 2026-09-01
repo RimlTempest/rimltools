@@ -124,6 +124,37 @@ pub async fn revoke<S: Sql>(sql: &S, request: &ManageRequest<'_>) -> Result<Valu
     Ok(json!({ "token": token.as_str(), "revoked_at": request.now }))
 }
 
+/// 開けなかった理由を 1 段だけ返す。
+///
+/// **見つからなかったときにしか引かない**ので、通常の読み取り数は増えない。
+/// 期限切れを「無い」と同じ文言にすると、受け取った人は次にすること
+/// （発行者に新しいリンクを頼む／URL を確かめ直す）を選べない。
+/// トークンは 160 bit の乱数なので、当てずっぽうで「あったこと」を
+/// 引き出せる形にはならない。取り消し済みは「無い」に畳む。
+async fn explain_absence<S: Sql>(sql: &S, token: &ShareToken, now: i64) -> CommonRpcError {
+    let rows = match sql
+        .all(&Statement::new(
+            "SELECT expires_at, revoked_at FROM share_link WHERE token = ?",
+            vec![Param::text(token.as_str())],
+        ))
+        .await
+    {
+        Ok(rows) => rows,
+        Err(cause) => return storage(cause),
+    };
+
+    let Some(found) = rows.first() else {
+        return not_found("share");
+    };
+    if row::read_opt_int(found, "revoked_at").flatten().is_some() {
+        return not_found("share");
+    }
+    match row::read_opt_int(found, "expires_at").flatten() {
+        Some(expires_at) if expires_at <= now => not_found("share_expired"),
+        _ => not_found("share"),
+    }
+}
+
 /// 共有リンクを開く。**サインインは要らない**（リンクを知っていることが鍵）。
 ///
 /// 期限切れ・取り消し済みは SQL の条件に畳んである。読み出してから
@@ -153,7 +184,9 @@ pub async fn resolve<S: Sql>(
         .await
         .map_err(storage)?;
 
-    let found = rows.first().ok_or_else(|| not_found("share"))?;
+    let Some(found) = rows.first() else {
+        return Err(explain_absence(sql, &token, request.now).await);
+    };
     let code = row::to_code(found).ok_or(CommonRpcError::Internal)?;
     let permission = row::read_text(found, "permission").ok_or(CommonRpcError::Internal)?;
 

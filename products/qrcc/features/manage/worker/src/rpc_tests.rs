@@ -552,3 +552,35 @@ fn never_resolves_a_revoked_or_expired_link() {
     );
     assert!(statement.params.contains(&crate::Param::Int(NOW)));
 }
+
+/// 期限切れだけは「無い」と区別して返す。受け取った人が次にすること
+/// （発行者に新しいリンクを頼む）が変わるため。
+#[test]
+fn tells_the_reader_that_a_link_expired() {
+    let expired = row(&[("expires_at", json!(NOW - 1)), ("revoked_at", Value::Null)]);
+    // 1 回目（期限と取り消しを畳んだ SELECT）は空。2 回目で理由だけを引く
+    let sql = FakeSql::new().read(vec![]).read(vec![expired]);
+    let body = json!({ "token": TOKEN });
+
+    assert_eq!(
+        block_on(handle(&sql, &request("shares.resolve", &body))),
+        Err(CommonRpcError::NotFound {
+            resource: "share_expired".to_string()
+        })
+    );
+}
+
+/// 取り消し済みは「無い」と同じに畳む。取り消したこと自体を知らせない。
+#[test]
+fn treats_a_revoked_link_as_missing() {
+    let revoked = row(&[("expires_at", Value::Null), ("revoked_at", json!(NOW - 1))]);
+    let sql = FakeSql::new().read(vec![]).read(vec![revoked]);
+    let body = json!({ "token": TOKEN });
+
+    assert_eq!(
+        block_on(handle(&sql, &request("shares.resolve", &body))),
+        Err(CommonRpcError::NotFound {
+            resource: "share".to_string()
+        })
+    );
+}
