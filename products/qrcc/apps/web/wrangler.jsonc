@@ -6,6 +6,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
 
+  // 入口はカスタムドメインだけにする。workers.dev を開けると APP_ORIGIN と
+  // 違うオリジンが増え、Cookie も OAuth のリダイレクト先も噛み合わなくなる。
+  "workers_dev": false,
   "routes": [{ "pattern": "qrcc.riml4i.com", "custom_domain": true }],
 
   // qrcc-api は routes を持たない auxiliary Worker。ここからのみ到達できる。

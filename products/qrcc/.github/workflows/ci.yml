@@ -72,6 +72,12 @@ jobs:
             echo "::error file=apps/api/wrangler.jsonc::qrcc-api must not be reachable from the internet. Remove 'routes' (ADR-0002)."
             exit 1
           fi
+          # workers_dev は既定が true。routes が無くても
+          # qrcc-api.<subdomain>.workers.dev で公開されるので、明示的な false を要求する。
+          if ! grep -qE '^\s*"workers_dev"\s*:\s*false\s*,?\s*$' apps/api/wrangler.jsonc; then
+            echo "::error file=apps/api/wrangler.jsonc::qrcc-api must set \"workers_dev\": false. It defaults to true and publishes the Worker on workers.dev even without routes (ADR-0002)."
+            exit 1
+          fi
       - name: 従量課金されるバインディングを足していないこと (ADR-0009)
         run: |
           # R2 は Cloudflare 側で利用上限を設定できず、超過分が従量課金される。
