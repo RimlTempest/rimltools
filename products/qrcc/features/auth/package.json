@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     "./contract": "./contract/index.ts",
-    "./ui": "./ui/index.ts"
+    "./server": "./server/index.ts",
+    "./ui": "./ui/index.ts",
+    "./ui/auth.css": "./ui/auth.css"
   },
   "scripts": {
     "build": "tsc --build",

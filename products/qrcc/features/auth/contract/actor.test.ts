@@ -1,23 +1,25 @@
 import { describe, expect, test } from 'bun:test'
+import type { UserId } from '@qrcc/contract'
 import { parseUserId } from '@qrcc/contract'
 import type { Actor } from './actor.ts'
 import { CAPABILITIES, actorUserId, canUse, isSignedIn } from './actor.ts'
 
-const id = parseUserId('usr_0123456789abcdefghjkmnpq')
-const userId = id.ok ? id.value : undefined
+const asUserId = (value: string): UserId => {
+  const parsed = parseUserId(value)
+  if (!parsed.ok) throw new Error(`テストの UserId が不正: ${value}`)
+  return parsed.value
+}
+
+const USER_ID = asUserId('usr_0123456789abcdefghjkmnpq')
 
 const visitor: Actor = { kind: 'visitor' }
-const guest: Actor =
-  userId === undefined
-    ? { kind: 'visitor' }
-    : {
-        kind: 'guest',
-        userId,
-        displayName: 'ゲスト',
-        sessionExpiresAt: new Date('2026-10-01T00:00:00Z'),
-      }
-const user: Actor =
-  userId === undefined ? { kind: 'visitor' } : { kind: 'user', userId, displayName: 'りむ' }
+const guest: Actor = {
+  kind: 'guest',
+  userId: USER_ID,
+  displayName: 'ゲスト',
+  sessionExpiresAt: new Date('2026-10-01T00:00:00Z'),
+}
+const user: Actor = { kind: 'user', userId: USER_ID, displayName: 'りむ' }
 
 describe('Actor', () => {
   test('未ログインでも生成と読み取りは使える（ADR-0004）', () => {
@@ -48,8 +50,8 @@ describe('Actor', () => {
   })
 
   test('ゲストとログイン済みは検証済みの UserId を持つ', () => {
-    expect(actorUserId(guest)).toBe(userId)
-    expect(actorUserId(user)).toBe(userId)
+    expect(actorUserId(guest)).toBe(USER_ID)
+    expect(actorUserId(user)).toBe(USER_ID)
   })
 
   test('サインインしているかを一言で判定できる', () => {

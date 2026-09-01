@@ -4,7 +4,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import type { UserId } from '@qrcc/contract'
 import { ok, parseUserId } from '@qrcc/contract'
-import type { SqlRunner, SqlStatement } from './sql.ts'
+import type { SqlRow, SqlRunner, SqlStatement, SqlValue } from './sql.ts'
 import { makePromotionStore } from './promotion-store.ts'
 
 const MIGRATIONS_DIR = join(import.meta.dir, '../../../apps/api/migrations')
@@ -21,7 +21,8 @@ const AT = new Date('2026-09-01T12:00:00Z')
 
 /** 実物の SQLite を D1 の代わりに使う。D1 も SQLite なので SQL はそのまま通る。 */
 const sqliteRunner = (db: Database): SqlRunner => ({
-  all: async (statement) => ok(db.query(statement.sql).all(...statement.params)),
+  all: async (statement) =>
+    ok(db.query<SqlRow, SqlValue[]>(statement.sql).all(...statement.params)),
   batch: async (statements) => {
     const run = db.transaction((batch: readonly SqlStatement[]) =>
       batch.map((statement) => db.run(statement.sql, [...statement.params]).changes),

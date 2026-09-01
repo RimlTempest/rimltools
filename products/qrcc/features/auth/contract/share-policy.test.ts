@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import type { UserId } from '@qrcc/contract'
 import { parseUserId } from '@qrcc/contract'
 import type { Actor } from './actor.ts'
 import type { ShareLinkRequest } from './share-policy.ts'
@@ -9,23 +10,24 @@ import {
   describeShareDenial,
 } from './share-policy.ts'
 
-const id = parseUserId('usr_0123456789abcdefghjkmnpq')
-const userId = id.ok ? id.value : undefined
+const asUserId = (value: string): UserId => {
+  const parsed = parseUserId(value)
+  if (!parsed.ok) throw new Error(`テストの UserId が不正: ${value}`)
+  return parsed.value
+}
+
+const USER_ID = asUserId('usr_0123456789abcdefghjkmnpq')
 const NOW = new Date('2026-09-01T00:00:00Z')
 const authorize = authorizeShareLink(() => NOW)
 
 const visitor: Actor = { kind: 'visitor' }
-const guest: Actor =
-  userId === undefined
-    ? { kind: 'visitor' }
-    : {
-        kind: 'guest',
-        userId,
-        displayName: 'ゲスト',
-        sessionExpiresAt: new Date('2026-10-01T00:00:00Z'),
-      }
-const user: Actor =
-  userId === undefined ? { kind: 'visitor' } : { kind: 'user', userId, displayName: 'りむ' }
+const guest: Actor = {
+  kind: 'guest',
+  userId: USER_ID,
+  displayName: 'ゲスト',
+  sessionExpiresAt: new Date('2026-10-01T00:00:00Z'),
+}
+const user: Actor = { kind: 'user', userId: USER_ID, displayName: 'りむ' }
 
 const view: ShareLinkRequest = { permission: 'view', expiry: { kind: 'days', days: 30 } }
 
@@ -41,7 +43,7 @@ describe('共有リンクの発行可否', () => {
     if (result.ok) {
       expect(result.value.permission).toBe('view')
       expect(result.value.expiresAt).toEqual(new Date('2026-10-01T00:00:00Z'))
-      expect(result.value.ownerId).toBe(userId)
+      expect(result.value.ownerId).toBe(USER_ID)
     }
   })
 
