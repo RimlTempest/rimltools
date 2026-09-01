@@ -7,16 +7,23 @@ import type { Folder, ShareLink } from '@qrcc/manage/contract'
 import type { CodeFormState } from '@qrcc/manage/core'
 import { buildCodeDraft, toCodeForm } from '@qrcc/manage/core'
 import { describeManageFailure } from '@qrcc/manage/server'
+import { CodePreview } from '@qrcc/generate/ui'
+import type { RenderFn } from '@qrcc/generate/ui'
 import { Button, Field, LiveRegion } from '@qrcc/ui'
 import type { CodeLinkRenderer, ManageDeps } from './manage-deps.tsx'
 import { defaultRenderLink } from './manage-deps.tsx'
 import { SharePanel, describeShareDraftError } from './share-panel.tsx'
+import { useCodePreview } from './use-code-preview.ts'
 
 type CodeEditorScreenProps = {
   readonly actor: Actor
   readonly codeId: CodeId
   readonly deps: ManageDeps
+  /** プレビューの作り方。ブラウザ側の wasm を配線する（サーバに投げない）。 */
+  readonly renderPreview: RenderFn
   readonly renderLink?: CodeLinkRenderer
+  /** ライブ更新の待ち時間（ms）。テストでは 0 にする。 */
+  readonly previewDebounceMs?: number
 }
 
 const QR_LEVELS = ['L', 'M', 'Q', 'H'] as const
@@ -32,7 +39,9 @@ export const CodeEditorScreen = ({
   actor,
   codeId,
   deps,
+  renderPreview,
   renderLink = defaultRenderLink,
+  previewDebounceMs = 300,
 }: CodeEditorScreenProps) => {
   const [form, setForm] = useState<CodeFormState | undefined>(undefined)
   const [shares, setShares] = useState<readonly ShareLink[]>([])
@@ -46,6 +55,15 @@ export const CodeEditorScreen = ({
 
   const { api } = deps
   const canManage = canUse(actor, 'save')
+
+  // 設定を触るたびに、その場で作り直す（サーバには投げない）
+  const preview = useCodePreview({
+    render: renderPreview,
+    codeId,
+    form,
+    debounceMs: previewDebounceMs,
+    onProblem: setMessage,
+  })
 
   /** 読み込みは「反映する関数」を返す。反映するかどうかは待っていた側が決める。 */
   const load = useCallback(async () => {
@@ -311,10 +329,21 @@ export const CodeEditorScreen = ({
                 onChange={(event) => update('scale', Number(event.target.value))}
               />
 
+              <p>設定を変えると、下のプレビューがすぐ更新されます。</p>
               <Button type="submit" busy={busy}>
                 保存する
               </Button>
             </form>
+          </section>
+
+          <section aria-labelledby="qrcc-editor-preview">
+            <h2 id="qrcc-editor-preview">プレビュー</h2>
+            {preview === undefined ? (
+              <p>設定を読み込むと、ここにコードのプレビューが出ます。</p>
+            ) : (
+              /* 保存はこの画面の仕事。書き出しは生成画面（/generate）に任せる */
+              <CodePreview response={preview} showDownloads={false} />
+            )}
           </section>
 
           <SharePanel

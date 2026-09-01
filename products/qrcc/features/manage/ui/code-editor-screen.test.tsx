@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event'
 import type { RandomBytes } from '@qrcc/contract'
 import { parseShareToken, parseUserId } from '@qrcc/contract'
 import type { Actor } from '@qrcc/auth/contract'
+import type { RenderWarning } from '@qrcc/generate/contract'
+import type { RenderFailure } from '@qrcc/generate/ui'
 import { makeCreateShareDraft } from '@qrcc/manage/core'
 import { CodeEditorScreen } from './code-editor-screen.tsx'
 import type { ManageDeps } from './manage-deps.tsx'
@@ -12,6 +14,7 @@ import {
   fixedNewCodeId,
   fixedNewFolderId,
   makeFakeApi,
+  makeFakeRenderer,
   savedCode,
 } from './testing-fakes.ts'
 
@@ -64,8 +67,17 @@ const setup = (over: { readonly actor?: Actor; readonly shares?: boolean } = {})
       return true
     },
   }
-  render(<CodeEditorScreen actor={over.actor ?? user} codeId={code.id} deps={deps} />)
-  return { fake, copied }
+  const renderer = makeFakeRenderer()
+  render(
+    <CodeEditorScreen
+      actor={over.actor ?? user}
+      codeId={code.id}
+      deps={deps}
+      renderPreview={renderer.render}
+      previewDebounceMs={0}
+    />,
+  )
+  return { fake, copied, renderer }
 }
 
 const methods = (fake: ReturnType<typeof makeFakeApi>) => fake.calls.map((call) => call.method)
@@ -129,6 +141,8 @@ describe('編集', () => {
           origin: 'https://qrcc.riml4i.com',
           copyText: async () => true,
         }}
+        renderPreview={makeFakeRenderer().render}
+        previewDebounceMs={0}
       />,
     )
     await waitFor(() => expect(screen.getByRole('status').textContent).toContain('見つかりません'))
@@ -188,5 +202,105 @@ describe('共有リンク', () => {
 
     await waitFor(() => expect(screen.getByRole('status').textContent).toContain('期限なし'))
     expect(methods(fake)).not.toContain('shares.create')
+  })
+})
+
+/**
+ * プレビューはブラウザ側の wasm で作る（docs/free-tier-budget.md）。
+ * ここでは生成の中身ではなく「設定を触るたびに更新されること」と
+ * 「読み上げ領域が問題だけを言うこと」を確かめる。
+ */
+const size = () => screen.getByLabelText('1 モジュールの大きさ')
+
+describe('プレビュー', () => {
+  /** 設定を 1 つ変えて、プレビューを作り直させる。 */
+  const changeSetting = async (value: string) => {
+    await userEvent.clear(size())
+    await userEvent.type(size(), value)
+  }
+
+  test('開くと、保存されている設定のプレビューが出る', async () => {
+    setup()
+    expect(await screen.findByText(/URL: https:\/\/qrcc\.riml4i\.com/)).toBeDefined()
+  })
+
+  test('設定を変えると、保存しなくてもその場で作り直す', async () => {
+    const { renderer } = setup()
+    await screen.findByText(/URL: https:\/\/qrcc\.riml4i\.com/)
+
+    await userEvent.clear(screen.getByLabelText('リンク先の URL'))
+    await userEvent.type(screen.getByLabelText('リンク先の URL'), 'https://example.com/1')
+
+    expect(await screen.findByText(/URL: https:\/\/example\.com\/1/)).toBeDefined()
+    expect(renderer.requests.at(-1)?.payload).toMatchObject({
+      kind: 'url',
+      url: 'https://example.com/1',
+    })
+  })
+
+  test('名前が空でもプレビューは出す（名前はコードの絵に関係ない）', async () => {
+    setup()
+    await screen.findByText(/URL: https:\/\/qrcc\.riml4i\.com/)
+
+    await userEvent.clear(screen.getByLabelText('名前'))
+
+    await waitFor(() => expect(screen.getByRole('figure')).toBeDefined())
+    expect(screen.getByRole('status').textContent).toBe('')
+  })
+
+  test('プレビューのためにサーバへ問い合わせない（無料枠を使わない）', async () => {
+    const { fake, renderer } = setup()
+    await screen.findByText(/URL: https:\/\/qrcc\.riml4i\.com/)
+    await changeSetting('9')
+
+    await waitFor(() => expect(renderer.requests.length).toBeGreaterThan(1))
+    expect(methods(fake)).toEqual(['codes.get', 'folders.list'])
+  })
+
+  test('うまくいったことは読み上げない（ライブ更新でしゃべり続けないため）', async () => {
+    setup()
+    await screen.findByText(/URL: https:\/\/qrcc\.riml4i\.com/)
+    expect(screen.getByRole('status').textContent).toBe('')
+  })
+
+  test('コントラストが低いときは警告するが、プレビューは止めない', async () => {
+    const { renderer } = setup()
+    await screen.findByText(/URL: https:\/\/qrcc\.riml4i\.com/)
+
+    const lowContrast: RenderWarning = { kind: 'low_contrast', ratio: 1.2, minimum: 3 }
+    renderer.setWarnings([lowContrast])
+    await changeSetting('9')
+
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('コントラスト'))
+    expect(screen.getByText(/URL: https:\/\/qrcc\.riml4i\.com/)).toBeDefined()
+  })
+
+  test('生成できないときは理由を読み上げ領域に出す', async () => {
+    const { renderer } = setup()
+    await screen.findByText(/URL: https:\/\/qrcc\.riml4i\.com/)
+
+    const tooLong: RenderFailure = {
+      kind: 'payload_too_long',
+      symbology: 'EAN-13',
+      max: 13,
+      actual: 26,
+    }
+    renderer.failWith(tooLong)
+    await changeSetting('9')
+
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('長すぎ'))
+  })
+
+  test('wasm が使えないときも、編集そのものは続けられると伝える', async () => {
+    const { renderer } = setup()
+    await screen.findByText(/URL: https:\/\/qrcc\.riml4i\.com/)
+
+    renderer.failWith({ kind: 'unavailable', detail: 'wasm_unavailable' })
+    await changeSetting('9')
+
+    await waitFor(() =>
+      expect(screen.getByRole('status').textContent).toContain('プレビューを表示できません'),
+    )
+    expect(screen.getByRole('button', { name: '保存する' })).toBeDefined()
   })
 })

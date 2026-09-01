@@ -17,7 +17,14 @@ import {
   parseNonEmptyText,
   parseUserId,
 } from '@qrcc/contract'
-import type { RenderStyle } from '@qrcc/generate/contract'
+import type {
+  CodePayload,
+  RenderRequest,
+  RenderResponse,
+  RenderStyle,
+  RenderWarning,
+} from '@qrcc/generate/contract'
+import type { RenderFailure, RenderFn } from '@qrcc/generate/ui'
 import type {
   CodeDetail,
   CodeDraft,
@@ -186,3 +193,63 @@ export const makeFakeApi = (initial: {
 /** 決まった値しか返さない ID 発行。テストで結果が動かないようにする。 */
 export const fixedNewCodeId = () => newCodeId(() => new Uint8Array(15).fill(9))
 export const fixedNewFolderId = () => newFolderId(() => new Uint8Array(15).fill(5))
+
+/**
+ * 生成エンジンのフェイク。
+ *
+ * 本物は wasm なので、画面テストでは呼ばない。ここでは「何を頼まれたか」を
+ * 記録し、頼まれた内容から説明文を組み立てて返すだけにする
+ * （プレビューが**更新されたこと**をテストから見分けられるように）。
+ */
+export type FakeRenderer = {
+  readonly render: RenderFn
+  readonly requests: RenderRequest[]
+  /** 次の生成から警告を付ける。 */
+  setWarnings: (warnings: readonly RenderWarning[]) => void
+  /** 次の生成から失敗させる。 */
+  failWith: (failure: RenderFailure) => void
+}
+
+const describePayload = (payload: CodePayload): string => {
+  switch (payload.kind) {
+    case 'url':
+      return `URL: ${payload.url}`
+    case 'text':
+      return `テキスト: ${payload.text}`
+    case 'wifi':
+      return `Wi-Fi: ${payload.ssid}`
+  }
+}
+
+export const makeFakeRenderer = (): FakeRenderer => {
+  const requests: RenderRequest[] = []
+  const state: {
+    warnings: readonly RenderWarning[]
+    failure: RenderFailure | undefined
+  } = { warnings: [], failure: undefined }
+
+  const render: RenderFn = async (request) => {
+    requests.push(request)
+    if (state.failure !== undefined) return err(state.failure)
+    const response: RenderResponse = {
+      body: '<svg role="img" aria-label="コード"><rect width="10" height="10" /></svg>',
+      content_type: 'image/svg+xml',
+      width: 21 * request.style.scale,
+      height: 21 * request.style.scale,
+      description: describePayload(request.payload),
+      warnings: state.warnings,
+    }
+    return ok(response)
+  }
+
+  return {
+    render,
+    requests,
+    setWarnings: (warnings) => {
+      state.warnings = warnings
+    },
+    failWith: (next) => {
+      state.failure = next
+    },
+  }
+}
