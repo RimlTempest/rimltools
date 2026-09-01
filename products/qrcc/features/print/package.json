@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     "./contract": "./contract/index.ts",
-    "./ui": "./ui/index.ts"
+    "./core": "./core/index.ts",
+    "./ui": "./ui/index.ts",
+    "./ui/print.css": "./ui/print.css"
   },
   "scripts": {
     "build": "tsc --build",
@@ -13,6 +15,9 @@
   },
   "dependencies": {
     "@qrcc/contract": "workspace:*",
-    "@qrcc/ui": "workspace:*"
+    "@qrcc/generate": "workspace:*",
+    "@qrcc/ui": "workspace:*",
+    "@qrcc/wasm": "workspace:*",
+    "@tanstack/react-router": "1.170.32"
   }
 }
