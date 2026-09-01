@@ -244,6 +244,80 @@ describe('フォルダ', () => {
     await userEvent.click(screen.getByRole('button', { name: 'フォルダを作る' }))
     await waitFor(() => expect(methods(fake)).toContain('folders.create'))
   })
+
+  test('名前を変えられる', async () => {
+    const work = folder('仕事')
+    const { fake } = setup({ folders: [work] })
+    await screen.findByRole('table')
+
+    const input = await screen.findByLabelText('「仕事」の新しい名前')
+    await userEvent.clear(input)
+    await userEvent.type(input, '私用')
+    await userEvent.click(screen.getByRole('button', { name: '「仕事」の名前を保存' }))
+
+    await waitFor(() => expect(methods(fake)).toContain('folders.update'))
+    expect(fake.calls.find((call) => call.method === 'folders.update')?.payload).toMatchObject({
+      id: work.id,
+      name: '私用',
+    })
+    // 絞り込みの選択肢も新しい名前になる
+    await waitFor(() =>
+      expect(screen.getByLabelText('フォルダで絞り込む').textContent).toContain('私用'),
+    )
+  })
+
+  test('名前を空にすると保存せず、理由を伝える', async () => {
+    const { fake } = setup({ folders: [folder('仕事')] })
+    await screen.findByRole('table')
+
+    await userEvent.clear(await screen.findByLabelText('「仕事」の新しい名前'))
+    await userEvent.click(screen.getByRole('button', { name: '「仕事」の名前を保存' }))
+
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('名前'))
+    expect(methods(fake)).not.toContain('folders.update')
+  })
+
+  /** 入れ物を捨てたら中身まで消えた、は取り返しがつかない。消す前に伝える。 */
+  test('削除の前に、中のコードがどうなるかを伝える。やめれば消えない', async () => {
+    const { fake } = setup({ folders: [folder('仕事')] })
+    await screen.findByRole('table')
+
+    await userEvent.click(await screen.findByRole('button', { name: '「仕事」を削除' }))
+    expect(screen.getByRole('heading', { name: 'フォルダを削除しますか？' })).toBeDefined()
+    expect(screen.getByText(/コードは削除されません/)).toBeDefined()
+
+    await userEvent.click(screen.getByRole('button', { name: 'フォルダを残す' }))
+    expect(methods(fake)).not.toContain('folders.delete')
+    expect(screen.getByLabelText('「仕事」の新しい名前')).toBeDefined()
+  })
+
+  test('確認して削除すると、フォルダの一覧からも絞り込みからも消える', async () => {
+    const { fake } = setup({ folders: [folder('仕事')] })
+    await screen.findByRole('table')
+
+    await userEvent.click(await screen.findByRole('button', { name: '「仕事」を削除' }))
+    await userEvent.click(screen.getByRole('button', { name: 'フォルダを削除する' }))
+
+    await waitFor(() => expect(methods(fake)).toContain('folders.delete'))
+    await waitFor(() => expect(screen.queryByRole('button', { name: '「仕事」を削除' })).toBeNull())
+    expect(screen.getByRole('status').textContent).toContain('コードは残っています')
+  })
+
+  test('絞り込みに使っていたフォルダを消したら、絞り込みを解いて読み直す', async () => {
+    const work = folder('仕事')
+    const { fake } = setup({ folders: [work] })
+    await screen.findByRole('table')
+
+    await userEvent.selectOptions(screen.getByLabelText('フォルダで絞り込む'), String(work.id))
+    await waitFor(() => expect(fake.calls.at(-1)?.payload).toMatchObject({ folderId: work.id }))
+
+    await userEvent.click(screen.getByRole('button', { name: '「仕事」を削除' }))
+    await userEvent.click(screen.getByRole('button', { name: 'フォルダを削除する' }))
+
+    await waitFor(() => expect(methods(fake)).toContain('folders.delete'))
+    await waitFor(() => expect(fake.calls.at(-1)?.method).toBe('codes.list'))
+    expect(fake.calls.at(-1)?.payload).toMatchObject({ folderId: undefined })
+  })
 })
 
 describe('失敗したとき', () => {

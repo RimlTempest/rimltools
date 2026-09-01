@@ -148,6 +148,22 @@ describe('保存', () => {
   })
 })
 
+describe('フォルダ', () => {
+  test('改名は id と新しい名前を送る', async () => {
+    const { sent, api } = recording({ id: folderId, name: '在庫ラベル', updated_at: 1_788_307_200 })
+    const renamed = await api.updateFolder({ id: folderId, name })
+    expect(sent[0]).toMatchObject({ method: 'folders.update', body: { id: folderId, name } })
+    expect(renamed.ok).toBe(true)
+  })
+
+  /** 入れ物を捨てても中身は捨てない（D1 は ON DELETE SET NULL）。 */
+  test('削除は id だけを送る', async () => {
+    const { sent, api } = recording({ id: folderId })
+    await api.deleteFolder(folderId)
+    expect(sent[0]).toMatchObject({ method: 'folders.delete', body: { id: folderId } })
+  })
+})
+
 describe('共有', () => {
   test('発行済みのトークンと期限を送る', async () => {
     const { sent, api } = recording({

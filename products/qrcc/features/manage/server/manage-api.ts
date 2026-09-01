@@ -121,6 +121,9 @@ export type ManageApi = {
     draft: FolderDraft,
     idempotencyKey?: string,
   ) => Promise<Result<void, ManageFailure>>
+  /** 改名。`FolderDraft` をそのまま送るので、名前は必ず検証済みの値になる。 */
+  readonly updateFolder: (draft: FolderDraft) => Promise<Result<void, ManageFailure>>
+  /** フォルダだけを消す。中のコードは残る（D1 の ON DELETE SET NULL）。 */
   readonly deleteFolder: (id: FolderId) => Promise<Result<void, ManageFailure>>
   readonly createShare: (
     draft: ShareDraft,
@@ -170,6 +173,7 @@ export const makeManageApi = (deps: ManageApiDeps): ManageApi => {
     listFolders: () => request('folders.list', {}, decodeFolderList),
     createFolder: (draft, idempotencyKey) =>
       request('folders.create', toFolderDraftWire(draft), acknowledged, withKey(idempotencyKey)),
+    updateFolder: (draft) => request('folders.update', toFolderDraftWire(draft), acknowledged),
     deleteFolder: (id) => request('folders.delete', { id }, acknowledged),
     createShare: (draft, idempotencyKey) =>
       request('shares.create', toShareDraftWire(draft), decodeShareLink, withKey(idempotencyKey)),

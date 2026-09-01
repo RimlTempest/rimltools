@@ -77,6 +77,8 @@ export const summaryOf = (code: SavedCode): CodeSummary => ({
   updatedAt: code.updatedAt,
 })
 
+const FIXTURE_NOW = new Date('2026-09-01T00:00:00.000Z')
+
 export const folder = (name: string): Folder => ({
   id: expectOk(newFolderId(() => new Uint8Array(15).fill(3))),
   name: expectOk(parseNonEmptyText(name)),
@@ -119,6 +121,9 @@ export const makeFakeApi = (initial: {
     shares: initial.shares ?? [],
   }
 
+  // フォルダは作る・改名する・消すが同じ画面で続くので、その場の記憶として持つ
+  const folders: Folder[] = [...(initial.folders ?? [])]
+
   const record = (method: string, payload: unknown) => calls.push({ method, payload })
 
   const api: ManageApi = {
@@ -144,14 +149,23 @@ export const makeFakeApi = (initial: {
     },
     listFolders: async () => {
       record('folders.list', undefined)
-      return answer(initial.folders ?? [])
+      return answer(folders)
     },
     createFolder: async (draft, idempotencyKey) => {
       record('folders.create', { draft, idempotencyKey })
+      folders.push({ id: draft.id, name: draft.name, updatedAt: FIXTURE_NOW })
+      return answer(undefined)
+    },
+    updateFolder: async (draft) => {
+      record('folders.update', draft)
+      const index = folders.findIndex((existing) => existing.id === draft.id)
+      if (index >= 0) folders[index] = { id: draft.id, name: draft.name, updatedAt: FIXTURE_NOW }
       return answer(undefined)
     },
     deleteFolder: async (id: FolderId) => {
       record('folders.delete', id)
+      const index = folders.findIndex((existing) => existing.id === id)
+      if (index >= 0) folders.splice(index, 1)
       return answer(undefined)
     },
     createShare: async (draft, idempotencyKey) => {

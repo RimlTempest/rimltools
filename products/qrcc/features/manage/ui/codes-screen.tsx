@@ -72,6 +72,9 @@ const SignedInCodes = ({
   const [folderId, setFolderId] = useState<FolderId | undefined>(undefined)
   const [form, setForm] = useState<CodeFormState>(NEW_CODE_FORM)
   const [folderName, setFolderName] = useState('')
+  /** 改名の途中の入力。フォルダ id ごとに覚える（保存するまで一覧には出さない）。 */
+  const [renames, setRenames] = useState<Readonly<Record<string, string>>>({})
+  const [pendingFolder, setPendingFolder] = useState<Folder | undefined>(undefined)
   const [message, setMessage] = useState<string | undefined>(undefined)
   const [busy, setBusy] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<CodeSummary | undefined>(undefined)
@@ -255,6 +258,52 @@ const SignedInCodes = ({
     applyFolders()
   }
 
+  const renameDraft = (target: Folder) => renames[target.id] ?? target.name
+
+  const renameFolder = async (target: Folder) => {
+    const name = parseNonEmptyText(renameDraft(target).trim())
+    if (!name.ok) {
+      setMessage('フォルダの名前を入力してください。')
+      return
+    }
+    setBusy(true)
+    const updated = await api.updateFolder({ id: target.id, name: name.value })
+    setBusy(false)
+    if (!updated.ok) {
+      setMessage(describeManageFailure(updated.error))
+      return
+    }
+    setRenames((current) => ({ ...current, [target.id]: name.value }))
+    setMessage(`フォルダの名前を「${name.value}」に変えました。`)
+    const applyFolders = await loadFolders()
+    applyFolders()
+  }
+
+  /**
+   * フォルダを消す。**中のコードは消えない**（D1 が `ON DELETE SET NULL`）。
+   * 何が起きるかは消す前にダイアログで伝え、消したあとも読み上げで念を押す。
+   */
+  const confirmDeleteFolder = async () => {
+    const target = pendingFolder
+    setPendingFolder(undefined)
+    if (target === undefined) return
+
+    setBusy(true)
+    const deleted = await api.deleteFolder(target.id)
+    setBusy(false)
+    if (!deleted.ok) {
+      setMessage(describeManageFailure(deleted.error))
+      return
+    }
+    // 消えたフォルダで絞り込んだままにしない（何も出ない一覧になる）
+    if (folderId === target.id) setFolderId(undefined)
+    setMessage(
+      `フォルダ「${target.name}」を削除しました。中のコードは残っています（フォルダ未設定）。`,
+    )
+    const applyFolders = await loadFolders()
+    applyFolders()
+  }
+
   const changeSort = (column: SortColumn) => setSort((current) => nextSortFor(column, current))
 
   return (
@@ -396,6 +445,42 @@ const SignedInCodes = ({
             フォルダを作る
           </Button>
         </form>
+
+        {folders.length === 0 ? (
+          <p>まだフォルダはありません。上の入力欄から作れます。</p>
+        ) : (
+          <ul className="qrcc-folder-list">
+            {folders.map((target) => (
+              <li key={target.id}>
+                {/* 1 フォルダ = 1 フォーム。Enter だけで改名まで届く */}
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    void renameFolder(target)
+                  }}
+                >
+                  <Field
+                    label={`「${target.name}」の新しい名前`}
+                    value={renameDraft(target)}
+                    onChange={(event) => {
+                      const value = event.target.value
+                      setRenames((current) => ({ ...current, [target.id]: value }))
+                    }}
+                  />
+                  <div className="qrcc-folder-list__actions">
+                    {/* どのフォルダの操作かをボタン名だけで分かるようにする */}
+                    <Button type="submit" variant="secondary" busy={busy}>
+                      「{target.name}」の名前を保存
+                    </Button>
+                    <Button variant="danger" busy={busy} onClick={() => setPendingFolder(target)}>
+                      「{target.name}」を削除
+                    </Button>
+                  </div>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section aria-labelledby="qrcc-manage-list">
@@ -476,6 +561,19 @@ const SignedInCodes = ({
         onConfirm={() => void confirmDelete()}
         onCancel={() => setPendingDelete(undefined)}
       />
+
+      {/* 取り消せない操作なので、何が残って何が消えるかを消す前に示す（AAA 3.3.6） */}
+      {pendingFolder === undefined ? undefined : (
+        <ConfirmDialog
+          open
+          title="フォルダを削除しますか？"
+          description={`「${pendingFolder.name}」を削除します。中のコードは削除されません。フォルダから外れて「フォルダ未設定」になるので、必要なら別のフォルダに入れ直してください。フォルダそのものは元に戻せません。`}
+          confirmLabel="フォルダを削除する"
+          cancelLabel="フォルダを残す"
+          onConfirm={() => void confirmDeleteFolder()}
+          onCancel={() => setPendingFolder(undefined)}
+        />
+      )}
     </>
   )
 }

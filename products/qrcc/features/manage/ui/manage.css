@@ -94,6 +94,41 @@
   max-inline-size: var(--qrcc-measure);
 }
 
+/*
+ * フォルダの改名と削除。1 件 = 1 フォーム で、操作はその場に置く。
+ * 幅が取れるときだけ入力とボタンを横に並べる（ページ幅ではなく自分の幅で決める）。
+ */
+.qrcc-folder-list {
+  display: grid;
+  gap: var(--qrcc-space-4);
+  margin-block-start: var(--qrcc-space-6);
+  padding: 0;
+  list-style: none;
+  container-type: inline-size;
+}
+
+.qrcc-folder-list > li {
+  padding: var(--qrcc-space-4);
+  border: 1px solid var(--qrcc-border);
+  border-radius: var(--qrcc-radius);
+  background: var(--qrcc-surface-raised);
+}
+
+.qrcc-folder-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qrcc-space-2);
+}
+
+@container (inline-size >= 40rem) {
+  .qrcc-folder-list > li > form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--qrcc-space-4);
+    align-items: end;
+  }
+}
+
 .qrcc-share-list {
   display: grid;
   gap: var(--qrcc-space-4);
@@ -149,6 +184,7 @@
 /* Windows ハイコントラストでも境界が消えないようにする */
 @media (forced-colors: active) {
   .qrcc-code-table :where(th, td),
+  .qrcc-folder-list > li,
   .qrcc-confirm-dialog {
     border-color: CanvasText;
   }
