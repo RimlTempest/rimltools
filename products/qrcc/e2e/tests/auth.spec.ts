@@ -18,7 +18,17 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag2aaa', 'wcag21a', 'wcag21aa', 'wcag
 /**
  * Google OAuth は本物の資格情報が要るのでここでは通せない。
  * 代わりに **ゲストログインの経路**と、画面のアクセシビリティを見る。
+ *
+ * ゲストログインはローカルの D1 を使う。マイグレーションが当たっていないと
+ * 何が悪いのか分からない失敗になるので、最初に確かめて案内する。
  */
+test.beforeAll(async ({ request }) => {
+  const response = await request.get('/api/auth/get-session')
+  expect(
+    response.ok(),
+    'ローカルの D1 が未準備です。`cd apps/web && bunx wrangler d1 migrations apply qrcc --local` を実行してください。',
+  ).toBe(true)
+})
 
 test('サインイン画面に axe の違反がない @a11y', async ({ page }) => {
   await page.goto('/sign-in')
