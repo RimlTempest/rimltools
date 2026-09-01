@@ -15,11 +15,11 @@
     {
       "binding": "DB",
       "database_name": "qrcc",
-      "database_id": "REPLACE_ME",
+      "database_id": "69c356fa-5d2f-4bfc-aa62-c528d1a73dcf",
       "migrations_dir": "../api/migrations",
     },
   ],
-  "kv_namespaces": [{ "binding": "CACHE", "id": "REPLACE_ME" }],
+  "kv_namespaces": [{ "binding": "CACHE", "id": "c198d02618bb42f6bbf5dab1a62b9f51" }],
   "r2_buckets": [{ "binding": "ARTIFACTS", "bucket_name": "qrcc-artifacts" }],
 
   "vars": { "APP_ORIGIN": "https://qrcc.riml4i.com" },
