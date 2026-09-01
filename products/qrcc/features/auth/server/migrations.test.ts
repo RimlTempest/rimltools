@@ -45,6 +45,12 @@ const insertUser = (db: Database, id: string, email: string, isAnonymous = 0) =>
     [id, 'テスト', email, isAnonymous],
   )
 
+const insertPromotion = (db: Database, from: string, to: string) =>
+  db.run(
+    'INSERT INTO account_promotion (from_user_id, to_user_id, moved_codes, moved_folders, completed_at) VALUES (?, ?, 0, 0, 0)',
+    [from, to],
+  )
+
 describe('D1 マイグレーション', () => {
   test('連番のファイル名で並ぶ', () => {
     const files = migrationFiles()
@@ -101,5 +107,27 @@ describe('D1 マイグレーション', () => {
       )
     insertAccount('a1')
     expect(() => insertAccount('a2')).toThrow()
+  })
+})
+
+describe('ゲスト → Google の移譲記録', () => {
+  test('同じゲストからの移譲は 1 度しか記録できない（冪等性の土台）', () => {
+    const db = applyMigrations()
+    insertUser(db, 'guest', 'guest@anonymous.placeholder.invalid', 1)
+    insertUser(db, 'google', 'me@example.com')
+    insertPromotion(db, 'guest', 'google')
+    // 2 回目の INSERT が主キー制約で落ちることが、二重移譲を止める最後の砦になる
+    expect(() => insertPromotion(db, 'guest', 'google')).toThrow()
+  })
+
+  test('ゲストのユーザー行が消えても移譲済みの記録は残る', () => {
+    const db = applyMigrations()
+    insertUser(db, 'guest', 'guest@anonymous.placeholder.invalid', 1)
+    insertUser(db, 'google', 'me@example.com')
+    insertPromotion(db, 'guest', 'google')
+    // Better Auth は連携後にゲストのユーザー行を消す。外部キーを張ると
+    // 記録まで一緒に消え、リトライで二重移譲が起きてしまう
+    db.run('DELETE FROM "user" WHERE id = ?', ['guest'])
+    expect(db.query('SELECT from_user_id FROM account_promotion').all()).toHaveLength(1)
   })
 })
