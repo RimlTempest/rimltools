@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test'
-import { decodeRenderResponse, describeRenderError, isPayloadCompatible } from './render.ts'
+import {
+  decodeRenderError,
+  decodeRenderResponse,
+  describeRenderError,
+  isPayloadCompatible,
+} from './render.ts'
 import { SYMBOLOGY_KINDS, SYMBOLOGY_META } from './symbology.ts'
 import { PAYLOAD_KINDS, PAYLOAD_META } from './payload.ts'
 
@@ -105,5 +110,32 @@ describe('payload と symbology の相性', () => {
   test('Code128 に Wi-Fi 設定は載せない', () => {
     expect(isPayloadCompatible('wifi', 'code128')).toBe(false)
     expect(isPayloadCompatible('url', 'code128')).toBe(true)
+  })
+})
+
+describe('render エラーのデコード', () => {
+  test('既知のエラーを読む', () => {
+    const decoded = decodeRenderError({
+      kind: 'payload_too_long',
+      symbology: 'QR',
+      max: 2953,
+      actual: 5000,
+    })
+    expect(decoded.ok).toBe(true)
+    if (decoded.ok && decoded.value.kind === 'payload_too_long') {
+      expect(decoded.value.actual).toBe(5000)
+    }
+  })
+
+  test('必須項目が欠けていれば拒否する', () => {
+    expect(decodeRenderError({ kind: 'payload_too_long', symbology: 'QR' }).ok).toBe(false)
+    expect(decodeRenderError({ kind: 'invalid_option', field: 'x' }).ok).toBe(false)
+    expect(decodeRenderError({ kind: 'incompatible_payload' }).ok).toBe(false)
+  })
+
+  /** 画面に出ないまま消えるのを防ぐ。 */
+  test('未知の kind は握りつぶさない', () => {
+    expect(decodeRenderError({ kind: 'wat' }).ok).toBe(false)
+    expect(decodeRenderError(null).ok).toBe(false)
   })
 })

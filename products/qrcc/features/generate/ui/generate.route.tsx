@@ -5,8 +5,10 @@ import { createServerFn } from '@tanstack/react-start'
 // （クライアント側ビルドでは vite.config.ts が外部化している）。
 import { env } from 'cloudflare:workers'
 import type { Result } from '@qrcc/contract'
+import { useSyncExternalStore } from 'react'
+import { canUseBrowserWasm, loadBrowserWasm, makeWasmRenderer } from '@qrcc/wasm'
 import type { RenderRequest, RenderResponse } from '../contract/index.ts'
-import { decodeRenderResponse } from '../contract/index.ts'
+import { decodeRenderError, decodeRenderResponse } from '../contract/index.ts'
 import type { RenderFailure } from './generate-screen.tsx'
 import { GenerateScreen } from './generate-screen.tsx'
 // TODO: api-client は全 feature が使う基盤なので shared/ へ移す（PR で相談）。
@@ -49,6 +51,37 @@ const renderOnServer = createServerFn({ method: 'POST' })
     }
   })
 
-const Generate = () => <GenerateScreen render={(request) => renderOnServer({ data: request })} />
+/**
+ * ブラウザ側の生成器。設定を触るたびに呼ばれるので、Workers の
+ * リクエスト無料枠を消費しないことが重要（ADR-0003 / free-tier-budget.md）。
+ */
+const browserRenderer = makeWasmRenderer(loadBrowserWasm)
+
+const renderInBrowser = async (
+  request: RenderRequest,
+): Promise<Result<RenderResponse, RenderFailure>> => {
+  const outcome = await browserRenderer.render(request, decodeRenderResponse, decodeRenderError)
+  // wasm が読めない・落ちている場合はサーバに肩代わりさせる
+  return outcome.ok ? outcome.value : renderOnServer({ data: request })
+}
+
+const neverChanges = () => () => {}
+
+const Generate = () => {
+  // wasm が使えるのはハイドレーション後だけ。SSR の出力と食い違わせない
+  const isHydrated = useSyncExternalStore(
+    neverChanges,
+    () => true,
+    () => false,
+  )
+  const inBrowser = isHydrated && canUseBrowserWasm()
+
+  return (
+    <GenerateScreen
+      render={inBrowser ? renderInBrowser : (request) => renderOnServer({ data: request })}
+      mode={inBrowser ? 'live' : 'manual'}
+    />
+  )
+}
 
 export const Route = createFileRoute('/generate')({ component: Generate })

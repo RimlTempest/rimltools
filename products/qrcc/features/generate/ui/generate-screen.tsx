@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import type { Result } from '@qrcc/contract'
 import { parseHexColor, parseHttpUrl, parseNonEmptyText } from '@qrcc/contract'
 import { Button, Field, LiveRegion } from '@qrcc/ui'
@@ -31,8 +31,17 @@ export type RenderFailure = RenderError | { readonly kind: 'unavailable'; readon
 /** 生成の実行方法。依存として受け取るのでテストではその場で答えを返せる。 */
 export type RenderFn = (request: RenderRequest) => Promise<Result<RenderResponse, RenderFailure>>
 
+/**
+ * `live`  … ブラウザ側の wasm で生成する。無料枠を消費しないので設定を触るたびに更新する
+ * `manual`… サーバに依頼する。毎回投げると無料枠を使い切るのでボタン操作にする
+ */
+export type GenerateMode = 'live' | 'manual'
+
 type GenerateScreenProps = {
   readonly render: RenderFn
+  readonly mode?: GenerateMode
+  /** ライブ更新の待ち時間（ms）。テストでは 0 にする。 */
+  readonly debounceMs?: number
 }
 
 type FormState = {
@@ -146,11 +155,18 @@ const buildRequest = (state: FormState): Result<RenderRequest, BuildError> => {
 /**
  * 生成画面。
  *
- * 生成はボタン操作で実行する。設定を触るたびにサーバへ投げると
- * 無料枠のリクエストを使い切ってしまうため（docs/free-tier-budget.md）。
- * ブラウザ側 wasm が入ったら（feat/wasm-bridge）即時プレビューに変える。
+ * 実行場所によって挙動を変える（docs/free-tier-budget.md）:
+ * ブラウザの wasm が使えるときは設定を触るたびに更新し、
+ * サーバに頼るときはボタン操作にしてリクエストを浪費しない。
+ *
+ * 読み上げ領域には**問題だけ**を出す。成功のたびに読み上げると、
+ * ライブ更新では常時しゃべり続けることになって使い物にならない。
  */
-export const GenerateScreen = ({ render }: GenerateScreenProps) => {
+export const GenerateScreen = ({
+  render,
+  mode = 'manual',
+  debounceMs = 300,
+}: GenerateScreenProps) => {
   const [state, setState] = useState<FormState>(INITIAL)
   const [result, setResult] = useState<RenderResponse | undefined>(undefined)
   const [message, setMessage] = useState<string | undefined>(undefined)
@@ -164,33 +180,51 @@ export const GenerateScreen = ({ render }: GenerateScreenProps) => {
   const meta = SYMBOLOGY_META[state.symbologyKind]
   const compatible = isPayloadCompatible(state.payloadKind, state.symbologyKind)
 
-  const submit = async () => {
-    const request = buildRequest(state)
-    if (!request.ok) {
+  /** `announce` が false なら、成功しても読み上げ領域を触らない。 */
+  const generate = useCallback(
+    async (announce: boolean) => {
+      const request = buildRequest(state)
+      if (!request.ok) {
+        setResult(undefined)
+        setMessage(`${request.error.field}: ${request.error.reason}`)
+        return
+      }
+      setBusy(true)
+      const outcome = await render(request.value)
+      setBusy(false)
+
+      if (outcome.ok) {
+        setResult(outcome.value)
+        const warnings = outcome.value.warnings.map(describeWarning)
+        if (warnings.length > 0) {
+          setMessage(warnings.join(' '))
+        } else if (announce) {
+          setMessage(`${meta.label}を生成しました。`)
+        } else {
+          setMessage(undefined)
+        }
+        return
+      }
+
       setResult(undefined)
-      setMessage(`${request.error.field}: ${request.error.reason}`)
-      return
-    }
-    setBusy(true)
-    const outcome = await render(request.value)
-    setBusy(false)
-    if (outcome.ok) {
-      setResult(outcome.value)
-      const warnings = outcome.value.warnings.map(describeWarning)
       setMessage(
-        warnings.length === 0
-          ? `${meta.label}を生成しました。`
-          : `${meta.label}を生成しました。${warnings.join(' ')}`,
+        outcome.error.kind === 'unavailable'
+          ? `生成できませんでした（${outcome.error.detail}）。しばらく待ってからもう一度お試しください。`
+          : describeRenderError(outcome.error),
       )
-      return
-    }
-    setResult(undefined)
-    setMessage(
-      outcome.error.kind === 'unavailable'
-        ? `生成できませんでした（${outcome.error.detail}）。しばらく待ってからもう一度お試しください。`
-        : describeRenderError(outcome.error),
-    )
-  }
+    },
+    [state, render, meta.label],
+  )
+
+  useEffect(() => {
+    if (mode !== 'live') return undefined
+    // 入力のたびに走らせず、手が止まってから 1 回だけ生成する。
+    // `generate` は設定が変わるたびに作り直されるので、待ち時間もそこで巻き戻る
+    const timer = setTimeout(() => {
+      void generate(false)
+    }, debounceMs)
+    return () => clearTimeout(timer)
+  }, [mode, debounceMs, generate])
 
   return (
     <>
@@ -203,7 +237,7 @@ export const GenerateScreen = ({ render }: GenerateScreenProps) => {
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          void submit()
+          void generate(true)
         }}
       >
         <fieldset>
@@ -359,18 +393,26 @@ export const GenerateScreen = ({ render }: GenerateScreenProps) => {
           )}
         </fieldset>
 
-        <Button type="submit" busy={busy}>
-          {busy ? '生成しています…' : '生成する'}
-        </Button>
+        {mode === 'manual' ? (
+          <Button type="submit" busy={busy}>
+            {busy ? '生成しています…' : '生成する'}
+          </Button>
+        ) : (
+          <p>設定を変えると、すぐ下のプレビューが更新されます。</p>
+        )}
       </form>
 
       <LiveRegion message={message} />
 
       <h2>生成したコード</h2>
       {result === undefined ? (
-        <p>まだ生成していません。設定を決めて「生成する」を押してください。</p>
+        <p>
+          {mode === 'manual'
+            ? 'まだ生成していません。設定を決めて「生成する」を押してください。'
+            : '設定を入力すると、ここにプレビューが出ます。'}
+        </p>
       ) : (
-        <CodePreview response={result} />
+        <CodePreview response={result} showDownloads={mode === 'live'} />
       )}
     </>
   )

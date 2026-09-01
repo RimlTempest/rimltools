@@ -109,6 +109,40 @@ export const decodeRenderResponse = (
   return ok({ body, content_type: contentType, description, width, height, warnings })
 }
 
+/**
+ * エンジンが返したエラーを読む。
+ * 未知の `kind` は握りつぶさず失敗にする（画面に出ないまま消えるのを防ぐ）。
+ */
+export const decodeRenderError = (
+  value: unknown,
+): Result<RenderError, { readonly detail: string }> => {
+  if (!isRecord(value)) return err({ detail: 'render error must be an object' })
+  const kind = readString(value, 'kind')
+  const symbology = readString(value, 'symbology')
+
+  if (kind === 'payload_too_long') {
+    const max = readNumber(value, 'max')
+    const actual = readNumber(value, 'actual')
+    return symbology === undefined || max === undefined || actual === undefined
+      ? err({ detail: 'payload_too_long requires symbology, max and actual' })
+      : ok({ kind, symbology, max, actual })
+  }
+  if (kind === 'incompatible_payload') {
+    const reason = readString(value, 'reason')
+    return symbology === undefined || reason === undefined
+      ? err({ detail: 'incompatible_payload requires symbology and reason' })
+      : ok({ kind, symbology, reason })
+  }
+  if (kind === 'invalid_option') {
+    const field = readString(value, 'field')
+    const reason = readString(value, 'reason')
+    return field === undefined || reason === undefined
+      ? err({ detail: 'invalid_option requires field and reason' })
+      : ok({ kind, field, reason })
+  }
+  return err({ detail: `unknown render error kind: ${String(kind)}` })
+}
+
 /** 画面に出す文言。エラーの `kind` ごとに、次にどうすればよいかを示す。 */
 export const describeRenderError = (error: RenderError): string => {
   switch (error.kind) {

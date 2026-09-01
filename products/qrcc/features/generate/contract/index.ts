@@ -7,7 +7,12 @@ export type {
   RenderResponse,
   RenderWarning,
 } from './render.ts'
-export { decodeRenderResponse, describeRenderError, isPayloadCompatible } from './render.ts'
+export {
+  decodeRenderError,
+  decodeRenderResponse,
+  describeRenderError,
+  isPayloadCompatible,
+} from './render.ts'
 export type { ModuleShape, Paint, RenderStyle } from './style.ts'
 export { MIN_READABLE_CONTRAST, MODULE_SHAPE_META } from './style.ts'
 export type {

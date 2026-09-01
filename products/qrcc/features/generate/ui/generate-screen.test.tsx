@@ -135,3 +135,49 @@ describe('GenerateScreen', () => {
     expect(screen.getByRole('alert').textContent).toContain('表せません')
   })
 })
+
+describe('GenerateScreen（ライブモード）', () => {
+  test('設定を触ると、ボタンなしで生成される', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} mode="live" debounceMs={0} />)
+    await waitFor(() => expect(requests.length).toBeGreaterThan(0))
+    expect(screen.queryByRole('button', { name: '生成する' })).toBeNull()
+  })
+
+  /** ライブ更新で毎回読み上げると、しゃべり続けて使い物にならない。 */
+  test('成功しても読み上げ領域を汚さない', async () => {
+    const { fn } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} mode="live" debounceMs={0} />)
+    await waitFor(() => expect(screen.getByText('URL: https://qrcc.riml4i.com')).toBeDefined())
+    // プレビュー側にも保存操作用の領域があるので、どれも汚れていないことを見る
+    for (const region of screen.getAllByRole('status')) {
+      expect(region.textContent).toBe('')
+    }
+  })
+
+  test('問題があるときだけ読み上げる', async () => {
+    const { fn } = recording({
+      ok: true,
+      value: response({ warnings: [{ kind: 'low_contrast', ratio: 1.26, minimum: 3 }] }),
+    })
+    render(<GenerateScreen render={fn} mode="live" debounceMs={0} />)
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('status')
+          .some((region) => region.textContent?.includes('コントラスト')),
+      ).toBe(true),
+    )
+  })
+
+  test('連続した入力では最後の 1 回だけ生成する', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} mode="live" debounceMs={50} />)
+    const scale = screen.getByLabelText('1 モジュールの大きさ')
+    await userEvent.clear(scale)
+    await userEvent.type(scale, '12')
+    await waitFor(() => expect(requests.length).toBeGreaterThan(0))
+    // 初回 + 入力が落ち着いてからの 1 回。文字数ぶん走らない
+    expect(requests.length).toBeLessThanOrEqual(3)
+  })
+})
