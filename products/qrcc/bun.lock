@@ -24,6 +24,7 @@
       "dependencies": {
         "@qrcc/contract": "workspace:*",
         "@qrcc/generate": "workspace:*",
+        "@qrcc/print": "workspace:*",
         "@qrcc/shell": "workspace:*",
         "@qrcc/ui": "workspace:*",
         "@qrcc/wasm": "workspace:*",
@@ -84,7 +85,10 @@
       "version": "0.1.0",
       "dependencies": {
         "@qrcc/contract": "workspace:*",
+        "@qrcc/generate": "workspace:*",
         "@qrcc/ui": "workspace:*",
+        "@qrcc/wasm": "workspace:*",
+        "@tanstack/react-router": "1.170.32",
       },
     },
     "features/scan": {

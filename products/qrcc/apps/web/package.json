@@ -18,6 +18,7 @@
   "dependencies": {
     "@qrcc/contract": "workspace:*",
     "@qrcc/generate": "workspace:*",
+    "@qrcc/print": "workspace:*",
     "@qrcc/shell": "workspace:*",
     "@qrcc/ui": "workspace:*",
     "@qrcc/wasm": "workspace:*",
