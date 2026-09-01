@@ -81,8 +81,12 @@
       "name": "@qrcc/manage",
       "version": "0.1.0",
       "dependencies": {
+        "@qrcc/auth": "workspace:*",
         "@qrcc/contract": "workspace:*",
+        "@qrcc/generate": "workspace:*",
         "@qrcc/ui": "workspace:*",
+        "@tanstack/react-router": "1.170.32",
+        "@tanstack/react-start": "1.168.49",
       },
     },
     "features/print": {
