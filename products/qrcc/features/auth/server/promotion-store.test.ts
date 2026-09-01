@@ -33,16 +33,22 @@ const sqliteRunner = (db: Database): SqlRunner => ({
 
 /**
  * `code` / `folder` は feat/manage が作るテーブル。
- * ここでは移譲対象として最小限の形だけを用意する。
+ * マイグレーションで実物ができているので、そこに移譲対象の行だけを入れる
+ * （偽のテーブルを作ると、列名がずれても気づけない）。
  */
 const withOwnedTables = (db: Database, owner: UserId, codes: number, folders: number) => {
-  db.exec('CREATE TABLE code (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL)')
-  db.exec('CREATE TABLE folder (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL)')
   for (let index = 0; index < codes; index += 1) {
-    db.run('INSERT INTO code (id, owner_id) VALUES (?, ?)', [`cd_${index}`, owner])
+    db.run(
+      'INSERT INTO code (id, owner_id, name, kind, payload, symbology, style, created_at, updated_at)'
+        + " VALUES (?, ?, 'テスト', 'qr', '{}', '{}', '{}', 0, 0)",
+      [`cd_${index}`, owner],
+    )
   }
   for (let index = 0; index < folders; index += 1) {
-    db.run('INSERT INTO folder (id, owner_id) VALUES (?, ?)', [`fld_${index}`, owner])
+    db.run(
+      'INSERT INTO folder (id, owner_id, name, created_at, updated_at) VALUES (?, ?, ?, 0, 0)',
+      [`fld_${index}`, owner, 'テスト'],
+    )
   }
 }
 
