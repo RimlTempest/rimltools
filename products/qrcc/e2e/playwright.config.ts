@@ -45,7 +45,14 @@ export default defineConfig({
   webServer: {
     // api(Rust) → web の順にビルドしてから preview する。
     // apps/api/build と apps/web/dist は git 管理外なので、必ずここで作る。
-    command: `bun run --cwd ../ build && bun run --filter @qrcc/web preview -- --port ${PORT} --strictPort`,
+    //
+    // ローカル D1 のマイグレーションもここで当てる。認証はこれが無いと 500 になり、
+    // 「CI では落ちるが手元では通る」という一番たちの悪い差が生まれる。
+    command: [
+      'bun run --cwd ../ build',
+      'bun run --filter @qrcc/web db:local',
+      `bun run --filter @qrcc/web preview -- --port ${PORT} --strictPort`,
+    ].join(' && '),
     stdout: 'pipe',
     stderr: 'pipe',
     url: baseURL,

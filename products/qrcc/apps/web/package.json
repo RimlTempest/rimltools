@@ -13,7 +13,8 @@
     "test": "bun test",
     "e2e": "playwright test",
     "a11y": "playwright test --grep @a11y",
-    "typecheck": "bun run gen && tsc --build"
+    "typecheck": "bun run gen && tsc --build",
+    "db:local": "wrangler d1 migrations apply qrcc --local"
   },
   "dependencies": {
     "@qrcc/auth": "workspace:*",
