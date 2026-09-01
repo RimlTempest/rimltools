@@ -6,5 +6,6 @@
  * ここからは公開しない（ADR-0007）。
  */
 export { LabelSheetPreview } from './label-sheet.tsx'
+export { PrintPreview } from './print-preview.tsx'
 export type { PrintRenderFailure, PrintRenderFn } from './print-screen.tsx'
 export { PrintScreen } from './print-screen.tsx'

@@ -4,7 +4,13 @@ import { parseHexColor } from '@qrcc/contract'
 import { Button, Field, LiveRegion } from '@qrcc/ui'
 import type { RenderError, RenderRequest, RenderResponse } from '@qrcc/generate/contract'
 import { describeRenderError } from '@qrcc/generate/contract'
-import type { Caption, CaptionKind, LabelSheetId, PrintItem } from '../contract/index.ts'
+import type {
+  Caption,
+  CaptionKind,
+  ImposedPage,
+  LabelSheetId,
+  PrintItem,
+} from '../contract/index.ts'
 import {
   CAPTION_KINDS,
   CAPTION_META,
@@ -14,7 +20,7 @@ import {
   isLabelSheetId,
 } from '../contract/index.ts'
 import { LABEL_SHEETS, cellsPerSheet, imposeLabels, parseItemLines } from '../core/index.ts'
-import { LabelSheetPreview } from './label-sheet.tsx'
+import { PrintPreview } from './print-preview.tsx'
 
 export type PrintRenderFailure =
   | RenderError
@@ -123,6 +129,9 @@ const withKeys = (items: readonly PrintItem[]): readonly { key: string; item: Pr
 const describeItem = (item: PrintItem): string =>
   item.name === '' ? item.content : `${item.name}（内容: ${item.content}）`
 
+/** 面付けできないときのページ一覧。毎回 [] を作ると再描画の理由になる。 */
+const NO_PAGES: readonly ImposedPage[] = []
+
 const browserPrint = () => {
   if (typeof globalThis.print === 'function') globalThis.print()
 }
@@ -156,7 +165,7 @@ export const PrintScreen = ({
   const caption = buildCaption(state.captionKind, state.captionText)
   const imposition = imposeLabels({ sheet, items, startCell: state.startCell })
   const problem = imposition.ok ? undefined : describeImpositionError(imposition.error)
-  const pages = imposition.ok ? imposition.value : []
+  const pages = imposition.ok ? imposition.value : NO_PAGES
   const labelCount = pages.reduce((total, page) => total + page.usedCells, 0)
 
   /** 同じ内容は 1 度だけ生成し、コピーは同じ SVG を使い回す。 */
@@ -339,21 +348,14 @@ export const PrintScreen = ({
         )}
       </section>
 
-      <section aria-labelledby="qrcc-print-preview">
-        <h2 className="qrcc-no-print" id="qrcc-print-preview">
-          印刷プレビュー
-        </h2>
-        <div className="qrcc-print-preview">
-          {pages.map((page) => (
-            <section key={page.pageNumber}>
-              <h3 className="qrcc-no-print">
-                {page.pageNumber} 枚目の台紙（{perSheet} 面中 {page.usedCells} 面を使用）
-              </h3>
-              <LabelSheetPreview sheet={sheet} page={page} caption={caption} symbols={symbols} />
-            </section>
-          ))}
-        </div>
-      </section>
+      <PrintPreview
+        sheet={sheet}
+        pages={pages}
+        caption={caption}
+        symbols={symbols}
+        cellsPerSheet={perSheet}
+        headingId="qrcc-print-preview"
+      />
     </>
   )
 }
