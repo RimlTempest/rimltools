@@ -20,6 +20,24 @@
   margin: 0;
 }
 
+/*
+ * <select> は最も長い選択肢の幅まで広がり、fieldset の既定
+ * （min-inline-size: min-content）がそれを押し返せない。狭い画面で
+ * ページごと横に伸びないよう、幅の下限を外す（1.4.10 / 320px 幅）。
+ */
+.qrcc-print-form fieldset {
+  min-inline-size: 0;
+}
+
+.qrcc-print-form .qrcc-field {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.qrcc-print-form select.qrcc-field__control {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
 .qrcc-print-preview {
   /* 台紙は物理寸法（210mm ≒ 794px）なので狭い画面でははみ出す。
      ページ全体を横スクロールさせず、この中だけでスクロールする（1.4.10） */
@@ -56,6 +74,12 @@
 
 .qrcc-print-cell {
   display: grid;
+  /*
+   * 読み上げ用の位置説明（.qrcc-visually-hidden）は絶対配置。基準になる
+   * 要素がないと初期包含ブロックに逃げ、プレビューの横スクロール領域から
+   * はみ出してページ全体が横に伸びる（1.4.10）。
+   */
+  position: relative;
   /* コードは伸縮し、キャプションは必要なぶんだけ */
   grid-template-rows: 1fr auto;
   justify-items: center;

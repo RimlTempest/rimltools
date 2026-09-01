@@ -214,7 +214,7 @@ export const PrintScreen = ({
         入力した内容がサーバに送られることはありません。
       </p>
 
-      <form className="qrcc-no-print" onSubmit={(event) => event.preventDefault()}>
+      <form className="qrcc-print-form qrcc-no-print" onSubmit={(event) => event.preventDefault()}>
         <fieldset>
           <legend>台紙と配置</legend>
 
