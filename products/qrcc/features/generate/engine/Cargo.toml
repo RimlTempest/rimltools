@@ -13,5 +13,8 @@ thiserror.workspace = true
 qrcode.workspace = true
 barcoders.workspace = true
 
+[dev-dependencies]
+serde_json.workspace = true
+
 [lints]
 workspace = true

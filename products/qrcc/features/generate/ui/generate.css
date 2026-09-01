@@ -1,0 +1,57 @@
+.qrcc-code-preview {
+  display: grid;
+  gap: var(--qrcc-space-4);
+  margin: 0;
+  padding: var(--qrcc-space-4);
+  background: var(--qrcc-surface-raised);
+  border: 1px solid var(--qrcc-border);
+  border-radius: var(--qrcc-radius);
+  /* 内容に応じて 1 段組と 2 段組を切り替える。ページ幅ではなく自分の幅で決める */
+  container-type: inline-size;
+}
+
+@container (inline-size >= 32rem) {
+  .qrcc-code-preview {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+  }
+}
+
+.qrcc-code-preview__image svg {
+  /* 生成物は等倍で見せる。小さすぎる場合でも拡大でぼやけない（SVG） */
+  block-size: auto;
+  max-inline-size: min(100%, 20rem);
+}
+
+.qrcc-code-preview figcaption p {
+  margin-block-end: var(--qrcc-space-2);
+}
+
+form fieldset {
+  margin-block-end: var(--qrcc-space-6);
+  border: 1px solid var(--qrcc-border);
+  border-radius: var(--qrcc-radius);
+  padding: var(--qrcc-space-4);
+}
+
+form legend {
+  font-weight: 700;
+  padding-inline: var(--qrcc-space-2);
+}
+
+form fieldset label:has(input[type='radio'], input[type='checkbox']) {
+  display: flex;
+  align-items: center;
+  gap: var(--qrcc-space-2);
+  /* AAA 2.5.5: ラベル全体を当たり判定にする */
+  min-block-size: var(--qrcc-target-min);
+  cursor: pointer;
+}
+
+form input[type='color'] {
+  /* 色見本は小さくなりがちなので、対象サイズを明示的に確保する */
+  inline-size: 100%;
+  max-inline-size: 8rem;
+  min-block-size: var(--qrcc-target-min);
+  padding: var(--qrcc-space-1);
+}
