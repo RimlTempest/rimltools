@@ -123,7 +123,16 @@
 @container (inline-size >= 40rem) {
   .qrcc-folder-list > li > form {
     display: grid;
-    grid-template-columns: 1fr auto;
+    /*
+     * ボタンのラベルにフォルダ名が入るので、操作列の幅は名前の長さ次第で
+     * いくらでも伸びる。`auto` に任せると操作列が幅を総取りし、入力欄が
+     * 数十 px まで潰れて改名できなくなる（実測 42px。名前によっては 16px
+     * まで落ち、axe の target-size にも引っかかった）。
+     *
+     * 入力欄に下限を与え、操作列は 0 まで縮められるようにする。
+     * ボタンのラベルは折り返せるので、縮んでも読めなくならない。
+     */
+    grid-template-columns: minmax(14rem, 1fr) minmax(0, auto);
     gap: var(--qrcc-space-4);
     align-items: end;
   }

@@ -369,6 +369,25 @@ test('一覧の操作が 44x44 CSS px 以上ある @a11y', async ({ page }) => {
   }
 })
 
+/**
+ * 操作ボタンのラベルにはフォルダ名が入るので、名前が長いほど操作列が広くなる。
+ * 幅の配分を操作列任せにすると入力欄が数十 px まで潰れ、改名できなくなる。
+ */
+test('フォルダ名が長くても、改名の入力欄が潰れない @a11y', async ({ page }) => {
+  await signInAsGuest(page)
+  await openCodes(page)
+
+  const folderName = uniqueName('とても長い名前のフォルダで幅を奪う')
+  await page.getByLabel('新しいフォルダの名前').fill(folderName)
+  await page.getByRole('button', { name: 'フォルダを作る' }).click()
+
+  const input = page.getByLabel(`「${folderName}」の新しい名前`)
+  await expect(input).toBeVisible(SLOW)
+  const box = await input.boundingBox()
+  // 目安は 14rem（= 224px）。下回るなら操作列に幅を取られている。
+  expect(box?.width ?? 0).toBeGreaterThanOrEqual(224)
+})
+
 test('320px 幅でも横スクロールが出ない @a11y', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 })
   await signInAsGuest(page)
