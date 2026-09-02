@@ -245,186 +245,194 @@ export const GenerateScreen = ({
         画像を読み取れない場合でも確認できます。
       </p>
 
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          void generate(true)
-        }}
-      >
-        <fieldset>
-          <legend>入れる内容</legend>
-          <div role="radiogroup" aria-label="内容の種類">
-            {PAYLOAD_KINDS.map((kind) => (
-              <label key={kind}>
-                <input
-                  type="radio"
-                  name={payloadGroup}
-                  value={kind}
-                  checked={state.payloadKind === kind}
-                  onChange={() => update('payloadKind', kind)}
-                />
-                {PAYLOAD_META[kind].label}
-              </label>
-            ))}
-          </div>
-          <p>{PAYLOAD_META[state.payloadKind].description}</p>
-
-          {state.payloadKind === 'text' ? (
-            <Field
-              control="textarea"
-              label="内容"
-              hint="読み取ったときにそのまま表示される文字列です。"
-              value={state.text}
-              onChange={(event) => update('text', event.target.value)}
-            />
-          ) : undefined}
-          {state.payloadKind === 'url' ? (
-            <Field
-              label="リンク先の URL"
-              type="url"
-              inputMode="url"
-              hint="http:// または https:// から始めてください。"
-              placeholder={SYMBOLOGY_META.qr.example}
-              value={state.url}
-              onChange={(event) => update('url', event.target.value)}
-            />
-          ) : undefined}
-          {state.payloadKind === 'wifi' ? (
-            <>
-              <Field
-                label="ネットワーク名"
-                hint="Wi-Fi の SSID です。"
-                value={state.ssid}
-                onChange={(event) => update('ssid', event.target.value)}
-              />
-              <Field
-                label="パスワード"
-                type="password"
-                hint="空のままにすると、パスワードなしのネットワークとして扱います。"
-                value={state.password}
-                onChange={(event) => update('password', event.target.value)}
-              />
-              <label>
-                <input
-                  type="checkbox"
-                  checked={state.hidden}
-                  onChange={(event) => update('hidden', event.target.checked)}
-                />
-                ステルス（SSID を公開していない）ネットワーク
-              </label>
-            </>
-          ) : undefined}
-        </fieldset>
-
-        <fieldset>
-          <legend>コードの種類</legend>
-          <div role="radiogroup" aria-label="コードの種類">
-            {SYMBOLOGY_KINDS.map((kind) => (
-              <label key={kind}>
-                <input
-                  type="radio"
-                  name={symbologyGroup}
-                  value={kind}
-                  checked={state.symbologyKind === kind}
-                  onChange={() => update('symbologyKind', kind)}
-                />
-                {SYMBOLOGY_META[kind].label}
-              </label>
-            ))}
-          </div>
-          <p>{meta.description}</p>
-          {compatible ? undefined : (
-            <p role="alert">
-              {PAYLOAD_META[state.payloadKind].label}は{meta.label}
-              で表せません。内容かコードの種類を変えてください。
+      {/*
+       * プレビューは**フォームより前**に置く。設定は下に長く続くので、
+       * 後ろに置くと変えるたびにフォームを越えてスクロールすることになる。
+       * 広い画面では CSS が横に並べ替えて貼り付かせる（読み上げ順は変えない）。
+       */}
+      <div className="qrcc-generate__layout">
+        <div className="qrcc-generate__preview">
+          <Section>生成したコード</Section>
+          {result === undefined ? (
+            <p>
+              {mode === 'manual'
+                ? 'まだ生成していません。設定を決めて「生成する」を押してください。'
+                : '設定を入力すると、ここにプレビューが出ます。'}
             </p>
+          ) : (
+            <CodePreview response={result} showDownloads={mode === 'live'} />
           )}
+          <LiveRegion message={message} />
+        </div>
 
-          {state.symbologyKind === 'qr' ? (
-            <fieldset>
-              <legend>誤り訂正レベル</legend>
-              <p>強いほど汚れや欠けに強くなりますが、コードは大きくなります。</p>
-              {(['L', 'M', 'Q', 'H'] as const).map((level) => (
-                <label key={level}>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            void generate(true)
+          }}
+        >
+          <fieldset>
+            <legend>入れる内容</legend>
+            <div role="radiogroup" aria-label="内容の種類">
+              {PAYLOAD_KINDS.map((kind) => (
+                <label key={kind}>
                   <input
                     type="radio"
-                    name={`${symbologyGroup}-ec`}
-                    value={level}
-                    checked={state.qrEc === level}
-                    onChange={() => update('qrEc', level)}
+                    name={payloadGroup}
+                    value={kind}
+                    checked={state.payloadKind === kind}
+                    onChange={() => update('payloadKind', kind)}
                   />
-                  {QR_ERROR_CORRECTION_META[level].label}（
-                  {QR_ERROR_CORRECTION_META[level].recovery}）
+                  {PAYLOAD_META[kind].label}
                 </label>
               ))}
-            </fieldset>
-          ) : undefined}
-        </fieldset>
+            </div>
+            <p>{PAYLOAD_META[state.payloadKind].description}</p>
 
-        <fieldset>
-          <legend>見た目</legend>
-          <Field
-            label="前景色"
-            type="color"
-            hint="コード本体の色です。背景とのコントラストが低いと読み取りにくくなります。"
-            value={state.foreground}
-            onChange={(event) => update('foreground', event.target.value)}
-          />
-          <Field
-            label="背景色"
-            type="color"
-            value={state.background}
-            onChange={(event) => update('background', event.target.value)}
-          />
-          <Field
-            label="1 モジュールの大きさ"
-            type="number"
-            min={1}
-            max={40}
-            hint="単位はピクセルです。印刷用途では大きめにしてください。"
-            value={state.scale}
-            onChange={(event) => update('scale', Number(event.target.value))}
-          />
-          {meta.oneDimensional ? undefined : (
-            <fieldset>
-              <legend>モジュールの形</legend>
-              {(['square', 'dot', 'rounded'] as const).map((shape) => (
-                <label key={shape}>
+            {state.payloadKind === 'text' ? (
+              <Field
+                control="textarea"
+                label="内容"
+                hint="読み取ったときにそのまま表示される文字列です。"
+                value={state.text}
+                onChange={(event) => update('text', event.target.value)}
+              />
+            ) : undefined}
+            {state.payloadKind === 'url' ? (
+              <Field
+                label="リンク先の URL"
+                type="url"
+                inputMode="url"
+                hint="http:// または https:// から始めてください。"
+                placeholder={SYMBOLOGY_META.qr.example}
+                value={state.url}
+                onChange={(event) => update('url', event.target.value)}
+              />
+            ) : undefined}
+            {state.payloadKind === 'wifi' ? (
+              <>
+                <Field
+                  label="ネットワーク名"
+                  hint="Wi-Fi の SSID です。"
+                  value={state.ssid}
+                  onChange={(event) => update('ssid', event.target.value)}
+                />
+                <Field
+                  label="パスワード"
+                  type="password"
+                  hint="空のままにすると、パスワードなしのネットワークとして扱います。"
+                  value={state.password}
+                  onChange={(event) => update('password', event.target.value)}
+                />
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={state.hidden}
+                    onChange={(event) => update('hidden', event.target.checked)}
+                  />
+                  ステルス（SSID を公開していない）ネットワーク
+                </label>
+              </>
+            ) : undefined}
+          </fieldset>
+
+          <fieldset>
+            <legend>コードの種類</legend>
+            <div role="radiogroup" aria-label="コードの種類">
+              {SYMBOLOGY_KINDS.map((kind) => (
+                <label key={kind}>
                   <input
                     type="radio"
-                    name={`${symbologyGroup}-shape`}
-                    value={shape}
-                    checked={state.moduleShape === shape}
-                    onChange={() => update('moduleShape', shape)}
+                    name={symbologyGroup}
+                    value={kind}
+                    checked={state.symbologyKind === kind}
+                    onChange={() => update('symbologyKind', kind)}
                   />
-                  {MODULE_SHAPE_META[shape].label}
+                  {SYMBOLOGY_META[kind].label}
                 </label>
               ))}
-            </fieldset>
+            </div>
+            <p>{meta.description}</p>
+            {compatible ? undefined : (
+              <p role="alert">
+                {PAYLOAD_META[state.payloadKind].label}は{meta.label}
+                で表せません。内容かコードの種類を変えてください。
+              </p>
+            )}
+
+            {state.symbologyKind === 'qr' ? (
+              <fieldset>
+                <legend>誤り訂正レベル</legend>
+                <p>強いほど汚れや欠けに強くなりますが、コードは大きくなります。</p>
+                {(['L', 'M', 'Q', 'H'] as const).map((level) => (
+                  <label key={level}>
+                    <input
+                      type="radio"
+                      name={`${symbologyGroup}-ec`}
+                      value={level}
+                      checked={state.qrEc === level}
+                      onChange={() => update('qrEc', level)}
+                    />
+                    {QR_ERROR_CORRECTION_META[level].label}（
+                    {QR_ERROR_CORRECTION_META[level].recovery}）
+                  </label>
+                ))}
+              </fieldset>
+            ) : undefined}
+          </fieldset>
+
+          <fieldset>
+            <legend>見た目</legend>
+            <Field
+              label="前景色"
+              type="color"
+              hint="コード本体の色です。背景とのコントラストが低いと読み取りにくくなります。"
+              value={state.foreground}
+              onChange={(event) => update('foreground', event.target.value)}
+            />
+            <Field
+              label="背景色"
+              type="color"
+              value={state.background}
+              onChange={(event) => update('background', event.target.value)}
+            />
+            <Field
+              label="1 モジュールの大きさ"
+              type="number"
+              min={1}
+              max={40}
+              hint="単位はピクセルです。印刷用途では大きめにしてください。"
+              value={state.scale}
+              onChange={(event) => update('scale', Number(event.target.value))}
+            />
+            {meta.oneDimensional ? undefined : (
+              <fieldset>
+                <legend>モジュールの形</legend>
+                {(['square', 'dot', 'rounded'] as const).map((shape) => (
+                  <label key={shape}>
+                    <input
+                      type="radio"
+                      name={`${symbologyGroup}-shape`}
+                      value={shape}
+                      checked={state.moduleShape === shape}
+                      onChange={() => update('moduleShape', shape)}
+                    />
+                    {MODULE_SHAPE_META[shape].label}
+                  </label>
+                ))}
+              </fieldset>
+            )}
+          </fieldset>
+
+          {mode === 'manual' ? (
+            <Button type="submit" busy={busy}>
+              {busy ? '生成しています…' : '生成する'}
+            </Button>
+          ) : (
+            <p>設定を変えると、プレビューがその場で更新されます。</p>
           )}
-        </fieldset>
-
-        {mode === 'manual' ? (
-          <Button type="submit" busy={busy}>
-            {busy ? '生成しています…' : '生成する'}
-          </Button>
-        ) : (
-          <p>設定を変えると、すぐ下のプレビューが更新されます。</p>
-        )}
-      </form>
-
-      <LiveRegion message={message} />
-
-      <Section>生成したコード</Section>
-      {result === undefined ? (
-        <p>
-          {mode === 'manual'
-            ? 'まだ生成していません。設定を決めて「生成する」を押してください。'
-            : '設定を入力すると、ここにプレビューが出ます。'}
-        </p>
-      ) : (
-        <CodePreview response={result} showDownloads={mode === 'live'} />
-      )}
+        </form>
+      </div>
     </>
   )
 }

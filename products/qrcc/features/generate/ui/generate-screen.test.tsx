@@ -8,6 +8,12 @@ import { GenerateScreen } from './generate-screen.tsx'
 
 afterEach(cleanup)
 
+/** `later` が `earlier` より後ろにあるか。前後どちらでもない場合は false。 */
+const isFollowedBy = (earlier: Element | null, later: Element | null): boolean => {
+  if (earlier === null || later === null) return false
+  return (earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+}
+
 const response = (over: Partial<RenderResponse> = {}): RenderResponse => ({
   body: '<svg role="img" aria-label="URL"><title>URL</title></svg>',
   content_type: 'image/svg+xml',
@@ -44,6 +50,30 @@ describe('GenerateScreen', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'コードを作る' })).toBeDefined()
     expect(screen.getByRole('heading', { level: 3, name: '生成したコード' })).toBeDefined()
     expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
+  })
+
+  /**
+   * 設定を触りながら結果を見たいので、プレビューはフォームより**前**に置く。
+   * 後ろだと、設定を変えるたびに長いフォームを越えてスクロールすることになる。
+   */
+  test('プレビューがフォームより前にある', async () => {
+    const { fn } = recording({ ok: true, value: response() })
+    const { container } = render(<GenerateScreen render={fn} mode="live" debounceMs={0} />)
+    await waitFor(() => expect(container.querySelector('.qrcc-code-preview')).not.toBeNull())
+    const preview = container.querySelector('.qrcc-code-preview')
+    const form = container.querySelector('form')
+    expect(preview).not.toBeNull()
+    expect(form).not.toBeNull()
+    expect(isFollowedBy(preview, form)).toBe(true)
+  })
+
+  test('見出し「生成したコード」もフォームより前にある', () => {
+    const { fn } = recording({ ok: true, value: response() })
+    const { container } = render(<GenerateScreen render={fn} />)
+    const heading = screen.getByRole('heading', { name: '生成したコード' })
+    const form = container.querySelector('form')
+    expect(form).not.toBeNull()
+    expect(isFollowedBy(heading, form)).toBe(true)
   })
 
   test('主要な設定がラベルで取得できる', () => {
