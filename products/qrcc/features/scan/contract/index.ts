@@ -21,3 +21,4 @@ export {
   fromBarcodeDetectorFormat,
   isScanSymbology,
 } from './symbology.ts'
+export type { ContactFields, Gs1Element, Interpretation } from './interpretation.ts'
