@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useId, useState } from 'react'
 import type { Result } from '@qrcc/contract'
 import { parseHexColor, parseHttpUrl, parseNonEmptyText } from '@qrcc/contract'
+import { buildEmailPayload } from '../core/payload/email.ts'
+import { buildEventPayload } from '../core/payload/event.ts'
+import { buildGeoPayload } from '../core/payload/geo.ts'
+import { buildSmsPayload } from '../core/payload/sms.ts'
+import { buildTelPayload } from '../core/payload/tel.ts'
+import { buildVCardPayload } from '../core/payload/vcard.ts'
 import { Button, Field, LiveRegion } from '@qrcc/ui'
 import type {
   CodePayload,
@@ -55,6 +61,23 @@ type FormState = {
   readonly payloadKind: PayloadKind
   readonly text: string
   readonly url: string
+  readonly tel: string
+  readonly emailTo: string
+  readonly emailSubject: string
+  readonly emailBody: string
+  readonly smsNumber: string
+  readonly smsBody: string
+  readonly lat: string
+  readonly lon: string
+  readonly eventSubject: string
+  readonly eventStart: string
+  readonly eventEnd: string
+  readonly eventLocation: string
+  readonly vcardName: string
+  readonly vcardOrganization: string
+  readonly vcardTel: string
+  readonly vcardEmail: string
+  readonly vcardUrl: string
   readonly ssid: string
   readonly password: string
   readonly hidden: boolean
@@ -70,6 +93,23 @@ const INITIAL: FormState = {
   payloadKind: 'url',
   text: '',
   url: 'https://qrcc.riml4i.com',
+  tel: '',
+  emailTo: '',
+  emailSubject: '',
+  emailBody: '',
+  smsNumber: '',
+  smsBody: '',
+  lat: '',
+  lon: '',
+  eventSubject: '',
+  eventStart: '',
+  eventEnd: '',
+  eventLocation: '',
+  vcardName: '',
+  vcardOrganization: '',
+  vcardTel: '',
+  vcardEmail: '',
+  vcardUrl: '',
   ssid: '',
   password: '',
   hidden: false,
@@ -102,6 +142,112 @@ const buildPayload = (state: FormState): Result<CodePayload, BuildError> => {
             ok: false,
             error: { field: 'URL', reason: 'http:// か https:// で始まる URL を入力してください' },
           }
+    }
+    case 'tel': {
+      const tel = buildTelPayload(state.tel)
+      return tel.ok
+        ? tel
+        : {
+            ok: false,
+            error: {
+              field: '電話番号',
+              reason: '国番号から始まる電話番号を入力してください（例: +819012345678）',
+            },
+          }
+    }
+    case 'email': {
+      const email = buildEmailPayload({
+        to: state.emailTo,
+        subject: state.emailSubject,
+        body: state.emailBody,
+      })
+      return email.ok
+        ? email
+        : {
+            ok: false,
+            error: {
+              field: '宛先メールアドレス',
+              reason: '正しいメールアドレスを入力してください',
+            },
+          }
+    }
+    case 'sms': {
+      const sms = buildSmsPayload({ number: state.smsNumber, body: state.smsBody })
+      return sms.ok
+        ? sms
+        : {
+            ok: false,
+            error: {
+              field: '電話番号',
+              reason: '国番号から始まる電話番号を入力してください（例: +819012345678）',
+            },
+          }
+    }
+    case 'geo': {
+      const geo = buildGeoPayload({ lat: state.lat, lon: state.lon })
+      return geo.ok
+        ? geo
+        : {
+            ok: false,
+            error:
+              geo.error.kind === 'invalid_lat'
+                ? { field: '緯度', reason: '-90 から 90 の数値を入力してください' }
+                : { field: '経度', reason: '-180 から 180 の数値を入力してください' },
+          }
+    }
+    case 'event': {
+      const event = buildEventPayload({
+        subject: state.eventSubject,
+        start: state.eventStart,
+        end: state.eventEnd,
+        location: state.eventLocation,
+      })
+      if (event.ok) return event
+      switch (event.error.kind) {
+        case 'invalid_subject':
+          return { ok: false, error: { field: '件名', reason: '件名を入力してください' } }
+        case 'invalid_start':
+          return { ok: false, error: { field: '開始日時', reason: '開始日時を入力してください' } }
+        case 'invalid_end':
+          return { ok: false, error: { field: '終了日時', reason: '終了日時を入力してください' } }
+        case 'end_before_start':
+          return {
+            ok: false,
+            error: { field: '終了日時', reason: '終了日時は開始日時より後にしてください' },
+          }
+      }
+    }
+    case 'vcard': {
+      const vcard = buildVCardPayload({
+        name: state.vcardName,
+        organization: state.vcardOrganization,
+        tel: state.vcardTel,
+        email: state.vcardEmail,
+        url: state.vcardUrl,
+      })
+      if (vcard.ok) return vcard
+      switch (vcard.error.kind) {
+        case 'invalid_name':
+          return { ok: false, error: { field: '氏名', reason: '氏名を入力してください' } }
+        case 'invalid_tel':
+          return {
+            ok: false,
+            error: {
+              field: '電話番号',
+              reason: '国番号から始まる電話番号を入力してください（例: +819012345678）',
+            },
+          }
+        case 'invalid_email':
+          return {
+            ok: false,
+            error: { field: 'メールアドレス', reason: '正しいメールアドレスを入力してください' },
+          }
+        case 'invalid_url':
+          return {
+            ok: false,
+            error: { field: 'URL', reason: 'http:// か https:// で始まる URL を入力してください' },
+          }
+      }
     }
     case 'wifi': {
       const ssid = parseNonEmptyText(state.ssid)
@@ -274,6 +420,10 @@ export const GenerateScreen = ({
         </div>
 
         <form
+          // 検証は自前の Result で行い、日本語の理由を読み上げ領域に出す。
+          // ブラウザ既定の検証（type="email" など）に任せると、ローカライズされない
+          // ポップアップが出て読み上げ領域に何も伝わらなくなる。
+          noValidate
           onSubmit={(event) => {
             event.preventDefault()
             void generate(true)
@@ -316,6 +466,151 @@ export const GenerateScreen = ({
                 value={state.url}
                 onChange={(event) => update('url', event.target.value)}
               />
+            ) : undefined}
+            {state.payloadKind === 'tel' ? (
+              <Field
+                label="電話番号（国番号付き）"
+                type="tel"
+                inputMode="tel"
+                hint="国番号から始めてください（例: +819012345678）。"
+                value={state.tel}
+                onChange={(event) => update('tel', event.target.value)}
+              />
+            ) : undefined}
+            {state.payloadKind === 'email' ? (
+              <>
+                <Field
+                  label="宛先メールアドレス"
+                  type="email"
+                  inputMode="email"
+                  value={state.emailTo}
+                  onChange={(event) => update('emailTo', event.target.value)}
+                />
+                <Field
+                  label="件名"
+                  hint="空のままにもできます。"
+                  value={state.emailSubject}
+                  onChange={(event) => update('emailSubject', event.target.value)}
+                />
+                <Field
+                  control="textarea"
+                  label="本文"
+                  hint="空のままにもできます。"
+                  value={state.emailBody}
+                  onChange={(event) => update('emailBody', event.target.value)}
+                />
+              </>
+            ) : undefined}
+            {state.payloadKind === 'sms' ? (
+              <>
+                <Field
+                  label="送信先の電話番号（国番号付き）"
+                  type="tel"
+                  inputMode="tel"
+                  hint="国番号から始めてください（例: +819012345678）。"
+                  value={state.smsNumber}
+                  onChange={(event) => update('smsNumber', event.target.value)}
+                />
+                <Field
+                  control="textarea"
+                  label="本文"
+                  hint="空のままにもできます。"
+                  value={state.smsBody}
+                  onChange={(event) => update('smsBody', event.target.value)}
+                />
+              </>
+            ) : undefined}
+            {state.payloadKind === 'geo' ? (
+              <>
+                <Field
+                  label="緯度"
+                  type="number"
+                  inputMode="decimal"
+                  min={-90}
+                  max={90}
+                  step="any"
+                  hint="-90 から 90 の数値です。"
+                  value={state.lat}
+                  onChange={(event) => update('lat', event.target.value)}
+                />
+                <Field
+                  label="経度"
+                  type="number"
+                  inputMode="decimal"
+                  min={-180}
+                  max={180}
+                  step="any"
+                  hint="-180 から 180 の数値です。"
+                  value={state.lon}
+                  onChange={(event) => update('lon', event.target.value)}
+                />
+              </>
+            ) : undefined}
+            {state.payloadKind === 'event' ? (
+              <>
+                <Field
+                  label="件名"
+                  value={state.eventSubject}
+                  onChange={(event) => update('eventSubject', event.target.value)}
+                />
+                <Field
+                  label="開始日時"
+                  type="datetime-local"
+                  value={state.eventStart}
+                  onChange={(event) => update('eventStart', event.target.value)}
+                />
+                <Field
+                  label="終了日時"
+                  type="datetime-local"
+                  value={state.eventEnd}
+                  onChange={(event) => update('eventEnd', event.target.value)}
+                />
+                <Field
+                  label="場所"
+                  hint="空のままにもできます。"
+                  value={state.eventLocation}
+                  onChange={(event) => update('eventLocation', event.target.value)}
+                />
+              </>
+            ) : undefined}
+            {state.payloadKind === 'vcard' ? (
+              <>
+                <Field
+                  label="氏名"
+                  value={state.vcardName}
+                  onChange={(event) => update('vcardName', event.target.value)}
+                />
+                <Field
+                  label="組織"
+                  hint="空のままにもできます。"
+                  value={state.vcardOrganization}
+                  onChange={(event) => update('vcardOrganization', event.target.value)}
+                />
+                <Field
+                  label="名刺の電話番号（国番号付き）"
+                  type="tel"
+                  inputMode="tel"
+                  hint="空のままにもできます。入れる場合は国番号から始めてください（例: +819012345678）。"
+                  value={state.vcardTel}
+                  onChange={(event) => update('vcardTel', event.target.value)}
+                />
+                <Field
+                  label="名刺のメールアドレス"
+                  type="email"
+                  inputMode="email"
+                  hint="空のままにもできます。"
+                  value={state.vcardEmail}
+                  onChange={(event) => update('vcardEmail', event.target.value)}
+                />
+                <Field
+                  label="名刺の URL"
+                  type="url"
+                  inputMode="url"
+                  hint="空のままにもできます。"
+                  value={state.vcardUrl}
+                  onChange={(event) => update('vcardUrl', event.target.value)}
+                />
+              </>
             ) : undefined}
             {state.payloadKind === 'wifi' ? (
               <>

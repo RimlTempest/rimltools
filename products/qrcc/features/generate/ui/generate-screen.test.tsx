@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { parseHttpUrl } from '@qrcc/contract'
+import {
+  parseEmailAddress,
+  parseHttpUrl,
+  parseNonEmptyText,
+  parsePhoneNumber,
+} from '@qrcc/contract'
+import { parseCalendarTimestamp } from '../core/payload/event.ts'
 import type { RenderRequest, RenderResponse } from '../contract/index.ts'
 import type { RenderFn } from './generate-screen.tsx'
 import { GenerateScreen } from './generate-screen.tsx'
@@ -179,6 +185,208 @@ describe('GenerateScreen', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Wi-Fi 設定' }))
     expect(screen.getByLabelText('ネットワーク名')).toBeDefined()
     expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+  })
+
+  test('電話番号を選ぶと入力欄が電話番号になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '電話番号' }))
+    expect(screen.getByLabelText('電話番号（国番号付き）')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('電話番号（国番号付き）'), '+819012345678')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const number = parsePhoneNumber('+819012345678')
+    expect(number.ok).toBe(true)
+    if (number.ok) expect(requests[0]?.payload).toEqual({ kind: 'tel', number: number.value })
+  })
+
+  test('電話番号が不正なときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '電話番号' }))
+    await userEvent.type(screen.getByLabelText('電話番号（国番号付き）'), '090-1234-5678')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('電話番号'))
+    expect(requests).toHaveLength(0)
+  })
+
+  test('メールを選ぶと入力欄が宛先・件名・本文になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: 'メール' }))
+    expect(screen.getByLabelText('宛先メールアドレス')).toBeDefined()
+    expect(screen.getByLabelText('件名')).toBeDefined()
+    expect(screen.getByLabelText('本文')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('宛先メールアドレス'), 'someone@example.com')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const to = parseEmailAddress('someone@example.com')
+    expect(to.ok).toBe(true)
+    if (to.ok) {
+      expect(requests[0]?.payload).toEqual({ kind: 'email', to: to.value, subject: '', body: '' })
+    }
+  })
+
+  test('宛先メールアドレスが不正なときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: 'メール' }))
+    await userEvent.type(screen.getByLabelText('宛先メールアドレス'), 'not-an-email')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('メールアドレス'))
+    expect(requests).toHaveLength(0)
+  })
+
+  test('SMS を選ぶと入力欄が電話番号・本文になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: 'SMS' }))
+    expect(screen.getByLabelText('送信先の電話番号（国番号付き）')).toBeDefined()
+    expect(screen.getByLabelText('本文')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('送信先の電話番号（国番号付き）'), '+819012345678')
+    await userEvent.type(screen.getByLabelText('本文'), 'こんにちは')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const number = parsePhoneNumber('+819012345678')
+    expect(number.ok).toBe(true)
+    if (number.ok) {
+      expect(requests[0]?.payload).toEqual({
+        kind: 'sms',
+        number: number.value,
+        body: 'こんにちは',
+      })
+    }
+  })
+
+  test('SMS の電話番号が不正なときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: 'SMS' }))
+    await userEvent.type(screen.getByLabelText('送信先の電話番号（国番号付き）'), '090-1234-5678')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('電話番号'))
+    expect(requests).toHaveLength(0)
+  })
+
+  test('位置情報を選ぶと入力欄が緯度・経度になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '位置情報' }))
+    expect(screen.getByLabelText('緯度')).toBeDefined()
+    expect(screen.getByLabelText('経度')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('緯度'), '35.681236')
+    await userEvent.type(screen.getByLabelText('経度'), '139.767125')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const payload = requests[0]?.payload
+    expect(payload?.kind).toBe('geo')
+    if (payload?.kind === 'geo') {
+      expect(payload.lat).toBeCloseTo(35.681236)
+      expect(payload.lon).toBeCloseTo(139.767125)
+    }
+  })
+
+  test('緯度が範囲外なときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '位置情報' }))
+    await userEvent.type(screen.getByLabelText('緯度'), '200')
+    await userEvent.type(screen.getByLabelText('経度'), '0')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('緯度'))
+    expect(requests).toHaveLength(0)
+  })
+
+  test('予定を選ぶと入力欄が件名・開始・終了・場所になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '予定' }))
+    expect(screen.getByLabelText('件名')).toBeDefined()
+    expect(screen.getByLabelText('開始日時')).toBeDefined()
+    expect(screen.getByLabelText('終了日時')).toBeDefined()
+    expect(screen.getByLabelText('場所')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('件名'), '定例会議')
+    await userEvent.type(screen.getByLabelText('開始日時'), '2026-09-06T10:00')
+    await userEvent.type(screen.getByLabelText('終了日時'), '2026-09-06T11:00')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const payload = requests[0]?.payload
+    expect(payload?.kind).toBe('event')
+    const subject = parseNonEmptyText('定例会議')
+    const start = parseCalendarTimestamp('2026-09-06T10:00')
+    const end = parseCalendarTimestamp('2026-09-06T11:00')
+    expect(subject.ok).toBe(true)
+    expect(start.ok).toBe(true)
+    expect(end.ok).toBe(true)
+    if (payload?.kind === 'event' && subject.ok && start.ok && end.ok) {
+      expect(payload.event).toEqual({
+        subject: subject.value,
+        start: start.value,
+        end: end.value,
+        location: '',
+      })
+    }
+  })
+
+  test('終了日時が開始日時より前のときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '予定' }))
+    await userEvent.type(screen.getByLabelText('件名'), '定例会議')
+    await userEvent.type(screen.getByLabelText('開始日時'), '2026-09-06T11:00')
+    await userEvent.type(screen.getByLabelText('終了日時'), '2026-09-06T10:00')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('終了日時'))
+    expect(requests).toHaveLength(0)
+  })
+
+  test('名刺を選ぶと入力欄が氏名・組織・電話・メール・URL になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '名刺' }))
+    expect(screen.getByLabelText('氏名')).toBeDefined()
+    expect(screen.getByLabelText('組織')).toBeDefined()
+    expect(screen.getByLabelText('名刺の電話番号（国番号付き）')).toBeDefined()
+    expect(screen.getByLabelText('名刺のメールアドレス')).toBeDefined()
+    expect(screen.getByLabelText('名刺の URL')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('氏名'), '山田太郎')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const name = parseNonEmptyText('山田太郎')
+    expect(name.ok).toBe(true)
+    if (name.ok) {
+      expect(requests[0]?.payload).toEqual({
+        kind: 'vcard',
+        card: {
+          name: name.value,
+          organization: '',
+          tel: undefined,
+          email: undefined,
+          url: undefined,
+        },
+      })
+    }
+  })
+
+  test('氏名が空なときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '名刺' }))
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('氏名'))
+    expect(requests).toHaveLength(0)
   })
 
   test('1D バーコードではモジュールの形を出さない', async () => {

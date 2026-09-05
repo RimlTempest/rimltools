@@ -96,6 +96,22 @@ test('内容とコードの種類が合わないと、その場で理由が出�
   await expect(generate(page).getByRole('alert')).toContainText('表せません')
 })
 
+test('電話番号を選ぶと tel: 形式でプレビューに出る', async ({ page }) => {
+  await page.goto('/')
+  await generate(page).getByRole('radio', { name: '電話番号' }).click()
+  await generate(page).getByLabel('電話番号（国番号付き）').fill('+819012345678')
+
+  await expect(preview(page)).toContainText('電話番号: +819012345678', { timeout: 15_000 })
+})
+
+test('名刺を選ぶと氏名がプレビューに出る', async ({ page }) => {
+  await page.goto('/')
+  await generate(page).getByRole('radio', { name: '名刺' }).click()
+  await generate(page).getByLabel('氏名').fill('山田太郎')
+
+  await expect(preview(page)).toContainText('名刺: 山田太郎', { timeout: 15_000 })
+})
+
 test('1D バーコードでは 2D 専用の設定が消える', async ({ page }) => {
   await page.goto('/')
   await expect(generate(page).getByRole('group', { name: 'モジュールの形' })).toBeVisible()

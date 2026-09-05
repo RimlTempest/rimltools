@@ -97,6 +97,53 @@ export type CodePayload =
 `features/generate/core/payload/<kind>.ts` に 1 ファイルずつ実装する。
 レジストリは Mapped Type なので**追加漏れがコンパイルエラーになる**。
 
+**実装状況**（`features/generate/contract/payload.ts` の `PAYLOAD_KINDS`）:
+
+| kind                                                | 状態     | 備考                                                                                                        |
+| --------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| `text` / `url` / `wifi`                             | 実装済み | 最初から実装されていた 3 種類                                                                               |
+| `tel` / `email` / `sms` / `geo` / `event` / `vcard` | 実装済み | plans/003 で追加。`features/generate/core/payload/*.ts`                                                     |
+| `gs1`                                               | 未実装   | 読み取り側の解釈（`features/scan/core/interpret/gs1.ts`）と対で設計すべき（plans/005 の Maintenance notes） |
+| `raw`                                               | 未実装   | バイト列の扱いが別問題                                                                                      |
+
+追加した 6 種類の実際の形（`VCard` / `CalendarEvent` / `Latitude` / `Longitude` は
+このドキュメントでは未定義だったため、実装時に決めた）:
+
+```ts
+/** 検証は features/generate/core/payload/geo.ts。範囲は -90..=90 / -180..=180。 */
+export type Latitude = Brand<number, 'Latitude'>
+export type Longitude = Brand<number, 'Longitude'>
+
+/**
+ * `<input type="datetime-local">` の値そのまま（`YYYY-MM-DDTHH:mm`）。
+ * タイムゾーンを持たない「その場の時刻」として扱う。
+ */
+export type CalendarTimestamp = Brand<string, 'CalendarTimestamp'>
+
+export type CalendarEvent = {
+  readonly subject: NonEmptyText
+  readonly start: CalendarTimestamp
+  readonly end: CalendarTimestamp
+  readonly location: string
+}
+
+/** 既定では MeCard 形式で符号化する（日本の携帯・スマホで最も通りが良いため）。 */
+export type VCard = {
+  readonly name: NonEmptyText
+  readonly organization: string
+  readonly tel: PhoneNumber | undefined
+  readonly email: EmailAddress | undefined
+  readonly url: HttpUrl | undefined
+}
+```
+
+`tel` / `sms` の電話番号、`vcard` の任意項目（組織・電話・メール・URL）の
+正規化とフォーム入力からの組み立ては `features/generate/core/payload/phone.ts`
+（`tel` と `sms` で共有）と各 `<kind>.ts` に閉じている。Rust 側の対応する型は
+`features/generate/engine/src/payload.rs`（`Latitude` / `Longitude` は
+`serde(try_from = "f64")`、`CalendarTimestamp` は `serde(try_from = "String")`
+で境界を検証する）。
+
 ### 4.1 読み取り側の解釈（`Interpretation`）
 
 `CodePayload` は生成側（`features/generate`）の型。読み取り側は

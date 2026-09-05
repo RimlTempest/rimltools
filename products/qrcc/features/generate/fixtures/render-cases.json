@@ -43,6 +43,136 @@
       "expect": { "ok": true, "description": "Wi-Fi 設定: home", "warnings": ["low_contrast"] }
     },
     {
+      "name": "qr-tel",
+      "request": {
+        "payload": { "kind": "tel", "number": "+819012345678" },
+        "symbology": { "kind": "qr", "ec": "M" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 4,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "電話番号: +819012345678", "warnings": [] }
+    },
+    {
+      "name": "qr-email",
+      "request": {
+        "payload": {
+          "kind": "email",
+          "to": "someone@example.com",
+          "subject": "件名",
+          "body": "本文"
+        },
+        "symbology": { "kind": "qr", "ec": "M" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 4,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "メール: someone@example.com", "warnings": [] }
+    },
+    {
+      "name": "qr-sms",
+      "request": {
+        "payload": { "kind": "sms", "number": "+819012345678", "body": "本文" },
+        "symbology": { "kind": "qr", "ec": "M" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 4,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "SMS: +819012345678", "warnings": [] }
+    },
+    {
+      "name": "qr-geo",
+      "request": {
+        "payload": { "kind": "geo", "lat": 35.681236, "lon": 139.767125 },
+        "symbology": { "kind": "qr", "ec": "M" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 4,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "位置情報: 35.681236, 139.767125", "warnings": [] }
+    },
+    {
+      "name": "qr-event",
+      "request": {
+        "payload": {
+          "kind": "event",
+          "event": {
+            "subject": "定例会議",
+            "start": "2026-09-06T10:00",
+            "end": "2026-09-06T11:00",
+            "location": "会議室A"
+          }
+        },
+        "symbology": { "kind": "qr", "ec": "M" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 4,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "予定: 定例会議", "warnings": [] }
+    },
+    {
+      "name": "qr-vcard",
+      "request": {
+        "payload": {
+          "kind": "vcard",
+          "card": {
+            "name": "山田太郎",
+            "organization": "株式会社サンプル",
+            "tel": "+819012345678",
+            "email": "yamada@example.com",
+            "url": "https://example.com"
+          }
+        },
+        "symbology": { "kind": "qr", "ec": "M" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 4,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "名刺: 山田太郎", "warnings": [] }
+    },
+    {
       "name": "code128-text",
       "request": {
         "payload": { "kind": "text", "text": "ABC-12345" },

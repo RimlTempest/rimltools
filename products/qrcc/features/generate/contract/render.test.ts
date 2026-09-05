@@ -99,18 +99,36 @@ describe('レジストリ', () => {
 })
 
 /**
- * 3 × 3 の全量表。振る舞いを変えない作業であることを保証するための土台。
- * リファクタの前後でこの表の答えが 1 マスでも変わってはならない。
+ * payload の種類 × symbology の種類の全量表。
+ * 内容の種類を足すたびに、この表にも行を足すこと（追加漏れは件数チェックで落ちる）。
  */
 const EXPECTED_COMPATIBILITY: readonly (readonly [PayloadKind, SymbologyKind, boolean])[] = [
   ['text', 'qr', true],
   ['url', 'qr', true],
+  ['tel', 'qr', true],
+  ['email', 'qr', true],
+  ['sms', 'qr', true],
+  ['geo', 'qr', true],
+  ['event', 'qr', true],
+  ['vcard', 'qr', true],
   ['wifi', 'qr', true],
   ['text', 'code128', true],
   ['url', 'code128', true],
+  ['tel', 'code128', false],
+  ['email', 'code128', false],
+  ['sms', 'code128', false],
+  ['geo', 'code128', false],
+  ['event', 'code128', false],
+  ['vcard', 'code128', false],
   ['wifi', 'code128', false],
   ['text', 'ean13', true],
   ['url', 'ean13', false],
+  ['tel', 'ean13', false],
+  ['email', 'ean13', false],
+  ['sms', 'ean13', false],
+  ['geo', 'ean13', false],
+  ['event', 'ean13', false],
+  ['vcard', 'ean13', false],
   ['wifi', 'ean13', false],
   ['text', 'code39', true],
   ['url', 'code39', false],
