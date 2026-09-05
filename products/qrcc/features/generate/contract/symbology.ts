@@ -14,6 +14,7 @@ export type Symbology =
   | { readonly kind: 'qr'; readonly ec: QrErrorCorrection }
   | { readonly kind: 'code128'; readonly charset: Code128Charset }
   | { readonly kind: 'ean13' }
+  | { readonly kind: 'code39' }
 
 export type SymbologyKind = Symbology['kind']
 
@@ -78,6 +79,17 @@ export const SYMBOLOGY_META: { readonly [K in SymbologyKind]: SymbologyMeta<K> }
     defaults: { kind: 'ean13' },
     example: '750103131130',
     // EAN-13 は数字だけなので、テキスト以外は入れられない
+    acceptsPayloads: ['text'],
+  },
+  code39: {
+    label: 'Code 39',
+    description: '英数字と一部の記号を表せる 1 次元バーコード。物流や工業製品でよく使われます。',
+    oneDimensional: true,
+    // Code39 は業界慣行として左右 10X の静寂域を取る
+    quietZone: 10,
+    defaults: { kind: 'code39' },
+    example: 'CODE-39',
+    // barcoders の Code39 実装は数字・英大文字・一部記号のみ受け付ける
     acceptsPayloads: ['text'],
   },
 }
