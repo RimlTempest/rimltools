@@ -37,6 +37,11 @@ pub enum Symbology {
     Qr { ec: QrEc },
     Code128 { charset: Code128Charset },
     Ean13,
+    Code39,
+    Code93,
+    Ean8,
+    Codabar,
+    Itf,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error, Serialize, Deserialize)]
@@ -60,6 +65,11 @@ impl Symbology {
             Self::Qr { .. } => "QR",
             Self::Code128 { .. } => "Code128",
             Self::Ean13 => "EAN-13",
+            Self::Code39 => "Code39",
+            Self::Code93 => "Code93",
+            Self::Ean8 => "EAN-8",
+            Self::Codabar => "Codabar",
+            Self::Itf => "ITF",
         }
     }
 
@@ -67,7 +77,13 @@ impl Symbology {
     pub fn is_one_dimensional(&self) -> bool {
         match self {
             Self::Qr { .. } => false,
-            Self::Code128 { .. } | Self::Ean13 => true,
+            Self::Code128 { .. }
+            | Self::Ean13
+            | Self::Code39
+            | Self::Code93
+            | Self::Ean8
+            | Self::Codabar
+            | Self::Itf => true,
         }
     }
 
@@ -77,6 +93,10 @@ impl Symbology {
             Self::Qr { .. } => 4,
             Self::Code128 { .. } => 10,
             Self::Ean13 => 9,
+            // 業界慣行として左右 10X
+            Self::Code39 | Self::Code93 | Self::Codabar | Self::Itf => 10,
+            // GS1 の規格どおり左右 7X
+            Self::Ean8 => 7,
         }
     }
 
@@ -86,6 +106,11 @@ impl Symbology {
             Self::Qr { ec } => encode_qr(data, *ec),
             Self::Code128 { charset } => encode_code128(data, *charset),
             Self::Ean13 => encode_ean13(data),
+            Self::Code39 => encode_code39(data),
+            Self::Code93 => encode_code93(data),
+            Self::Ean8 => encode_ean8(data),
+            Self::Codabar => encode_codabar(data),
+            Self::Itf => encode_itf(data),
         }
     }
 }
@@ -187,6 +212,77 @@ fn encode_ean13(data: &str) -> Result<Modules, EncodeError> {
 
     Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
         .map_err(invalid_modules("EAN-13"))
+}
+
+fn encode_code39(data: &str) -> Result<Modules, EncodeError> {
+    let encoded = barcoders::sym::code39::Code39::new(data)
+        .map_err(|cause| EncodeError::IncompatiblePayload {
+            symbology: "Code39".to_string(),
+            reason: alloc::format!("{cause:?}"),
+        })?
+        .encode();
+
+    Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
+        .map_err(invalid_modules("Code39"))
+}
+
+fn encode_code93(data: &str) -> Result<Modules, EncodeError> {
+    let encoded = barcoders::sym::code93::Code93::new(data)
+        .map_err(|cause| EncodeError::IncompatiblePayload {
+            symbology: "Code93".to_string(),
+            reason: alloc::format!("{cause:?}"),
+        })?
+        .encode();
+
+    Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
+        .map_err(invalid_modules("Code93"))
+}
+
+fn encode_ean8(data: &str) -> Result<Modules, EncodeError> {
+    let encoded = barcoders::sym::ean8::EAN8::new(data)
+        .map_err(|cause| EncodeError::IncompatiblePayload {
+            symbology: "EAN-8".to_string(),
+            reason: alloc::format!("{cause:?}"),
+        })?
+        .encode();
+
+    Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
+        .map_err(invalid_modules("EAN-8"))
+}
+
+fn encode_codabar(data: &str) -> Result<Modules, EncodeError> {
+    let encoded = barcoders::sym::codabar::Codabar::new(data)
+        .map_err(|cause| EncodeError::IncompatiblePayload {
+            symbology: "Codabar".to_string(),
+            reason: alloc::format!("{cause:?}"),
+        })?
+        .encode();
+
+    Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
+        .map_err(invalid_modules("Codabar"))
+}
+
+/// ITF（インターリーブド 2 of 5）は 2 桁ずつ組にして符号化するため、
+/// 桁数は偶数でなければならない。`barcoders::sym::tf::TF::interleaved` は
+/// 奇数桁を渡すと**検査数字を黙って追加して**偶数に揃えてしまうので、
+/// ここで先に弾いて分かりやすいエラーにする。
+fn encode_itf(data: &str) -> Result<Modules, EncodeError> {
+    if !data.len().is_multiple_of(2) {
+        return Err(EncodeError::IncompatiblePayload {
+            symbology: "ITF".to_string(),
+            reason: "digit count must be even".to_string(),
+        });
+    }
+
+    let encoded = barcoders::sym::tf::TF::interleaved(data)
+        .map_err(|cause| EncodeError::IncompatiblePayload {
+            symbology: "ITF".to_string(),
+            reason: alloc::format!("{cause:?}"),
+        })?
+        .encode();
+
+    Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
+        .map_err(invalid_modules("ITF"))
 }
 
 #[cfg(test)]
@@ -302,16 +398,175 @@ mod tests {
         }
     }
 
+    /// 期待値は `barcoders` クレート自身の `src/sym/code39.rs` の
+    /// `#[cfg(test)] fn code39_encode()` から取った（自分のエンコーダの
+    /// 出力ではなく、依存先が外部に対して保証している値）。
+    #[test]
+    fn code39_matches_a_known_module_pattern() {
+        let modules = Symbology::Code39.encode("1234").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some("10010110110101101001010110101100101011011011001010101010011010110100101101101")
+        );
+    }
+
+    #[test]
+    fn code39_rejects_characters_outside_its_alphabet() {
+        // 小文字は Code39 の文字集合に無い
+        let error = Symbology::Code39.encode("abc").expect_err("rejects");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    #[test]
+    fn code39_rejects_an_empty_payload() {
+        let error = Symbology::Code39.encode("").expect_err("empty");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    /// 期待値は `barcoders` クレート自身の `src/sym/code93.rs` の
+    /// `#[cfg(test)] fn code93_encode()` から取った外部検証済みの値。
+    #[test]
+    fn code93_matches_a_known_module_pattern() {
+        let modules = Symbology::Code93.encode("TEST93").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some(
+                "1010111101101001101100100101101011001101001101000010101010000101011101101001000101010111101"
+            )
+        );
+        let modules = Symbology::Code93.encode("99").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some("1010111101000010101000010101101100101000101101010111101")
+        );
+    }
+
+    #[test]
+    fn code93_rejects_characters_outside_its_alphabet() {
+        // 小文字は Code93（基本モード）の文字集合に無い
+        let error = Symbology::Code93.encode("lowerCASE").expect_err("rejects");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    #[test]
+    fn code93_rejects_an_empty_payload() {
+        let error = Symbology::Code93.encode("").expect_err("empty");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    /// 期待値は `barcoders` クレート自身の `src/sym/ean8.rs` の
+    /// `#[cfg(test)] fn ean8_encode()` から取った外部検証済みの値。
+    /// 7 桁を渡すと検査数字（7）を計算して付ける。
+    #[test]
+    fn ean8_accepts_seven_digits_and_computes_the_check_digit() {
+        let modules = Symbology::Ean8.encode("5512345").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some("1010110001011000100110010010011010101000010101110010011101000100101")
+        );
+    }
+
+    #[test]
+    fn ean8_accepts_eight_digits_when_the_check_digit_is_correct() {
+        // "5512345" の検査数字は 7（barcoders の src/sym/ean8.rs のコメントどおり）
+        let modules = Symbology::Ean8.encode("55123457").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some("1010110001011000100110010010011010101000010101110010011101000100101")
+        );
+    }
+
+    #[test]
+    fn ean8_rejects_an_incorrect_check_digit() {
+        let error = Symbology::Ean8
+            .encode("55123450")
+            .expect_err("wrong checksum");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    #[test]
+    fn ean8_rejects_non_digits_and_wrong_lengths() {
+        for bad in ["123456", "abcdefgh", ""] {
+            assert!(
+                Symbology::Ean8.encode(bad).is_err(),
+                "should reject {bad:?}"
+            );
+        }
+    }
+
+    /// 期待値は `barcoders` クレート自身の `src/sym/codabar.rs` の
+    /// `#[cfg(test)] fn codabar_encode()` から取った外部検証済みの値。
+    #[test]
+    fn codabar_matches_a_known_module_pattern() {
+        let modules = Symbology::Codabar.encode("A1234B").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some("1011001001010101100101010010110110010101010110100101010010011")
+        );
+    }
+
+    #[test]
+    fn codabar_rejects_characters_outside_its_alphabet() {
+        // 小文字は Codabar の文字集合に無い
+        let error = Symbology::Codabar.encode("a1234b").expect_err("rejects");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    #[test]
+    fn codabar_rejects_an_empty_payload() {
+        let error = Symbology::Codabar.encode("").expect_err("empty");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    /// 期待値は `barcoders` クレート自身の `src/sym/tf.rs` の
+    /// `#[cfg(test)] fn itf_encode()` から取った外部検証済みの値。
+    /// あちらのテストは奇数桁 "1234567" を渡して黙って検査数字 0 が
+    /// 付いた前提（"12345670"）なので、ここでは偶数桁のまま同じ値を渡す。
+    #[test]
+    fn itf_matches_a_known_module_pattern() {
+        let modules = Symbology::Itf.encode("12345670").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some(
+                "10101110100010101110001110111010001010001110100011100010101010100011100011101101"
+            )
+        );
+    }
+
+    /// `barcoders` は奇数桁を渡すと検査数字を黙って付けてしまう
+    /// （plans/004-1d-symbologies.md 参照）。ここで明示的に弾く。
+    #[test]
+    fn itf_rejects_an_odd_digit_count() {
+        let error = Symbology::Itf.encode("1234567").expect_err("odd length");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    #[test]
+    fn itf_rejects_non_digits() {
+        let error = Symbology::Itf.encode("12ab").expect_err("non digit");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
     #[test]
     fn quiet_zones_follow_each_standard() {
         assert_eq!(Symbology::Qr { ec: QrEc::M }.recommended_quiet_zone(), 4);
         assert_eq!(Symbology::Ean13.recommended_quiet_zone(), 9);
+        assert_eq!(Symbology::Code39.recommended_quiet_zone(), 10);
+        assert_eq!(Symbology::Code93.recommended_quiet_zone(), 10);
+        assert_eq!(Symbology::Ean8.recommended_quiet_zone(), 7);
+        assert_eq!(Symbology::Codabar.recommended_quiet_zone(), 10);
+        assert_eq!(Symbology::Itf.recommended_quiet_zone(), 10);
     }
 
     #[test]
     fn one_dimensional_symbologies_are_marked_as_such() {
         assert!(!Symbology::Qr { ec: QrEc::L }.is_one_dimensional());
         assert!(Symbology::Ean13.is_one_dimensional());
+        assert!(Symbology::Code39.is_one_dimensional());
+        assert!(Symbology::Code93.is_one_dimensional());
+        assert!(Symbology::Ean8.is_one_dimensional());
+        assert!(Symbology::Codabar.is_one_dimensional());
+        assert!(Symbology::Itf.is_one_dimensional());
         assert!(
             Symbology::Code128 {
                 charset: Code128Charset::Auto

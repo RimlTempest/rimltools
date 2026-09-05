@@ -14,6 +14,11 @@ export type Symbology =
   | { readonly kind: 'qr'; readonly ec: QrErrorCorrection }
   | { readonly kind: 'code128'; readonly charset: Code128Charset }
   | { readonly kind: 'ean13' }
+  | { readonly kind: 'code39' }
+  | { readonly kind: 'code93' }
+  | { readonly kind: 'ean8' }
+  | { readonly kind: 'codabar' }
+  | { readonly kind: 'itf' }
 
 export type SymbologyKind = Symbology['kind']
 
@@ -78,6 +83,62 @@ export const SYMBOLOGY_META: { readonly [K in SymbologyKind]: SymbologyMeta<K> }
     defaults: { kind: 'ean13' },
     example: '750103131130',
     // EAN-13 は数字だけなので、テキスト以外は入れられない
+    acceptsPayloads: ['text'],
+  },
+  code39: {
+    label: 'Code 39',
+    description: '英数字と一部の記号を表せる 1 次元バーコード。物流や工業製品でよく使われます。',
+    oneDimensional: true,
+    // Code39 は業界慣行として左右 10X の静寂域を取る
+    quietZone: 10,
+    defaults: { kind: 'code39' },
+    example: 'CODE-39',
+    // barcoders の Code39 実装は数字・英大文字・一部記号のみ受け付ける
+    acceptsPayloads: ['text'],
+  },
+  code93: {
+    label: 'Code 93',
+    description: 'Code 39 より高密度に表せる 1 次元バーコード。物流でよく使われます。',
+    oneDimensional: true,
+    // Code93 は業界慣行として左右 10X の静寂域を取る
+    quietZone: 10,
+    defaults: { kind: 'code93' },
+    example: 'CODE-93',
+    // barcoders の Code93 実装（基本モードのみ）は数字・英大文字・一部記号を受け付ける
+    acceptsPayloads: ['text'],
+  },
+  ean8: {
+    label: 'EAN-8',
+    description: '小さな商品向けの 8 桁のバーコード。7 桁を入れると検査数字を計算します。',
+    oneDimensional: true,
+    // GS1 の規格どおり左右 7X
+    quietZone: 7,
+    defaults: { kind: 'ean8' },
+    example: '5512345',
+    // EAN-8 は数字だけなので、テキスト以外は入れられない
+    acceptsPayloads: ['text'],
+  },
+  codabar: {
+    label: 'Codabar',
+    description: '数字と一部の記号を表せる 1 次元バーコード。図書館や血液バッグでよく使われます。',
+    oneDimensional: true,
+    // Codabar は業界慣行として左右 10X の静寂域を取る
+    quietZone: 10,
+    defaults: { kind: 'codabar' },
+    example: 'A1234B',
+    // barcoders の Codabar 実装は数字と一部記号（開始・終了は A/B/C/D）のみ受け付ける
+    acceptsPayloads: ['text'],
+  },
+  itf: {
+    label: 'ITF（インターリーブド 2 of 5）',
+    description:
+      '数字だけを高密度で表せる 1 次元バーコード。日本の物流（ITF-14）でよく使われます。桁数は偶数にしてください。',
+    oneDimensional: true,
+    // ITF は業界慣行として左右 10X の静寂域を取る
+    quietZone: 10,
+    defaults: { kind: 'itf' },
+    example: '12345678',
+    // ITF は数字だけなので、テキスト以外は入れられない
     acceptsPayloads: ['text'],
   },
 }

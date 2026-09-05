@@ -61,6 +61,114 @@
       "expect": { "ok": true, "description": "テキスト: ABC-12345", "warnings": [] }
     },
     {
+      "name": "code39-text",
+      "request": {
+        "payload": { "kind": "text", "text": "CODE-39" },
+        "symbology": { "kind": "code39" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 2,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "テキスト: CODE-39", "warnings": [] }
+    },
+    {
+      "name": "code93-text",
+      "request": {
+        "payload": { "kind": "text", "text": "CODE-93" },
+        "symbology": { "kind": "code93" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 2,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "テキスト: CODE-93", "warnings": [] }
+    },
+    {
+      "name": "ean8-computes-check-digit",
+      "request": {
+        "payload": { "kind": "text", "text": "5512345" },
+        "symbology": { "kind": "ean8" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 2,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "テキスト: 5512345", "warnings": [] }
+    },
+    {
+      "name": "codabar-text",
+      "request": {
+        "payload": { "kind": "text", "text": "A1234B" },
+        "symbology": { "kind": "codabar" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 2,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "テキスト: A1234B", "warnings": [] }
+    },
+    {
+      "name": "itf-text",
+      "request": {
+        "payload": { "kind": "text", "text": "12345670" },
+        "symbology": { "kind": "itf" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 2,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "テキスト: 12345670", "warnings": [] }
+    },
+    {
+      "name": "itf-odd-digit-count",
+      "request": {
+        "payload": { "kind": "text", "text": "1234567" },
+        "symbology": { "kind": "itf" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 2,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": false, "errorKind": "incompatible_payload" }
+    },
+    {
       "name": "ean13-invalid-digits",
       "request": {
         "payload": { "kind": "text", "text": "not-digits" },
