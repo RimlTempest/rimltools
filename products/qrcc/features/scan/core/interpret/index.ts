@@ -14,6 +14,7 @@ import { interpretMailto } from './mailto.ts'
 import { interpretMecard } from './mecard.ts'
 import { interpretSms } from './sms.ts'
 import { interpretTel } from './tel.ts'
+import { interpretVcard } from './vcard.ts'
 import { interpretWifi } from './wifi.ts'
 
 export const interpret = (text: string): Interpretation => {
@@ -23,6 +24,7 @@ export const interpret = (text: string): Interpretation => {
     ?? interpretSms(text)
     ?? interpretGeo(text)
     ?? interpretWifi(text)
-    ?? interpretMecard(text) ?? { kind: 'plain', text }
+    ?? interpretMecard(text)
+    ?? interpretVcard(text) ?? { kind: 'plain', text }
   )
 }
