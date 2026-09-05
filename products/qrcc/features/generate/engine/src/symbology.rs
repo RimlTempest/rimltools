@@ -40,6 +40,7 @@ pub enum Symbology {
     Code39,
     Code93,
     Ean8,
+    Codabar,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error, Serialize, Deserialize)]
@@ -66,6 +67,7 @@ impl Symbology {
             Self::Code39 => "Code39",
             Self::Code93 => "Code93",
             Self::Ean8 => "EAN-8",
+            Self::Codabar => "Codabar",
         }
     }
 
@@ -73,7 +75,12 @@ impl Symbology {
     pub fn is_one_dimensional(&self) -> bool {
         match self {
             Self::Qr { .. } => false,
-            Self::Code128 { .. } | Self::Ean13 | Self::Code39 | Self::Code93 | Self::Ean8 => true,
+            Self::Code128 { .. }
+            | Self::Ean13
+            | Self::Code39
+            | Self::Code93
+            | Self::Ean8
+            | Self::Codabar => true,
         }
     }
 
@@ -84,7 +91,7 @@ impl Symbology {
             Self::Code128 { .. } => 10,
             Self::Ean13 => 9,
             // 業界慣行として左右 10X
-            Self::Code39 | Self::Code93 => 10,
+            Self::Code39 | Self::Code93 | Self::Codabar => 10,
             // GS1 の規格どおり左右 7X
             Self::Ean8 => 7,
         }
@@ -99,6 +106,7 @@ impl Symbology {
             Self::Code39 => encode_code39(data),
             Self::Code93 => encode_code93(data),
             Self::Ean8 => encode_ean8(data),
+            Self::Codabar => encode_codabar(data),
         }
     }
 }
@@ -236,6 +244,18 @@ fn encode_ean8(data: &str) -> Result<Modules, EncodeError> {
 
     Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
         .map_err(invalid_modules("EAN-8"))
+}
+
+fn encode_codabar(data: &str) -> Result<Modules, EncodeError> {
+    let encoded = barcoders::sym::codabar::Codabar::new(data)
+        .map_err(|cause| EncodeError::IncompatiblePayload {
+            symbology: "Codabar".to_string(),
+            reason: alloc::format!("{cause:?}"),
+        })?
+        .encode();
+
+    Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
+        .map_err(invalid_modules("Codabar"))
 }
 
 #[cfg(test)]
@@ -447,6 +467,30 @@ mod tests {
         }
     }
 
+    /// 期待値は `barcoders` クレート自身の `src/sym/codabar.rs` の
+    /// `#[cfg(test)] fn codabar_encode()` から取った外部検証済みの値。
+    #[test]
+    fn codabar_matches_a_known_module_pattern() {
+        let modules = Symbology::Codabar.encode("A1234B").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some("1011001001010101100101010010110110010101010110100101010010011")
+        );
+    }
+
+    #[test]
+    fn codabar_rejects_characters_outside_its_alphabet() {
+        // 小文字は Codabar の文字集合に無い
+        let error = Symbology::Codabar.encode("a1234b").expect_err("rejects");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    #[test]
+    fn codabar_rejects_an_empty_payload() {
+        let error = Symbology::Codabar.encode("").expect_err("empty");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
     #[test]
     fn quiet_zones_follow_each_standard() {
         assert_eq!(Symbology::Qr { ec: QrEc::M }.recommended_quiet_zone(), 4);
@@ -454,6 +498,7 @@ mod tests {
         assert_eq!(Symbology::Code39.recommended_quiet_zone(), 10);
         assert_eq!(Symbology::Code93.recommended_quiet_zone(), 10);
         assert_eq!(Symbology::Ean8.recommended_quiet_zone(), 7);
+        assert_eq!(Symbology::Codabar.recommended_quiet_zone(), 10);
     }
 
     #[test]
@@ -463,6 +508,7 @@ mod tests {
         assert!(Symbology::Code39.is_one_dimensional());
         assert!(Symbology::Code93.is_one_dimensional());
         assert!(Symbology::Ean8.is_one_dimensional());
+        assert!(Symbology::Codabar.is_one_dimensional());
         assert!(
             Symbology::Code128 {
                 charset: Code128Charset::Auto

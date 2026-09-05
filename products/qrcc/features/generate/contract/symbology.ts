@@ -17,6 +17,7 @@ export type Symbology =
   | { readonly kind: 'code39' }
   | { readonly kind: 'code93' }
   | { readonly kind: 'ean8' }
+  | { readonly kind: 'codabar' }
 
 export type SymbologyKind = Symbology['kind']
 
@@ -114,6 +115,17 @@ export const SYMBOLOGY_META: { readonly [K in SymbologyKind]: SymbologyMeta<K> }
     defaults: { kind: 'ean8' },
     example: '5512345',
     // EAN-8 は数字だけなので、テキスト以外は入れられない
+    acceptsPayloads: ['text'],
+  },
+  codabar: {
+    label: 'Codabar',
+    description: '数字と一部の記号を表せる 1 次元バーコード。図書館や血液バッグでよく使われます。',
+    oneDimensional: true,
+    // Codabar は業界慣行として左右 10X の静寂域を取る
+    quietZone: 10,
+    defaults: { kind: 'codabar' },
+    example: 'A1234B',
+    // barcoders の Codabar 実装は数字と一部記号（開始・終了は A/B/C/D）のみ受け付ける
     acceptsPayloads: ['text'],
   },
 }

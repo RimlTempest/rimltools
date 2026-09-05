@@ -115,6 +115,24 @@
       "expect": { "ok": true, "description": "テキスト: 5512345", "warnings": [] }
     },
     {
+      "name": "codabar-text",
+      "request": {
+        "payload": { "kind": "text", "text": "A1234B" },
+        "symbology": { "kind": "codabar" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 2,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "テキスト: A1234B", "warnings": [] }
+    },
+    {
       "name": "ean13-invalid-digits",
       "request": {
         "payload": { "kind": "text", "text": "not-digits" },
