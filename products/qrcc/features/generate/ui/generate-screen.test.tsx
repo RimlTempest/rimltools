@@ -350,6 +350,45 @@ describe('GenerateScreen', () => {
     expect(requests).toHaveLength(0)
   })
 
+  test('名刺を選ぶと入力欄が氏名・組織・電話・メール・URL になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '名刺' }))
+    expect(screen.getByLabelText('氏名')).toBeDefined()
+    expect(screen.getByLabelText('組織')).toBeDefined()
+    expect(screen.getByLabelText('名刺の電話番号（国番号付き）')).toBeDefined()
+    expect(screen.getByLabelText('名刺のメールアドレス')).toBeDefined()
+    expect(screen.getByLabelText('名刺の URL')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('氏名'), '山田太郎')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const name = parseNonEmptyText('山田太郎')
+    expect(name.ok).toBe(true)
+    if (name.ok) {
+      expect(requests[0]?.payload).toEqual({
+        kind: 'vcard',
+        card: {
+          name: name.value,
+          organization: '',
+          tel: undefined,
+          email: undefined,
+          url: undefined,
+        },
+      })
+    }
+  })
+
+  test('氏名が空なときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '名刺' }))
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('氏名'))
+    expect(requests).toHaveLength(0)
+  })
+
   test('1D バーコードではモジュールの形を出さない', async () => {
     const { fn } = recording({ ok: true, value: response() })
     render(<GenerateScreen render={fn} />)

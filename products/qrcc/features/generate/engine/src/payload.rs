@@ -135,6 +135,17 @@ pub struct CalendarEvent {
     pub location: String,
 }
 
+/// 名刺。**既定では MeCard 形式で符号化する**（日本の携帯・スマホで最も通りが良いため）。
+/// 組織・電話・メール・URL は任意。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VCard {
+    pub name: NonEmptyText,
+    pub organization: String,
+    pub tel: Option<PhoneNumber>,
+    pub email: Option<EmailAddress>,
+    pub url: Option<HttpUrl>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum WifiAuth {
@@ -171,6 +182,9 @@ pub enum CodePayload {
     Event {
         event: CalendarEvent,
     },
+    Vcard {
+        card: VCard,
+    },
     Wifi {
         ssid: NonEmptyText,
         auth: WifiAuth,
@@ -178,9 +192,9 @@ pub enum CodePayload {
     },
 }
 
-/// Wi-Fi 形式で意味を持つ文字を退避する。
+/// `WIFI:` 形式で意味を持つ文字を退避する（Wi-Fi Alliance の仕様）。
 /// これを忘れると SSID に `;` が入っただけで別の設定として読まれる。
-fn escape_wifi(value: &str) -> String {
+fn escape_wifi_field(value: &str) -> String {
     let mut escaped = String::with_capacity(value.len());
     for character in value.chars() {
         if matches!(character, '\\' | ';' | ',' | ':' | '"') {
@@ -204,6 +218,20 @@ fn percent_encode(value: &str) -> String {
         }
     }
     encoded
+}
+
+/// `MECARD:` 形式で意味を持つ文字を退避する。
+/// `:` は退避しない — 値の終わりは次の `;` で決まり、URL に含まれる `:` や `/` を
+/// 壊さないため（WIFI: とは規則が異なる）。
+fn escape_mecard_field(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        if matches!(character, '\\' | ';' | ',') {
+            escaped.push('\\');
+        }
+        escaped.push(character);
+    }
+    escaped
 }
 
 /// iCalendar のテキスト値で意味を持つ文字を退避する（RFC 5545）。
@@ -248,13 +276,30 @@ impl CodePayload {
             Self::Wifi { ssid, auth, hidden } => {
                 let (auth_type, password) = match auth {
                     WifiAuth::Nopass => ("nopass", String::new()),
-                    WifiAuth::Wep { password } => ("WEP", escape_wifi(password)),
-                    WifiAuth::Wpa { password } => ("WPA", escape_wifi(password)),
+                    WifiAuth::Wep { password } => ("WEP", escape_wifi_field(password)),
+                    WifiAuth::Wpa { password } => ("WPA", escape_wifi_field(password)),
                 };
                 format!(
                     "WIFI:T:{auth_type};S:{};P:{password};H:{hidden};;",
-                    escape_wifi(ssid.as_str())
+                    escape_wifi_field(ssid.as_str())
                 )
+            }
+            Self::Vcard { card } => {
+                let mut mecard = format!("MECARD:N:{};", escape_mecard_field(card.name.as_str()));
+                if !card.organization.is_empty() {
+                    mecard.push_str(&format!("ORG:{};", escape_mecard_field(&card.organization)));
+                }
+                if let Some(tel) = &card.tel {
+                    mecard.push_str(&format!("TEL:{};", escape_mecard_field(tel.as_str())));
+                }
+                if let Some(email) = &card.email {
+                    mecard.push_str(&format!("EMAIL:{};", escape_mecard_field(email.as_str())));
+                }
+                if let Some(url) = &card.url {
+                    mecard.push_str(&format!("URL:{};", escape_mecard_field(url.as_str())));
+                }
+                mecard.push(';');
+                mecard
             }
         }
     }
@@ -269,6 +314,7 @@ impl CodePayload {
             Self::Sms { number, .. } => format!("SMS: {}", number.as_str()),
             Self::Geo { lat, lon } => format!("位置情報: {}, {}", lat.0, lon.0),
             Self::Event { event } => format!("予定: {}", event.subject.as_str()),
+            Self::Vcard { card } => format!("名刺: {}", card.name.as_str()),
             Self::Wifi { ssid, .. } => format!("Wi-Fi 設定: {}", ssid.as_str()),
         }
     }
@@ -469,6 +515,60 @@ mod tests {
                 "should reject {bad:?}"
             );
         }
+    }
+
+    #[test]
+    fn vcard_is_encoded_as_mecard_with_all_fields() {
+        let card = VCard {
+            name: NonEmptyText::parse("山田太郎").expect("valid name"),
+            organization: "株式会社サンプル".to_string(),
+            tel: Some(PhoneNumber::parse("+819012345678").expect("valid tel")),
+            email: Some(EmailAddress::parse("yamada@example.com").expect("valid email")),
+            url: Some(HttpUrl::parse("https://example.com").expect("valid url")),
+        };
+        assert_eq!(
+            CodePayload::Vcard { card }.encode(),
+            "MECARD:N:山田太郎;ORG:株式会社サンプル;TEL:+819012345678;EMAIL:yamada@example.com;URL:https://example.com;;"
+        );
+    }
+
+    #[test]
+    fn vcard_omits_absent_optional_fields() {
+        let card = VCard {
+            name: NonEmptyText::parse("山田太郎").expect("valid name"),
+            organization: String::new(),
+            tel: None,
+            email: None,
+            url: None,
+        };
+        assert_eq!(CodePayload::Vcard { card }.encode(), "MECARD:N:山田太郎;;");
+    }
+
+    #[test]
+    fn vcard_escapes_characters_that_would_change_the_meaning() {
+        let card = VCard {
+            name: NonEmptyText::parse("山田;太郎").expect("valid name"),
+            organization: String::new(),
+            tel: None,
+            email: None,
+            url: None,
+        };
+        assert_eq!(
+            CodePayload::Vcard { card }.encode(),
+            r"MECARD:N:山田\;太郎;;"
+        );
+    }
+
+    #[test]
+    fn vcard_describes_itself_for_screen_readers() {
+        let card = VCard {
+            name: NonEmptyText::parse("山田太郎").expect("valid name"),
+            organization: String::new(),
+            tel: None,
+            email: None,
+            url: None,
+        };
+        assert_eq!(CodePayload::Vcard { card }.describe(), "名刺: 山田太郎");
     }
 
     #[test]

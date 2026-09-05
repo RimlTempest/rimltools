@@ -29,6 +29,18 @@ export type CalendarEvent = {
   readonly location: string
 }
 
+/**
+ * 名刺。**既定では MeCard 形式で符号化する**（日本の携帯・スマホで最も
+ * 通りが良いため）。組織・電話・メール・URL は任意。
+ */
+export type VCard = {
+  readonly name: NonEmptyText
+  readonly organization: string
+  readonly tel: PhoneNumber | undefined
+  readonly email: EmailAddress | undefined
+  readonly url: HttpUrl | undefined
+}
+
 export type CodePayload =
   | { readonly kind: 'text'; readonly text: string }
   | { readonly kind: 'url'; readonly url: HttpUrl }
@@ -42,6 +54,7 @@ export type CodePayload =
   | { readonly kind: 'sms'; readonly number: PhoneNumber; readonly body: string }
   | { readonly kind: 'geo'; readonly lat: Latitude; readonly lon: Longitude }
   | { readonly kind: 'event'; readonly event: CalendarEvent }
+  | { readonly kind: 'vcard'; readonly card: VCard }
   | {
       readonly kind: 'wifi'
       readonly ssid: NonEmptyText
@@ -65,6 +78,7 @@ export const PAYLOAD_META: { readonly [K in PayloadKind]: PayloadMeta } = {
   sms: { label: 'SMS', description: '読み取るとメッセージの作成画面が開きます。' },
   geo: { label: '位置情報', description: '読み取ると地図アプリでその場所を開きます。' },
   event: { label: '予定', description: '読み取るとカレンダーに予定を追加できます。' },
+  vcard: { label: '名刺', description: '読み取ると連絡先に追加できます。' },
   wifi: {
     label: 'Wi-Fi 設定',
     description: '読み取るとネットワークに接続できます。パスワードはコードに含まれます。',

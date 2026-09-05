@@ -6,6 +6,7 @@ import { buildEventPayload } from '../core/payload/event.ts'
 import { buildGeoPayload } from '../core/payload/geo.ts'
 import { buildSmsPayload } from '../core/payload/sms.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
+import { buildVCardPayload } from '../core/payload/vcard.ts'
 import { Button, Field, LiveRegion } from '@qrcc/ui'
 import type {
   CodePayload,
@@ -72,6 +73,11 @@ type FormState = {
   readonly eventStart: string
   readonly eventEnd: string
   readonly eventLocation: string
+  readonly vcardName: string
+  readonly vcardOrganization: string
+  readonly vcardTel: string
+  readonly vcardEmail: string
+  readonly vcardUrl: string
   readonly ssid: string
   readonly password: string
   readonly hidden: boolean
@@ -99,6 +105,11 @@ const INITIAL: FormState = {
   eventStart: '',
   eventEnd: '',
   eventLocation: '',
+  vcardName: '',
+  vcardOrganization: '',
+  vcardTel: '',
+  vcardEmail: '',
+  vcardUrl: '',
   ssid: '',
   password: '',
   hidden: false,
@@ -203,6 +214,38 @@ const buildPayload = (state: FormState): Result<CodePayload, BuildError> => {
           return {
             ok: false,
             error: { field: '終了日時', reason: '終了日時は開始日時より後にしてください' },
+          }
+      }
+    }
+    case 'vcard': {
+      const vcard = buildVCardPayload({
+        name: state.vcardName,
+        organization: state.vcardOrganization,
+        tel: state.vcardTel,
+        email: state.vcardEmail,
+        url: state.vcardUrl,
+      })
+      if (vcard.ok) return vcard
+      switch (vcard.error.kind) {
+        case 'invalid_name':
+          return { ok: false, error: { field: '氏名', reason: '氏名を入力してください' } }
+        case 'invalid_tel':
+          return {
+            ok: false,
+            error: {
+              field: '電話番号',
+              reason: '国番号から始まる電話番号を入力してください（例: +819012345678）',
+            },
+          }
+        case 'invalid_email':
+          return {
+            ok: false,
+            error: { field: 'メールアドレス', reason: '正しいメールアドレスを入力してください' },
+          }
+        case 'invalid_url':
+          return {
+            ok: false,
+            error: { field: 'URL', reason: 'http:// か https:// で始まる URL を入力してください' },
           }
       }
     }
@@ -527,6 +570,45 @@ export const GenerateScreen = ({
                   hint="空のままにもできます。"
                   value={state.eventLocation}
                   onChange={(event) => update('eventLocation', event.target.value)}
+                />
+              </>
+            ) : undefined}
+            {state.payloadKind === 'vcard' ? (
+              <>
+                <Field
+                  label="氏名"
+                  value={state.vcardName}
+                  onChange={(event) => update('vcardName', event.target.value)}
+                />
+                <Field
+                  label="組織"
+                  hint="空のままにもできます。"
+                  value={state.vcardOrganization}
+                  onChange={(event) => update('vcardOrganization', event.target.value)}
+                />
+                <Field
+                  label="名刺の電話番号（国番号付き）"
+                  type="tel"
+                  inputMode="tel"
+                  hint="空のままにもできます。入れる場合は国番号から始めてください（例: +819012345678）。"
+                  value={state.vcardTel}
+                  onChange={(event) => update('vcardTel', event.target.value)}
+                />
+                <Field
+                  label="名刺のメールアドレス"
+                  type="email"
+                  inputMode="email"
+                  hint="空のままにもできます。"
+                  value={state.vcardEmail}
+                  onChange={(event) => update('vcardEmail', event.target.value)}
+                />
+                <Field
+                  label="名刺の URL"
+                  type="url"
+                  inputMode="url"
+                  hint="空のままにもできます。"
+                  value={state.vcardUrl}
+                  onChange={(event) => update('vcardUrl', event.target.value)}
                 />
               </>
             ) : undefined}
