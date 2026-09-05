@@ -9,7 +9,8 @@
  * `Interpretation` を返す。
  */
 import type { Interpretation } from '../../contract/interpretation.ts'
+import { interpretTel } from './tel.ts'
 
 export const interpret = (text: string): Interpretation => {
-  return { kind: 'plain', text }
+  return interpretTel(text) ?? { kind: 'plain', text }
 }
