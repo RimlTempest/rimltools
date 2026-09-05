@@ -13,6 +13,22 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag2aaa', 'wcag21a', 'wcag21aa', 'wcag
 const FIXTURE = fileURLToPath(new URL('../fixtures/qr-url.png', import.meta.url))
 const FIXTURE_TEXT = 'https://qrcc.riml4i.com/scan-fixture'
 
+/**
+ * Wi-Fi の QR（内容は下の文字列）。この計画（plans/005）の解釈結果が
+ * 表示されることを確かめるための固定画像。
+ */
+const WIFI_FIXTURE = fileURLToPath(new URL('../fixtures/qr-wifi.png', import.meta.url))
+const WIFI_FIXTURE_TEXT = 'WIFI:S:MyNet;T:WPA;P:secret;;'
+
+/**
+ * GS1 の要素文字列（01=GTIN・17=有効期限・10=ロット）を QR に入れた固定画像。
+ * 実際の GS1 バーコード（ITF-14 / GS1 DataBar）である必要はない。
+ * 解釈（`interpret`）はテキストの中身だけを見るので、QR に入っていても
+ * 同じように解釈されることを確かめられる。
+ */
+const GS1_FIXTURE = fileURLToPath(new URL('../fixtures/qr-gs1.png', import.meta.url))
+const GS1_FIXTURE_TEXT = '0104912345678904172512311012345'
+
 /** wasm デコーダは読み取り画面に入ってから取りに行くので、初回は時間がかかる。 */
 const DECODE_TIMEOUT = 30_000
 
@@ -30,6 +46,40 @@ test('画像を選ぶと内容がテキストで出る', async ({ page }) => {
     timeout: DECODE_TIMEOUT,
   })
   await expect(page.getByText('種類: QR コード')).toBeVisible()
+})
+
+/** plans/005: Wi-Fi の QR を読むと、解釈した内容が出て、パスワードは既定で伏せられる。 */
+test('Wi-Fi の QR を読むと SSID などが解釈されて出る', async ({ page }) => {
+  await page.goto('/')
+  await scan(page).getByLabel('コードが写っている画像').setInputFiles(WIFI_FIXTURE)
+
+  // 生のテキストは残る（Playwright の getByText は既定で部分一致なので、読み上げ
+  // 領域にも同じ文字列が出る。以降は exact: true にして両者を混同しない）
+  await expect(scan(page).getByText(WIFI_FIXTURE_TEXT, { exact: true })).toBeVisible({
+    timeout: DECODE_TIMEOUT,
+  })
+  // 解釈した内容
+  await expect(scan(page).getByText('MyNet', { exact: true })).toBeVisible()
+  await expect(scan(page).getByText('WPA', { exact: true })).toBeVisible()
+  await expect(scan(page).getByText('secret', { exact: true })).toBeHidden()
+
+  await scan(page).getByRole('button', { name: 'パスワードを表示する' }).click()
+  await expect(scan(page).getByText('secret', { exact: true })).toBeVisible()
+})
+
+/** plans/005: GS1 の要素文字列を読むと GTIN・有効期限・ロットが解釈されて出る。 */
+test('GS1 の要素文字列を読むと GTIN などが解釈されて出る', async ({ page }) => {
+  await page.goto('/')
+  await scan(page).getByLabel('コードが写っている画像').setInputFiles(GS1_FIXTURE)
+
+  // 生のテキストは残る（読み上げ領域にも同じ文字列が出るので exact: true で絞る）
+  await expect(scan(page).getByText(GS1_FIXTURE_TEXT, { exact: true })).toBeVisible({
+    timeout: DECODE_TIMEOUT,
+  })
+  // 解釈した内容（GTIN・有効期限・ロット）
+  await expect(scan(page).getByText('04912345678904', { exact: true })).toBeVisible()
+  await expect(scan(page).getByText('251231', { exact: true })).toBeVisible()
+  await expect(scan(page).getByText('12345', { exact: true })).toBeVisible()
 })
 
 test('読み取った内容が読み上げ領域に出る', async ({ page }) => {
@@ -97,6 +147,25 @@ test('読み取った結果が出たあとも axe の違反がない @a11y', asy
 
   const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
   expect(results.violations).toEqual([])
+})
+
+/**
+ * plans/005 で足した解釈結果の表示（<dl> とパスワードの表示切り替えボタン）に
+ * axe の違反が無いことも確かめる。パスワードを表示した状態でも確認する。
+ */
+test('Wi-Fi の解釈結果を表示しても axe の違反がない @a11y', async ({ page }) => {
+  await page.goto('/')
+  await scan(page).getByLabel('コードが写っている画像').setInputFiles(WIFI_FIXTURE)
+  await expect(scan(page).getByRole('button', { name: 'パスワードを表示する' })).toBeVisible({
+    timeout: DECODE_TIMEOUT,
+  })
+
+  const beforeReveal = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
+  expect(beforeReveal.violations).toEqual([])
+
+  await scan(page).getByRole('button', { name: 'パスワードを表示する' }).click()
+  const afterReveal = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
+  expect(afterReveal.violations).toEqual([])
 })
 
 /** マウスが使えなくても、カメラ起動から画像選択まで届くこと（AAA 2.1.3）。 */
