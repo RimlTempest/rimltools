@@ -1,10 +1,17 @@
 import { describe, expect, test } from 'bun:test'
-import { parseHttpUrl } from '@qrcc/contract'
+import type { Ok, Result } from '@qrcc/contract'
+import { isOk, parseHttpUrl } from '@qrcc/contract'
 import { interpret } from './index.ts'
 
+/** テスト固定値が壊れていたら、その場でテストを失敗させて気づけるようにする。 */
+function assertOk<T, E>(result: Result<T, E>): asserts result is Ok<T> {
+  expect(isOk(result)).toBe(true)
+}
+
+/** テストの固定値専用。 */
 const httpUrl = (text: string) => {
   const parsed = parseHttpUrl(text)
-  if (!parsed.ok) throw new Error(`test fixture is not a valid http url: ${text}`)
+  assertOk(parsed)
   return parsed.value
 }
 
