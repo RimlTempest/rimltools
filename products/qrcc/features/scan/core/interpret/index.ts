@@ -10,8 +10,11 @@
  */
 import type { Interpretation } from '../../contract/interpretation.ts'
 import { interpretMailto } from './mailto.ts'
+import { interpretSms } from './sms.ts'
 import { interpretTel } from './tel.ts'
 
 export const interpret = (text: string): Interpretation => {
-  return interpretTel(text) ?? interpretMailto(text) ?? { kind: 'plain', text }
+  return (
+    interpretTel(text) ?? interpretMailto(text) ?? interpretSms(text) ?? { kind: 'plain', text }
+  )
 }
