@@ -83,6 +83,11 @@ const INITIAL: FormState = {
 
 type BuildError = { readonly field: string; readonly reason: string }
 
+/**
+ * ここは**網羅のまま残している**。内容の種類ごとに入力欄が違うので、
+ * 種類を足した人に「フォームをどうするか」を必ず考えさせたい。
+ * `default` を足さないこと。
+ */
 const buildPayload = (state: FormState): Result<CodePayload, BuildError> => {
   switch (state.payloadKind) {
     case 'text':
@@ -121,16 +126,15 @@ const buildPayload = (state: FormState): Result<CodePayload, BuildError> => {
   }
 }
 
-const buildSymbology = (state: FormState): Symbology => {
-  switch (state.symbologyKind) {
-    case 'qr':
-      return { kind: 'qr', ec: state.qrEc }
-    case 'code128':
-      return { kind: 'code128', charset: 'auto' }
-    case 'ean13':
-      return { kind: 'ean13' }
-  }
-}
+/**
+ * 符号の既定値はレジストリが持っている（`SYMBOLOGY_META[kind].defaults`）。
+ * ここで二重に持たない。こうすると**符号を増やす作業がこの関数を
+ * 触らずに済む**。QR だけは利用者が誤り訂正レベルを選ぶので上書きする。
+ */
+const buildSymbology = (state: FormState): Symbology =>
+  state.symbologyKind === 'qr'
+    ? { kind: 'qr', ec: state.qrEc }
+    : SYMBOLOGY_META[state.symbologyKind].defaults
 
 const buildRequest = (state: FormState): Result<RenderRequest, BuildError> => {
   const payload = buildPayload(state)
