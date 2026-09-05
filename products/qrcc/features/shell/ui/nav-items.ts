@@ -14,6 +14,7 @@ export type NavItem = {
 export const NAV_ITEMS: readonly NavItem[] = [
   { to: '/', label: 'コードを作る・読み取る' },
   { to: '/print', label: '印刷とラベル' },
+  { to: '/nfc', label: 'NFC タグに書く' },
   { to: '/codes', label: '保存したコード' },
   { to: '/sign-in', label: 'サインイン' },
   { to: '/settings', label: '設定' },

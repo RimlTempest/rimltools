@@ -1,0 +1,23 @@
+/*
+ * NFC 書き込み画面。
+ *
+ * レイアウトは Grid だけで決める。JS では計算しない。
+ */
+.qrcc-nfc__confirm,
+.qrcc-nfc__done {
+  display: grid;
+  gap: var(--qrcc-space-3);
+  justify-items: start;
+  max-inline-size: var(--qrcc-measure);
+  margin-block-start: var(--qrcc-space-4);
+}
+
+.qrcc-nfc__preview {
+  padding: var(--qrcc-space-3);
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--qrcc-font-mono);
+  background: var(--qrcc-surface-raised);
+  border: 1px solid var(--qrcc-border);
+  border-radius: var(--qrcc-radius-sm);
+}
