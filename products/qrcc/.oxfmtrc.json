@@ -12,6 +12,8 @@
     "**/target/**",
     "**/routeTree.gen.ts",
     "**/worker-configuration.d.ts",
-    "**/*.gen.ts"
+    "**/*.gen.ts",
+    ".agents/skills/**",
+    ".claude/skills/**"
   ]
 }
