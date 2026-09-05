@@ -225,21 +225,18 @@ export type FakeRenderer = {
 }
 
 const describePayload = (payload: CodePayload): string => {
-  // switch の外で kind を控えておく。default 節では `payload` が
-  // 網羅済みの型（既知の種類だけ）に絞り込まれて `never` になるため、
-  // ここで先に取っておいた `kind` を使う。
+  // switch にしないのは、`switch-exhaustiveness-check` が全メンバーの明示 case を
+  // 要求し、種類が増えるたびにこの関数を触ることになるため。
+  // テスト用の偽物なので、専用の文言が無い種類は種類名を出すだけで十分。
+  //
+  // if の連なりの外で kind を控えておく。最後の return の位置では、既知の
+  // 種類をすべて弾いたあとの `payload` が `never` に絞り込まれてしまい
+  // `payload.kind` に直接はアクセスできないため。
   const kind = payload.kind
-  switch (payload.kind) {
-    case 'url':
-      return `URL: ${payload.url}`
-    case 'text':
-      return `テキスト: ${payload.text}`
-    case 'wifi':
-      return `Wi-Fi: ${payload.ssid}`
-    // テスト用の偽物なので、専用の文言が無い種類は種類名を出すだけで十分。
-    default:
-      return kind
-  }
+  if (payload.kind === 'url') return `URL: ${payload.url}`
+  if (payload.kind === 'text') return `テキスト: ${payload.text}`
+  if (payload.kind === 'wifi') return `Wi-Fi: ${payload.ssid}`
+  return kind
 }
 
 export const makeFakeRenderer = (): FakeRenderer => {

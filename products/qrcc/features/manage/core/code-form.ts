@@ -135,19 +135,12 @@ export const buildCodeDraft = (
 }
 
 export const toCodeContent = (payload: CodePayload): CodeContent => {
-  switch (payload.kind) {
-    case 'text':
-      return { kind: 'text', text: payload.text }
-    case 'url':
-      return { kind: 'url', url: payload.url }
-    case 'wifi':
-      return { kind: 'other', payload }
-    // 専用の編集欄を持たない種類は、そのまま抱えて `other` にする。
-    // 種類が増えてもこの関数は変えなくてよい（増やした人が編集欄を
-    // 用意したくなったときだけ case を足す）
-    default:
-      return { kind: 'other', payload }
-  }
+  // 専用の編集欄を持つのは text と url だけ。それ以外はそのまま抱えて `other` にする。
+  // switch にしないのは、`switch-exhaustiveness-check` が全メンバーの明示 case を
+  // 要求し、種類が増えるたびにこの関数を触ることになるため。
+  if (payload.kind === 'text') return { kind: 'text', text: payload.text }
+  if (payload.kind === 'url') return { kind: 'url', url: payload.url }
+  return { kind: 'other', payload }
 }
 
 /** 保存されたコードを編集フォームの初期値に開く。 */
