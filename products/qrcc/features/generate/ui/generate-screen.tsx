@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useState } from 'react'
 import type { Result } from '@qrcc/contract'
 import { parseHexColor, parseHttpUrl, parseNonEmptyText } from '@qrcc/contract'
+import { buildTelPayload } from '../core/payload/tel.ts'
 import { Button, Field, LiveRegion } from '@qrcc/ui'
 import type {
   CodePayload,
@@ -55,6 +56,7 @@ type FormState = {
   readonly payloadKind: PayloadKind
   readonly text: string
   readonly url: string
+  readonly tel: string
   readonly ssid: string
   readonly password: string
   readonly hidden: boolean
@@ -70,6 +72,7 @@ const INITIAL: FormState = {
   payloadKind: 'url',
   text: '',
   url: 'https://qrcc.riml4i.com',
+  tel: '',
   ssid: '',
   password: '',
   hidden: false,
@@ -101,6 +104,18 @@ const buildPayload = (state: FormState): Result<CodePayload, BuildError> => {
         : {
             ok: false,
             error: { field: 'URL', reason: 'http:// か https:// で始まる URL を入力してください' },
+          }
+    }
+    case 'tel': {
+      const tel = buildTelPayload(state.tel)
+      return tel.ok
+        ? tel
+        : {
+            ok: false,
+            error: {
+              field: '電話番号',
+              reason: '国番号から始まる電話番号を入力してください（例: +819012345678）',
+            },
           }
     }
     case 'wifi': {
@@ -315,6 +330,16 @@ export const GenerateScreen = ({
                 placeholder={SYMBOLOGY_META.qr.example}
                 value={state.url}
                 onChange={(event) => update('url', event.target.value)}
+              />
+            ) : undefined}
+            {state.payloadKind === 'tel' ? (
+              <Field
+                label="電話番号（国番号付き）"
+                type="tel"
+                inputMode="tel"
+                hint="国番号から始めてください（例: +819012345678）。"
+                value={state.tel}
+                onChange={(event) => update('tel', event.target.value)}
               />
             ) : undefined}
             {state.payloadKind === 'wifi' ? (

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { parseHttpUrl } from '@qrcc/contract'
+import { parseHttpUrl, parsePhoneNumber } from '@qrcc/contract'
 import type { RenderRequest, RenderResponse } from '../contract/index.ts'
 import type { RenderFn } from './generate-screen.tsx'
 import { GenerateScreen } from './generate-screen.tsx'
@@ -179,6 +179,31 @@ describe('GenerateScreen', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Wi-Fi 設定' }))
     expect(screen.getByLabelText('ネットワーク名')).toBeDefined()
     expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+  })
+
+  test('電話番号を選ぶと入力欄が電話番号になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '電話番号' }))
+    expect(screen.getByLabelText('電話番号（国番号付き）')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('電話番号（国番号付き）'), '+819012345678')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const number = parsePhoneNumber('+819012345678')
+    expect(number.ok).toBe(true)
+    if (number.ok) expect(requests[0]?.payload).toEqual({ kind: 'tel', number: number.value })
+  })
+
+  test('電話番号が不正なときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '電話番号' }))
+    await userEvent.type(screen.getByLabelText('電話番号'), '090-1234-5678')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('電話番号'))
+    expect(requests).toHaveLength(0)
   })
 
   test('1D バーコードではモジュールの形を出さない', async () => {

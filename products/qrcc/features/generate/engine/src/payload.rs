@@ -8,7 +8,7 @@ extern crate alloc;
 use alloc::format;
 use alloc::string::{String, ToString};
 
-use qrcc_kernel::{HttpUrl, NonEmptyText};
+use qrcc_kernel::{HttpUrl, NonEmptyText, PhoneNumber};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -27,6 +27,9 @@ pub enum CodePayload {
     },
     Url {
         url: HttpUrl,
+    },
+    Tel {
+        number: PhoneNumber,
     },
     Wifi {
         ssid: NonEmptyText,
@@ -54,6 +57,7 @@ impl CodePayload {
         match self {
             Self::Text { text } => text.clone(),
             Self::Url { url } => url.as_str().to_string(),
+            Self::Tel { number } => format!("tel:{}", number.as_str()),
             Self::Wifi { ssid, auth, hidden } => {
                 let (auth_type, password) = match auth {
                     WifiAuth::Nopass => ("nopass", String::new()),
@@ -73,6 +77,7 @@ impl CodePayload {
         match self {
             Self::Text { text } => format!("テキスト: {text}"),
             Self::Url { url } => format!("URL: {}", url.as_str()),
+            Self::Tel { number } => format!("電話番号: {}", number.as_str()),
             Self::Wifi { ssid, .. } => format!("Wi-Fi 設定: {}", ssid.as_str()),
         }
     }
@@ -100,6 +105,21 @@ mod tests {
         assert_eq!(
             CodePayload::Url { url }.encode(),
             "https://example.com/a?b=1"
+        );
+    }
+
+    #[test]
+    fn tel_is_encoded_with_the_tel_scheme() {
+        let number = PhoneNumber::parse("+819012345678").expect("valid number");
+        assert_eq!(CodePayload::Tel { number }.encode(), "tel:+819012345678");
+    }
+
+    #[test]
+    fn tel_describes_itself_for_screen_readers() {
+        let number = PhoneNumber::parse("+819012345678").expect("valid number");
+        assert_eq!(
+            CodePayload::Tel { number }.describe(),
+            "電話番号: +819012345678"
         );
     }
 
