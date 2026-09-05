@@ -39,6 +39,7 @@ pub enum Symbology {
     Ean13,
     Code39,
     Code93,
+    Ean8,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error, Serialize, Deserialize)]
@@ -64,6 +65,7 @@ impl Symbology {
             Self::Ean13 => "EAN-13",
             Self::Code39 => "Code39",
             Self::Code93 => "Code93",
+            Self::Ean8 => "EAN-8",
         }
     }
 
@@ -71,7 +73,7 @@ impl Symbology {
     pub fn is_one_dimensional(&self) -> bool {
         match self {
             Self::Qr { .. } => false,
-            Self::Code128 { .. } | Self::Ean13 | Self::Code39 | Self::Code93 => true,
+            Self::Code128 { .. } | Self::Ean13 | Self::Code39 | Self::Code93 | Self::Ean8 => true,
         }
     }
 
@@ -83,6 +85,8 @@ impl Symbology {
             Self::Ean13 => 9,
             // 業界慣行として左右 10X
             Self::Code39 | Self::Code93 => 10,
+            // GS1 の規格どおり左右 7X
+            Self::Ean8 => 7,
         }
     }
 
@@ -94,6 +98,7 @@ impl Symbology {
             Self::Ean13 => encode_ean13(data),
             Self::Code39 => encode_code39(data),
             Self::Code93 => encode_code93(data),
+            Self::Ean8 => encode_ean8(data),
         }
     }
 }
@@ -219,6 +224,18 @@ fn encode_code93(data: &str) -> Result<Modules, EncodeError> {
 
     Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
         .map_err(invalid_modules("Code93"))
+}
+
+fn encode_ean8(data: &str) -> Result<Modules, EncodeError> {
+    let encoded = barcoders::sym::ean8::EAN8::new(data)
+        .map_err(|cause| EncodeError::IncompatiblePayload {
+            symbology: "EAN-8".to_string(),
+            reason: alloc::format!("{cause:?}"),
+        })?
+        .encode();
+
+    Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
+        .map_err(invalid_modules("EAN-8"))
 }
 
 #[cfg(test)]
@@ -390,12 +407,53 @@ mod tests {
         assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
     }
 
+    /// 期待値は `barcoders` クレート自身の `src/sym/ean8.rs` の
+    /// `#[cfg(test)] fn ean8_encode()` から取った外部検証済みの値。
+    /// 7 桁を渡すと検査数字（7）を計算して付ける。
+    #[test]
+    fn ean8_accepts_seven_digits_and_computes_the_check_digit() {
+        let modules = Symbology::Ean8.encode("5512345").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some("1010110001011000100110010010011010101000010101110010011101000100101")
+        );
+    }
+
+    #[test]
+    fn ean8_accepts_eight_digits_when_the_check_digit_is_correct() {
+        // "5512345" の検査数字は 7（barcoders の src/sym/ean8.rs のコメントどおり）
+        let modules = Symbology::Ean8.encode("55123457").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some("1010110001011000100110010010011010101000010101110010011101000100101")
+        );
+    }
+
+    #[test]
+    fn ean8_rejects_an_incorrect_check_digit() {
+        let error = Symbology::Ean8
+            .encode("55123450")
+            .expect_err("wrong checksum");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    #[test]
+    fn ean8_rejects_non_digits_and_wrong_lengths() {
+        for bad in ["123456", "abcdefgh", ""] {
+            assert!(
+                Symbology::Ean8.encode(bad).is_err(),
+                "should reject {bad:?}"
+            );
+        }
+    }
+
     #[test]
     fn quiet_zones_follow_each_standard() {
         assert_eq!(Symbology::Qr { ec: QrEc::M }.recommended_quiet_zone(), 4);
         assert_eq!(Symbology::Ean13.recommended_quiet_zone(), 9);
         assert_eq!(Symbology::Code39.recommended_quiet_zone(), 10);
         assert_eq!(Symbology::Code93.recommended_quiet_zone(), 10);
+        assert_eq!(Symbology::Ean8.recommended_quiet_zone(), 7);
     }
 
     #[test]
@@ -404,6 +462,7 @@ mod tests {
         assert!(Symbology::Ean13.is_one_dimensional());
         assert!(Symbology::Code39.is_one_dimensional());
         assert!(Symbology::Code93.is_one_dimensional());
+        assert!(Symbology::Ean8.is_one_dimensional());
         assert!(
             Symbology::Code128 {
                 charset: Code128Charset::Auto

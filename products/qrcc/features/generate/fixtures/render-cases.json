@@ -97,6 +97,24 @@
       "expect": { "ok": true, "description": "テキスト: CODE-93", "warnings": [] }
     },
     {
+      "name": "ean8-computes-check-digit",
+      "request": {
+        "payload": { "kind": "text", "text": "5512345" },
+        "symbology": { "kind": "ean8" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 2,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "テキスト: 5512345", "warnings": [] }
+    },
+    {
       "name": "ean13-invalid-digits",
       "request": {
         "payload": { "kind": "text", "text": "not-digits" },

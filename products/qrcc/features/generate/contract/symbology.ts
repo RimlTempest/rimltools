@@ -16,6 +16,7 @@ export type Symbology =
   | { readonly kind: 'ean13' }
   | { readonly kind: 'code39' }
   | { readonly kind: 'code93' }
+  | { readonly kind: 'ean8' }
 
 export type SymbologyKind = Symbology['kind']
 
@@ -102,6 +103,17 @@ export const SYMBOLOGY_META: { readonly [K in SymbologyKind]: SymbologyMeta<K> }
     defaults: { kind: 'code93' },
     example: 'CODE-93',
     // barcoders の Code93 実装（基本モードのみ）は数字・英大文字・一部記号を受け付ける
+    acceptsPayloads: ['text'],
+  },
+  ean8: {
+    label: 'EAN-8',
+    description: '小さな商品向けの 8 桁のバーコード。7 桁を入れると検査数字を計算します。',
+    oneDimensional: true,
+    // GS1 の規格どおり左右 7X
+    quietZone: 7,
+    defaults: { kind: 'ean8' },
+    example: '5512345',
+    // EAN-8 は数字だけなので、テキスト以外は入れられない
     acceptsPayloads: ['text'],
   },
 }
