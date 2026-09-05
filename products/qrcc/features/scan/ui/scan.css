@@ -101,6 +101,31 @@
   color: var(--qrcc-text-muted);
 }
 
+/*
+ * 解釈結果（GS1 の要素・Wi-Fi・名刺など）。項目名と値の対応を <dl> で表す。
+ * 色や記号だけで意味を伝えないよう、項目名は必ずテキストで出す。
+ */
+.qrcc-scan__interpretation {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--qrcc-space-3);
+  row-gap: var(--qrcc-space-1);
+  inline-size: 100%;
+  margin: 0;
+  padding-block-start: var(--qrcc-space-2);
+  border-block-start: 1px solid var(--qrcc-border);
+}
+
+.qrcc-scan__interpretation dt {
+  color: var(--qrcc-text-muted);
+  font-weight: normal;
+}
+
+.qrcc-scan__interpretation dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 @media print {
   /* 印刷では操作系を落とし、読み取った内容だけを残す */
   .qrcc-scan__video,
