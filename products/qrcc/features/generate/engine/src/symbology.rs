@@ -38,6 +38,7 @@ pub enum Symbology {
     Code128 { charset: Code128Charset },
     Ean13,
     Code39,
+    Code93,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error, Serialize, Deserialize)]
@@ -62,6 +63,7 @@ impl Symbology {
             Self::Code128 { .. } => "Code128",
             Self::Ean13 => "EAN-13",
             Self::Code39 => "Code39",
+            Self::Code93 => "Code93",
         }
     }
 
@@ -69,7 +71,7 @@ impl Symbology {
     pub fn is_one_dimensional(&self) -> bool {
         match self {
             Self::Qr { .. } => false,
-            Self::Code128 { .. } | Self::Ean13 | Self::Code39 => true,
+            Self::Code128 { .. } | Self::Ean13 | Self::Code39 | Self::Code93 => true,
         }
     }
 
@@ -80,7 +82,7 @@ impl Symbology {
             Self::Code128 { .. } => 10,
             Self::Ean13 => 9,
             // 業界慣行として左右 10X
-            Self::Code39 => 10,
+            Self::Code39 | Self::Code93 => 10,
         }
     }
 
@@ -91,6 +93,7 @@ impl Symbology {
             Self::Code128 { charset } => encode_code128(data, *charset),
             Self::Ean13 => encode_ean13(data),
             Self::Code39 => encode_code39(data),
+            Self::Code93 => encode_code93(data),
         }
     }
 }
@@ -204,6 +207,18 @@ fn encode_code39(data: &str) -> Result<Modules, EncodeError> {
 
     Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
         .map_err(invalid_modules("Code39"))
+}
+
+fn encode_code93(data: &str) -> Result<Modules, EncodeError> {
+    let encoded = barcoders::sym::code93::Code93::new(data)
+        .map_err(|cause| EncodeError::IncompatiblePayload {
+            symbology: "Code93".to_string(),
+            reason: alloc::format!("{cause:?}"),
+        })?
+        .encode();
+
+    Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
+        .map_err(invalid_modules("Code93"))
 }
 
 #[cfg(test)]
@@ -344,11 +359,43 @@ mod tests {
         assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
     }
 
+    /// 期待値は `barcoders` クレート自身の `src/sym/code93.rs` の
+    /// `#[cfg(test)] fn code93_encode()` から取った外部検証済みの値。
+    #[test]
+    fn code93_matches_a_known_module_pattern() {
+        let modules = Symbology::Code93.encode("TEST93").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some(
+                "1010111101101001101100100101101011001101001101000010101010000101011101101001000101010111101"
+            )
+        );
+        let modules = Symbology::Code93.encode("99").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some("1010111101000010101000010101101100101000101101010111101")
+        );
+    }
+
+    #[test]
+    fn code93_rejects_characters_outside_its_alphabet() {
+        // 小文字は Code93（基本モード）の文字集合に無い
+        let error = Symbology::Code93.encode("lowerCASE").expect_err("rejects");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    #[test]
+    fn code93_rejects_an_empty_payload() {
+        let error = Symbology::Code93.encode("").expect_err("empty");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
     #[test]
     fn quiet_zones_follow_each_standard() {
         assert_eq!(Symbology::Qr { ec: QrEc::M }.recommended_quiet_zone(), 4);
         assert_eq!(Symbology::Ean13.recommended_quiet_zone(), 9);
         assert_eq!(Symbology::Code39.recommended_quiet_zone(), 10);
+        assert_eq!(Symbology::Code93.recommended_quiet_zone(), 10);
     }
 
     #[test]
@@ -356,6 +403,7 @@ mod tests {
         assert!(!Symbology::Qr { ec: QrEc::L }.is_one_dimensional());
         assert!(Symbology::Ean13.is_one_dimensional());
         assert!(Symbology::Code39.is_one_dimensional());
+        assert!(Symbology::Code93.is_one_dimensional());
         assert!(
             Symbology::Code128 {
                 charset: Code128Charset::Auto

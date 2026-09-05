@@ -15,6 +15,7 @@ export type Symbology =
   | { readonly kind: 'code128'; readonly charset: Code128Charset }
   | { readonly kind: 'ean13' }
   | { readonly kind: 'code39' }
+  | { readonly kind: 'code93' }
 
 export type SymbologyKind = Symbology['kind']
 
@@ -90,6 +91,17 @@ export const SYMBOLOGY_META: { readonly [K in SymbologyKind]: SymbologyMeta<K> }
     defaults: { kind: 'code39' },
     example: 'CODE-39',
     // barcoders の Code39 実装は数字・英大文字・一部記号のみ受け付ける
+    acceptsPayloads: ['text'],
+  },
+  code93: {
+    label: 'Code 93',
+    description: 'Code 39 より高密度に表せる 1 次元バーコード。物流でよく使われます。',
+    oneDimensional: true,
+    // Code93 は業界慣行として左右 10X の静寂域を取る
+    quietZone: 10,
+    defaults: { kind: 'code93' },
+    example: 'CODE-93',
+    // barcoders の Code93 実装（基本モードのみ）は数字・英大文字・一部記号を受け付ける
     acceptsPayloads: ['text'],
   },
 }
