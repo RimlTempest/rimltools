@@ -225,6 +225,10 @@ export type FakeRenderer = {
 }
 
 const describePayload = (payload: CodePayload): string => {
+  // switch の外で kind を控えておく。default 節では `payload` が
+  // 網羅済みの型（既知の種類だけ）に絞り込まれて `never` になるため、
+  // ここで先に取っておいた `kind` を使う。
+  const kind = payload.kind
   switch (payload.kind) {
     case 'url':
       return `URL: ${payload.url}`
@@ -232,6 +236,9 @@ const describePayload = (payload: CodePayload): string => {
       return `テキスト: ${payload.text}`
     case 'wifi':
       return `Wi-Fi: ${payload.ssid}`
+    // テスト用の偽物なので、専用の文言が無い種類は種類名を出すだけで十分。
+    default:
+      return kind
   }
 }
 
