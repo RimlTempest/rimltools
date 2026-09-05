@@ -15,6 +15,7 @@ import type {
   Symbology,
   SymbologyKind,
 } from '@qrcc/generate/contract'
+import { SYMBOLOGY_META } from '@qrcc/generate/contract'
 import type { CodeDraft, SavedCode } from '@qrcc/manage/contract'
 
 /**
@@ -85,16 +86,15 @@ const buildPayload = (content: CodeContent): Result<CodePayload, CodeFormError> 
   }
 }
 
-const buildSymbology = (state: CodeFormState): Symbology => {
-  switch (state.symbologyKind) {
-    case 'qr':
-      return { kind: 'qr', ec: state.qrEc }
-    case 'code128':
-      return { kind: 'code128', charset: 'auto' }
-    case 'ean13':
-      return { kind: 'ean13' }
-  }
-}
+/**
+ * 符号の既定値はレジストリが持っている（`SYMBOLOGY_META[kind].defaults`）。
+ * ここで二重に持たない。こうすると**符号を増やす作業がこの関数を
+ * 触らずに済む**。QR だけは利用者が誤り訂正レベルを選ぶので上書きする。
+ */
+const buildSymbology = (state: CodeFormState): Symbology =>
+  state.symbologyKind === 'qr'
+    ? { kind: 'qr', ec: state.qrEc }
+    : SYMBOLOGY_META[state.symbologyKind].defaults
 
 export const buildCodeDraft = (
   id: CodeId,
@@ -141,6 +141,11 @@ export const toCodeContent = (payload: CodePayload): CodeContent => {
     case 'url':
       return { kind: 'url', url: payload.url }
     case 'wifi':
+      return { kind: 'other', payload }
+    // 専用の編集欄を持たない種類は、そのまま抱えて `other` にする。
+    // 種類が増えてもこの関数は変えなくてよい（増やした人が編集欄を
+    // 用意したくなったときだけ case を足す）
+    default:
       return { kind: 'other', payload }
   }
 }
