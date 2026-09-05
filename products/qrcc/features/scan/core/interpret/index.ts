@@ -13,12 +13,14 @@ import { interpretGeo } from './geo.ts'
 import { interpretMailto } from './mailto.ts'
 import { interpretSms } from './sms.ts'
 import { interpretTel } from './tel.ts'
+import { interpretWifi } from './wifi.ts'
 
 export const interpret = (text: string): Interpretation => {
   return (
     interpretTel(text)
     ?? interpretMailto(text)
     ?? interpretSms(text)
-    ?? interpretGeo(text) ?? { kind: 'plain', text }
+    ?? interpretGeo(text)
+    ?? interpretWifi(text) ?? { kind: 'plain', text }
   )
 }
