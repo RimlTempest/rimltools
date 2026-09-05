@@ -8,6 +8,7 @@ import { err, ok } from '@qrcc/contract'
 import type { CodePayload } from './payload.ts'
 import type { RenderStyle } from './style.ts'
 import type { Symbology, SymbologyKind } from './symbology.ts'
+import { SYMBOLOGY_META } from './symbology.ts'
 
 export type OutputFormat = 'svg'
 
@@ -160,14 +161,6 @@ export const isPayloadCompatible = (
   payloadKind: CodePayload['kind'],
   symbologyKind: SymbologyKind,
 ): boolean => {
-  switch (symbologyKind) {
-    case 'qr':
-      return true
-    // EAN-13 は数字だけなので、テキスト以外は入れられない
-    case 'ean13':
-      return payloadKind === 'text'
-    // Code128 は ASCII のみ。URL とテキストは載るが、日本語混じりの Wi-Fi 設定は載らない
-    case 'code128':
-      return payloadKind === 'text' || payloadKind === 'url'
-  }
+  const { acceptsPayloads } = SYMBOLOGY_META[symbologyKind]
+  return acceptsPayloads === 'all' || acceptsPayloads.includes(payloadKind)
 }
