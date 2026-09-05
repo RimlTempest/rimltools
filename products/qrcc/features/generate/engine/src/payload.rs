@@ -11,6 +11,59 @@ use alloc::string::{String, ToString};
 use qrcc_kernel::{EmailAddress, HttpUrl, NonEmptyText, PhoneNumber};
 use serde::{Deserialize, Serialize};
 
+/// 緯度。-90..=90 の有限な数値であることを serde の境界で強制する。
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(try_from = "f64", into = "f64")]
+pub struct Latitude(f64);
+
+impl TryFrom<f64> for Latitude {
+    type Error = String;
+    fn try_from(value: f64) -> Result<Self, Self::Error> {
+        if value.is_finite() && (-90.0..=90.0).contains(&value) {
+            Ok(Self(value))
+        } else {
+            Err(format!(
+                "latitude must be a finite number between -90 and 90, got {value}"
+            ))
+        }
+    }
+}
+
+impl From<Latitude> for f64 {
+    fn from(value: Latitude) -> Self {
+        value.0
+    }
+}
+
+// 検証済みなので常に有限（NaN を含まない）。反射性が保証できるので手で実装する。
+impl Eq for Latitude {}
+
+/// 経度。-180..=180 の有限な数値であることを serde の境界で強制する。
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(try_from = "f64", into = "f64")]
+pub struct Longitude(f64);
+
+impl TryFrom<f64> for Longitude {
+    type Error = String;
+    fn try_from(value: f64) -> Result<Self, Self::Error> {
+        if value.is_finite() && (-180.0..=180.0).contains(&value) {
+            Ok(Self(value))
+        } else {
+            Err(format!(
+                "longitude must be a finite number between -180 and 180, got {value}"
+            ))
+        }
+    }
+}
+
+impl From<Longitude> for f64 {
+    fn from(value: Longitude) -> Self {
+        value.0
+    }
+}
+
+impl Eq for Longitude {}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum WifiAuth {
@@ -39,6 +92,10 @@ pub enum CodePayload {
     Sms {
         number: PhoneNumber,
         body: String,
+    },
+    Geo {
+        lat: Latitude,
+        lon: Longitude,
     },
     Wifi {
         ssid: NonEmptyText,
@@ -89,6 +146,7 @@ impl CodePayload {
                 percent_encode(body)
             ),
             Self::Sms { number, body } => format!("SMSTO:{}:{body}", number.as_str()),
+            Self::Geo { lat, lon } => format!("geo:{},{}", lat.0, lon.0),
             Self::Wifi { ssid, auth, hidden } => {
                 let (auth_type, password) = match auth {
                     WifiAuth::Nopass => ("nopass", String::new()),
@@ -111,6 +169,7 @@ impl CodePayload {
             Self::Tel { number } => format!("電話番号: {}", number.as_str()),
             Self::Email { to, .. } => format!("メール: {}", to.as_str()),
             Self::Sms { number, .. } => format!("SMS: {}", number.as_str()),
+            Self::Geo { lat, lon } => format!("位置情報: {}, {}", lat.0, lon.0),
             Self::Wifi { ssid, .. } => format!("Wi-Fi 設定: {}", ssid.as_str()),
         }
     }
@@ -223,6 +282,42 @@ mod tests {
             body: String::new(),
         };
         assert_eq!(payload.describe(), "SMS: +819012345678");
+    }
+
+    #[test]
+    fn geo_is_encoded_with_the_geo_scheme() {
+        let payload = CodePayload::Geo {
+            lat: Latitude::try_from(35.681236).expect("valid latitude"),
+            lon: Longitude::try_from(139.767125).expect("valid longitude"),
+        };
+        assert_eq!(payload.encode(), "geo:35.681236,139.767125");
+    }
+
+    #[test]
+    fn geo_describes_itself_for_screen_readers() {
+        let payload = CodePayload::Geo {
+            lat: Latitude::try_from(35.681236).expect("valid latitude"),
+            lon: Longitude::try_from(139.767125).expect("valid longitude"),
+        };
+        assert_eq!(payload.describe(), "位置情報: 35.681236, 139.767125");
+    }
+
+    #[test]
+    fn latitude_accepts_the_boundary_and_rejects_beyond_it() {
+        assert!(Latitude::try_from(90.0).is_ok());
+        assert!(Latitude::try_from(-90.0).is_ok());
+        assert!(Latitude::try_from(90.0001).is_err());
+        assert!(Latitude::try_from(-90.0001).is_err());
+        assert!(Latitude::try_from(f64::NAN).is_err());
+    }
+
+    #[test]
+    fn longitude_accepts_the_boundary_and_rejects_beyond_it() {
+        assert!(Longitude::try_from(180.0).is_ok());
+        assert!(Longitude::try_from(-180.0).is_ok());
+        assert!(Longitude::try_from(180.0001).is_err());
+        assert!(Longitude::try_from(-180.0001).is_err());
+        assert!(Longitude::try_from(f64::NAN).is_err());
     }
 
     #[test]

@@ -268,6 +268,37 @@ describe('GenerateScreen', () => {
     expect(requests).toHaveLength(0)
   })
 
+  test('位置情報を選ぶと入力欄が緯度・経度になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '位置情報' }))
+    expect(screen.getByLabelText('緯度')).toBeDefined()
+    expect(screen.getByLabelText('経度')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('緯度'), '35.681236')
+    await userEvent.type(screen.getByLabelText('経度'), '139.767125')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const payload = requests[0]?.payload
+    expect(payload?.kind).toBe('geo')
+    if (payload?.kind === 'geo') {
+      expect(payload.lat).toBeCloseTo(35.681236)
+      expect(payload.lon).toBeCloseTo(139.767125)
+    }
+  })
+
+  test('緯度が範囲外なときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '位置情報' }))
+    await userEvent.type(screen.getByLabelText('緯度'), '200')
+    await userEvent.type(screen.getByLabelText('経度'), '0')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('緯度'))
+    expect(requests).toHaveLength(0)
+  })
+
   test('1D バーコードではモジュールの形を出さない', async () => {
     const { fn } = recording({ ok: true, value: response() })
     render(<GenerateScreen render={fn} />)
