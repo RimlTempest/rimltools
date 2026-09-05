@@ -119,7 +119,24 @@ HTML を取得し、そこから参照されている `/assets/*` を**全数** 
 > 資産が 1 本も見つからない場合も落とす。「HTML は返るがビルド成果物が
 > 繋がっていない」状態を、200 だけ見て見逃さないため。
 
-`.github/workflows/deploy.yml` のデプロイ直後にも同じものが入っている。
+さらに、実ブラウザでの確認も用意してある。
+
+```bash
+bun run smoke:browser                                    # 本番
+QRCC_SMOKE_URL=http://localhost:5173 bun run smoke:browser   # 任意のオリジン
+```
+
+HTTP 版が「配信されているか」までなのに対し、こちらは**JavaScript が動いた
+結果**を見る（ハイドレーション・ブラウザ内 wasm での生成と読み取り・
+Google の選択肢が出ること・qrcc-api が外から叩けないこと）。4 本で数秒。
+
+> **本番のデータを変えない。** サインインするとゲストの user と session が
+> D1 に増えるので、この spec では一切サインインしない。読み取り専用。
+
+設定は `e2e/playwright.prod.config.ts`。通常の e2e と違い `webServer` を
+持たず、既に動いているオリジンを外から叩くだけ。
+
+`.github/workflows/deploy.yml` のデプロイ直後に、両方が入っている。
 
 ## 2. 通常のデプロイ
 

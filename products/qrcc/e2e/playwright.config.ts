@@ -24,6 +24,16 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env['CI']),
   retries: process.env['CI'] ? 2 : 0,
+  /*
+   * CI のランナーは 4 コアで、Playwright の既定（コア数の半分）は 2 になる。
+   * 実測: workers=2 で 113 秒、4 で 70 秒、8 で 50 秒（320 件・10 コアの手元）。
+   * 待ち時間の大半は wasm の取得とページ遷移で CPU は空いているので、
+   * コア数ぶんまで上げる。手元は既定（コア数の半分）に任せる。
+   *
+   * **これ以上増やさないこと。** 並列度を上げるとページの描画が遅れ、
+   * 寸法を測る種類のテスト（対象サイズ・横スクロール）が実際に落ちた。
+   */
+  workers: process.env['CI'] ? 4 : undefined,
   reporter: process.env['CI'] ? [['github'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL,
