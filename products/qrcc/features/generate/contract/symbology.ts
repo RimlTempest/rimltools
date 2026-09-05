@@ -18,6 +18,7 @@ export type Symbology =
   | { readonly kind: 'code93' }
   | { readonly kind: 'ean8' }
   | { readonly kind: 'codabar' }
+  | { readonly kind: 'itf' }
 
 export type SymbologyKind = Symbology['kind']
 
@@ -126,6 +127,18 @@ export const SYMBOLOGY_META: { readonly [K in SymbologyKind]: SymbologyMeta<K> }
     defaults: { kind: 'codabar' },
     example: 'A1234B',
     // barcoders の Codabar 実装は数字と一部記号（開始・終了は A/B/C/D）のみ受け付ける
+    acceptsPayloads: ['text'],
+  },
+  itf: {
+    label: 'ITF（インターリーブド 2 of 5）',
+    description:
+      '数字だけを高密度で表せる 1 次元バーコード。日本の物流（ITF-14）でよく使われます。桁数は偶数にしてください。',
+    oneDimensional: true,
+    // ITF は業界慣行として左右 10X の静寂域を取る
+    quietZone: 10,
+    defaults: { kind: 'itf' },
+    example: '12345678',
+    // ITF は数字だけなので、テキスト以外は入れられない
     acceptsPayloads: ['text'],
   },
 }

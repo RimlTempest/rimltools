@@ -41,6 +41,7 @@ pub enum Symbology {
     Code93,
     Ean8,
     Codabar,
+    Itf,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error, Serialize, Deserialize)]
@@ -68,6 +69,7 @@ impl Symbology {
             Self::Code93 => "Code93",
             Self::Ean8 => "EAN-8",
             Self::Codabar => "Codabar",
+            Self::Itf => "ITF",
         }
     }
 
@@ -80,7 +82,8 @@ impl Symbology {
             | Self::Code39
             | Self::Code93
             | Self::Ean8
-            | Self::Codabar => true,
+            | Self::Codabar
+            | Self::Itf => true,
         }
     }
 
@@ -91,7 +94,7 @@ impl Symbology {
             Self::Code128 { .. } => 10,
             Self::Ean13 => 9,
             // 業界慣行として左右 10X
-            Self::Code39 | Self::Code93 | Self::Codabar => 10,
+            Self::Code39 | Self::Code93 | Self::Codabar | Self::Itf => 10,
             // GS1 の規格どおり左右 7X
             Self::Ean8 => 7,
         }
@@ -107,6 +110,7 @@ impl Symbology {
             Self::Code93 => encode_code93(data),
             Self::Ean8 => encode_ean8(data),
             Self::Codabar => encode_codabar(data),
+            Self::Itf => encode_itf(data),
         }
     }
 }
@@ -256,6 +260,29 @@ fn encode_codabar(data: &str) -> Result<Modules, EncodeError> {
 
     Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
         .map_err(invalid_modules("Codabar"))
+}
+
+/// ITF（インターリーブド 2 of 5）は 2 桁ずつ組にして符号化するため、
+/// 桁数は偶数でなければならない。`barcoders::sym::tf::TF::interleaved` は
+/// 奇数桁を渡すと**検査数字を黙って追加して**偶数に揃えてしまうので、
+/// ここで先に弾いて分かりやすいエラーにする。
+fn encode_itf(data: &str) -> Result<Modules, EncodeError> {
+    if !data.len().is_multiple_of(2) {
+        return Err(EncodeError::IncompatiblePayload {
+            symbology: "ITF".to_string(),
+            reason: "digit count must be even".to_string(),
+        });
+    }
+
+    let encoded = barcoders::sym::tf::TF::interleaved(data)
+        .map_err(|cause| EncodeError::IncompatiblePayload {
+            symbology: "ITF".to_string(),
+            reason: alloc::format!("{cause:?}"),
+        })?
+        .encode();
+
+    Modules::from_row(encoded.into_iter().map(|bar| bar == 1).collect())
+        .map_err(invalid_modules("ITF"))
 }
 
 #[cfg(test)]
@@ -491,6 +518,35 @@ mod tests {
         assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
     }
 
+    /// 期待値は `barcoders` クレート自身の `src/sym/tf.rs` の
+    /// `#[cfg(test)] fn itf_encode()` から取った外部検証済みの値。
+    /// あちらのテストは奇数桁 "1234567" を渡して黙って検査数字 0 が
+    /// 付いた前提（"12345670"）なので、ここでは偶数桁のまま同じ値を渡す。
+    #[test]
+    fn itf_matches_a_known_module_pattern() {
+        let modules = Symbology::Itf.encode("12345670").expect("encodes");
+        assert_eq!(
+            modules.to_bit_rows().first().map(String::as_str),
+            Some(
+                "10101110100010101110001110111010001010001110100011100010101010100011100011101101"
+            )
+        );
+    }
+
+    /// `barcoders` は奇数桁を渡すと検査数字を黙って付けてしまう
+    /// （plans/004-1d-symbologies.md 参照）。ここで明示的に弾く。
+    #[test]
+    fn itf_rejects_an_odd_digit_count() {
+        let error = Symbology::Itf.encode("1234567").expect_err("odd length");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
+    #[test]
+    fn itf_rejects_non_digits() {
+        let error = Symbology::Itf.encode("12ab").expect_err("non digit");
+        assert!(matches!(error, EncodeError::IncompatiblePayload { .. }));
+    }
+
     #[test]
     fn quiet_zones_follow_each_standard() {
         assert_eq!(Symbology::Qr { ec: QrEc::M }.recommended_quiet_zone(), 4);
@@ -499,6 +555,7 @@ mod tests {
         assert_eq!(Symbology::Code93.recommended_quiet_zone(), 10);
         assert_eq!(Symbology::Ean8.recommended_quiet_zone(), 7);
         assert_eq!(Symbology::Codabar.recommended_quiet_zone(), 10);
+        assert_eq!(Symbology::Itf.recommended_quiet_zone(), 10);
     }
 
     #[test]
@@ -509,6 +566,7 @@ mod tests {
         assert!(Symbology::Code93.is_one_dimensional());
         assert!(Symbology::Ean8.is_one_dimensional());
         assert!(Symbology::Codabar.is_one_dimensional());
+        assert!(Symbology::Itf.is_one_dimensional());
         assert!(
             Symbology::Code128 {
                 charset: Code128Charset::Auto

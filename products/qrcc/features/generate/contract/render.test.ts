@@ -124,6 +124,9 @@ const EXPECTED_COMPATIBILITY: readonly (readonly [PayloadKind, SymbologyKind, bo
   ['text', 'codabar', true],
   ['url', 'codabar', false],
   ['wifi', 'codabar', false],
+  ['text', 'itf', true],
+  ['url', 'itf', false],
+  ['wifi', 'itf', false],
 ]
 
 describe('payload と symbology の相性（全量表）', () => {
