@@ -9,12 +9,16 @@
  * `Interpretation` を返す。
  */
 import type { Interpretation } from '../../contract/interpretation.ts'
+import { interpretGeo } from './geo.ts'
 import { interpretMailto } from './mailto.ts'
 import { interpretSms } from './sms.ts'
 import { interpretTel } from './tel.ts'
 
 export const interpret = (text: string): Interpretation => {
   return (
-    interpretTel(text) ?? interpretMailto(text) ?? interpretSms(text) ?? { kind: 'plain', text }
+    interpretTel(text)
+    ?? interpretMailto(text)
+    ?? interpretSms(text)
+    ?? interpretGeo(text) ?? { kind: 'plain', text }
   )
 }
