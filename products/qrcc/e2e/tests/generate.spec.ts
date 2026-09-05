@@ -102,3 +102,29 @@ test('1D バーコードでは 2D 専用の設定が消える', async ({ page })
   await generate(page).getByRole('radio', { name: 'Code 128' }).click()
   await expect(generate(page).getByRole('group', { name: 'モジュールの形' })).toBeHidden()
 })
+
+/**
+ * plans/004-1d-symbologies.md: 読めるのに作れなかった 1D バーコードが、
+ * 実際に作れて、内容が確認できることを確かめる（代表 2 種類）。
+ */
+test('Code 39 のバーコードを生成できる', async ({ page }) => {
+  await page.goto('/')
+  await generate(page).getByRole('radio', { name: 'テキスト' }).click()
+  await generate(page).getByLabel('内容', { exact: true }).fill('CODE-39')
+  await generate(page).getByRole('radio', { name: 'Code 39' }).click()
+
+  await expect(preview(page)).toBeVisible({ timeout: 15_000 })
+  await expect(preview(page).locator('svg')).toBeVisible()
+  await expect(preview(page)).toContainText('テキスト: CODE-39')
+})
+
+test('EAN-8 のバーコードを生成できる', async ({ page }) => {
+  await page.goto('/')
+  await generate(page).getByRole('radio', { name: 'テキスト' }).click()
+  await generate(page).getByLabel('内容', { exact: true }).fill('5512345')
+  await generate(page).getByRole('radio', { name: 'EAN-8' }).click()
+
+  await expect(preview(page)).toBeVisible({ timeout: 15_000 })
+  await expect(preview(page).locator('svg')).toBeVisible()
+  await expect(preview(page)).toContainText('テキスト: 5512345')
+})
