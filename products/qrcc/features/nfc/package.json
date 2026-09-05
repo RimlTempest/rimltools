@@ -1,0 +1,20 @@
+{
+  "name": "@qrcc/nfc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./contract": "./contract/index.ts",
+    "./ui": "./ui/index.ts",
+    "./ui/nfc.css": "./ui/nfc.css"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@qrcc/contract": "workspace:*",
+    "@qrcc/ui": "workspace:*",
+    "@tanstack/react-router": "1.170.32"
+  }
+}

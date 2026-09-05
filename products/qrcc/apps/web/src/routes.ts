@@ -11,6 +11,7 @@ export const routes = rootRoute('shell/ui/root.route.tsx', [
   // トップページが生成と読み取りを兼ねる（/generate と /scan は廃止）
   index('shell/ui/home.route.tsx'),
   route('/print', 'print/ui/print.route.tsx'),
+  route('/nfc', 'nfc/ui/nfc.route.tsx'),
   route('/codes', 'manage/ui/codes.route.tsx'),
   route('/codes/$codeId', 'manage/ui/code-detail.route.tsx'),
   route('/settings', 'shell/ui/settings.route.tsx'),

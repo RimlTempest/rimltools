@@ -11,5 +11,6 @@
 @import '@qrcc/generate/ui/generate.css' layer(components);
 @import '@qrcc/print/ui/print.css';
 @import '@qrcc/scan/ui/scan.css' layer(components);
+@import '@qrcc/nfc/ui/nfc.css' layer(components);
 @import '@qrcc/auth/ui/auth.css' layer(components);
 @import '@qrcc/manage/ui/manage.css' layer(components);
