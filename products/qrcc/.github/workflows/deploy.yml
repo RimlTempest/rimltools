@@ -46,3 +46,9 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # 一度、エントリチャンクだけが 500 を返してクライアント JS が丸ごと
+      # 動かない状態が本番に残った。HTML は 200 で返り SSR のぶんは表示される
+      # ので、トップを開くだけでは気づけない。参照されている資産を全数叩く。
+      - name: 疎通確認（デプロイしたものが実際に配信されているか）
+        run: bun run smoke https://qrcc.riml4i.com/
