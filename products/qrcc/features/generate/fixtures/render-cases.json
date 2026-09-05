@@ -61,6 +61,29 @@
       "expect": { "ok": true, "description": "電話番号: +819012345678", "warnings": [] }
     },
     {
+      "name": "qr-email",
+      "request": {
+        "payload": {
+          "kind": "email",
+          "to": "someone@example.com",
+          "subject": "件名",
+          "body": "本文"
+        },
+        "symbology": { "kind": "qr", "ec": "M" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 4,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "メール: someone@example.com", "warnings": [] }
+    },
+    {
       "name": "code128-text",
       "request": {
         "payload": { "kind": "text", "text": "ABC-12345" },

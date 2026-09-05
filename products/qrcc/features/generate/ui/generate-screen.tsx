@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useState } from 'react'
 import type { Result } from '@qrcc/contract'
 import { parseHexColor, parseHttpUrl, parseNonEmptyText } from '@qrcc/contract'
+import { buildEmailPayload } from '../core/payload/email.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
 import { Button, Field, LiveRegion } from '@qrcc/ui'
 import type {
@@ -57,6 +58,9 @@ type FormState = {
   readonly text: string
   readonly url: string
   readonly tel: string
+  readonly emailTo: string
+  readonly emailSubject: string
+  readonly emailBody: string
   readonly ssid: string
   readonly password: string
   readonly hidden: boolean
@@ -73,6 +77,9 @@ const INITIAL: FormState = {
   text: '',
   url: 'https://qrcc.riml4i.com',
   tel: '',
+  emailTo: '',
+  emailSubject: '',
+  emailBody: '',
   ssid: '',
   password: '',
   hidden: false,
@@ -115,6 +122,22 @@ const buildPayload = (state: FormState): Result<CodePayload, BuildError> => {
             error: {
               field: '電話番号',
               reason: '国番号から始まる電話番号を入力してください（例: +819012345678）',
+            },
+          }
+    }
+    case 'email': {
+      const email = buildEmailPayload({
+        to: state.emailTo,
+        subject: state.emailSubject,
+        body: state.emailBody,
+      })
+      return email.ok
+        ? email
+        : {
+            ok: false,
+            error: {
+              field: '宛先メールアドレス',
+              reason: '正しいメールアドレスを入力してください',
             },
           }
     }
@@ -289,6 +312,10 @@ export const GenerateScreen = ({
         </div>
 
         <form
+          // 検証は自前の Result で行い、日本語の理由を読み上げ領域に出す。
+          // ブラウザ既定の検証（type="email" など）に任せると、ローカライズされない
+          // ポップアップが出て読み上げ領域に何も伝わらなくなる。
+          noValidate
           onSubmit={(event) => {
             event.preventDefault()
             void generate(true)
@@ -341,6 +368,30 @@ export const GenerateScreen = ({
                 value={state.tel}
                 onChange={(event) => update('tel', event.target.value)}
               />
+            ) : undefined}
+            {state.payloadKind === 'email' ? (
+              <>
+                <Field
+                  label="宛先メールアドレス"
+                  type="email"
+                  inputMode="email"
+                  value={state.emailTo}
+                  onChange={(event) => update('emailTo', event.target.value)}
+                />
+                <Field
+                  label="件名"
+                  hint="空のままにもできます。"
+                  value={state.emailSubject}
+                  onChange={(event) => update('emailSubject', event.target.value)}
+                />
+                <Field
+                  control="textarea"
+                  label="本文"
+                  hint="空のままにもできます。"
+                  value={state.emailBody}
+                  onChange={(event) => update('emailBody', event.target.value)}
+                />
+              </>
             ) : undefined}
             {state.payloadKind === 'wifi' ? (
               <>

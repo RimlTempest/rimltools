@@ -8,7 +8,7 @@ extern crate alloc;
 use alloc::format;
 use alloc::string::{String, ToString};
 
-use qrcc_kernel::{HttpUrl, NonEmptyText, PhoneNumber};
+use qrcc_kernel::{EmailAddress, HttpUrl, NonEmptyText, PhoneNumber};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -31,6 +31,11 @@ pub enum CodePayload {
     Tel {
         number: PhoneNumber,
     },
+    Email {
+        to: EmailAddress,
+        subject: String,
+        body: String,
+    },
     Wifi {
         ssid: NonEmptyText,
         auth: WifiAuth,
@@ -51,6 +56,21 @@ fn escape_wifi(value: &str) -> String {
     escaped
 }
 
+/// `mailto:` のクエリに乗せる値をパーセントエンコードする。
+/// `&` や `=`、空白、日本語などが件名・本文に入っても URI を壊さないようにする。
+fn percent_encode(value: &str) -> String {
+    let mut encoded = String::with_capacity(value.len());
+    for byte in value.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                encoded.push(byte as char);
+            }
+            _ => encoded.push_str(&format!("%{byte:02X}")),
+        }
+    }
+    encoded
+}
+
 impl CodePayload {
     /// シンボルに載せる文字列。
     pub fn encode(&self) -> String {
@@ -58,6 +78,12 @@ impl CodePayload {
             Self::Text { text } => text.clone(),
             Self::Url { url } => url.as_str().to_string(),
             Self::Tel { number } => format!("tel:{}", number.as_str()),
+            Self::Email { to, subject, body } => format!(
+                "mailto:{}?subject={}&body={}",
+                to.as_str(),
+                percent_encode(subject),
+                percent_encode(body)
+            ),
             Self::Wifi { ssid, auth, hidden } => {
                 let (auth_type, password) = match auth {
                     WifiAuth::Nopass => ("nopass", String::new()),
@@ -78,6 +104,7 @@ impl CodePayload {
             Self::Text { text } => format!("テキスト: {text}"),
             Self::Url { url } => format!("URL: {}", url.as_str()),
             Self::Tel { number } => format!("電話番号: {}", number.as_str()),
+            Self::Email { to, .. } => format!("メール: {}", to.as_str()),
             Self::Wifi { ssid, .. } => format!("Wi-Fi 設定: {}", ssid.as_str()),
         }
     }
@@ -121,6 +148,45 @@ mod tests {
             CodePayload::Tel { number }.describe(),
             "電話番号: +819012345678"
         );
+    }
+
+    #[test]
+    fn email_is_encoded_as_a_mailto_link() {
+        let to = EmailAddress::parse("someone@example.com").expect("valid email");
+        let payload = CodePayload::Email {
+            to,
+            subject: "こんにちは".to_string(),
+            body: "元気ですか？".to_string(),
+        };
+        assert_eq!(
+            payload.encode(),
+            "mailto:someone@example.com?subject=%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF&body=%E5%85%83%E6%B0%97%E3%81%A7%E3%81%99%E3%81%8B%EF%BC%9F"
+        );
+    }
+
+    #[test]
+    fn email_percent_encodes_reserved_characters_in_the_query() {
+        let to = EmailAddress::parse("someone@example.com").expect("valid email");
+        let payload = CodePayload::Email {
+            to,
+            subject: "a&b=c".to_string(),
+            body: "line one".to_string(),
+        };
+        assert_eq!(
+            payload.encode(),
+            "mailto:someone@example.com?subject=a%26b%3Dc&body=line%20one"
+        );
+    }
+
+    #[test]
+    fn email_describes_itself_for_screen_readers() {
+        let to = EmailAddress::parse("someone@example.com").expect("valid email");
+        let payload = CodePayload::Email {
+            to,
+            subject: String::new(),
+            body: String::new(),
+        };
+        assert_eq!(payload.describe(), "メール: someone@example.com");
     }
 
     #[test]

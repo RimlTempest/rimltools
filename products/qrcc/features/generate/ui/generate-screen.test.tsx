@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { parseHttpUrl, parsePhoneNumber } from '@qrcc/contract'
+import { parseEmailAddress, parseHttpUrl, parsePhoneNumber } from '@qrcc/contract'
 import type { RenderRequest, RenderResponse } from '../contract/index.ts'
 import type { RenderFn } from './generate-screen.tsx'
 import { GenerateScreen } from './generate-screen.tsx'
@@ -200,9 +200,38 @@ describe('GenerateScreen', () => {
     const { fn, requests } = recording({ ok: true, value: response() })
     render(<GenerateScreen render={fn} />)
     await userEvent.click(screen.getByRole('radio', { name: '電話番号' }))
-    await userEvent.type(screen.getByLabelText('電話番号'), '090-1234-5678')
+    await userEvent.type(screen.getByLabelText('電話番号（国番号付き）'), '090-1234-5678')
     await userEvent.click(screen.getByRole('button', { name: '生成する' }))
     await waitFor(() => expect(screen.getByRole('status').textContent).toContain('電話番号'))
+    expect(requests).toHaveLength(0)
+  })
+
+  test('メールを選ぶと入力欄が宛先・件名・本文になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: 'メール' }))
+    expect(screen.getByLabelText('宛先メールアドレス')).toBeDefined()
+    expect(screen.getByLabelText('件名')).toBeDefined()
+    expect(screen.getByLabelText('本文')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('宛先メールアドレス'), 'someone@example.com')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const to = parseEmailAddress('someone@example.com')
+    expect(to.ok).toBe(true)
+    if (to.ok) {
+      expect(requests[0]?.payload).toEqual({ kind: 'email', to: to.value, subject: '', body: '' })
+    }
+  })
+
+  test('宛先メールアドレスが不正なときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: 'メール' }))
+    await userEvent.type(screen.getByLabelText('宛先メールアドレス'), 'not-an-email')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('メールアドレス'))
     expect(requests).toHaveLength(0)
   })
 

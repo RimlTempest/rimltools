@@ -106,14 +106,17 @@ const EXPECTED_COMPATIBILITY: readonly (readonly [PayloadKind, SymbologyKind, bo
   ['text', 'qr', true],
   ['url', 'qr', true],
   ['tel', 'qr', true],
+  ['email', 'qr', true],
   ['wifi', 'qr', true],
   ['text', 'code128', true],
   ['url', 'code128', true],
   ['tel', 'code128', false],
+  ['email', 'code128', false],
   ['wifi', 'code128', false],
   ['text', 'ean13', true],
   ['url', 'ean13', false],
   ['tel', 'ean13', false],
+  ['email', 'ean13', false],
   ['wifi', 'ean13', false],
 ]
 
