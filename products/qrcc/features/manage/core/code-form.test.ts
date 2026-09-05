@@ -8,7 +8,13 @@ import {
   parseUserId,
 } from '@qrcc/contract'
 import type { SavedCode } from '@qrcc/manage/contract'
-import { NEW_CODE_FORM, buildCodeDraft, toCodeForm, toRestoreDraft } from './code-form.ts'
+import {
+  NEW_CODE_FORM,
+  buildCodeDraft,
+  toCodeContent,
+  toCodeForm,
+  toRestoreDraft,
+} from './code-form.ts'
 
 const expectOk = <T>(
   result: { readonly ok: true; readonly value: T } | { readonly ok: false },
@@ -101,6 +107,60 @@ describe('buildCodeDraft', () => {
     })
     expect(draft.ok).toBe(true)
     if (draft.ok) expect(draft.value.symbology).toEqual({ kind: 'ean13' })
+  })
+
+  /**
+   * symbology の組み立て方をレジストリ由来に変えても答えが変わらないことを
+   * 固定するテスト（plans/007）。QR だけ利用者が選んだ ec を反映する。
+   */
+  test('QR は選んだ誤り訂正レベルを反映する', () => {
+    const draft = buildCodeDraft(codeId, {
+      ...NEW_CODE_FORM,
+      name: 'テスト',
+      symbologyKind: 'qr',
+      qrEc: 'H',
+    })
+    expect(draft.ok).toBe(true)
+    if (draft.ok) expect(draft.value.symbology).toEqual({ kind: 'qr', ec: 'H' })
+  })
+
+  test('Code128 は既定の charset になる', () => {
+    const draft = buildCodeDraft(codeId, {
+      ...NEW_CODE_FORM,
+      name: 'テスト',
+      content: { kind: 'text', text: 'ABC-12345' },
+      symbologyKind: 'code128',
+    })
+    expect(draft.ok).toBe(true)
+    if (draft.ok) expect(draft.value.symbology).toEqual({ kind: 'code128', charset: 'auto' })
+  })
+})
+
+/**
+ * `toCodeContent`（`CodePayload` → 画面で編集できる形）の答えを固定する。
+ * 専用の編集欄を持たない種類（`wifi`）は `other` に落ちる。
+ */
+describe('toCodeContent', () => {
+  test('text はそのまま編集できる形になる', () => {
+    expect(toCodeContent({ kind: 'text', text: 'こんにちは' })).toEqual({
+      kind: 'text',
+      text: 'こんにちは',
+    })
+  })
+
+  test('url はそのまま編集できる形になる', () => {
+    const url = expectOk(parseHttpUrl('https://qrcc.riml4i.com'))
+    expect(toCodeContent({ kind: 'url', url })).toEqual({ kind: 'url', url })
+  })
+
+  test('wifi は専用の編集欄が無いので other になる', () => {
+    const payload = {
+      kind: 'wifi' as const,
+      ssid: expectOk(parseNonEmptyText('home')),
+      auth: { kind: 'nopass' as const },
+      hidden: false,
+    }
+    expect(toCodeContent(payload)).toEqual({ kind: 'other', payload })
   })
 })
 
