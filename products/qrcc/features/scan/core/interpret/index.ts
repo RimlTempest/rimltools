@@ -11,6 +11,7 @@
 import type { Interpretation } from '../../contract/interpretation.ts'
 import { interpretGeo } from './geo.ts'
 import { interpretMailto } from './mailto.ts'
+import { interpretMecard } from './mecard.ts'
 import { interpretSms } from './sms.ts'
 import { interpretTel } from './tel.ts'
 import { interpretWifi } from './wifi.ts'
@@ -21,6 +22,7 @@ export const interpret = (text: string): Interpretation => {
     ?? interpretMailto(text)
     ?? interpretSms(text)
     ?? interpretGeo(text)
-    ?? interpretWifi(text) ?? { kind: 'plain', text }
+    ?? interpretWifi(text)
+    ?? interpretMecard(text) ?? { kind: 'plain', text }
   )
 }
