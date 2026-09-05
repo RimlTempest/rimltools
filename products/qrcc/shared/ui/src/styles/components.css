@@ -35,6 +35,33 @@
   border: 1px solid transparent;
   border-radius: var(--qrcc-radius);
   cursor: pointer;
+  /*
+   * 押したことが分かる手応えを付ける。押下は必ず 0.96（それ以下は大げさになる）。
+   * 高頻度の操作なので 120ms に収め、変えるプロパティだけを名指しする。
+   * 動きを減らす設定の人には utilities.css の一括指定が効く。
+   */
+  transition-property: background-color, border-color, scale;
+  transition-duration: 120ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* タッチ端末ではタップ後に hover が残るので、ポインタがある環境だけに限る */
+@media (hover: hover) {
+  .qrcc-button:hover:not(:disabled):not([aria-disabled='true']) {
+    background: var(--qrcc-surface-hover);
+  }
+
+  .qrcc-button[data-variant='primary']:hover:not(:disabled):not([aria-disabled='true']) {
+    background: var(--qrcc-accent-hover);
+  }
+
+  .qrcc-button[data-variant='danger']:hover:not(:disabled):not([aria-disabled='true']) {
+    background: var(--qrcc-danger-hover);
+  }
+}
+
+.qrcc-button:active:not(:disabled):not([aria-disabled='true']) {
+  scale: 0.96;
 }
 
 .qrcc-button[data-variant='primary'] {
@@ -85,7 +112,7 @@
 
 .qrcc-field__hint {
   color: var(--qrcc-text-muted);
-  font-size: 0.9em;
+  font-size: var(--qrcc-text-sm);
 }
 
 .qrcc-field__control {
@@ -135,7 +162,8 @@ textarea.qrcc-field__control {
   display: grid;
   gap: var(--qrcc-space-2);
   border: 1px solid var(--qrcc-border);
-  border-radius: var(--qrcc-radius);
+  /* 中身（0.5rem）+ padding（1rem）= 1.5rem。入れ子の角丸を同心にする */
+  border-radius: var(--qrcc-radius-lg);
   padding: var(--qrcc-space-4);
   max-inline-size: fit-content;
 }

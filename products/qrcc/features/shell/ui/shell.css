@@ -111,3 +111,18 @@ body > :is(header, main, footer) {
   max-inline-size: 60rem;
   margin-inline: auto;
 }
+
+/*
+ * トップの「作る」と「読み取る」は別々の群。群間の余白が群内と同じだと、
+ * ひと続きの長いページに見えて切れ目が読めない。群内（見出しの 2rem）の
+ * 2 倍を空ける。線ではなく空白で分ける。
+ */
+.qrcc-home__section + .qrcc-home__section {
+  margin-block-start: var(--qrcc-space-8);
+  /* padding があると子の margin が外に抜けない。合計 4rem を確実に取る */
+  padding-block-start: var(--qrcc-space-8);
+}
+
+.qrcc-home__section + .qrcc-home__section > :first-child {
+  margin-block-start: 0;
+}

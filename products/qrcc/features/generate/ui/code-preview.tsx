@@ -7,6 +7,8 @@ type CodePreviewProps = {
   readonly response: RenderResponse
   /** テストや SSR で保存操作を出さないための切り替え。 */
   readonly showDownloads?: boolean
+  /** 「保存する」の見出しレベル。呼び出し側の階層に合わせる（AAA 2.4.10）。 */
+  readonly headingLevel?: 3 | 4
 }
 
 /**
@@ -15,7 +17,11 @@ type CodePreviewProps = {
  * **画像だけで提供しない**（WCAG 1.1.1）。SVG 自体に title と aria-label を
  * 持たせたうえで、エンコードした内容をテキストでも併記する。
  */
-export const CodePreview = ({ response, showDownloads = true }: CodePreviewProps) => {
+export const CodePreview = ({
+  response,
+  showDownloads = true,
+  headingLevel = 3,
+}: CodePreviewProps) => {
   // SVG は生成エンジンが組み立てた決定的な文字列で、内容は XML 退避済み。
   const symbol = { __html: response.body }
   // 「説明つき PNG」で取り込む範囲。
@@ -41,7 +47,9 @@ export const CodePreview = ({ response, showDownloads = true }: CodePreviewProps
           )}
         </figcaption>
       </figure>
-      {showDownloads ? <DownloadControls response={response} captureTarget={figure} /> : undefined}
+      {showDownloads ? (
+        <DownloadControls response={response} captureTarget={figure} headingLevel={headingLevel} />
+      ) : undefined}
     </>
   )
 }

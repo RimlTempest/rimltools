@@ -15,7 +15,8 @@
   padding: var(--qrcc-space-4);
   background: var(--qrcc-surface-raised);
   border: 1px solid var(--qrcc-border);
-  border-radius: var(--qrcc-radius);
+  /* 中身（0.5rem）+ padding（1rem）= 1.5rem。入れ子の角丸を同心にする */
+  border-radius: var(--qrcc-radius-lg);
   /* ページ幅ではなく自分の幅で中身を組み替える */
   container-type: inline-size;
 }

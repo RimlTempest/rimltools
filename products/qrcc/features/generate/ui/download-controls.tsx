@@ -21,6 +21,11 @@ type DownloadControlsProps = {
   readonly save?: SaveBlob
   /** 能力検出の差し替え（テスト用）。既定は実ブラウザを見る。 */
   readonly canCaptureElement?: () => boolean
+  /**
+   * この節の見出しレベル。親（「生成したコード」）より 1 段下でなければ、
+   * 親子が同じ高さの兄弟に見えてしまう（AAA 2.4.10）。
+   */
+  readonly headingLevel?: 3 | 4
 }
 
 /**
@@ -36,7 +41,9 @@ export const DownloadControls = ({
   deps,
   save = saveBlob,
   canCaptureElement = supportsElementCapture,
+  headingLevel = 3,
 }: DownloadControlsProps) => {
+  const Title = headingLevel === 4 ? 'h4' : 'h3'
   const [message, setMessage] = useState<string | undefined>(undefined)
   const [busy, setBusy] = useState(false)
   // 能力検出は初回だけ。遅延初期化なのでレンダーのたびには走らない
@@ -84,7 +91,7 @@ export const DownloadControls = ({
 
   return (
     <div className="qrcc-download-controls">
-      <h3>保存する</h3>
+      <Title>保存する</Title>
       <p>SVG は拡大しても劣化しません。PNG はそのまま貼り付けられます。</p>
       <Button variant="secondary" onClick={saveSvg}>
         SVG で保存

@@ -5,7 +5,8 @@
   padding: var(--qrcc-space-4);
   background: var(--qrcc-surface-raised);
   border: 1px solid var(--qrcc-border);
-  border-radius: var(--qrcc-radius);
+  /* 中身（0.5rem）+ padding（1rem）= 1.5rem。入れ子の角丸を同心にする */
+  border-radius: var(--qrcc-radius-lg);
   /* 内容に応じて 1 段組と 2 段組を切り替える。ページ幅ではなく自分の幅で決める */
   container-type: inline-size;
 }
@@ -25,6 +26,11 @@
 
 .qrcc-code-preview figcaption p {
   margin-block-end: var(--qrcc-space-2);
+}
+
+/* 大きさは設定を変えるたびに書き換わる。等幅の数字にして行が揺れないようにする */
+.qrcc-code-preview figcaption {
+  font-variant-numeric: tabular-nums;
 }
 
 form fieldset {

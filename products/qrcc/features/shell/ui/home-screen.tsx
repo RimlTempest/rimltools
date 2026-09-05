@@ -41,7 +41,11 @@ export const HomeScreen = ({ generate, scan, renderLink = defaultRenderLink }: H
      * それぞれをランドマークにして、支援技術が「作る」「読み取る」を
      * 行き来できるようにする。名前は中の見出しと同じ文言にする。
      */}
-    <section aria-label="コードを作る">{generate}</section>
-    <section aria-label="コードを読み取る">{scan}</section>
+    <section className="qrcc-home__section" aria-label="コードを作る">
+      {generate}
+    </section>
+    <section className="qrcc-home__section" aria-label="コードを読み取る">
+      {scan}
+    </section>
   </>
 )

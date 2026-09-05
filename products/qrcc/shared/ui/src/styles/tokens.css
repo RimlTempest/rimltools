@@ -12,6 +12,11 @@
   --qrcc-surface: light-dark(oklch(1 0 0), oklch(0.18 0.012 265));
   --qrcc-surface-raised: light-dark(oklch(0.975 0.002 265), oklch(0.24 0.014 265));
   --qrcc-surface-sunken: light-dark(oklch(0.945 0.004 265), oklch(0.14 0.01 265));
+  /*
+   * ポインタを載せたときの面。sunken を流用しない — ダークでは地の面より
+   * 暗くなり「押し込まれた」ように見えてしまう。明るい方へ 1 段動かす。
+   */
+  --qrcc-surface-hover: light-dark(oklch(0.93 0.006 265), oklch(0.3 0.016 265));
 
   /* 本文: ライト 15.9:1 / ダーク 15.1:1 */
   --qrcc-text: light-dark(oklch(0.2 0.012 265), oklch(0.955 0.006 265));
@@ -19,8 +24,11 @@
   --qrcc-text-muted: light-dark(oklch(0.415 0.012 265), oklch(0.79 0.012 265));
 
   --qrcc-accent: light-dark(oklch(0.44 0.16 255), oklch(0.83 0.13 250));
+  /* ホバーは明度だけを動かす。色相を変えると別の意味の色に見える */
+  --qrcc-accent-hover: light-dark(oklch(0.36 0.16 255), oklch(0.89 0.11 250));
   --qrcc-on-accent: light-dark(oklch(1 0 0), oklch(0.17 0.03 265));
   --qrcc-danger: light-dark(oklch(0.44 0.19 25), oklch(0.83 0.14 25));
+  --qrcc-danger-hover: light-dark(oklch(0.36 0.19 25), oklch(0.89 0.12 25));
   --qrcc-on-danger: light-dark(oklch(1 0 0), oklch(0.17 0.04 25));
   --qrcc-success: light-dark(oklch(0.42 0.13 150), oklch(0.83 0.13 150));
 
@@ -38,6 +46,11 @@
 
   --qrcc-radius: 0.5rem;
   --qrcc-radius-sm: 0.25rem;
+  /*
+   * 入れ子の角丸は「外側 = 内側 + padding」でないと目に留まる。
+   * カードは padding 1rem に半径 0.5rem の中身を入れるので 1.5rem になる。
+   */
+  --qrcc-radius-lg: 1.5rem;
 
   /* AAA 2.5.5: クリック対象は 44x44 CSS px 以上 */
   --qrcc-target-min: 44px;
@@ -47,6 +60,16 @@
 
   /* AAA 1.4.8: 本文は 80 文字以内 */
   --qrcc-measure: 70ch;
+
+  /*
+   * 型スケール。役割で名前を付けて、ここ以外に文字サイズを書かない。
+   * 見出しは段が下がるほど小さくなる（h1 だけは画面幅に追従させる）。
+   */
+  --qrcc-text-sm: 0.875rem;
+  --qrcc-text-base: 1rem;
+  --qrcc-text-lg: 1.125rem;
+  --qrcc-text-xl: 1.375rem;
+  --qrcc-text-2xl: 1.75rem;
 
   --qrcc-font-sans:
     system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic UI', sans-serif;

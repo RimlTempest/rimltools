@@ -76,6 +76,27 @@ describe('GenerateScreen', () => {
     expect(isFollowedBy(heading, form)).toBe(true)
   })
 
+  /**
+   * 埋め込むと「生成したコード」は h3 になる。その中の「保存する」は
+   * さらに 1 段下がらないと、親子が同じ高さの兄弟に見えてしまう。
+   */
+  test('埋め込み時に「保存する」が「生成したコード」の下位になる', async () => {
+    const { fn } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} mode="live" debounceMs={0} headingLevel={2} />)
+    // 節見出しは結果が無くても出るので、保存操作そのものが出るまで待つ
+    const heading = await screen.findByRole('heading', { name: '保存する' })
+    expect(screen.getByRole('heading', { name: '生成したコード' }).tagName).toBe('H3')
+    expect(heading.tagName).toBe('H4')
+  })
+
+  test('単独ページでは「保存する」は h3 のまま', async () => {
+    const { fn } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} mode="live" debounceMs={0} />)
+    const heading = await screen.findByRole('heading', { name: '保存する' })
+    expect(screen.getByRole('heading', { name: '生成したコード' }).tagName).toBe('H2')
+    expect(heading.tagName).toBe('H3')
+  })
+
   test('主要な設定がラベルで取得できる', () => {
     const { fn } = recording({ ok: true, value: response() })
     render(<GenerateScreen render={fn} />)

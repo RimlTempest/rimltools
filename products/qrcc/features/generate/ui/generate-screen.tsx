@@ -260,7 +260,11 @@ export const GenerateScreen = ({
                 : '設定を入力すると、ここにプレビューが出ます。'}
             </p>
           ) : (
-            <CodePreview response={result} showDownloads={mode === 'live'} />
+            <CodePreview
+              response={result}
+              showDownloads={mode === 'live'}
+              headingLevel={headingLevel === 2 ? 4 : 3}
+            />
           )}
           <LiveRegion message={message} />
         </div>

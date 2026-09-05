@@ -27,6 +27,19 @@ h1 {
   font-size: clamp(1.6rem, 1.4rem + 1vi, 2.2rem);
 }
 
+/* 段が下がるほど小さくする。ブラウザ既定に任せると h4 が本文と同じ大きさになる */
+h2 {
+  font-size: var(--qrcc-text-2xl);
+}
+
+h3 {
+  font-size: var(--qrcc-text-xl);
+}
+
+h4 {
+  font-size: var(--qrcc-text-lg);
+}
+
 :where(p, li) {
   max-inline-size: var(--qrcc-measure);
   text-wrap: pretty;
