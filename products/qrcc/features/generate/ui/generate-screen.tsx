@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState } from 'react'
 import type { Result } from '@qrcc/contract'
 import { parseHexColor, parseHttpUrl, parseNonEmptyText } from '@qrcc/contract'
 import { buildEmailPayload } from '../core/payload/email.ts'
+import { buildSmsPayload } from '../core/payload/sms.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
 import { Button, Field, LiveRegion } from '@qrcc/ui'
 import type {
@@ -61,6 +62,8 @@ type FormState = {
   readonly emailTo: string
   readonly emailSubject: string
   readonly emailBody: string
+  readonly smsNumber: string
+  readonly smsBody: string
   readonly ssid: string
   readonly password: string
   readonly hidden: boolean
@@ -80,6 +83,8 @@ const INITIAL: FormState = {
   emailTo: '',
   emailSubject: '',
   emailBody: '',
+  smsNumber: '',
+  smsBody: '',
   ssid: '',
   password: '',
   hidden: false,
@@ -138,6 +143,18 @@ const buildPayload = (state: FormState): Result<CodePayload, BuildError> => {
             error: {
               field: '宛先メールアドレス',
               reason: '正しいメールアドレスを入力してください',
+            },
+          }
+    }
+    case 'sms': {
+      const sms = buildSmsPayload({ number: state.smsNumber, body: state.smsBody })
+      return sms.ok
+        ? sms
+        : {
+            ok: false,
+            error: {
+              field: '電話番号',
+              reason: '国番号から始まる電話番号を入力してください（例: +819012345678）',
             },
           }
     }
@@ -390,6 +407,25 @@ export const GenerateScreen = ({
                   hint="空のままにもできます。"
                   value={state.emailBody}
                   onChange={(event) => update('emailBody', event.target.value)}
+                />
+              </>
+            ) : undefined}
+            {state.payloadKind === 'sms' ? (
+              <>
+                <Field
+                  label="送信先の電話番号（国番号付き）"
+                  type="tel"
+                  inputMode="tel"
+                  hint="国番号から始めてください（例: +819012345678）。"
+                  value={state.smsNumber}
+                  onChange={(event) => update('smsNumber', event.target.value)}
+                />
+                <Field
+                  control="textarea"
+                  label="本文"
+                  hint="空のままにもできます。"
+                  value={state.smsBody}
+                  onChange={(event) => update('smsBody', event.target.value)}
                 />
               </>
             ) : undefined}

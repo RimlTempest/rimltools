@@ -20,6 +20,7 @@ export type CodePayload =
       readonly subject: string
       readonly body: string
     }
+  | { readonly kind: 'sms'; readonly number: PhoneNumber; readonly body: string }
   | {
       readonly kind: 'wifi'
       readonly ssid: NonEmptyText
@@ -40,6 +41,7 @@ export const PAYLOAD_META: { readonly [K in PayloadKind]: PayloadMeta } = {
   url: { label: 'URL', description: '読み取るとブラウザで開きます。' },
   tel: { label: '電話番号', description: '読み取ると電話をかける画面が開きます。' },
   email: { label: 'メール', description: '読み取るとメールの作成画面が開きます。' },
+  sms: { label: 'SMS', description: '読み取るとメッセージの作成画面が開きます。' },
   wifi: {
     label: 'Wi-Fi 設定',
     description: '読み取るとネットワークに接続できます。パスワードはコードに含まれます。',

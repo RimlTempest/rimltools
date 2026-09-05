@@ -235,6 +235,39 @@ describe('GenerateScreen', () => {
     expect(requests).toHaveLength(0)
   })
 
+  test('SMS を選ぶと入力欄が電話番号・本文になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: 'SMS' }))
+    expect(screen.getByLabelText('送信先の電話番号（国番号付き）')).toBeDefined()
+    expect(screen.getByLabelText('本文')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('送信先の電話番号（国番号付き）'), '+819012345678')
+    await userEvent.type(screen.getByLabelText('本文'), 'こんにちは')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const number = parsePhoneNumber('+819012345678')
+    expect(number.ok).toBe(true)
+    if (number.ok) {
+      expect(requests[0]?.payload).toEqual({
+        kind: 'sms',
+        number: number.value,
+        body: 'こんにちは',
+      })
+    }
+  })
+
+  test('SMS の電話番号が不正なときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: 'SMS' }))
+    await userEvent.type(screen.getByLabelText('送信先の電話番号（国番号付き）'), '090-1234-5678')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('電話番号'))
+    expect(requests).toHaveLength(0)
+  })
+
   test('1D バーコードではモジュールの形を出さない', async () => {
     const { fn } = recording({ ok: true, value: response() })
     render(<GenerateScreen render={fn} />)

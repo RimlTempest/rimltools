@@ -36,6 +36,10 @@ pub enum CodePayload {
         subject: String,
         body: String,
     },
+    Sms {
+        number: PhoneNumber,
+        body: String,
+    },
     Wifi {
         ssid: NonEmptyText,
         auth: WifiAuth,
@@ -84,6 +88,7 @@ impl CodePayload {
                 percent_encode(subject),
                 percent_encode(body)
             ),
+            Self::Sms { number, body } => format!("SMSTO:{}:{body}", number.as_str()),
             Self::Wifi { ssid, auth, hidden } => {
                 let (auth_type, password) = match auth {
                     WifiAuth::Nopass => ("nopass", String::new()),
@@ -105,6 +110,7 @@ impl CodePayload {
             Self::Url { url } => format!("URL: {}", url.as_str()),
             Self::Tel { number } => format!("電話番号: {}", number.as_str()),
             Self::Email { to, .. } => format!("メール: {}", to.as_str()),
+            Self::Sms { number, .. } => format!("SMS: {}", number.as_str()),
             Self::Wifi { ssid, .. } => format!("Wi-Fi 設定: {}", ssid.as_str()),
         }
     }
@@ -187,6 +193,36 @@ mod tests {
             body: String::new(),
         };
         assert_eq!(payload.describe(), "メール: someone@example.com");
+    }
+
+    #[test]
+    fn sms_is_encoded_with_the_smsto_format() {
+        let number = PhoneNumber::parse("+819012345678").expect("valid number");
+        let payload = CodePayload::Sms {
+            number,
+            body: "こんにちは".to_string(),
+        };
+        assert_eq!(payload.encode(), "SMSTO:+819012345678:こんにちは");
+    }
+
+    #[test]
+    fn sms_allows_an_empty_body() {
+        let number = PhoneNumber::parse("+819012345678").expect("valid number");
+        let payload = CodePayload::Sms {
+            number,
+            body: String::new(),
+        };
+        assert_eq!(payload.encode(), "SMSTO:+819012345678:");
+    }
+
+    #[test]
+    fn sms_describes_itself_for_screen_readers() {
+        let number = PhoneNumber::parse("+819012345678").expect("valid number");
+        let payload = CodePayload::Sms {
+            number,
+            body: String::new(),
+        };
+        assert_eq!(payload.describe(), "SMS: +819012345678");
     }
 
     #[test]
