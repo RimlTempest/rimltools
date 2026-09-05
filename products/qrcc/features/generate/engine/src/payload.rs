@@ -64,6 +64,77 @@ impl From<Longitude> for f64 {
 
 impl Eq for Longitude {}
 
+/// `YYYY-MM-DDTHH:mm`（`<input type="datetime-local">` の値そのまま）。
+/// タイムゾーンを持たない「その場の時刻」として扱う。
+fn is_valid_timestamp(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    let digit = |index: usize| bytes.get(index).is_some_and(u8::is_ascii_digit);
+    let literal = |index: usize, expected: u8| bytes.get(index) == Some(&expected);
+    bytes.len() == 16
+        && digit(0)
+        && digit(1)
+        && digit(2)
+        && digit(3)
+        && literal(4, b'-')
+        && digit(5)
+        && digit(6)
+        && literal(7, b'-')
+        && digit(8)
+        && digit(9)
+        && literal(10, b'T')
+        && digit(11)
+        && digit(12)
+        && literal(13, b':')
+        && digit(14)
+        && digit(15)
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
+pub struct CalendarTimestamp(String);
+
+impl CalendarTimestamp {
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+
+    /// iCalendar の `DTSTART`/`DTEND` が要求する `YYYYMMDDTHHMMSS` に直す。
+    /// 秒は持たないので `00` を補う。
+    fn to_ical(&self) -> String {
+        let year = self.0.get(0..4).unwrap_or_default();
+        let month = self.0.get(5..7).unwrap_or_default();
+        let day = self.0.get(8..10).unwrap_or_default();
+        let hour = self.0.get(11..13).unwrap_or_default();
+        let minute = self.0.get(14..16).unwrap_or_default();
+        format!("{year}{month}{day}T{hour}{minute}00")
+    }
+}
+
+impl TryFrom<String> for CalendarTimestamp {
+    type Error = String;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if is_valid_timestamp(&value) {
+            Ok(Self(value))
+        } else {
+            Err(format!("expected YYYY-MM-DDTHH:mm, got {value}"))
+        }
+    }
+}
+
+impl From<CalendarTimestamp> for String {
+    fn from(value: CalendarTimestamp) -> Self {
+        value.0
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CalendarEvent {
+    pub subject: NonEmptyText,
+    pub start: CalendarTimestamp,
+    pub end: CalendarTimestamp,
+    pub location: String,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum WifiAuth {
@@ -96,6 +167,9 @@ pub enum CodePayload {
     Geo {
         lat: Latitude,
         lon: Longitude,
+    },
+    Event {
+        event: CalendarEvent,
     },
     Wifi {
         ssid: NonEmptyText,
@@ -132,6 +206,23 @@ fn percent_encode(value: &str) -> String {
     encoded
 }
 
+/// iCalendar のテキスト値で意味を持つ文字を退避する（RFC 5545）。
+/// これを忘れると、件名や場所に `,` `;` が入っただけで別のフィールドとして読まれる。
+fn escape_ical_text(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        match character {
+            '\\' | ',' | ';' => {
+                escaped.push('\\');
+                escaped.push(character);
+            }
+            '\n' => escaped.push_str("\\n"),
+            _ => escaped.push(character),
+        }
+    }
+    escaped
+}
+
 impl CodePayload {
     /// シンボルに載せる文字列。
     pub fn encode(&self) -> String {
@@ -147,6 +238,13 @@ impl CodePayload {
             ),
             Self::Sms { number, body } => format!("SMSTO:{}:{body}", number.as_str()),
             Self::Geo { lat, lon } => format!("geo:{},{}", lat.0, lon.0),
+            Self::Event { event } => format!(
+                "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nSUMMARY:{}\r\nDTSTART:{}\r\nDTEND:{}\r\nLOCATION:{}\r\nEND:VEVENT\r\nEND:VCALENDAR",
+                escape_ical_text(event.subject.as_str()),
+                event.start.to_ical(),
+                event.end.to_ical(),
+                escape_ical_text(&event.location)
+            ),
             Self::Wifi { ssid, auth, hidden } => {
                 let (auth_type, password) = match auth {
                     WifiAuth::Nopass => ("nopass", String::new()),
@@ -170,6 +268,7 @@ impl CodePayload {
             Self::Email { to, .. } => format!("メール: {}", to.as_str()),
             Self::Sms { number, .. } => format!("SMS: {}", number.as_str()),
             Self::Geo { lat, lon } => format!("位置情報: {}, {}", lat.0, lon.0),
+            Self::Event { event } => format!("予定: {}", event.subject.as_str()),
             Self::Wifi { ssid, .. } => format!("Wi-Fi 設定: {}", ssid.as_str()),
         }
     }
@@ -318,6 +417,58 @@ mod tests {
         assert!(Longitude::try_from(180.0001).is_err());
         assert!(Longitude::try_from(-180.0001).is_err());
         assert!(Longitude::try_from(f64::NAN).is_err());
+    }
+
+    fn event_of(subject: &str, start: &str, end: &str, location: &str) -> CalendarEvent {
+        CalendarEvent {
+            subject: NonEmptyText::parse(subject).expect("valid subject"),
+            start: CalendarTimestamp::try_from(start.to_string()).expect("valid start"),
+            end: CalendarTimestamp::try_from(end.to_string()).expect("valid end"),
+            location: location.to_string(),
+        }
+    }
+
+    #[test]
+    fn event_is_encoded_as_an_icalendar_vevent() {
+        let event = event_of(
+            "定例会議",
+            "2026-09-06T10:00",
+            "2026-09-06T11:00",
+            "会議室A",
+        );
+        assert_eq!(
+            CodePayload::Event { event }.encode(),
+            "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nSUMMARY:定例会議\r\nDTSTART:20260906T100000\r\nDTEND:20260906T110000\r\nLOCATION:会議室A\r\nEND:VEVENT\r\nEND:VCALENDAR"
+        );
+    }
+
+    #[test]
+    fn event_escapes_characters_that_would_change_the_meaning() {
+        let event = event_of("a,b;c", "2026-09-06T10:00", "2026-09-06T11:00", "x\\y");
+        let encoded = CodePayload::Event { event }.encode();
+        assert!(encoded.contains(r"SUMMARY:a\,b\;c"));
+        assert!(encoded.contains(r"LOCATION:x\\y"));
+    }
+
+    #[test]
+    fn event_describes_itself_for_screen_readers() {
+        let event = event_of("定例会議", "2026-09-06T10:00", "2026-09-06T11:00", "");
+        assert_eq!(CodePayload::Event { event }.describe(), "予定: 定例会議");
+    }
+
+    #[test]
+    fn calendar_timestamp_rejects_malformed_input() {
+        for bad in [
+            "2026-09-06 10:00",
+            "2026/09/06T10:00",
+            "",
+            "2026-09-06T10:0",
+        ] {
+            assert!(
+                CalendarTimestamp::try_from(bad.to_string()).is_err(),
+                "should reject {bad:?}"
+            );
+        }
     }
 
     #[test]

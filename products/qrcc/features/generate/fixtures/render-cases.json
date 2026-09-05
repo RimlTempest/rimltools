@@ -120,6 +120,32 @@
       "expect": { "ok": true, "description": "位置情報: 35.681236, 139.767125", "warnings": [] }
     },
     {
+      "name": "qr-event",
+      "request": {
+        "payload": {
+          "kind": "event",
+          "event": {
+            "subject": "定例会議",
+            "start": "2026-09-06T10:00",
+            "end": "2026-09-06T11:00",
+            "location": "会議室A"
+          }
+        },
+        "symbology": { "kind": "qr", "ec": "M" },
+        "style": {
+          "foreground": "#000000",
+          "background": { "kind": "solid", "color": "#ffffff" },
+          "scale": 4,
+          "quiet_zone": null,
+          "module_shape": "square",
+          "bar_height": 40,
+          "human_readable": true
+        },
+        "output": "svg"
+      },
+      "expect": { "ok": true, "description": "予定: 定例会議", "warnings": [] }
+    },
+    {
       "name": "code128-text",
       "request": {
         "payload": { "kind": "text", "text": "ABC-12345" },

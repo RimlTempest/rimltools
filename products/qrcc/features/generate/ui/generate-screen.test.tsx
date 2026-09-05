@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { parseEmailAddress, parseHttpUrl, parsePhoneNumber } from '@qrcc/contract'
+import {
+  parseEmailAddress,
+  parseHttpUrl,
+  parseNonEmptyText,
+  parsePhoneNumber,
+} from '@qrcc/contract'
+import { parseCalendarTimestamp } from '../core/payload/event.ts'
 import type { RenderRequest, RenderResponse } from '../contract/index.ts'
 import type { RenderFn } from './generate-screen.tsx'
 import { GenerateScreen } from './generate-screen.tsx'
@@ -296,6 +302,51 @@ describe('GenerateScreen', () => {
     await userEvent.type(screen.getByLabelText('経度'), '0')
     await userEvent.click(screen.getByRole('button', { name: '生成する' }))
     await waitFor(() => expect(screen.getByRole('status').textContent).toContain('緯度'))
+    expect(requests).toHaveLength(0)
+  })
+
+  test('予定を選ぶと入力欄が件名・開始・終了・場所になる', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '予定' }))
+    expect(screen.getByLabelText('件名')).toBeDefined()
+    expect(screen.getByLabelText('開始日時')).toBeDefined()
+    expect(screen.getByLabelText('終了日時')).toBeDefined()
+    expect(screen.getByLabelText('場所')).toBeDefined()
+    expect(screen.queryByLabelText('リンク先の URL')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('件名'), '定例会議')
+    await userEvent.type(screen.getByLabelText('開始日時'), '2026-09-06T10:00')
+    await userEvent.type(screen.getByLabelText('終了日時'), '2026-09-06T11:00')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(requests).toHaveLength(1))
+    const payload = requests[0]?.payload
+    expect(payload?.kind).toBe('event')
+    const subject = parseNonEmptyText('定例会議')
+    const start = parseCalendarTimestamp('2026-09-06T10:00')
+    const end = parseCalendarTimestamp('2026-09-06T11:00')
+    expect(subject.ok).toBe(true)
+    expect(start.ok).toBe(true)
+    expect(end.ok).toBe(true)
+    if (payload?.kind === 'event' && subject.ok && start.ok && end.ok) {
+      expect(payload.event).toEqual({
+        subject: subject.value,
+        start: start.value,
+        end: end.value,
+        location: '',
+      })
+    }
+  })
+
+  test('終了日時が開始日時より前のときはその場で理由を伝える', async () => {
+    const { fn, requests } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} />)
+    await userEvent.click(screen.getByRole('radio', { name: '予定' }))
+    await userEvent.type(screen.getByLabelText('件名'), '定例会議')
+    await userEvent.type(screen.getByLabelText('開始日時'), '2026-09-06T11:00')
+    await userEvent.type(screen.getByLabelText('終了日時'), '2026-09-06T10:00')
+    await userEvent.click(screen.getByRole('button', { name: '生成する' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('終了日時'))
     expect(requests).toHaveLength(0)
   })
 

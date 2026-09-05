@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState } from 'react'
 import type { Result } from '@qrcc/contract'
 import { parseHexColor, parseHttpUrl, parseNonEmptyText } from '@qrcc/contract'
 import { buildEmailPayload } from '../core/payload/email.ts'
+import { buildEventPayload } from '../core/payload/event.ts'
 import { buildGeoPayload } from '../core/payload/geo.ts'
 import { buildSmsPayload } from '../core/payload/sms.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
@@ -67,6 +68,10 @@ type FormState = {
   readonly smsBody: string
   readonly lat: string
   readonly lon: string
+  readonly eventSubject: string
+  readonly eventStart: string
+  readonly eventEnd: string
+  readonly eventLocation: string
   readonly ssid: string
   readonly password: string
   readonly hidden: boolean
@@ -90,6 +95,10 @@ const INITIAL: FormState = {
   smsBody: '',
   lat: '',
   lon: '',
+  eventSubject: '',
+  eventStart: '',
+  eventEnd: '',
+  eventLocation: '',
   ssid: '',
   password: '',
   hidden: false,
@@ -174,6 +183,28 @@ const buildPayload = (state: FormState): Result<CodePayload, BuildError> => {
                 ? { field: '緯度', reason: '-90 から 90 の数値を入力してください' }
                 : { field: '経度', reason: '-180 から 180 の数値を入力してください' },
           }
+    }
+    case 'event': {
+      const event = buildEventPayload({
+        subject: state.eventSubject,
+        start: state.eventStart,
+        end: state.eventEnd,
+        location: state.eventLocation,
+      })
+      if (event.ok) return event
+      switch (event.error.kind) {
+        case 'invalid_subject':
+          return { ok: false, error: { field: '件名', reason: '件名を入力してください' } }
+        case 'invalid_start':
+          return { ok: false, error: { field: '開始日時', reason: '開始日時を入力してください' } }
+        case 'invalid_end':
+          return { ok: false, error: { field: '終了日時', reason: '終了日時を入力してください' } }
+        case 'end_before_start':
+          return {
+            ok: false,
+            error: { field: '終了日時', reason: '終了日時は開始日時より後にしてください' },
+          }
+      }
     }
     case 'wifi': {
       const ssid = parseNonEmptyText(state.ssid)
@@ -469,6 +500,33 @@ export const GenerateScreen = ({
                   hint="-180 から 180 の数値です。"
                   value={state.lon}
                   onChange={(event) => update('lon', event.target.value)}
+                />
+              </>
+            ) : undefined}
+            {state.payloadKind === 'event' ? (
+              <>
+                <Field
+                  label="件名"
+                  value={state.eventSubject}
+                  onChange={(event) => update('eventSubject', event.target.value)}
+                />
+                <Field
+                  label="開始日時"
+                  type="datetime-local"
+                  value={state.eventStart}
+                  onChange={(event) => update('eventStart', event.target.value)}
+                />
+                <Field
+                  label="終了日時"
+                  type="datetime-local"
+                  value={state.eventEnd}
+                  onChange={(event) => update('eventEnd', event.target.value)}
+                />
+                <Field
+                  label="場所"
+                  hint="空のままにもできます。"
+                  value={state.eventLocation}
+                  onChange={(event) => update('eventLocation', event.target.value)}
                 />
               </>
             ) : undefined}

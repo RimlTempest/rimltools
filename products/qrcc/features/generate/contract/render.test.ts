@@ -109,6 +109,7 @@ const EXPECTED_COMPATIBILITY: readonly (readonly [PayloadKind, SymbologyKind, bo
   ['email', 'qr', true],
   ['sms', 'qr', true],
   ['geo', 'qr', true],
+  ['event', 'qr', true],
   ['wifi', 'qr', true],
   ['text', 'code128', true],
   ['url', 'code128', true],
@@ -116,6 +117,7 @@ const EXPECTED_COMPATIBILITY: readonly (readonly [PayloadKind, SymbologyKind, bo
   ['email', 'code128', false],
   ['sms', 'code128', false],
   ['geo', 'code128', false],
+  ['event', 'code128', false],
   ['wifi', 'code128', false],
   ['text', 'ean13', true],
   ['url', 'ean13', false],
@@ -123,6 +125,7 @@ const EXPECTED_COMPATIBILITY: readonly (readonly [PayloadKind, SymbologyKind, bo
   ['email', 'ean13', false],
   ['sms', 'ean13', false],
   ['geo', 'ean13', false],
+  ['event', 'ean13', false],
   ['wifi', 'ean13', false],
 ]
 
