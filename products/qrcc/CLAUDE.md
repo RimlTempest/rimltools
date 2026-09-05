@@ -15,8 +15,15 @@ Bun workspaces の monorepo。
 | 機能追加・バグ修正               | `qrcc-tdd`（必ず red → green） |
 | どこに置くか迷う・機能を拡張する | `qrcc-architecture`            |
 | 並行作業・worktree・コンフリクト | `qrcc-worktree`                |
+| UI・UX を見直す                  | `better-interface`             |
 
 設計の背景は `docs/architecture.md` と `docs/adr/`。
+
+`better-interface` は `better-accessibility` / `better-layout` / `better-writing` /
+`better-typography` / `better-colors` / `better-ui` を順に当てて 1 つの表にまとめる。
+個別の観点だけ見たいときはその 1 本を直接使う。**このリポジトリのスタックは
+プレーン CSS + 独自トークン**なので、Tailwind 前提の項目（`baseline-ui` の
+Stack / Components 節など）は読み替えるか無視すること。
 
 ## 絶対に守ること
 
