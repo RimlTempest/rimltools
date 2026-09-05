@@ -6,7 +6,9 @@ import {
   isPayloadCompatible,
 } from './render.ts'
 import { SYMBOLOGY_KINDS, SYMBOLOGY_META } from './symbology.ts'
+import type { SymbologyKind } from './symbology.ts'
 import { PAYLOAD_KINDS, PAYLOAD_META } from './payload.ts'
+import type { PayloadKind } from './payload.ts'
 
 const validResponse = {
   body: '<svg/>',
@@ -92,6 +94,50 @@ describe('レジストリ', () => {
   test('すべての payload にメタ情報がある', () => {
     for (const kind of PAYLOAD_KINDS) {
       expect(PAYLOAD_META[kind].label.length).toBeGreaterThan(0)
+    }
+  })
+})
+
+/**
+ * 3 × 3 の全量表。振る舞いを変えない作業であることを保証するための土台。
+ * リファクタの前後でこの表の答えが 1 マスでも変わってはならない。
+ */
+const EXPECTED_COMPATIBILITY: readonly (readonly [PayloadKind, SymbologyKind, boolean])[] = [
+  ['text', 'qr', true],
+  ['url', 'qr', true],
+  ['wifi', 'qr', true],
+  ['text', 'code128', true],
+  ['url', 'code128', true],
+  ['wifi', 'code128', false],
+  ['text', 'ean13', true],
+  ['url', 'ean13', false],
+  ['wifi', 'ean13', false],
+]
+
+describe('payload と symbology の相性（全量表）', () => {
+  test('全組み合わせを網羅している', () => {
+    expect(EXPECTED_COMPATIBILITY.length).toBe(PAYLOAD_KINDS.length * SYMBOLOGY_KINDS.length)
+  })
+
+  test('表のとおりに判定する', () => {
+    for (const [payloadKind, symbologyKind, expected] of EXPECTED_COMPATIBILITY) {
+      expect(isPayloadCompatible(payloadKind, symbologyKind)).toBe(expected)
+    }
+  })
+
+  /**
+   * isPayloadCompatible の実装が `SYMBOLOGY_META[...].acceptsPayloads` を
+   * 実際に見ていることを確かめる。メタデータだけを書き換えて判定が
+   * 追随すれば、判定がメタデータ由来になっている証拠になる。
+   */
+  test('symbology 側のメタデータを書き換えると判定が追随する', () => {
+    const original = SYMBOLOGY_META.code128.acceptsPayloads
+    expect(isPayloadCompatible('wifi', 'code128')).toBe(false)
+    Object.assign(SYMBOLOGY_META.code128, { acceptsPayloads: 'all' })
+    try {
+      expect(isPayloadCompatible('wifi', 'code128')).toBe(true)
+    } finally {
+      Object.assign(SYMBOLOGY_META.code128, { acceptsPayloads: original })
     }
   })
 })

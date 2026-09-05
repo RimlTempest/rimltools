@@ -5,6 +5,8 @@
  * ワイヤ形式（serde の tag = "kind"）が一致していることは
  * `features/generate/contract/conformance.test.ts` が担保する。
  */
+import type { PayloadKind } from './payload.ts'
+
 export type QrErrorCorrection = 'L' | 'M' | 'Q' | 'H'
 export type Code128Charset = 'auto' | 'a' | 'b' | 'c'
 
@@ -29,12 +31,24 @@ type SymbologyMeta<K extends SymbologyKind> = {
   readonly defaults: SymbologyOf<K>
   /** 入力欄のプレースホルダに使う実例。 */
   readonly example: string
+  /**
+   * この符号に載せられる内容の種類。
+   *
+   * `'all'` は「これから増える種類も含めて全部」。QR は文字数さえ足りれば
+   * 何でも載るので `'all'` にしておく。こうすると**内容を増やす作業が
+   * この表を触らずに済む**（1D の符号は明示した種類だけを受け入れる）。
+   */
+  readonly acceptsPayloads: 'all' | readonly PayloadKind[]
 }
 
 /**
  * 種類ごとのメタ情報。**Mapped Type なので、`Symbology` にメンバーを足して
  * ここに 1 行足し忘れるとコンパイルエラーになる。**
  * これが「拡張性」の実体で、規約ではなく型が追加漏れを止める。
+ *
+ * 内容の種類（`PAYLOAD_KINDS`）を増やすときは、**このファイルを触らなくてよい**。
+ * QR は `'all'` なので自動的に受け入れる。1D の符号に新しい種類を載せたいときだけ、
+ * その符号の `acceptsPayloads` に足す。
  */
 export const SYMBOLOGY_META: { readonly [K in SymbologyKind]: SymbologyMeta<K> } = {
   qr: {
@@ -44,6 +58,7 @@ export const SYMBOLOGY_META: { readonly [K in SymbologyKind]: SymbologyMeta<K> }
     quietZone: 4,
     defaults: { kind: 'qr', ec: 'M' },
     example: 'https://example.com',
+    acceptsPayloads: 'all',
   },
   code128: {
     label: 'Code 128',
@@ -52,6 +67,8 @@ export const SYMBOLOGY_META: { readonly [K in SymbologyKind]: SymbologyMeta<K> }
     quietZone: 10,
     defaults: { kind: 'code128', charset: 'auto' },
     example: 'ABC-12345',
+    // Code128 は ASCII のみ。URL とテキストは載るが、日本語混じりの Wi-Fi 設定は載らない
+    acceptsPayloads: ['text', 'url'],
   },
   ean13: {
     label: 'EAN-13 / JAN',
@@ -60,6 +77,8 @@ export const SYMBOLOGY_META: { readonly [K in SymbologyKind]: SymbologyMeta<K> }
     quietZone: 9,
     defaults: { kind: 'ean13' },
     example: '750103131130',
+    // EAN-13 は数字だけなので、テキスト以外は入れられない
+    acceptsPayloads: ['text'],
   },
 }
 
