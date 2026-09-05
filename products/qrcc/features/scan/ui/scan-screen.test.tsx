@@ -256,6 +256,71 @@ describe('ScanScreen', () => {
     expect(screen.queryByRole('link', { name: 'javascript:alert(1)' })).toBeNull()
   })
 
+  /** tel: は解釈しても、既存のセキュリティ判断（http(s) だけリンクにする）を緩めない。 */
+  test('tel: を解釈しても、電話番号はリンクにしない', async () => {
+    render(
+      <ScanScreen
+        startCamera={undefined}
+        decodeImageFile={decodesTo(found('tel:+819012345678'))}
+        copyText={undefined}
+      />,
+    )
+    await userEvent.upload(screen.getByLabelText('コードが写っている画像'), pngFile())
+    await waitFor(() => expect(screen.getByText('tel:+819012345678')).toBeDefined())
+    expect(screen.queryByRole('link')).toBeNull()
+    expect(screen.getByText('+819012345678')).toBeDefined()
+  })
+
+  test('GS1 の要素文字列を解釈して GTIN などを出す。生のテキストも残す', async () => {
+    render(
+      <ScanScreen
+        startCamera={undefined}
+        decodeImageFile={decodesTo(found('0104912345678904172512311012345', 'rss14'))}
+        copyText={undefined}
+      />,
+    )
+    await userEvent.upload(screen.getByLabelText('コードが写っている画像'), pngFile())
+    // 生のテキスト
+    await waitFor(() => expect(screen.getByText('0104912345678904172512311012345')).toBeDefined())
+    // 解釈した内容
+    expect(screen.getByText('04912345678904')).toBeDefined()
+    expect(screen.getByText('12345')).toBeDefined()
+  })
+
+  test('解釈できない内容は、いまと同じく素のテキストとして出る', async () => {
+    render(
+      <ScanScreen
+        startCamera={undefined}
+        decodeImageFile={decodesTo(found('在庫-0001', 'code128'))}
+        copyText={undefined}
+      />,
+    )
+    await userEvent.upload(screen.getByLabelText('コードが写っている画像'), pngFile())
+    await waitFor(() => expect(screen.getByText('在庫-0001')).toBeDefined())
+  })
+
+  test('Wi-Fi のパスワードは既定で伏せられ、押すと見える', async () => {
+    render(
+      <ScanScreen
+        startCamera={undefined}
+        decodeImageFile={decodesTo(found('WIFI:S:MyNet;T:WPA;P:secret;;'))}
+        copyText={undefined}
+      />,
+    )
+    await userEvent.upload(screen.getByLabelText('コードが写っている画像'), pngFile())
+    // 生のテキストは残る
+    await waitFor(() => expect(screen.getByText('WIFI:S:MyNet;T:WPA;P:secret;;')).toBeDefined())
+    // SSID は見えるが、パスワードは既定では見えない
+    expect(screen.getByText('MyNet')).toBeDefined()
+    expect(screen.queryByText('secret')).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: 'パスワードを表示する' }))
+    expect(screen.getByText('secret')).toBeDefined()
+
+    await userEvent.click(screen.getByRole('button', { name: 'パスワードを隠す' }))
+    expect(screen.queryByText('secret')).toBeNull()
+  })
+
   test('画像を選ぶと読み取り、結果を出す', async () => {
     render(
       <ScanScreen

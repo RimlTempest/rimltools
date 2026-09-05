@@ -97,6 +97,26 @@ export type CodePayload =
 `features/generate/core/payload/<kind>.ts` に 1 ファイルずつ実装する。
 レジストリは Mapped Type なので**追加漏れがコンパイルエラーになる**。
 
+### 4.1 読み取り側の解釈（`Interpretation`）
+
+`CodePayload` は生成側（`features/generate`）の型。読み取り側は
+`Detection.text`（生の文字列。`features/scan/contract/decode.ts`）を入力に
+`interpret(text): Interpretation` という別の判別可能ユニオンへ変換する
+（`features/scan/contract/interpretation.ts`）。
+
+形式ごとの解釈ロジックは `features/scan/core/interpret/<kind>.ts` に
+1 ファイルずつあり、`interpret()`（`features/scan/core/interpret/index.ts`）
+が順に試して最初に一致したものを返す。どれにも当てはまらなければ
+`{ kind: 'plain' }` になる。GS1 だけは `elements: readonly Gs1Element[]`
+という、この `CodePayload` の `gs1` と同じ語彙を使う。
+
+**`CodePayload` と `Interpretation` はあえて型を共有しない。**
+生成側と読み取り側が同時に改修されるレーンが分かれていること、
+読み取りは「壊れた入力でも常に何か返す」ことを崩さないための緩さが要ること
+（`throw` しない、未対応の値は `unknown`/`plain` に落ちる）が理由。
+両方が落ち着いたら、`MECARD:` などの形式文字列を 1 箇所に寄せることを
+検討する（`plans/005-scan-content-interpretation.md` の Maintenance notes）。
+
 ## 5. `Symbology`（判別可能ユニオン）
 
 シンボル体系と、その体系固有の設定。**細かく設定できる**ことが要件なので、

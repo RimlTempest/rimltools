@@ -1,10 +1,17 @@
 import type { ChangeEvent } from 'react'
-import { useEffect, useId, useReducer, useRef } from 'react'
+import { Fragment, useEffect, useId, useReducer, useRef, useState } from 'react'
 import type { Result } from '@qrcc/contract'
-import { parseHttpUrl } from '@qrcc/contract'
 import { Button, Field, LiveRegion } from '@qrcc/ui'
-import type { CameraError, DecodeResponse, Detection, ScanFailure } from '../contract/index.ts'
+import type {
+  CameraError,
+  DecodeResponse,
+  Detection,
+  Gs1Element,
+  Interpretation,
+  ScanFailure,
+} from '../contract/index.ts'
 import { SCAN_SYMBOLOGY_META } from '../contract/index.ts'
+import { interpret } from '../core/index.ts'
 import { INITIAL_SCAN_STATE, reduceScan } from './scan-state.ts'
 
 /** カメラ読み取りの 1 回分。開始したら必ず `stop()` で止める。 */
@@ -55,11 +62,178 @@ const LABEL_LIMIT = 24
 const shorten = (text: string): string =>
   text.length <= LABEL_LIMIT ? text : `${text.slice(0, LABEL_LIMIT)}…`
 
+/** GS1 の AI（対応している 5 つ）の日本語ラベル。未対応の AI は別扱い。 */
+const GS1_ELEMENT_LABEL: Record<Exclude<Gs1Element['kind'], 'unknown'>, string> = {
+  gtin: 'GTIN',
+  lot: 'ロット番号',
+  production_date: '製造日（YYMMDD）',
+  expiry_date: '有効期限（YYMMDD）',
+  serial: 'シリアル番号',
+}
+
+const gs1ElementValue = (element: Gs1Element): string => {
+  switch (element.kind) {
+    case 'gtin':
+      return element.gtin
+    case 'lot':
+      return element.lot
+    case 'production_date':
+    case 'expiry_date':
+      return element.date
+    case 'serial':
+      return element.serial
+    case 'unknown':
+      return element.value
+  }
+}
+
+/** 値があるときだけ `<dt>`/`<dd>` の組を出す。 */
+const OptionalRow = ({
+  label,
+  value,
+}: {
+  readonly label: string
+  readonly value: string | undefined
+}) => {
+  if (value === undefined) return undefined
+  return (
+    <>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </>
+  )
+}
+
+/**
+ * Wi-Fi のパスワード欄。既定では伏せ、押したら見せる
+ * （読み取り画面は人前で開かれることがある）。
+ */
+const WifiPasswordRow = ({ password }: { readonly password: string | undefined }) => {
+  const [revealed, setRevealed] = useState(false)
+
+  if (password === undefined) {
+    return (
+      <>
+        <dt>パスワード</dt>
+        <dd>このネットワークにパスワードはありません。</dd>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <dt>パスワード</dt>
+      <dd>
+        <span aria-hidden={!revealed}>{revealed ? password : '●'.repeat(password.length)}</span>
+        <Button
+          variant="secondary"
+          aria-pressed={revealed}
+          onClick={() => setRevealed((current) => !current)}
+        >
+          {revealed ? 'パスワードを隠す' : 'パスワードを表示する'}
+        </Button>
+      </dd>
+    </>
+  )
+}
+
+/**
+ * 解釈結果を構造化して出す。`plain` と `url` は生のテキストで十分なので
+ * 何も足さない。`tel:` や `mailto:` はリンクにせず、ここでもテキストと
+ * して出すだけにする（既存のセキュリティ判断を緩めない）。
+ */
+const InterpretationDetails = ({ interpretation }: { readonly interpretation: Interpretation }) => {
+  switch (interpretation.kind) {
+    case 'plain':
+    case 'url':
+      return undefined
+    case 'wifi':
+      return (
+        <dl className="qrcc-scan__interpretation">
+          <dt>ネットワーク名（SSID）</dt>
+          <dd>
+            {interpretation.ssid.length === 0 ? '（読み取れませんでした）' : interpretation.ssid}
+          </dd>
+          <dt>暗号方式</dt>
+          <dd>{interpretation.auth}</dd>
+          <WifiPasswordRow password={interpretation.password} />
+        </dl>
+      )
+    case 'gs1':
+      return (
+        <dl className="qrcc-scan__interpretation">
+          {interpretation.elements.map((element, index) => (
+            <Fragment key={`${element.ai}-${String(index)}`}>
+              <dt>
+                {element.kind === 'unknown'
+                  ? `未対応の識別子（AI ${element.ai}）`
+                  : GS1_ELEMENT_LABEL[element.kind]}
+              </dt>
+              <dd>{gs1ElementValue(element)}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      )
+    case 'contact':
+      return (
+        <dl className="qrcc-scan__interpretation">
+          <OptionalRow label="氏名" value={interpretation.fields.name} />
+          <OptionalRow label="電話" value={interpretation.fields.tel} />
+          <OptionalRow label="メール" value={interpretation.fields.email} />
+          <OptionalRow label="組織" value={interpretation.fields.org} />
+        </dl>
+      )
+    case 'email':
+      return (
+        <dl className="qrcc-scan__interpretation">
+          <dt>宛先</dt>
+          <dd>{interpretation.to}</dd>
+          <OptionalRow label="件名" value={interpretation.subject} />
+        </dl>
+      )
+    case 'tel':
+      return (
+        <dl className="qrcc-scan__interpretation">
+          <dt>電話番号</dt>
+          <dd>{interpretation.number}</dd>
+        </dl>
+      )
+    case 'sms':
+      return (
+        <dl className="qrcc-scan__interpretation">
+          <dt>宛先</dt>
+          <dd>{interpretation.number}</dd>
+          <OptionalRow label="本文" value={interpretation.body} />
+        </dl>
+      )
+    case 'geo':
+      return (
+        <dl className="qrcc-scan__interpretation">
+          <dt>緯度</dt>
+          <dd>{interpretation.lat}</dd>
+          <dt>経度</dt>
+          <dd>{interpretation.lon}</dd>
+        </dl>
+      )
+    case 'event':
+      return (
+        <dl className="qrcc-scan__interpretation">
+          <OptionalRow label="件名" value={interpretation.summary} />
+          <OptionalRow label="開始" value={interpretation.start} />
+          <OptionalRow label="終了" value={interpretation.end} />
+          <OptionalRow label="場所" value={interpretation.location} />
+        </dl>
+      )
+  }
+}
+
 /**
  * 読み取った内容 1 件。
  *
- * http(s) のときだけリンクにする。`javascript:` などを踏ませないため、
- * 判定は `@qrcc/contract` の `parseHttpUrl` に任せる（自前で書かない）。
+ * **生のテキストは常に残す。** 解釈が外れていても元の値を確認できるように
+ * する。http(s) のときだけリンクにする。`javascript:` などを踏ませないため、
+ * 判定は結局 `@qrcc/contract` の `parseHttpUrl` に任せている
+ * （`interpret()` の内部で使っている。自前では書かない）。
  */
 const DetectionItem = ({
   detection,
@@ -72,13 +246,13 @@ const DetectionItem = ({
   readonly onCopied: (text: string) => void
   readonly onCopyFailed: () => void
 }) => {
-  const url = parseHttpUrl(detection.text)
+  const interpretation = interpret(detection.text)
 
   return (
     <li className="qrcc-scan__result">
       <p className="qrcc-scan__result-text">
-        {url.ok ? (
-          <a href={url.value} rel="noreferrer">
+        {interpretation.kind === 'url' ? (
+          <a href={interpretation.url} rel="noreferrer">
             {detection.text}
           </a>
         ) : (
@@ -88,6 +262,7 @@ const DetectionItem = ({
       <p className="qrcc-scan__result-kind">
         種類: {SCAN_SYMBOLOGY_META[detection.symbology].label}
       </p>
+      <InterpretationDetails interpretation={interpretation} />
       {copyText === undefined ? undefined : (
         <Button
           variant="secondary"
