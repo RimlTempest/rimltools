@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useId, useState } from 'react'
 import type { Result } from '@qrcc/contract'
-import { parseHexColor, parseHttpUrl, parseNonEmptyText } from '@qrcc/contract'
+import { parseHexColor, parseHttpUrl } from '@qrcc/contract'
 import { buildEmailPayload } from '../core/payload/email.ts'
 import { buildEventPayload } from '../core/payload/event.ts'
 import { buildGeoPayload } from '../core/payload/geo.ts'
 import { buildSmsPayload } from '../core/payload/sms.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
 import { buildVCardPayload } from '../core/payload/vcard.ts'
+import { buildWifiPayload } from '../core/payload/wifi.ts'
 import { Button, Field, LiveRegion } from '@qrcc/ui'
 import type {
   CodePayload,
@@ -250,20 +251,13 @@ const buildPayload = (state: FormState): Result<CodePayload, BuildError> => {
       }
     }
     case 'wifi': {
-      const ssid = parseNonEmptyText(state.ssid)
-      return ssid.ok
-        ? {
-            ok: true,
-            value: {
-              kind: 'wifi',
-              ssid: ssid.value,
-              auth:
-                state.password.length === 0
-                  ? { kind: 'nopass' }
-                  : { kind: 'wpa', password: state.password },
-              hidden: state.hidden,
-            },
-          }
+      const wifi = buildWifiPayload({
+        ssid: state.ssid,
+        password: state.password,
+        hidden: state.hidden,
+      })
+      return wifi.ok
+        ? wifi
         : {
             ok: false,
             error: { field: 'ネットワーク名', reason: 'ネットワーク名を入力してください' },
