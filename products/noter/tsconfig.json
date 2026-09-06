@@ -3,6 +3,7 @@
   "references": [
     { "path": "./shared/contract" },
     { "path": "./shared/ui" },
+    { "path": "./features/auth" },
     { "path": "./features/shell" },
     { "path": "./features/sync" }
   ]
