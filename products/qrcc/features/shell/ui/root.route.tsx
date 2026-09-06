@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   HeadContent,
   Outlet,
@@ -13,6 +14,7 @@ import { parseActorWire } from '@qrcc/auth/contract'
 import { AuthStatus } from '@qrcc/auth/ui'
 import { currentActorWire } from '@qrcc/auth/ui/auth-env'
 import { AppShell } from './app-shell.tsx'
+import { registerServiceWorker } from './register-sw.ts'
 import { RootDocument, documentHead } from './root-document.tsx'
 import { routerLink } from './router-link.tsx'
 // スタイルの組み立てはアプリの責務。feature からは href を受け取るだけ。
@@ -34,6 +36,11 @@ const actorFn = createServerFn({ method: 'GET' }).handler(async (): Promise<Acto
 const Layout = () => {
   const currentPath = useRouterState({ select: (state) => state.location.pathname })
   const actor = Route.useLoaderData()
+
+  // ハイドレーション後だけ登録する（SSR では navigator が無い）
+  useEffect(() => {
+    registerServiceWorker(typeof navigator === 'undefined' ? undefined : navigator.serviceWorker)
+  }, [])
 
   return (
     <AppShell

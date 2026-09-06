@@ -176,6 +176,31 @@ union に足したのに実装を足していない場合、TS は Mapped Type �
 Rust は `match` の網羅性チェックで**必ずコンパイルエラーになる**。
 これが「拡張性」の実体であり、規約ではなく型で担保する。
 
+## 6.5 PWA（ホーム画面への追加とオフライン対応）
+
+生成・読み取りは端末内の wasm で完結する（[ADR-0003](adr/0003-rust-core-dual-target.md)）
+ため、ネットワークが無くても本来は動く。それを実際に成立させているのが
+`apps/web/public/` に置いた静的ファイルだけの PWA 化（plans/009-pwa.md）。
+
+- **ビルドプラグインを使わない。** `manifest.webmanifest` / アイコン / `sw.js`
+  はすべて `apps/web/public/` の静的ファイルで、Vite の `publicDir` が
+  そのまま `dist/client/` にコピーする。`vite.config.ts` は 1 行も変えない
+  （`cloudflare()` と `tanstackStart()` の順序に 3 つ目のプラグインを足す
+  リスクを取らない判断）
+- **`sw.js` は素の JavaScript。** ビルドを通らないので typecheck も lint の
+  型情報も効かない。ロジックを増やしたくなったらビルドに組み込む判断
+  （＝プラグイン導入）を改めてする
+- キャッシュ方針: `/assets/*`（内容ハッシュ付き）は cache-first、ページの
+  HTML は network-first（失敗したらキャッシュ）、`/_serverFn/*` と
+  `/api/auth/*` は一切キャッシュしない
+- **HTML をキャッシュしてよいのは公開ページだけ**（`sw.js` の
+  `CACHEABLE_PAGES`）。`/codes`・`/codes/*`・`/shared/*` は認証や秘密の
+  トークンが絡むページなので、network-first のままキャッシュへ保存しない
+  （共有端末で次の人にデータが見える事故を避ける）
+- **新しい SW を `skipWaiting()` で即有効化しない。** 開いているページの
+  途中でアセットの世代が入れ替わり、古い HTML が新しいチャンクを要求して
+  壊れるため。新しい版は次にページを開いたときに有効になる
+
 ## 7. 関連ドキュメント
 
 - [ドメインモデル](domain-model.md)
