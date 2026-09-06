@@ -33,7 +33,7 @@
 | 005 | [エディタ画面](005-editor-codemirror-presence-status.md)                               | P1   | L    | 004      | DONE（`b40863a`）                       |
 | 006 | [フォーマット層](006-formats-parse-diagnose-preview.md)                                | P1   | L    | 001, 005 | DONE（006a `4532ff1` / 006b `f6a8c1a`） |
 | 007 | [WebMCP・PWA・Deploy・smoke](007-webmcp-pwa-deploy-smoke.md)                           | P2   | M    | 005, 006 | DONE（`b026d17`）                       |
-| 008 | [AAA 監査・e2e・ハードニング](008-a11y-pass-e2e-and-hardening.md)                      | P2   | M    | 007      | IN PROGRESS（`feat/e2e`）               |
+| 008 | [AAA 監査・e2e・ハードニング](008-a11y-pass-e2e-and-hardening.md)                      | P2   | M    | 007      | DONE（`eec322b`）                       |
 
 状態: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED(理由)` / `STALE`。
 executor は完了時にこの表の自分の行だけを書き換える（reviewer が索引を管理すると言った場合は触らない）。
@@ -65,3 +65,10 @@ executor は完了時にこの表の自分の行だけを書き換える（revie
 - **ハイドレーションの判定は `__reactFiber$*` の有無**: トップは素の `<form method="post">` で JS なしでも文書を作れるため、「ボタンが押せる」は証拠にならない（plan 007 `e2e/smoke/production.spec.ts`）
 - **アカウント削除 UI**: 文書の扱い（所有権・メンバー）を決めてから。v1 では置かない（plan 003）
 - **`MAX_MEMBERS` 超過や日次上限の e2e**: 再現手段が無い。ユニットで UI を固定する（plan 008）
+- **server function 入力の実行時検証は 2 段構え**: `.validator()` には `parse*Input`（`features/documents/contract/wire.ts`）を通すが、返すのは**生の入力**（`validated(input, parsed)`）。Branded 型は TanStack のシリアライズを越えて残らないため、handler 側でもう一度 `parse*` して失敗は `err(NOT_FOUND)` にする。同じ理由で不正な role 文字列は `forbidden` ではなく `not_found` になる（UI からは到達しない、plan 008）
+- **`dangerouslySetInnerHTML` は 2 箇所**: plan 006 の想定は `markdown-preview.tsx` の 1 箇所だったが、`root-document.tsx` の `themeInitScript`（静的な文字列定数、ユーザー入力を含まない）も使っている。両方許容し、grep の期待値を 2 に読み替える（plan 008 Step 4）
+- **削除は `/kick` を呼ばない**: `service.remove` は soft delete のみ。`features/documents/server/service.ts` のコメントは「再接続で `4404`」と書くが、実際は web の `/ws` ゲートが HTTP 404 を返して WS が 1006 で閉じ、クライアントは**`reconnecting` のまま**（`rejected(not_found)` にならない）。e2e は「B の再読み込みが 404 画面」だけを固定した。直すなら、ゲートの 404 を `4404` の close に変えるか、削除時に `/kick` を呼ぶ（フォローアップ、`features/sync` レーン）
+- **オフライン復帰後のピル**: `setOffline(false)` の後、入力は同期されるがピルが「再接続中…」に残ることがある。`features/sync/client/src/state-machine.ts` の遷移の問題で plan 008 のスコープ外。e2e は「A に B の入力が現れる」で固定し、ピルの文言は見ない（フォローアップ）
+- **上限バナー（`limit-banner.tsx`）はユニットのみ**: `rejected(limit)` / `rejected(too_large)` を e2e で作る手段が無い。閉じたことは `sessionStorage`（`noter-limit-banner:<id>`）に覚え、ライブリージョンにはしない（`section aria-labelledby`）。書き出しボタンへは `#noter-export` で飛ぶ（plan 008）
+- **WS を落とす e2e は `page.routeWebSocket`**: `page.route` は WebSocket のハンドシェイクを捕まえられない（plan 008）
+- **スクリーンリーダーの手動確認（VoiceOver / NVDA）は未実施**: 自動化できないため `docs/accessibility.md` §3 に残した。ユーザーが手元で一巡する（plan 008）
