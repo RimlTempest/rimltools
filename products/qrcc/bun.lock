@@ -171,6 +171,13 @@
         "@qrcc/contract": "workspace:*",
       },
     },
+    "shared/webmcp": {
+      "name": "@qrcc/webmcp",
+      "version": "0.1.0",
+      "dependencies": {
+        "@qrcc/contract": "workspace:*",
+      },
+    },
   },
   "packages": {
     "@axe-core/playwright": ["@axe-core/playwright@4.13.0", "", { "dependencies": { "axe-core": "~4.13.0" }, "peerDependencies": { "playwright-core": ">= 1.0.0" } }, "sha512-6YLx+kxXu5GJceG4ozFg+33a2EMTdjYwWGloJ3sb9Kta5pp+ZNS53uxGVog5JetIY8s++P5UrtX+cri+u0VAVg=="],
@@ -504,6 +511,8 @@
     "@qrcc/wasm": ["@qrcc/wasm@workspace:shared/wasm"],
 
     "@qrcc/web": ["@qrcc/web@workspace:apps/web"],
+
+    "@qrcc/webmcp": ["@qrcc/webmcp@workspace:shared/webmcp"],
 
     "@rolldown/binding-android-arm-eabi": ["@rolldown/binding-android-arm-eabi@1.2.6", "", { "os": "android", "cpu": "arm" }, "sha512-b+jTcARdTiFLI6jB4a5XjTm0RWd6KcRfQj/I2356fxUZemiho9zQLxo0RtCuMDAyKcLo6cEltkgbQp6d1+sjjQ=="],
 
