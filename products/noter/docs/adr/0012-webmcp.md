@@ -40,7 +40,10 @@ WebMCP は 2026-09 時点で Origin Trial 段階（Chrome 149 / Edge 150）。
 
 ## 帰結
 
-- `shared/webmcp` は `features/editor` と `features/formats` の公開サブパスにだけ依存する
+- `shared/webmcp` は **`features/*` に依存しない**汎用アダプタ（`document.modelContext` の
+  有無判定・`registerTool` の呼び出し・`sessionStorage` の一覧の預かり）。本文・診断・
+  提案の実体は `features/editor/ui/editor.route.tsx` が関数（deps）として渡す。
+  `shared/` が feature に依存すると層が逆転するため（plan 007 レビューで改訂）
 - `propose-edit` の差分 UI は `features/editor/ui/proposal-panel.tsx`。
   WebMCP 以外（将来のインポート機能など）からも使えるよう、WebMCP に依存しない
 - 削除・共有・メンバー操作はツールにしない。したくなったら認可の設計からやり直す
