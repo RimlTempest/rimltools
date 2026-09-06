@@ -24,16 +24,16 @@
 
 ## 状態
 
-| #   | 計画                                                                                   | 優先 | 規模 | 依存     | 状態                                                                    |
-| --- | -------------------------------------------------------------------------------------- | ---- | ---- | -------- | ----------------------------------------------------------------------- |
-| 001 | [足場・ツールチェーン・contract・ui・shell](001-scaffold-tooling-contract-ui-shell.md) | P1   | L    | —        | DONE（`e3b67ac`）                                                       |
-| 002 | [DocumentRoom DO と /ws 配線](002-sync-durable-object-and-ws-entry.md)                 | P1   | L    | 001      | DONE（`b7f1cb6`）                                                       |
-| 003 | [Better Auth（ゲスト + Google）](003-auth-guest-and-google.md)                         | P1   | M    | 001      | DONE（`7596f5b`）                                                       |
-| 004 | [文書・共有リンク・本認可](004-documents-sharing-and-authorization.md)                 | P1   | L    | 002, 003 | DONE（`aa66ae6`）                                                       |
-| 005 | [エディタ画面](005-editor-codemirror-presence-status.md)                               | P1   | L    | 004      | DONE（`b40863a`）                                                       |
-| 006 | [フォーマット層](006-formats-parse-diagnose-preview.md)                                | P1   | L    | 001, 005 | IN PROGRESS（core + UI 部品 `4532ff1`、editor 差し込み・e2e は 005 後） |
-| 007 | [WebMCP・PWA・Deploy・smoke](007-webmcp-pwa-deploy-smoke.md)                           | P2   | M    | 005, 006 | TODO                                                                    |
-| 008 | [AAA 監査・e2e・ハードニング](008-a11y-pass-e2e-and-hardening.md)                      | P2   | M    | 007      | TODO                                                                    |
+| #   | 計画                                                                                   | 優先 | 規模 | 依存     | 状態                                    |
+| --- | -------------------------------------------------------------------------------------- | ---- | ---- | -------- | --------------------------------------- |
+| 001 | [足場・ツールチェーン・contract・ui・shell](001-scaffold-tooling-contract-ui-shell.md) | P1   | L    | —        | DONE（`e3b67ac`）                       |
+| 002 | [DocumentRoom DO と /ws 配線](002-sync-durable-object-and-ws-entry.md)                 | P1   | L    | 001      | DONE（`b7f1cb6`）                       |
+| 003 | [Better Auth（ゲスト + Google）](003-auth-guest-and-google.md)                         | P1   | M    | 001      | DONE（`7596f5b`）                       |
+| 004 | [文書・共有リンク・本認可](004-documents-sharing-and-authorization.md)                 | P1   | L    | 002, 003 | DONE（`aa66ae6`）                       |
+| 005 | [エディタ画面](005-editor-codemirror-presence-status.md)                               | P1   | L    | 004      | DONE（`b40863a`）                       |
+| 006 | [フォーマット層](006-formats-parse-diagnose-preview.md)                                | P1   | L    | 001, 005 | DONE（006a `4532ff1` / 006b `f6a8c1a`） |
+| 007 | [WebMCP・PWA・Deploy・smoke](007-webmcp-pwa-deploy-smoke.md)                           | P2   | M    | 005, 006 | TODO                                    |
+| 008 | [AAA 監査・e2e・ハードニング](008-a11y-pass-e2e-and-hardening.md)                      | P2   | M    | 007      | TODO                                    |
 
 状態: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED(理由)` / `STALE`。
 executor は完了時にこの表の自分の行だけを書き換える（reviewer が索引を管理すると言った場合は触らない）。
@@ -58,5 +58,7 @@ executor は完了時にこの表の自分の行だけを書き換える（revie
 - **名前プロンプトの表示条件**: 自分で作った文書では出さず、共有リンクで参加したゲストだけ（ux.md §6.1「開いた瞬間に書ける」優先、plan 005）
 - **CodeMirror が server bundle に入る**: `ssr: 'data-only'` でもルートモジュール経由で `editor.route-*.js` が 1.44 MB（gzip 390 kB）。free tier の 3 MiB gzip には余裕があるが、`React.lazy` で `EditorScreen` を切り出す候補（plan 006b または 007、plan 005 レビュー）
 - **⋯ メニューの「複製」「ショートカット一覧」**: 複製は server function が無い、一覧は仕様が無い。v1 では置かない（plan 005）
+- **「変換して新規作成」の本文の受け渡し**: `create` に初期本文の引数が無いので `sessionStorage`（`noter-initial-body:<id>`）に預け、接続後に `ytext` が空なら 1 回だけ挿入する。サーバ側に初期本文を持たせるなら plan 008 以降で（plan 006b）
+- **整形の本文置換は `EditorHandle.replaceAll`（CodeMirror トランザクション）経由**: `ytext` を直接書くと y-codemirror.next の `ySyncAnnotation` を通らず undo とリモートカーソルが崩れる（plan 006b）
 - **アカウント削除 UI**: 文書の扱い（所有権・メンバー）を決めてから。v1 では置かない（plan 003）
 - **`MAX_MEMBERS` 超過や日次上限の e2e**: 再現手段が無い。ユニットで UI を固定する（plan 008）

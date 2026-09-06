@@ -17,26 +17,27 @@ qrcc のトークン体系（`--qrcc-*`）を `--noter-*` として移植し、�
 
 ### 2.1 面と文字
 
-| トークン                 | Light                          | Dark                            | 用途                                        |
-| ------------------------ | ------------------------------ | ------------------------------- | ------------------------------------------- |
-| `--noter-surface`        | `oklch(1 0 0)`                 | `oklch(0.18 0.012 265)`         | ページ地                                    |
-| `--noter-surface-raised` | `oklch(0.975 0.002 265)`       | `oklch(0.24 0.014 265)`         | ヘッダ・ツールバー・ダイアログ              |
-| `--noter-surface-sunken` | `oklch(0.945 0.004 265)`       | `oklch(0.14 0.01 265)`          | 問題パネル・コードブロック地                |
-| `--noter-surface-hover`  | `oklch(0.93 0.006 265)`        | `oklch(0.3 0.016 265)`          | 行・ボタンのホバー                          |
-| `--noter-surface-editor` | `oklch(1 0 0)`                 | `oklch(0.16 0.012 265)`         | CodeMirror の地（surface より僅かに沈める） |
-| `--noter-text`           | `oklch(0.2 0.012 265)` 15.9:1  | `oklch(0.955 0.006 265)` 15.1:1 | 本文                                        |
-| `--noter-text-muted`     | `oklch(0.415 0.012 265)` 7.4:1 | `oklch(0.79 0.012 265)` 7.6:1   | 補助（7:1 を割らない）                      |
-| `--noter-accent`         | `oklch(0.44 0.16 255)`         | `oklch(0.83 0.13 250)`          | 主ボタン・リンク・選択                      |
-| `--noter-accent-hover`   | `oklch(0.36 0.16 255)`         | `oklch(0.89 0.11 250)`          | 明度のみ動かす                              |
-| `--noter-on-accent`      | `oklch(1 0 0)`                 | `oklch(0.17 0.03 265)`          | accent 上の文字                             |
-| `--noter-danger`         | `oklch(0.44 0.19 25)`          | `oklch(0.83 0.14 25)`           | 削除・拒否・構文エラー                      |
-| `--noter-danger-hover`   | `oklch(0.36 0.19 25)`          | `oklch(0.89 0.12 25)`           |                                             |
-| `--noter-on-danger`      | `oklch(1 0 0)`                 | `oklch(0.17 0.04 25)`           |                                             |
-| `--noter-warning`        | `oklch(0.5 0.13 75)`           | `oklch(0.85 0.12 80)`           | 再接続中・オフライン                        |
-| `--noter-success`        | `oklch(0.42 0.13 150)`         | `oklch(0.83 0.13 150)`          | 同期済み                                    |
-| `--noter-border`         | `oklch(0.72 0.01 265)` 3.1:1   | `oklch(0.48 0.014 265)` 3.2:1   | UI 境界                                     |
-| `--noter-border-strong`  | `oklch(0.55 0.012 265)`        | `oklch(0.66 0.014 265)`         | 入力の枠                                    |
-| `--noter-focus-ring`     | `oklch(0.44 0.2 255)`          | `oklch(0.86 0.16 250)`          | フォーカス                                  |
+| トークン                     | Light                          | Dark                            | 用途                                                                                             |
+| ---------------------------- | ------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `--noter-surface`            | `oklch(1 0 0)`                 | `oklch(0.18 0.012 265)`         | ページ地                                                                                         |
+| `--noter-surface-raised`     | `oklch(0.975 0.002 265)`       | `oklch(0.24 0.014 265)`         | ヘッダ・ツールバー・ダイアログ                                                                   |
+| `--noter-surface-sunken`     | `oklch(0.945 0.004 265)`       | `oklch(0.14 0.01 265)`          | 問題パネル・コードブロック地                                                                     |
+| `--noter-surface-hover`      | `oklch(0.93 0.006 265)`        | `oklch(0.3 0.016 265)`          | 行・ボタンのホバー                                                                               |
+| `--noter-editor-active-line` | `oklch(0.97 0.006 265)`        | `oklch(0.3 0.016 265)`          | CodeMirror のカーソル行。`surface-hover`（0.93）だと JSON のキー・数値が 7:1 を割る（plan 006b） |
+| `--noter-surface-editor`     | `oklch(1 0 0)`                 | `oklch(0.16 0.012 265)`         | CodeMirror の地（surface より僅かに沈める）                                                      |
+| `--noter-text`               | `oklch(0.2 0.012 265)` 15.9:1  | `oklch(0.955 0.006 265)` 15.1:1 | 本文                                                                                             |
+| `--noter-text-muted`         | `oklch(0.415 0.012 265)` 7.4:1 | `oklch(0.79 0.012 265)` 7.6:1   | 補助（7:1 を割らない）                                                                           |
+| `--noter-accent`             | `oklch(0.44 0.16 255)`         | `oklch(0.83 0.13 250)`          | 主ボタン・リンク・選択                                                                           |
+| `--noter-accent-hover`       | `oklch(0.36 0.16 255)`         | `oklch(0.89 0.11 250)`          | 明度のみ動かす                                                                                   |
+| `--noter-on-accent`          | `oklch(1 0 0)`                 | `oklch(0.17 0.03 265)`          | accent 上の文字                                                                                  |
+| `--noter-danger`             | `oklch(0.44 0.19 25)`          | `oklch(0.83 0.14 25)`           | 削除・拒否・構文エラー                                                                           |
+| `--noter-danger-hover`       | `oklch(0.36 0.19 25)`          | `oklch(0.89 0.12 25)`           |                                                                                                  |
+| `--noter-on-danger`          | `oklch(1 0 0)`                 | `oklch(0.17 0.04 25)`           |                                                                                                  |
+| `--noter-warning`            | `oklch(0.5 0.13 75)`           | `oklch(0.85 0.12 80)`           | 再接続中・オフライン                                                                             |
+| `--noter-success`            | `oklch(0.42 0.13 150)`         | `oklch(0.83 0.13 150)`          | 同期済み                                                                                         |
+| `--noter-border`             | `oklch(0.72 0.01 265)` 3.1:1   | `oklch(0.48 0.014 265)` 3.2:1   | UI 境界                                                                                          |
+| `--noter-border-strong`      | `oklch(0.55 0.012 265)`        | `oklch(0.66 0.014 265)`         | 入力の枠                                                                                         |
+| `--noter-focus-ring`         | `oklch(0.44 0.2 255)`          | `oklch(0.86 0.16 250)`          | フォーカス                                                                                       |
 
 ### 2.2 presence（参加者の色）
 
@@ -161,7 +162,7 @@ EditorView.theme({
     color: 'var(--noter-text-muted)',
     borderRight: '1px solid var(--noter-border)',
   },
-  '.cm-activeLine': { backgroundColor: 'var(--noter-surface-hover)' },
+  '.cm-activeLine': { backgroundColor: 'var(--noter-editor-active-line)' },
   '&.cm-focused': {
     outline: 'var(--noter-focus-width) solid var(--noter-focus-ring)',
     outlineOffset: '-3px',
