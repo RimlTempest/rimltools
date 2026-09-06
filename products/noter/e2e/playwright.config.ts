@@ -57,6 +57,9 @@ export default defineConfig({
       'bun run --filter @noter/web db:local',
       `bun run --filter @noter/web preview -- --port ${PORT} --strictPort`,
     ].join(' && '),
+    // plan 002: 認証はまだ無いので、e2e の間だけ /ws の認可を開ける。
+    // plan 004 が本物の認可に差し替えたら消す（apps/web/src/server/ws-authorize.ts）。
+    env: { NOTER_DEV_OPEN_WS: '1' },
     stdout: 'pipe',
     stderr: 'pipe',
     url: baseURL,

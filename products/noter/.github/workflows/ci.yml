@@ -98,6 +98,14 @@ jobs:
             echo "::error::class is only allowed in features/sync/worker/document-room.ts (ADR-0004)"
             exit 1
           fi
+      - name: 開発用の WS 開放フラグが設定に混ざっていないこと (plan 002)
+        run: |
+          # NOTER_DEV_OPEN_WS は認可を丸ごと素通りさせる。.dev.vars と e2e の
+          # 起動環境にだけ置き、デプロイされる設定には絶対に載せない。
+          if grep -q 'NOTER_DEV_OPEN_WS' apps/web/wrangler.jsonc apps/sync/wrangler.jsonc; then
+            echo "::error file=apps/web/wrangler.jsonc::NOTER_DEV_OPEN_WS must never be declared in wrangler config. It bypasses authorization for /ws."
+            exit 1
+          fi
       - name: ドメイン層に I/O が漏れていないこと
         run: |
           hits=$(find shared/contract/src features/*/contract features/*/core -name '*.ts' ! -name '*.test.ts' 2>/dev/null \

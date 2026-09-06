@@ -21,6 +21,9 @@
     },
     {
       "path": "../../features/shell"
+    },
+    {
+      "path": "../../features/sync"
     }
   ]
 }
