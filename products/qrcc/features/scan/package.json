@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./contract": "./contract/index.ts",
+    "./core": "./core/index.ts",
     "./ui": "./ui/index.ts",
     "./ui/scan.css": "./ui/scan.css",
     "./ui/wiring": "./ui/scan-wiring.route.tsx"
@@ -17,6 +18,7 @@
     "@qrcc/contract": "workspace:*",
     "@qrcc/ui": "workspace:*",
     "@qrcc/wasm": "workspace:*",
+    "@qrcc/webmcp": "workspace:*",
     "@tanstack/react-router": "1.170.32"
   }
 }

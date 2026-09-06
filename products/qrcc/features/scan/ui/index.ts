@@ -15,3 +15,4 @@ export type {
 export { ScanScreen } from './scan-screen.tsx'
 export type { CameraStatus, ScanEvent, ScanState } from './scan-state.ts'
 export { INITIAL_SCAN_STATE, reduceScan } from './scan-state.ts'
+export { makeDecodeTool } from './webmcp-tools.ts'
