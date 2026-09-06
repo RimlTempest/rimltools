@@ -285,6 +285,42 @@ describe('makeGenerateTool', () => {
     })
   })
 
+  describe('kind: geo', () => {
+    test('geo.lat / lon から位置情報の payload を組み立てる', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      await tool.execute({ kind: 'geo', geo: { lat: '35.681236', lon: '139.767125' } })
+
+      expect(calls).toHaveLength(1)
+      const request = calls[0]
+      if (typeof request === 'object' && request !== null && 'payload' in request) {
+        const payload = request.payload
+        if (typeof payload === 'object' && payload !== null && 'kind' in payload) {
+          expect(payload.kind).toBe('geo')
+          return
+        }
+      }
+      throw new Error('request が RenderRequest ではない')
+    })
+
+    test('範囲外の緯度は render を呼ばず、日本語の理由を返す', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      const result = await tool.execute({ kind: 'geo', geo: { lat: '999', lon: '0' } })
+
+      expect(calls).toHaveLength(0)
+      expect(result.content[0]?.text.length).toBeGreaterThan(0)
+    })
+  })
+
   test('知らない kind を渡しても例外を投げず、理由を返す', async () => {
     const calls: unknown[] = []
     const render: RenderFn = (request) => {

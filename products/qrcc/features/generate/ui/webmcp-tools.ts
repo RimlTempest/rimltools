@@ -13,6 +13,7 @@ import type { Result } from '@qrcc/contract'
 import type { WebMcpTool } from '@qrcc/webmcp'
 import { textResult } from '@qrcc/webmcp'
 import { buildEmailPayload } from '../core/payload/email.ts'
+import { buildGeoPayload } from '../core/payload/geo.ts'
 import { buildSmsPayload } from '../core/payload/sms.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
 import type { CodePayload, PayloadKind, RenderRequest, SymbologyKind } from '../contract/index.ts'
@@ -124,8 +125,18 @@ const buildPayloadFromKind = (kind: PayloadKind, input: ToolInput): Result<CodeP
             'SMS の宛先（sms.number）に国番号から始まる番号を指定してください（例: +819012345678）。',
           )
     }
-    case 'geo':
-      return err(notYetSupported('geo'))
+    case 'geo': {
+      const result = buildGeoPayload({
+        lat: readNestedString(input, 'geo', 'lat'),
+        lon: readNestedString(input, 'geo', 'lon'),
+      })
+      if (result.ok) return result
+      return err(
+        result.error.kind === 'invalid_lat'
+          ? '位置情報の緯度（geo.lat）に -90 から 90 の数値を指定してください。'
+          : '位置情報の経度（geo.lon）に -180 から 180 の数値を指定してください。',
+      )
+    }
     case 'event':
       return err(notYetSupported('event'))
     case 'vcard':
@@ -225,6 +236,15 @@ export const makeGenerateTool = (render: RenderFn): WebMcpTool => ({
         },
         required: ['number'],
         description: `kind が sms のとき指定します。${PAYLOAD_META.sms.description}`,
+      },
+      geo: {
+        type: 'object',
+        properties: {
+          lat: { type: 'string', description: '緯度（-90 から 90）。' },
+          lon: { type: 'string', description: '経度（-180 から 180）。' },
+        },
+        required: ['lat', 'lon'],
+        description: `kind が geo のとき指定します。${PAYLOAD_META.geo.description}`,
       },
       symbology: {
         type: 'string',
