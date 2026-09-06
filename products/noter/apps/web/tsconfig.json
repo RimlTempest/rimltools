@@ -26,6 +26,9 @@
       "path": "../../features/documents"
     },
     {
+      "path": "../../features/editor"
+    },
+    {
       "path": "../../features/shell"
     },
     {
