@@ -81,6 +81,16 @@ describe('MarkdownPreview', () => {
     expect(region.querySelectorAll('[data-mermaid-mount]')).toHaveLength(1)
   })
 
+  /**
+   * 差し込み先が残っているだけでは足りない。React 19 は
+   * `dangerouslySetInnerHTML` に別のオブジェクトを渡すたびに innerHTML を
+   * 当て直すので、ポータルで入れた図が次の描画で消える（実際に消えていた）。
+   */
+  test('差し込み先に図の枠が入る', () => {
+    const region = preview('```mermaid\ngraph TD;\n  A-->B;\n```\n')
+    expect(region.querySelectorAll('.noter-mermaid-figure__svg')).toHaveLength(1)
+  })
+
   test('本文が変わると描画も変わる', () => {
     const { rerender } = render(<MarkdownPreview markdown={'# 最初\n'} />)
     rerender(<MarkdownPreview markdown={'# 次\n'} />)

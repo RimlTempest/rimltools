@@ -7,8 +7,11 @@
  *
  * 畳み込みは `<details>` に任せる。JS が無くても開閉でき、キーボードでも
  * 操作できる（ARIA の tree ロールを自作しない）。
+ *
+ * テキストの見出しは `<figcaption>`。`<code>` や `<pre>` は暗黙のロールを
+ * 持たないので `aria-label` を付けても無視される（axe も違反として拾う）。
  */
-import { Button } from '@noter/ui'
+import { Button, VisuallyHidden } from '@noter/ui'
 import { useMemo, useState } from 'react'
 import type { DataDocumentKind } from '../contract/data-kind.ts'
 import type { JsonValue } from '../contract/json-value.ts'
@@ -59,16 +62,22 @@ export const DataPreview = ({ kind, text, label = 'プレビュー' }: DataPrevi
           <p className="noter-data-preview__error">
             構文エラーがあるため、整形して表示できません。問題パネルを開いて、指摘された行を直してください。
           </p>
-          <pre className="noter-data-preview__text">
-            <code aria-label="本文">{text}</code>
-          </pre>
+          <figure>
+            <VisuallyHidden as="figcaption">本文</VisuallyHidden>
+            <pre className="noter-data-preview__text">
+              <code>{text}</code>
+            </pre>
+          </figure>
         </>
       ) : mode === 'tree' ? (
         <JsonTreeRoot value={parsed.value.value} />
       ) : (
-        <pre className="noter-data-preview__text">
-          <code aria-label="整形した本文">{formatted.ok ? formatted.value : text}</code>
-        </pre>
+        <figure>
+          <VisuallyHidden as="figcaption">整形した本文</VisuallyHidden>
+          <pre className="noter-data-preview__text">
+            <code>{formatted.ok ? formatted.value : text}</code>
+          </pre>
+        </figure>
       )}
     </section>
   )
