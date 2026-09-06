@@ -133,6 +133,12 @@
       "skillPath": "skills/interface-review/SKILL.md",
       "computedHash": "692fc5f2cfc2ad08951ea68ee6f5db9c99b759fa46b18e53101cd50d51a94f3a"
     },
+    "modern-web-guidance": {
+      "source": "GoogleChrome/modern-web-guidance",
+      "sourceType": "github",
+      "skillPath": "skills/modern-web-guidance/SKILL.md",
+      "computedHash": "c75f98ef13e63bcf0c074f6e7651ecb567ffcd78f2527d085a7cddd530073c4f"
+    },
     "rust-best-practices": {
       "source": "apollographql/skills",
       "sourceType": "github",

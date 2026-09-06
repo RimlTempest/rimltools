@@ -16,8 +16,22 @@ Bun workspaces の monorepo。
 | どこに置くか迷う・機能を拡張する | `qrcc-architecture`            |
 | 並行作業・worktree・コンフリクト | `qrcc-worktree`                |
 | UI・UX を見直す                  | `better-interface`             |
+| HTML/CSS/クライアント JS を書く  | `modern-web-guidance`          |
 
 設計の背景は `docs/architecture.md` と `docs/adr/`。
+
+`modern-web-guidance`（Google Chrome 公式）は、書く前に「いま標準で何ができるか」を
+引きにいくスキル。**スキル本文は `npx` を指示しているが、このリポジトリでは
+`bunx` を使うこと**（`npx` は環境によって解決できない）:
+
+```bash
+bunx modern-web-guidance@latest search "<やりたいこと>"
+bunx modern-web-guidance@latest retrieve "<id>"
+```
+
+> **検索語は Google に送られる。** 収集されるのは導入回数・取得したガイドの ID・
+> エージェントが生成した検索語で、生のプロンプトは含まれない。止めるなら
+> シェルの設定に `export DISABLE_TELEMETRY=1` を書くか、コマンドの前に付ける。
 
 `better-interface` は `better-accessibility` / `better-layout` / `better-writing` /
 `better-typography` / `better-colors` / `better-ui` を順に当てて 1 つの表にまとめる。
