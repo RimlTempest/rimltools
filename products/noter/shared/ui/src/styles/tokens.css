@@ -1,0 +1,116 @@
+/*
+ * デザイントークン。色は oklch で定義する（明度を数値で操作でき、
+ * コントラスト比を予測しやすい）。コンポーネントはセマンティックトークンだけを参照する。
+ *
+ * コントラストは WCAG 2.2 AAA（本文 7:1 / 大きい文字 4.5:1 / UI 境界 3:1）を
+ * ライト・ダーク両方で満たすことを前提に選んである。
+ */
+:root {
+  color-scheme: light dark;
+
+  /* --- セマンティックカラー ------------------------------------------- */
+  --noter-surface: light-dark(oklch(1 0 0), oklch(0.18 0.012 265));
+  --noter-surface-raised: light-dark(oklch(0.975 0.002 265), oklch(0.24 0.014 265));
+  --noter-surface-sunken: light-dark(oklch(0.945 0.004 265), oklch(0.14 0.01 265));
+  /*
+   * ポインタを載せたときの面。sunken を流用しない — ダークでは地の面より
+   * 暗くなり「押し込まれた」ように見えてしまう。明るい方へ 1 段動かす。
+   */
+  --noter-surface-hover: light-dark(oklch(0.93 0.006 265), oklch(0.3 0.016 265));
+  /*
+   * エディタの地。surface より僅かに沈めて「書く場所」を面で示す
+   * （ライトでは差を付けず、紙のままにしておく）。
+   */
+  --noter-surface-editor: light-dark(oklch(1 0 0), oklch(0.16 0.012 265));
+
+  /* 本文: ライト 15.9:1 / ダーク 15.1:1 */
+  --noter-text: light-dark(oklch(0.2 0.012 265), oklch(0.955 0.006 265));
+  /* 補助テキストも 7:1 を割らない明度に寄せる。「薄いグレー」で妥協しない */
+  --noter-text-muted: light-dark(oklch(0.415 0.012 265), oklch(0.79 0.012 265));
+
+  --noter-accent: light-dark(oklch(0.44 0.16 255), oklch(0.83 0.13 250));
+  /* ホバーは明度だけを動かす。色相を変えると別の意味の色に見える */
+  --noter-accent-hover: light-dark(oklch(0.36 0.16 255), oklch(0.89 0.11 250));
+  --noter-on-accent: light-dark(oklch(1 0 0), oklch(0.17 0.03 265));
+  --noter-danger: light-dark(oklch(0.44 0.19 25), oklch(0.83 0.14 25));
+  --noter-danger-hover: light-dark(oklch(0.36 0.19 25), oklch(0.89 0.12 25));
+  --noter-on-danger: light-dark(oklch(1 0 0), oklch(0.17 0.04 25));
+  /* 再接続中・オフライン。danger と区別が付くよう色相を離す */
+  --noter-warning: light-dark(oklch(0.5 0.13 75), oklch(0.85 0.12 80));
+  --noter-success: light-dark(oklch(0.42 0.13 150), oklch(0.83 0.13 150));
+
+  /*
+   * --- presence（参加者の色）-------------------------------------------
+   * 同じ人には常に同じ色を割り当てる（actorId のハッシュ % 8）。
+   * **色だけで人を識別させない。** 必ず名前を併記する（DESIGN.md §2.2）。
+   * 名前ラベルの文字（--noter-on-presence）と 4.5:1 以上になる明度に揃えてある。
+   */
+  --noter-presence-0: light-dark(oklch(0.55 0.17 25), oklch(0.78 0.14 25));
+  --noter-presence-1: light-dark(oklch(0.55 0.15 60), oklch(0.8 0.13 70));
+  --noter-presence-2: light-dark(oklch(0.5 0.13 140), oklch(0.78 0.14 145));
+  --noter-presence-3: light-dark(oklch(0.5 0.12 190), oklch(0.8 0.11 195));
+  --noter-presence-4: light-dark(oklch(0.5 0.16 250), oklch(0.8 0.12 250));
+  --noter-presence-5: light-dark(oklch(0.5 0.18 300), oklch(0.8 0.13 300));
+  --noter-presence-6: light-dark(oklch(0.55 0.17 340), oklch(0.8 0.13 340));
+  --noter-presence-7: light-dark(oklch(0.45 0.05 265), oklch(0.75 0.04 265));
+  --noter-on-presence: light-dark(oklch(1 0 0), oklch(0.17 0.02 265));
+
+  --noter-border: light-dark(oklch(0.72 0.01 265), oklch(0.48 0.014 265));
+  --noter-border-strong: light-dark(oklch(0.55 0.012 265), oklch(0.66 0.014 265));
+  --noter-focus-ring: light-dark(oklch(0.44 0.2 255), oklch(0.86 0.16 250));
+
+  /* --- 寸法 ------------------------------------------------------------ */
+  --noter-space-1: 0.25rem;
+  --noter-space-2: 0.5rem;
+  --noter-space-3: 0.75rem;
+  --noter-space-4: 1rem;
+  --noter-space-6: 1.5rem;
+  --noter-space-8: 2rem;
+
+  --noter-radius: 0.5rem;
+  --noter-radius-sm: 0.25rem;
+  /*
+   * 入れ子の角丸は「外側 = 内側 + padding」でないと目に留まる。
+   * カードは padding 1rem に半径 0.5rem の中身を入れるので 1.5rem になる。
+   */
+  --noter-radius-lg: 1.5rem;
+
+  /* AAA 2.5.5: クリック対象は 44x44 CSS px 以上 */
+  --noter-target-min: 44px;
+  /* AAA 2.4.13: フォーカスインジケータは 2px 以上 */
+  --noter-focus-width: 3px;
+  --noter-focus-offset: 2px;
+
+  /* AAA 1.4.8: 本文は 80 文字以内 */
+  --noter-measure: 70ch;
+
+  /*
+   * 型スケール。役割で名前を付けて、ここ以外に文字サイズを書かない。
+   * 見出しは段が下がるほど小さくなる（h1 だけは画面幅に追従させる）。
+   */
+  --noter-text-sm: 0.875rem;
+  --noter-text-base: 1rem;
+  --noter-text-lg: 1.125rem;
+  --noter-text-xl: 1.375rem;
+  --noter-text-2xl: 1.75rem;
+
+  /* 等幅は同じ rem でも大きく見えるので、エディタ本文だけ一段落とす */
+  --noter-text-code: 0.9375rem;
+  --noter-line-code: 1.6;
+
+  --noter-font-sans:
+    system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic UI', sans-serif;
+  --noter-font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+
+  /* ヘッダとツールバーの高さ。ワークスペースは残り（100dvb − この 2 つ） */
+  --noter-header-h: 3.5rem;
+  --noter-toolbar-h: 3rem;
+}
+
+/* ユーザーの明示選択は OS 設定を上書きする */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
