@@ -246,6 +246,45 @@ describe('makeGenerateTool', () => {
     })
   })
 
+  describe('kind: sms', () => {
+    test('sms.number / body から SMS の payload を組み立てる', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      await tool.execute({ kind: 'sms', sms: { number: '+819012345678', body: 'こんにちは' } })
+
+      expect(calls).toHaveLength(1)
+      const request = calls[0]
+      const expected = parsePhoneNumber('+819012345678')
+      expect(expected.ok).toBe(true)
+      if (typeof request === 'object' && request !== null && 'payload' in request && expected.ok) {
+        expect(request.payload).toEqual({
+          kind: 'sms',
+          number: expected.value,
+          body: 'こんにちは',
+        })
+        return
+      }
+      throw new Error('request が RenderRequest ではない')
+    })
+
+    test('不正な電話番号は render を呼ばず、日本語の理由を返す', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      const result = await tool.execute({ kind: 'sms', sms: { number: '090-1234-5678', body: '' } })
+
+      expect(calls).toHaveLength(0)
+      expect(result.content[0]?.text.length).toBeGreaterThan(0)
+    })
+  })
+
   test('知らない kind を渡しても例外を投げず、理由を返す', async () => {
     const calls: unknown[] = []
     const render: RenderFn = (request) => {

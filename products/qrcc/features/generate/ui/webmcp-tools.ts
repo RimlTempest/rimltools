@@ -13,6 +13,7 @@ import type { Result } from '@qrcc/contract'
 import type { WebMcpTool } from '@qrcc/webmcp'
 import { textResult } from '@qrcc/webmcp'
 import { buildEmailPayload } from '../core/payload/email.ts'
+import { buildSmsPayload } from '../core/payload/sms.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
 import type { CodePayload, PayloadKind, RenderRequest, SymbologyKind } from '../contract/index.ts'
 import {
@@ -112,8 +113,17 @@ const buildPayloadFromKind = (kind: PayloadKind, input: ToolInput): Result<CodeP
         ? result
         : err('メールの宛先（email.to）に正しいメールアドレスを指定してください。')
     }
-    case 'sms':
-      return err(notYetSupported('sms'))
+    case 'sms': {
+      const result = buildSmsPayload({
+        number: readNestedString(input, 'sms', 'number'),
+        body: readNestedString(input, 'sms', 'body'),
+      })
+      return result.ok
+        ? result
+        : err(
+            'SMS の宛先（sms.number）に国番号から始まる番号を指定してください（例: +819012345678）。',
+          )
+    }
     case 'geo':
       return err(notYetSupported('geo'))
     case 'event':
@@ -203,6 +213,18 @@ export const makeGenerateTool = (render: RenderFn): WebMcpTool => ({
         },
         required: ['to'],
         description: `kind が email のとき指定します。${PAYLOAD_META.email.description}`,
+      },
+      sms: {
+        type: 'object',
+        properties: {
+          number: {
+            type: 'string',
+            description: '国番号から始まる送信先の電話番号（例: +819012345678）。',
+          },
+          body: { type: 'string', description: '本文（省略可）。' },
+        },
+        required: ['number'],
+        description: `kind が sms のとき指定します。${PAYLOAD_META.sms.description}`,
       },
       symbology: {
         type: 'string',
