@@ -202,6 +202,50 @@ describe('makeGenerateTool', () => {
     })
   })
 
+  describe('kind: email', () => {
+    test('email.to / subject / body からメールの payload を組み立てる', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      await tool.execute({
+        kind: 'email',
+        email: { to: 'yamada@example.com', subject: '件名', body: '本文' },
+      })
+
+      expect(calls).toHaveLength(1)
+      const request = calls[0]
+      if (typeof request === 'object' && request !== null && 'payload' in request) {
+        expect(request.payload).toEqual({
+          kind: 'email',
+          to: 'yamada@example.com',
+          subject: '件名',
+          body: '本文',
+        })
+        return
+      }
+      throw new Error('request が RenderRequest ではない')
+    })
+
+    test('不正なメールアドレスは render を呼ばず、日本語の理由を返す', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      const result = await tool.execute({
+        kind: 'email',
+        email: { to: 'not-an-email', subject: '', body: '' },
+      })
+
+      expect(calls).toHaveLength(0)
+      expect(result.content[0]?.text.length).toBeGreaterThan(0)
+    })
+  })
+
   test('知らない kind を渡しても例外を投げず、理由を返す', async () => {
     const calls: unknown[] = []
     const render: RenderFn = (request) => {

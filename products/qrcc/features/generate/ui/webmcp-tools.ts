@@ -12,6 +12,7 @@ import { err, ok, parseHexColor, parseHttpUrl, parseNonEmptyText } from '@qrcc/c
 import type { Result } from '@qrcc/contract'
 import type { WebMcpTool } from '@qrcc/webmcp'
 import { textResult } from '@qrcc/webmcp'
+import { buildEmailPayload } from '../core/payload/email.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
 import type { CodePayload, PayloadKind, RenderRequest, SymbologyKind } from '../contract/index.ts'
 import {
@@ -101,8 +102,16 @@ const buildPayloadFromKind = (kind: PayloadKind, input: ToolInput): Result<CodeP
             '電話番号（tel.number）に国番号から始まる番号を指定してください（例: +819012345678）。',
           )
     }
-    case 'email':
-      return err(notYetSupported('email'))
+    case 'email': {
+      const result = buildEmailPayload({
+        to: readNestedString(input, 'email', 'to'),
+        subject: readNestedString(input, 'email', 'subject'),
+        body: readNestedString(input, 'email', 'body'),
+      })
+      return result.ok
+        ? result
+        : err('メールの宛先（email.to）に正しいメールアドレスを指定してください。')
+    }
     case 'sms':
       return err(notYetSupported('sms'))
     case 'geo':
@@ -184,6 +193,16 @@ export const makeGenerateTool = (render: RenderFn): WebMcpTool => ({
         },
         required: ['number'],
         description: `kind が tel のとき指定します。${PAYLOAD_META.tel.description}`,
+      },
+      email: {
+        type: 'object',
+        properties: {
+          to: { type: 'string', description: '送信先のメールアドレス。' },
+          subject: { type: 'string', description: '件名（省略可）。' },
+          body: { type: 'string', description: '本文（省略可）。' },
+        },
+        required: ['to'],
+        description: `kind が email のとき指定します。${PAYLOAD_META.email.description}`,
       },
       symbology: {
         type: 'string',
