@@ -11,3 +11,4 @@
 @import '@noter/auth/ui/auth.css' layer(components);
 @import '@noter/documents/ui/documents.css' layer(components);
 @import '@noter/editor/ui/editor.css' layer(components);
+@import '@noter/formats/ui/formats.css' layer(components);

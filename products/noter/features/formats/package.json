@@ -7,7 +7,8 @@
     "./contract": "./contract/index.ts",
     "./core": "./core/index.ts",
     "./ui": "./ui/index.ts",
-    "./ui/formats.css": "./ui/formats.css"
+    "./ui/formats.css": "./ui/formats.css",
+    "./ui/test-setup": "./ui/happy-dom-node-name.test-setup.ts"
   },
   "scripts": {
     "build": "tsc --build",

@@ -5,6 +5,7 @@
 export type { EditorHandle } from './code-editor.tsx'
 export { CodeEditor } from './code-editor.tsx'
 export { ConfirmDialog } from './confirm-dialog.tsx'
+export { DocumentPreview } from './document-preview.tsx'
 export { EditorHeader } from './editor-header.tsx'
 export { EditorScreen } from './editor-screen.tsx'
 export type { ImportPlacement } from './editor-toolbar.tsx'

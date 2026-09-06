@@ -30,7 +30,13 @@ import {
   toEditorDiagnostics,
 } from '@noter/editor/core'
 import type { FormatOutcome, ViewMode } from '@noter/editor/contract'
-import { EditorScreen, NamePrompt, useDocumentSync, useDocumentText } from '@noter/editor/ui'
+import {
+  DocumentPreview,
+  EditorScreen,
+  NamePrompt,
+  useDocumentSync,
+  useDocumentText,
+} from '@noter/editor/ui'
 import { isDataDocumentKind } from '@noter/formats/contract'
 import { diagnose, formatDocument } from '@noter/formats/core'
 import type { NavLinkRenderer } from '@noter/shell/ui'
@@ -176,6 +182,7 @@ const Editor = ({ state, document, actor }: EditorProps) => {
       copyText={browserCopyText}
       download={(text) => downloadText(document, text)}
       diagnostics={diagnostics}
+      preview={<DocumentPreview kind={document.kind} text={documentText} />}
       {...(isDataDocumentKind(document.kind) ? { formatAction } : {})}
       initialViewMode={initialViewMode}
       onViewModeChange={(mode) => writeLocal(VIEW_MODE_KEY, mode)}
