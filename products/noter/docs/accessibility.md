@@ -42,7 +42,7 @@
 | 3.3.7 冗長な入力                 | ゲスト名は 1 度入力したら記憶する                                                                                                                                                           |
 | 4.1.3 ステータスメッセージ       | 接続状態・保存状態・参加者の増減を **1 つの** `role="status"` 領域で通知。同時に複数出さない                                                                                                |
 | 1.4.4 テキストのサイズ変更       | 文字サイズを 200% にしても横スクロールが出ない（寸法は `rem` / `em` で組む）。`e2e/tests/manual-checks.spec.ts` が幅 640px × 文字 200% で検査                                               |
-| 1.4.11 非テキストのコントラスト  | `forced-colors: active` で境界線を `CanvasText` に戻す（ピル・パネル・上限バナー）。同 spec が axe で検査                                                                                   |
+| 1.4.11 非テキストのコントラスト  | `forced-colors: active` で境界線を `CanvasText` に、選択された表示切替を `Highlight` / `HighlightText` に戻す。同 spec が axe で検査                                                        |
 | 2.2.6（上限到達）                | `rejected(limit)` / `rejected(too_large)` でも入力は続けられ、書き出しを促すバナーを出す（`ux.md` §6.5）。読み上げは既存の 1 つの `role="status"` に任せ、バナー自体は live region にしない |
 
 ## 3. 到達困難な項目
