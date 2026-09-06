@@ -50,6 +50,43 @@ for (const target of PAGES) {
   })
 }
 
+/**
+ * ホームは visitor とゲストで別の中身になる（説明 + 4 ボタン / 一覧 + 案内）。
+ * 一覧が出た状態も検査しないと、表と削除ボタンが素通りしてしまう。
+ */
+test('ゲストのホームに axe の違反がない @a11y', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Markdown で始める' }).click()
+  await expect(page).toHaveURL(/\/d\/doc_[0-9a-z]{24}$/)
+  await page.goto('/')
+
+  await expect(page.getByRole('table', { name: '最近の文書' })).toBeVisible()
+  const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
+  expect(results.violations).toEqual([])
+})
+
+test('文書の画面に axe の違反がない @a11y', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Markdown で始める' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: '無題' })).toBeVisible()
+
+  const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
+  expect(results.violations).toEqual([])
+})
+
+test('共有ダイアログに axe の違反がない @a11y', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Markdown で始める' }).click()
+  // showModal() はハイドレーション後にしか動かない。開くまで押し直す
+  await expect(async () => {
+    await page.getByRole('button', { name: '共有' }).click()
+    await expect(page.getByRole('radio', { name: '閲覧のみ' })).toBeVisible({ timeout: 1000 })
+  }).toPass({ timeout: 20_000 })
+
+  const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
+  expect(results.violations).toEqual([])
+})
+
 test('スキップリンクを押すと本文にフォーカスが移る @a11y', async ({ page }) => {
   await page.goto('/')
   await page.keyboard.press('Tab')

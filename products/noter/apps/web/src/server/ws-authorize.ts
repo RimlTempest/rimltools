@@ -1,54 +1,48 @@
 /**
- * `/ws/:documentId` の認可。
+ * `/ws/:documentId` の認可（docs/realtime-protocol.md §1 の 2 と 3）。
  *
- * **plan 004 がこのファイルを丸ごと差し替える**（セッション → `document` +
- * `document_member` → ロール）。この時点では認証も文書テーブルも無いので、
- * ローカル開発でだけ通す穴を開けている。
+ * **DO は認可しない。** 到達経路が binding だけなので、ここが唯一の関門
+ * （ADR-0002）。判定は server function と同じ `can(role, action)` 1 枚を通る
+ * （`DocumentService.authorizeRead`）ので、画面と WebSocket で許可がずれない。
  *
- * `NOTER_DEV_OPEN_WS` は `.dev.vars`（gitignore 済み）と e2e の起動環境にだけ書く。
- * `wrangler.jsonc` の `vars` には**絶対に書かない**（CI の guard が落とす）。
+ * セッションの読み取りは Cookie ヘッダを見るだけで、本体（body）は消費しない。
+ * だから `ws-gate.ts` はこのあとで同じリクエストを DO へ転送できる。
  */
-import type { DocumentId, Result, UserId } from '@noter/contract'
-import { err, newUserId, ok } from '@noter/contract'
+import { actorDisplayName, actorUserId } from '@noter/auth/contract'
+import type { DocumentId, Result } from '@noter/contract'
+import { err, ok } from '@noter/contract'
 import type { RoomIdentity } from '@noter/sync/contract'
+import type { WebEnv } from './container.ts'
+import { makeContainer } from './container.ts'
 
 export type WsAuthorizeError = 'unauthorized' | 'not_found'
 
-/**
- * `CloudflareEnv` には現れない開発用フラグを、構造的な型で受ける。
- * `wrangler types` は `.dev.vars` の内容を型に出さない。
- */
-export type WsAuthorizeEnv = {
-  readonly NOTER_DEV_OPEN_WS?: string
-}
+/** 表示名が空のセッションでも presence ラベルを出せるようにする。 */
+const NAME_FALLBACK = 'ゲスト'
 
-const DEV_NAME_FALLBACK = 'dev'
-
-/**
- * 表示名から決定的に `UserId` を作る。同じ名前で入り直すと同じ actor になるので、
- * `/kick` や presence の挙動を手元で確かめられる。
- */
-const devActorId = (name: string): Result<UserId, { readonly kind: 'invalid_id' }> => {
-  const source = new TextEncoder().encode(name.length > 0 ? name : DEV_NAME_FALLBACK)
-  return newUserId((byteLength: number) => {
-    const bytes = new Uint8Array(byteLength)
-    for (let index = 0; index < byteLength; index += 1) {
-      bytes[index] = source[index % source.length] ?? 0
-    }
-    return bytes
-  })
-}
-
-export const authorizeWs = (
+export const authorizeWs = async (
   request: Request,
-  env: WsAuthorizeEnv,
-  _documentId: DocumentId,
+  env: WebEnv,
+  documentId: DocumentId,
 ): Promise<Result<RoomIdentity, WsAuthorizeError>> => {
-  if (env.NOTER_DEV_OPEN_WS !== '1') return Promise.resolve(err('unauthorized'))
+  const container = makeContainer(env, request)
+  const documents = container.documents
+  // D1 が無い環境では誰もメンバーになれない。存在も知らせない
+  if (documents === undefined) return err('not_found')
 
-  const name = new URL(request.url).searchParams.get('name') ?? DEV_NAME_FALLBACK
-  const actorId = devActorId(name)
-  if (!actorId.ok) return Promise.resolve(err('unauthorized'))
+  const actor = await container.currentActor(request)
+  const actorId = actorUserId(actor)
+  if (actorId === undefined) return err('unauthorized')
 
-  return Promise.resolve(ok({ role: 'editor', actorId: actorId.value, name }))
+  const access = await documents.authorizeRead(actor, documentId)
+  if (!access.ok) {
+    return err(access.error.kind === 'sign_in_required' ? 'unauthorized' : 'not_found')
+  }
+
+  const name = actorDisplayName(actor) ?? ''
+  return ok({
+    role: access.value.role,
+    actorId,
+    name: name === '' ? NAME_FALLBACK : name,
+  })
 }

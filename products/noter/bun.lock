@@ -31,6 +31,7 @@
         "@better-auth/drizzle-adapter": "1.7.3",
         "@noter/auth": "workspace:*",
         "@noter/contract": "workspace:*",
+        "@noter/documents": "workspace:*",
         "@noter/formats": "workspace:*",
         "@noter/shell": "workspace:*",
         "@noter/sync": "workspace:*",
@@ -80,6 +81,29 @@
         "@noter/ui": "workspace:*",
         "better-auth": "1.7.3",
         "drizzle-orm": "0.45.2",
+      },
+      "devDependencies": {
+        "@tanstack/react-router": "1.170.32",
+        "@testing-library/react": "16.3.3",
+        "@testing-library/user-event": "14.6.6",
+        "@types/react": "19.2.7",
+        "@types/react-dom": "19.2.4",
+        "react": "19.2.8",
+        "react-dom": "19.2.8",
+      },
+      "peerDependencies": {
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+      },
+    },
+    "features/documents": {
+      "name": "@noter/documents",
+      "version": "0.1.0",
+      "dependencies": {
+        "@noter/auth": "workspace:*",
+        "@noter/contract": "workspace:*",
+        "@noter/shell": "workspace:*",
+        "@noter/ui": "workspace:*",
       },
       "devDependencies": {
         "@tanstack/react-router": "1.170.32",
@@ -392,6 +416,8 @@
     "@noter/auth": ["@noter/auth@workspace:features/auth"],
 
     "@noter/contract": ["@noter/contract@workspace:shared/contract"],
+
+    "@noter/documents": ["@noter/documents@workspace:features/documents"],
 
     "@noter/e2e": ["@noter/e2e@workspace:e2e"],
 

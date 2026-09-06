@@ -23,6 +23,9 @@
       "path": "../../features/auth"
     },
     {
+      "path": "../../features/documents"
+    },
+    {
       "path": "../../features/shell"
     },
     {

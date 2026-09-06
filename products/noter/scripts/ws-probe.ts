@@ -6,9 +6,10 @@
  * （auxiliary Worker 間の DO binding と Hibernation API）がここに出る。
  *
  *   bun run dev            # 別のシェルで
- *   bun run scripts/ws-probe.ts ws://localhost:5173/ws/doc_000000000000000000000000
+ *   bun run scripts/ws-probe.ts 'ws://localhost:5173/ws/doc_…' 'better-auth.session_token=…'
  *
- * `NOTER_DEV_OPEN_WS=1` を `apps/web/.dev.vars` に書いておくこと。
+ * `/ws/` は本物の認可を通る（plan 004）。第 2 引数にメンバーのセッション Cookie を
+ * 渡さないと 401 で切られる。Cookie はブラウザの開発者ツールから取る。
  */
 import * as decoding from 'lib0/decoding'
 import * as encoding from 'lib0/encoding'
@@ -21,7 +22,12 @@ const SYNC_STEP1 = 0
 const SYNC_STEP2 = 1
 
 const target = new URL(process.argv[2] ?? DEFAULT_URL)
-target.searchParams.set('name', 'probe')
+
+/**
+ * `/ws/` は本物の認可を通る（plan 004）。ブラウザ以外から繋ぐには
+ * メンバーのセッション Cookie が要る。無いと 401 で切られる。
+ */
+const cookie = process.argv[3] ?? process.env['NOTER_SESSION_COOKIE'] ?? ''
 
 const doc = new Y.Doc()
 
@@ -40,7 +46,7 @@ const fail = (reason: string): never => {
 
 const timer = setTimeout(() => fail(`timeout after ${TIMEOUT_MS}ms`), TIMEOUT_MS)
 
-const socket = new WebSocket(target.toString())
+const socket = new WebSocket(target.toString(), cookie === '' ? {} : { headers: { cookie } })
 socket.binaryType = 'arraybuffer'
 
 socket.addEventListener('open', () => {

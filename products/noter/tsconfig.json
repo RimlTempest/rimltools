@@ -4,6 +4,7 @@
     { "path": "./shared/contract" },
     { "path": "./shared/ui" },
     { "path": "./features/auth" },
+    { "path": "./features/documents" },
     { "path": "./features/shell" },
     { "path": "./features/sync" },
     { "path": "./features/formats" }
