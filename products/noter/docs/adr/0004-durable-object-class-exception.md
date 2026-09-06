@@ -42,7 +42,10 @@ export class DocumentRoom extends DurableObject<CloudflareEnv> {
 
 - CI の `guard` が「`class ` を含む `.ts` が `features/sync/worker/document-room.ts` 以外に無い」
   ことを検査する（`.oxlintrc.json` の override と二重に守る）
-- `DurableObject` の `ctx` / `env` は constructor で受けるが、constructor を
-  自前で書かない（既定のものを使う）。`blockConcurrencyWhile` による初期化は
-  `makeRoom` 内の `ensureLoaded()` を各エントリで await する形にして、
-  constructor にロジックを置かない
+- constructor に置いてよいのは **配線と初期化の呼び出しだけ**: `super(ctx, env)`、
+  `makeRoom(makeRoomDeps(ctx, env))`、`ctx.blockConcurrencyWhile(() => room.init())`。
+  条件分岐・状態・try/catch は置かない（2026-09-06 改訂。当初は「constructor を
+  自前で書かず各エントリで `ensureLoaded()` を await する」としていたが、5 本の
+  エントリ全部に await と分岐が散り、かえってクラスが厚くなる。wake 時に
+  `blockConcurrencyWhile` で復元するのは Cloudflare が推奨する形でもある。
+  `init()` が reject すると DO はリセットされ、壊れた状態のまま進まない）
