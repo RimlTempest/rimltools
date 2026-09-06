@@ -33,15 +33,15 @@ AI エージェント向けの入口は [`CLAUDE.md`](CLAUDE.md)。設計の背�
 
 ## ドキュメント
 
-| 文書                                                   | 内容                                   |
-| ------------------------------------------------------ | -------------------------------------- |
-| [docs/architecture.md](docs/architecture.md)           | 全体構成・Worker 分割・パッケージ配置  |
-| [docs/domain-model.md](docs/domain-model.md)           | 用語・ID・権限表・状態遷移・上限       |
-| [docs/realtime-protocol.md](docs/realtime-protocol.md) | WebSocket プロトコル・永続化           |
-| [docs/free-tier-budget.md](docs/free-tier-budget.md)   | 無料枠の予算と縮退動作                 |
-| [docs/design/ux.md](docs/design/ux.md)                 | UX 設計（画面・フロー・文言）          |
-| [DESIGN.md](DESIGN.md)                                 | デザインシステム（トークン・部品）     |
-| [docs/accessibility.md](docs/accessibility.md)         | WCAG AAA 達成計画                      |
-| [docs/deployment.md](docs/deployment.md)               | デプロイ・運用                         |
-| [docs/parallel-lanes.md](docs/parallel-lanes.md)       | 並行作業レーン                         |
-| [plans/README.md](plans/README.md)                     | 実装計画                               |
+| 文書                                                   | 内容                                  |
+| ------------------------------------------------------ | ------------------------------------- |
+| [docs/architecture.md](docs/architecture.md)           | 全体構成・Worker 分割・パッケージ配置 |
+| [docs/domain-model.md](docs/domain-model.md)           | 用語・ID・権限表・状態遷移・上限      |
+| [docs/realtime-protocol.md](docs/realtime-protocol.md) | WebSocket プロトコル・永続化          |
+| [docs/free-tier-budget.md](docs/free-tier-budget.md)   | 無料枠の予算と縮退動作                |
+| [docs/design/ux.md](docs/design/ux.md)                 | UX 設計（画面・フロー・文言）         |
+| [DESIGN.md](DESIGN.md)                                 | デザインシステム（トークン・部品）    |
+| [docs/accessibility.md](docs/accessibility.md)         | WCAG AAA 達成計画                     |
+| [docs/deployment.md](docs/deployment.md)               | デプロイ・運用                        |
+| [docs/parallel-lanes.md](docs/parallel-lanes.md)       | 並行作業レーン                        |
+| [plans/README.md](plans/README.md)                     | 実装計画                              |

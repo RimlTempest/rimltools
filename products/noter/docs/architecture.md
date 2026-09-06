@@ -43,10 +43,10 @@ noter は「Markdown（Mermaid）/ YAML / TOML / JSON を複数人で同時に�
 
 ## 3. Worker の分割と非公開 DO
 
-| Worker       | 公開           | 役割                                                       |
-| ------------ | -------------- | ---------------------------------------------------------- |
-| `noter-web`  | custom domain  | SSR、server function、認証、認可、`/ws/` の Upgrade 受付   |
-| `noter-sync` | **非公開**     | `DocumentRoom` DO を export するだけ。`fetch` は 404       |
+| Worker       | 公開          | 役割                                                     |
+| ------------ | ------------- | -------------------------------------------------------- |
+| `noter-web`  | custom domain | SSR、server function、認証、認可、`/ws/` の Upgrade 受付 |
+| `noter-sync` | **非公開**    | `DocumentRoom` DO を export するだけ。`fetch` は 404     |
 
 `noter-web` は `durable_objects.bindings` に `script_name: "noter-sync"` で DO を参照する。
 `noter-sync` に `routes` も `workers_dev` も無いため、DO へ到達する経路は
@@ -115,25 +115,25 @@ feature 間は `@noter/<name>/<subpath>` のみ（[ADR-0007](adr/0007-feature-co
 
 ## 8. ルート一覧
 
-| パス                 | 種別            | 所有 feature | 内容                                              |
-| -------------------- | --------------- | ------------ | ------------------------------------------------- |
-| `/`                  | page            | shell        | 未ログイン: 説明 + 新規作成 / ログイン済: 最近の文書 |
-| `/new`               | server function | documents    | 種別を受けて作成 → `/d/:id` へ redirect           |
-| `/d/:documentId`     | page            | editor       | エディタ（役割に応じて read-only）                |
-| `/d/:documentId/raw` | server route    | documents    | 本文を `text/plain` で返す（curl / 外部ツール向け）|
-| `/s/:token`          | page            | documents    | 共有リンク入口 → メンバー登録 → `/d/:id`          |
-| `/sign-in`           | page            | auth         | Google ログイン / ゲストのまま続ける              |
-| `/settings/account`  | page            | auth         | アカウント連携・表示名                            |
-| `/api/auth/*`        | handler         | auth         | Better Auth                                       |
-| `/ws/:documentId`    | **server entry**| apps/web     | WebSocket Upgrade。ルータを通さず `src/server.ts` で処理 |
+| パス                 | 種別             | 所有 feature | 内容                                                     |
+| -------------------- | ---------------- | ------------ | -------------------------------------------------------- |
+| `/`                  | page             | shell        | 未ログイン: 説明 + 新規作成 / ログイン済: 最近の文書     |
+| `/new`               | server function  | documents    | 種別を受けて作成 → `/d/:id` へ redirect                  |
+| `/d/:documentId`     | page             | editor       | エディタ（役割に応じて read-only）                       |
+| `/d/:documentId/raw` | server route     | documents    | 本文を `text/plain` で返す（curl / 外部ツール向け）      |
+| `/s/:token`          | page             | documents    | 共有リンク入口 → メンバー登録 → `/d/:id`                 |
+| `/sign-in`           | page             | auth         | Google ログイン / ゲストのまま続ける                     |
+| `/settings/account`  | page             | auth         | アカウント連携・表示名                                   |
+| `/api/auth/*`        | handler          | auth         | Better Auth                                              |
+| `/ws/:documentId`    | **server entry** | apps/web     | WebSocket Upgrade。ルータを通さず `src/server.ts` で処理 |
 
 ## 9. 変更するときの入口
 
-| やりたいこと                     | 読むもの                                             |
-| -------------------------------- | ---------------------------------------------------- |
-| 文書種別を足す                   | `noter-architecture` スキル §3、`features/formats`   |
-| 同期メッセージを足す             | `realtime-protocol.md`、ADR-0013                     |
-| 権限を足す・変える               | `domain-model.md` §権限、ADR-0011                    |
-| 無料枠に効く変更                 | `free-tier-budget.md`                                |
-| 画面を足す                       | `design/ux.md`、`DESIGN.md`、`accessibility.md`      |
-| デプロイ                         | `deployment.md`                                      |
+| やりたいこと         | 読むもの                                           |
+| -------------------- | -------------------------------------------------- |
+| 文書種別を足す       | `noter-architecture` スキル §3、`features/formats` |
+| 同期メッセージを足す | `realtime-protocol.md`、ADR-0013                   |
+| 権限を足す・変える   | `domain-model.md` §権限、ADR-0011                  |
+| 無料枠に効く変更     | `free-tier-budget.md`                              |
+| 画面を足す           | `design/ux.md`、`DESIGN.md`、`accessibility.md`    |
+| デプロイ             | `deployment.md`                                    |

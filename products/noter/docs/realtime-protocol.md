@@ -29,26 +29,26 @@ web Worker（`apps/web/src/server.ts`）→ `DocumentRoom`（Durable Object）�
 
 ### web → DO のヘッダ（`features/sync/contract/src/headers.ts`）
 
-| ヘッダ            | 値                                  | 必須 |
-| ----------------- | ----------------------------------- | ---- |
-| `X-Noter-Role`    | `owner` / `editor` / `viewer`       | ○    |
-| `X-Noter-Actor`   | `UserId`                            | ○    |
-| `X-Noter-Name`    | 表示名（URL エンコード、≤32 文字）  | ○    |
+| ヘッダ          | 値                                 | 必須 |
+| --------------- | ---------------------------------- | ---- |
+| `X-Noter-Role`  | `owner` / `editor` / `viewer`      | ○    |
+| `X-Noter-Actor` | `UserId`                           | ○    |
+| `X-Noter-Name`  | 表示名（URL エンコード、≤32 文字） | ○    |
 
 DO はこれらを**検証せずに信じる**（到達経路が binding のみ、ADR-0002）。
 ただしパースはする（不正なら 4400 で閉じる = web 側のバグ検出）。
 
 ### 拒否時の HTTP / close code
 
-| 状況                                  | web の応答           | DO の close code |
-| ------------------------------------- | -------------------- | ---------------- |
-| `Upgrade` が websocket でない         | 426                  | —                |
-| セッションなし（visitor）             | 401                  | —                |
-| 文書なし / 削除済み / 非メンバー      | 404                  | —                |
-| DO の同時接続が `MAX_MEMBERS` を超過  | —                    | 4429 `limit`     |
-| 1 メッセージが `MAX_WS_MESSAGE_BYTES` 超 | —                 | 4413 `too_large` |
-| ヘッダ不正                            | —                    | 4400 `bad_request` |
-| 権限剥奪（後述 §5）                   | —                    | 4403 `forbidden` |
+| 状況                                     | web の応答 | DO の close code   |
+| ---------------------------------------- | ---------- | ------------------ |
+| `Upgrade` が websocket でない            | 426        | —                  |
+| セッションなし（visitor）                | 401        | —                  |
+| 文書なし / 削除済み / 非メンバー         | 404        | —                  |
+| DO の同時接続が `MAX_MEMBERS` を超過     | —          | 4429 `limit`       |
+| 1 メッセージが `MAX_WS_MESSAGE_BYTES` 超 | —          | 4413 `too_large`   |
+| ヘッダ不正                               | —          | 4400 `bad_request` |
+| 権限剥奪（後述 §5）                      | —          | 4403 `forbidden`   |
 
 `4xxx` はクライアントが**再接続しない**コード（`ConnectionState.rejected`）。
 それ以外（1006 など）は backoff 付きで再接続する。
@@ -57,13 +57,13 @@ DO はこれらを**検証せずに信じる**（到達経路が binding のみ�
 
 すべてバイナリ。先頭の varUint がメッセージ種別。
 
-| 種別 | 名前            | 方向     | 内容                                                              |
-| ---- | --------------- | -------- | ----------------------------------------------------------------- |
-| 0    | sync            | 双方向   | y-protocols/sync: step1(0) / step2(1) / update(2)                 |
-| 1    | awareness       | 双方向   | y-protocols/awareness の update バイト列                          |
-| 3    | queryAwareness  | C → S    | 保存済み awareness を全部送り返す                                 |
-| 2    | auth            | S → C    | **使わない**（権限は close code で伝える）                        |
-| ≥100 | 独自拡張        | —        | 予約。追加時は ADR を書く                                         |
+| 種別 | 名前           | 方向   | 内容                                              |
+| ---- | -------------- | ------ | ------------------------------------------------- |
+| 0    | sync           | 双方向 | y-protocols/sync: step1(0) / step2(1) / update(2) |
+| 1    | awareness      | 双方向 | y-protocols/awareness の update バイト列          |
+| 3    | queryAwareness | C → S  | 保存済み awareness を全部送り返す                 |
+| 2    | auth           | S → C  | **使わない**（権限は close code で伝える）        |
+| ≥100 | 独自拡張       | —      | 予約。追加時は ADR を書く                         |
 
 テキストフレームは受け付けない（`4400`）。ただし `setWebSocketAutoResponse('ping','pong')`
 のテキスト `ping` は runtime が処理し、DO を起こさない。

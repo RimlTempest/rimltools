@@ -1,0 +1,16 @@
+{
+  "name": "@noter/sync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./worker": "./worker/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@noter/contract": "workspace:*"
+  }
+}

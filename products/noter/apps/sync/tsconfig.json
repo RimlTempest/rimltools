@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["es2024"],
+    "types": ["bun"],
+    "composite": false,
+    "incremental": false,
+    "declaration": false,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true
+  },
+  "include": ["src/**/*", "../../features/sync/worker/**/*"],
+  "references": [
+    {
+      "path": "../../shared/contract"
+    },
+    {
+      "path": "../../features/sync"
+    }
+  ]
+}

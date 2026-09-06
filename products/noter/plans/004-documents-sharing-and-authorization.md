@@ -51,12 +51,12 @@ plan 002 の開発フラグ（`NOTER_DEV_OPEN_WS`）を消して本番相当の�
 
 ## Commands you will need
 
-| Purpose   | Command                                         | Expected     |
-| --------- | ----------------------------------------------- | ------------ |
-| Tests     | `bun test features/documents features/auth`     | pass         |
-| Migrate   | `bun run --filter '@noter/web' db:local`        | 0002 適用    |
-| Check     | `bun run check`                                 | exit 0       |
-| e2e       | `bun run e2e`                                   | pass         |
+| Purpose | Command                                     | Expected  |
+| ------- | ------------------------------------------- | --------- |
+| Tests   | `bun test features/documents features/auth` | pass      |
+| Migrate | `bun run --filter '@noter/web' db:local`    | 0002 適用 |
+| Check   | `bun run check`                             | exit 0    |
+| e2e     | `bun run e2e`                               | pass      |
 
 ## Suggested executor toolkit
 
@@ -169,10 +169,11 @@ server routes（`features/documents/ui/*.route.ts`）:
 
 ```ts
 export const authorizeWs = async (request, env, documentId) => {
-  const actor = await currentActor(request, env)         // plan 003 の関数
+  const actor = await currentActor(request, env) // plan 003 の関数
   if (actor.kind === 'visitor') return err('unauthorized')
   const found = await repo.findForActor(documentId, actor.id)
-  if (!found || found.document.deletedAt !== null || !can(found.role, 'read')) return err('not_found')
+  if (!found || found.document.deletedAt !== null || !can(found.role, 'read'))
+    return err('not_found')
   return ok({ role: found.role, actorId: actor.id, name: actor.displayName })
 }
 ```

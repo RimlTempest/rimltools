@@ -1,0 +1,26 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "types": ["bun", "vite/client"],
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "composite": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true
+  },
+  "include": ["src/**/*", "vite.config.ts", "../../features/*/ui/*.route.*"],
+  "references": [
+    {
+      "path": "../../shared/contract"
+    },
+    {
+      "path": "../../shared/ui"
+    },
+    {
+      "path": "../../features/shell"
+    }
+  ]
+}

@@ -57,12 +57,12 @@ qrcc に同じ設計（anonymous + Google、昇格）の実装があり、その
 
 ## Commands you will need
 
-| Purpose   | Command                                                   | Expected             |
-| --------- | --------------------------------------------------------- | -------------------- |
-| Tests     | `bun test features/auth`                                  | pass                 |
-| Migrate   | `bun run --filter '@noter/web' db:local`                  | `0001_auth.sql` 適用 |
-| Check     | `bun run check`                                           | exit 0               |
-| a11y      | `bun run a11y`                                            | pass                 |
+| Purpose | Command                                  | Expected             |
+| ------- | ---------------------------------------- | -------------------- |
+| Tests   | `bun test features/auth`                 | pass                 |
+| Migrate | `bun run --filter '@noter/web' db:local` | `0001_auth.sql` 適用 |
+| Check   | `bun run check`                          | exit 0               |
+| a11y    | `bun run a11y`                           | pass                 |
 
 ## Suggested executor toolkit
 

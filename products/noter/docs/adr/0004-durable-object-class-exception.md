@@ -22,12 +22,27 @@ qrcc から引き継いだ規約は「`class` を書かない」（oxlint `noter
 
 ```ts
 export class DocumentRoom extends DurableObject<CloudflareEnv> {
-  #room = makeRoom({ storage: this.ctx.storage, sockets: this.ctx, now: () => Date.now(), touch: makeTouch(this.env.DB) })
-  fetch(request: Request) { return this.#room.fetch(request) }
-  webSocketMessage(ws: WebSocket, msg: ArrayBuffer | string) { return this.#room.onMessage(ws, msg) }
-  webSocketClose(ws: WebSocket, code: number) { return this.#room.onClose(ws, code) }
-  webSocketError(ws: WebSocket) { return this.#room.onClose(ws, 1011) }
-  alarm() { return this.#room.onAlarm() }
+  #room = makeRoom({
+    storage: this.ctx.storage,
+    sockets: this.ctx,
+    now: () => Date.now(),
+    touch: makeTouch(this.env.DB),
+  })
+  fetch(request: Request) {
+    return this.#room.fetch(request)
+  }
+  webSocketMessage(ws: WebSocket, msg: ArrayBuffer | string) {
+    return this.#room.onMessage(ws, msg)
+  }
+  webSocketClose(ws: WebSocket, code: number) {
+    return this.#room.onClose(ws, code)
+  }
+  webSocketError(ws: WebSocket) {
+    return this.#room.onClose(ws, 1011)
+  }
+  alarm() {
+    return this.#room.onAlarm()
+  }
 }
 ```
 

@@ -92,10 +92,10 @@ Google OAuth の設定（Google Cloud Console）:
 
 リポジトリの Secrets に登録する。
 
-| Secret                  | 内容                                                                     |
-| ----------------------- | ------------------------------------------------------------------------ |
-| `CLOUDFLARE_API_TOKEN`  | Workers Scripts:Edit / D1:Edit / Durable Objects 権限（R2・KV は不要）   |
-| `CLOUDFLARE_ACCOUNT_ID` | アカウント ID                                                            |
+| Secret                  | 内容                                                                   |
+| ----------------------- | ---------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Workers Scripts:Edit / D1:Edit / Durable Objects 権限（R2・KV は不要） |
+| `CLOUDFLARE_ACCOUNT_ID` | アカウント ID                                                          |
 
 登録後、`.github/workflows/deploy.yml` の `push` トリガーのコメントを外す。
 

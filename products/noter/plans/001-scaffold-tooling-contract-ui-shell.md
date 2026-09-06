@@ -117,14 +117,14 @@ lefthook、CI の `guard`）を機械的に効かせておくことが、後続�
 
 ## Commands you will need
 
-| Purpose      | Command                                                    | Expected on success                          |
-| ------------ | ---------------------------------------------------------- | -------------------------------------------- |
-| Toolchain    | `cd /Users/riml/orca/projects/noter && mise install`       | exit 0                                       |
-| Install      | `bun install`                                              | exit 0、`bun.lock` 生成                      |
-| Check        | `bun run check`                                            | exit 0                                       |
-| Tests        | `bun run test`                                             | exit 0、全 pass                              |
-| Build        | `bun run build`                                            | exit 0、`apps/web/dist/` 生成                |
-| Dev smoke    | `bun run dev` を background で起動し `curl -s -o /dev/null -w '%{http_code}' http://localhost:5173/` | `200` |
+| Purpose   | Command                                                                                              | Expected on success           |
+| --------- | ---------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Toolchain | `cd /Users/riml/orca/projects/noter && mise install`                                                 | exit 0                        |
+| Install   | `bun install`                                                                                        | exit 0、`bun.lock` 生成       |
+| Check     | `bun run check`                                                                                      | exit 0                        |
+| Tests     | `bun run test`                                                                                       | exit 0、全 pass               |
+| Build     | `bun run build`                                                                                      | exit 0、`apps/web/dist/` 生成 |
+| Dev smoke | `bun run dev` を background で起動し `curl -s -o /dev/null -w '%{http_code}' http://localhost:5173/` | `200`                         |
 
 ## Suggested executor toolkit
 
@@ -278,7 +278,7 @@ GOOGLE_CLIENT_SECRET=
 
 - `shared/contract/src/id.ts`: `UserId`(`usr`) / `DocumentId`(`doc`) / `ShareToken`(`shr`) の
   `Brand` 型、`parseUserId` / `parseDocumentId` / `parseShareToken`、`newUserId` / `newDocumentId` /
-  `newShareToken`（`RandomBytes` を引数に取る）、`IdParseError`。**3 つとも「prefix_ + Crockford base32 24 文字」**
+  `newShareToken`（`RandomBytes` を引数に取る）、`IdParseError`。**3 つとも「prefix\_ + Crockford base32 24 文字」**
   （qrcc2 の `ShareToken` は 32 文字・prefix 無しだが、noter は `docs/domain-model.md` に従い `shr_` + 24 文字）。
   `SpecHash` / `CodeId` / `FolderId` は作らない。
 - `shared/contract/src/document-kind.ts`:
@@ -286,8 +286,8 @@ GOOGLE_CLIENT_SECRET=
   export const DOCUMENT_KINDS = ['markdown', 'yaml', 'toml', 'json'] as const
   export type DocumentKind = (typeof DOCUMENT_KINDS)[number]
   export const parseDocumentKind: (value: string) => Result<DocumentKind, DocumentKindParseError>
-  export const FILE_EXTENSION: { readonly [K in DocumentKind]: string }  // md / yaml / toml / json
-  export const MIME_TYPE: { readonly [K in DocumentKind]: string }       // text/markdown, application/yaml, application/toml, application/json
+  export const FILE_EXTENSION: { readonly [K in DocumentKind]: string } // md / yaml / toml / json
+  export const MIME_TYPE: { readonly [K in DocumentKind]: string } // text/markdown, application/yaml, application/toml, application/json
   ```
 - `shared/contract/src/role.ts`:
   ```ts
@@ -295,7 +295,7 @@ GOOGLE_CLIENT_SECRET=
   export type Role = (typeof ROLES)[number]
   export const parseRole: (value: string) => Result<Role, RoleParseError>
   /** 高い方を返す。共有リンクの upsert で既存ロールを下げないために使う */
-  export const higherRole: (a: Role, b: Role) => Role   // owner > editor > viewer
+  export const higherRole: (a: Role, b: Role) => Role // owner > editor > viewer
   ```
 - `shared/contract/src/limits.ts`: 上記「Current state」の値を `export const` で。全て `number`（ミリ秒は `_MS` 接尾辞）。
 - `shared/contract/src/index.ts`: 上記を全て re-export（qrcc2 の `index.ts` の書き方に合わせる）。
@@ -327,7 +327,10 @@ qrcc2 `shared/ui/**`（`dist/` と `tsconfig.tsbuildinfo` を除く）を `share
 
 ```json
 {
-  "name": "@noter/shell", "version": "0.1.0", "private": true, "type": "module",
+  "name": "@noter/shell",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "exports": { "./ui": "./ui/index.ts", "./ui/shell.css": "./ui/shell.css" },
   "scripts": { "build": "tsc --build", "test": "bun test" },
   "dependencies": { "@noter/contract": "workspace:*", "@noter/ui": "workspace:*" }
@@ -352,23 +355,42 @@ qrcc2 `features/shell/ui/` から `app-shell.tsx`, `app-shell.test.tsx`, `breadc
 - `ui/root.route.tsx`: 認証と service worker を含まない版。
 
 ```tsx
-import { HeadContent, Outlet, Scripts, createRootRoute, useRouterState } from '@tanstack/react-router'
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRoute,
+  useRouterState,
+} from '@tanstack/react-router'
 import { AppShell } from './app-shell.tsx'
 import { RootDocument, documentHead } from './root-document.tsx'
 import { routerLink } from './router-link.tsx'
 import appCss from '../../../apps/web/src/styles/app.css?url'
 
 const Shell = ({ children }: { readonly children: React.ReactNode }) => (
-  <RootDocument><HeadContent />{children}<Scripts /></RootDocument>
+  <RootDocument>
+    <HeadContent />
+    {children}
+    <Scripts />
+  </RootDocument>
 )
 const Layout = () => {
   const currentPath = useRouterState({ select: (state) => state.location.pathname })
-  return <AppShell currentPath={currentPath} renderLink={routerLink} status={null}><Outlet /></AppShell>
+  return (
+    <AppShell currentPath={currentPath} renderLink={routerLink} status={null}>
+      <Outlet />
+    </AppShell>
+  )
 }
-export const Route = createRootRoute({ head: documentHead(appCss), shellComponent: Shell, component: Layout })
+export const Route = createRootRoute({
+  head: documentHead(appCss),
+  shellComponent: Shell,
+  component: Layout,
+})
 ```
 
-  （`AppShell` の `status` prop が必須なら `null` を許す型にする。qrcc2 の `app-shell.tsx` を見て合わせる。）
+（`AppShell` の `status` prop が必須なら `null` を許す型にする。qrcc2 の `app-shell.tsx` を見て合わせる。）
+
 - `ui/home-screen.tsx` + `ui/home-screen.test.tsx`: `<h1>文書一覧</h1>` と
   「まだ文書がありません。」の `<p>`、`renderLink` で `/new` への「新しい文書を作る」リンクを出すだけの
   プレースホルダ。テストは見出しとリンクの存在。
@@ -403,17 +425,25 @@ export const Route = createRootRoute({ head: documentHead(appCss), shellComponen
   "routes": [{ "pattern": "noter.riml4i.com", "custom_domain": true }],
   // DocumentRoom は noter-sync（auxiliary Worker）が持つ。routes を持たないので web からしか届かない（ADR-0002）
   "durable_objects": {
-    "bindings": [{ "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom", "script_name": "noter-sync" }]
+    "bindings": [
+      { "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom", "script_name": "noter-sync" },
+    ],
   },
   "d1_databases": [
-    { "binding": "DB", "database_name": "noter", "database_id": "REPLACE_ME", "migrations_dir": "./migrations" }
+    {
+      "binding": "DB",
+      "database_name": "noter",
+      "database_id": "REPLACE_ME",
+      "migrations_dir": "./migrations",
+    },
   ],
   "vars": { "APP_ORIGIN": "https://noter.riml4i.com" },
   // BETTER_AUTH_SECRET / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET は wrangler secret put で設定する
 }
 ```
 
-  `apps/web/migrations/` は空ディレクトリだと git に入らないので `apps/web/migrations/.gitkeep` を置く。
+`apps/web/migrations/` は空ディレクトリだと git に入らないので `apps/web/migrations/.gitkeep` を置く。
+
 - `apps/web/src/routes.ts`:
 
 ```ts
@@ -438,7 +468,10 @@ export const routes = rootRoute('shell/ui/root.route.tsx', [
 
 ```json
 {
-  "name": "@noter/sync", "version": "0.1.0", "private": true, "type": "module",
+  "name": "@noter/sync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "exports": { "./worker": "./worker/index.ts" },
   "scripts": { "build": "tsc --build", "test": "bun test" },
   "dependencies": { "@noter/contract": "workspace:*" }
@@ -479,8 +512,9 @@ export { DocumentRoom } from '@noter/sync/worker'
 export default { fetch: (): Response => new Response('not found', { status: 404 }) }
 ```
 
-  （`import/no-default-export` は `apps/sync/src/index.ts` に対して `.oxlintrc.json` の overrides に
-  `{ "files": ["apps/sync/src/index.ts"], "rules": { "import/no-default-export": "off" } }` を足して許可する。）
+（`import/no-default-export` は `apps/sync/src/index.ts` に対して `.oxlintrc.json` の overrides に
+`{ "files": ["apps/sync/src/index.ts"], "rules": { "import/no-default-export": "off" } }` を足して許可する。）
+
 - `apps/sync/wrangler.jsonc`:
 
 ```jsonc
@@ -496,9 +530,7 @@ export default { fetch: (): Response => new Response('not found', { status: 404 
   "durable_objects": { "bindings": [{ "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom" }] },
   // Free プランでは new_sqlite_classes のみ使える（new_classes は Paid 限定、ADR-0009）
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentRoom"] }],
-  "d1_databases": [
-    { "binding": "DB", "database_name": "noter", "database_id": "REPLACE_ME" }
-  ]
+  "d1_databases": [{ "binding": "DB", "database_name": "noter", "database_id": "REPLACE_ME" }],
 }
 ```
 

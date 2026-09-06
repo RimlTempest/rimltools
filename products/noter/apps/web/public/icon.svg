@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="noter">
+  <!-- 背景: 円。--noter-accent のライト側（oklch(0.44 0.16 255)）を sRGB に変換した値 -->
+  <circle cx="256" cy="256" r="256" fill="#004fa7" />
+  <!-- 図柄はマスカブル対応のため中央 80%（51.2〜460.8）に収める -->
+  <text
+    x="256"
+    y="256"
+    fill="#ffffff"
+    font-family="ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace"
+    font-size="288"
+    font-weight="700"
+    text-anchor="middle"
+    dominant-baseline="central"
+  >n</text>
+</svg>

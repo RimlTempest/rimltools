@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "noter-sync",
+  "main": "./src/index.ts",
+  "compatibility_date": "2026-08-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // routes を書かない。workers_dev も false。DO は noter-web の binding からのみ届く（ADR-0002）。
+  // ここに routes を足すと認可が二重化して権限昇格の穴になるので、CI の guard が落とす。
+  "workers_dev": false,
+  "durable_objects": { "bindings": [{ "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom" }] },
+  // Free プランは SQLite backed の DO のみ（key-value backed は Paid 限定、ADR-0009）。
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentRoom"] }],
+  "d1_databases": [{ "binding": "DB", "database_name": "noter", "database_id": "REPLACE_ME" }],
+}

@@ -44,12 +44,12 @@
 
 ## Commands you will need
 
-| Purpose | Command                              | Expected |
-| ------- | ------------------------------------ | -------- |
-| Tests   | `bun test features/editor`           | pass     |
-| Check   | `bun run check`                      | exit 0   |
-| e2e     | `bun run e2e -- --grep editor`       | pass     |
-| a11y    | `bun run a11y`                       | pass     |
+| Purpose | Command                        | Expected |
+| ------- | ------------------------------ | -------- |
+| Tests   | `bun test features/editor`     | pass     |
+| Check   | `bun run check`                | exit 0   |
+| e2e     | `bun run e2e -- --grep editor` | pass     |
+| a11y    | `bun run a11y`                 | pass     |
 
 ## Suggested executor toolkit
 
