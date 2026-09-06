@@ -531,6 +531,65 @@
   margin-block-start: var(--noter-space-3);
 }
 
+/* --- 上限バナー ----------------------------------------------------------- */
+
+/*
+ * 上限に達しても入力は続けられる（ux.md §6.5）。バナーは邪魔をしないよう
+ * ヘッダーの直下に敷き、閉じられるようにする。**読み上げ領域にはしない**
+ * （画面の live region は 1 つだけ — docs/accessibility.md §2 の 4.1.3）。
+ */
+.noter-limit-banner {
+  display: grid;
+  gap: var(--noter-space-2);
+  margin-block-start: var(--noter-space-3);
+  padding: var(--noter-space-3) var(--noter-space-4);
+  /* 色だけに意味を持たせない。見出しの言葉でも状態が分かる */
+  border: 1px solid var(--noter-danger);
+  border-inline-start-width: var(--noter-space-1);
+  border-radius: var(--noter-radius);
+  background: var(--noter-surface-raised);
+}
+
+.noter-limit-banner__title {
+  margin: 0;
+  font-size: var(--noter-text-lg);
+}
+
+.noter-limit-banner__body {
+  margin: 0;
+  max-inline-size: var(--noter-measure);
+  text-wrap: pretty;
+}
+
+.noter-limit-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-2);
+  margin: 0;
+}
+
+.noter-limit-banner__link,
+.noter-limit-banner__close {
+  display: inline-flex;
+  align-items: center;
+  /* AAA 2.5.5。単独のクリック対象は 44x44 以上 */
+  min-block-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-3);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  background: transparent;
+  color: var(--noter-text);
+  font: inherit;
+  font-size: var(--noter-text-sm);
+  cursor: pointer;
+}
+
+.noter-limit-banner__link:hover,
+.noter-limit-banner__close:hover {
+  background: var(--noter-surface-hover);
+}
+
 /* --- ダイアログ ---------------------------------------------------------- */
 
 .noter-confirm,
@@ -570,6 +629,7 @@
   .noter-presence,
   .noter-problems,
   .noter-proposal,
+  .noter-limit-banner,
   .noter-editor__hint,
   .noter-pane[data-pane='editor'] {
     display: none !important;
@@ -593,7 +653,10 @@
   .noter-menu__items,
   .noter-presence__popover,
   .noter-proposal,
-  .noter-proposal__diff {
+  .noter-proposal__diff,
+  .noter-limit-banner,
+  .noter-limit-banner__link,
+  .noter-limit-banner__close {
     border-color: CanvasText;
   }
 }

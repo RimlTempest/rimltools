@@ -15,6 +15,12 @@ import { ViewSwitch } from './view-switch.tsx'
 /** 取り込んだ本文をどこに置くか（docs/design/ux.md §4.2 取り込み）。 */
 export type ImportPlacement = 'replace' | 'cursor'
 
+/**
+ * 「書き出し」の先頭のボタンに付ける id。上限バナー（`LimitBanner`）が
+ * ここへ飛ばす。画面に 1 つしかツールバーが無いので固定値でよい。
+ */
+export const EXPORT_ANCHOR_ID = 'noter-export'
+
 type Problems = {
   readonly count: number
   readonly expanded: boolean
@@ -136,7 +142,7 @@ export const EditorToolbar = ({
 
       <fieldset className="noter-toolbar__export">
         <VisuallyHidden as="legend">書き出し</VisuallyHidden>
-        <Button variant="secondary" onClick={onDownload}>
+        <Button id={EXPORT_ANCHOR_ID} variant="secondary" onClick={onDownload}>
           端末に保存
         </Button>
         <Button variant="secondary" onClick={onCopyText}>

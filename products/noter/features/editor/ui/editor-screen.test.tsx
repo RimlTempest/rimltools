@@ -223,3 +223,35 @@ describe('EditorScreen の変換して新規作成', () => {
     expect(screen.queryByRole('button', { name: /変換して新規作成/ })).toBeNull()
   })
 })
+
+/** docs/design/ux.md §6.5。上限に達しても入力は続けられ、書き出しを促す。 */
+describe('EditorScreen の上限バナー', () => {
+  test('同期上限のときに書き出しを促すバナーを出す', () => {
+    setup({ connection: { kind: 'rejected', reason: 'limit' } })
+    const banner = screen.getByRole('region', { name: '本日の同期上限に達しました' })
+    expect(banner.textContent).toContain('編集は続けられます')
+  })
+
+  test('バナーからツールバーの書き出しへ移動できる', () => {
+    setup({ connection: { kind: 'rejected', reason: 'too_large' } })
+    const link = screen.getByRole('link', { name: '書き出しの操作へ移動' })
+    const target = link.getAttribute('href')?.slice(1) ?? ''
+    expect(document.getElementById(target)?.textContent).toBe('端末に保存')
+  })
+
+  /** 読み上げ領域は画面にただ 1 つ（docs/accessibility.md §2 の 4.1.3）。 */
+  test('バナーを出しても読み上げ領域は 1 つのまま', () => {
+    setup({ connection: { kind: 'rejected', reason: 'limit' } })
+    expect(screen.getAllByRole('status')).toHaveLength(1)
+  })
+
+  test('つながっているときは出さない', () => {
+    setup()
+    expect(screen.queryByRole('link', { name: '書き出しの操作へ移動' })).toBeNull()
+  })
+
+  test('権限を失ったときは出さない（書き出しを促す場面ではない）', () => {
+    setup({ connection: { kind: 'rejected', reason: 'forbidden' } })
+    expect(screen.queryByRole('link', { name: '書き出しの操作へ移動' })).toBeNull()
+  })
+})

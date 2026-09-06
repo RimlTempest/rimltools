@@ -25,7 +25,8 @@ import type { EditorHandle } from './code-editor.tsx'
 import { CodeEditor } from './code-editor.tsx'
 import { EditorHeader } from './editor-header.tsx'
 import type { ImportPlacement } from './editor-toolbar.tsx'
-import { EditorToolbar } from './editor-toolbar.tsx'
+import { EXPORT_ANCHOR_ID, EditorToolbar } from './editor-toolbar.tsx'
+import { LimitBanner, limitReasonOf } from './limit-banner.tsx'
 import { useAnnouncer } from './use-announcer.ts'
 
 type EditorScreenProps = {
@@ -134,6 +135,8 @@ export const EditorScreen = ({
   const canFormat = canEdit && formatAction !== undefined
   const hasProblems = diagnostics !== undefined
   const status = statusText(connection, save)
+  // 上限に達しても入力は続けられる。書き出しだけ促す（ux.md §6.5）
+  const limitReason = limitReasonOf(connection)
 
   const trail: readonly NavItem[] = useMemo(
     () => [
@@ -260,6 +263,14 @@ export const EditorScreen = ({
         {...(onChanged === undefined ? {} : { onChanged })}
         {...(onLeft === undefined ? {} : { onLeft })}
       />
+
+      {limitReason === undefined ? undefined : (
+        <LimitBanner
+          reason={limitReason}
+          documentId={document.id}
+          exportTargetId={EXPORT_ANCHOR_ID}
+        />
+      )}
 
       <EditorToolbar
         mode={mode}
