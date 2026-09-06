@@ -155,9 +155,113 @@
   margin-block: var(--noter-space-2) 0;
 }
 
+/* --- データ（yaml / toml / json）プレビュー ------------------------------ */
+
+.noter-data-preview {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--noter-space-3);
+  align-content: start;
+}
+
+.noter-data-preview__modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--noter-space-2);
+}
+
+.noter-data-preview__error {
+  margin: 0;
+  padding: var(--noter-space-3);
+  border-inline-start: 3px solid var(--noter-danger);
+  background: var(--noter-surface-sunken);
+  max-inline-size: var(--noter-measure);
+}
+
+.noter-data-preview__text {
+  margin: 0;
+  overflow-x: auto;
+  padding: var(--noter-space-3);
+  border-radius: var(--noter-radius);
+  background: var(--noter-surface-sunken);
+  font-family: var(--noter-font-mono);
+  font-size: var(--noter-text-code);
+  line-height: var(--noter-line-code);
+}
+
+/* --- ツリー ------------------------------------------------------------- */
+
+.noter-json-tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--noter-font-mono);
+  font-size: var(--noter-text-code);
+  line-height: var(--noter-line-code);
+}
+
+.noter-json-tree .noter-json-tree {
+  /* 段の深さは 1 段ずつ。罫線で親子関係を見せる */
+  margin-inline-start: var(--noter-space-2);
+  padding-inline-start: var(--noter-space-3);
+  border-inline-start: 1px solid var(--noter-border);
+}
+
+.noter-json-tree__leaf,
+.noter-json-tree__branch > details > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-2);
+  /* 深い階層でも指で開けるだけの高さを残す（AAA 2.5.5） */
+  min-block-size: var(--noter-target-min);
+}
+
+.noter-json-tree__branch > details > summary {
+  cursor: pointer;
+}
+
+.noter-json-tree__key {
+  color: var(--noter-text);
+  font-weight: 600;
+}
+
+.noter-json-tree__key::after {
+  content: ':';
+  color: var(--noter-text-muted);
+}
+
+.noter-json-tree__value {
+  color: var(--noter-text);
+  /* 長い文字列は折り返す。横スクロールを増やさない */
+  overflow-wrap: anywhere;
+}
+
+.noter-json-tree__value[data-type='number'],
+.noter-json-tree__value[data-type='boolean'],
+.noter-json-tree__value[data-type='null'] {
+  color: var(--noter-accent);
+}
+
+.noter-json-tree__meta,
+.noter-json-tree__empty {
+  color: var(--noter-text-muted);
+  font-size: var(--noter-text-sm);
+}
+
+.noter-json-tree__scalar {
+  margin: 0;
+  font-family: var(--noter-font-mono);
+}
+
 /* --- 印刷 --------------------------------------------------------------- */
 
 @media print {
+  /* 紙の上ではプレビューだけが残る。表示モードの切替は押せないので出さない */
+  .noter-data-preview__modes {
+    display: none;
+  }
+
   /* 図のソースは開いた状態で刷る（畳んだままだと情報が落ちる） */
   .noter-mermaid-source {
     display: block;
