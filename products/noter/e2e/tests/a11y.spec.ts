@@ -203,3 +203,74 @@ test('JSON のエディタ（プレビューと問題）に axe の違反がな�
   const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
   expect(results.violations).toEqual([])
 })
+
+/* ------------------------------------------------ 接続の 3 状態（plan 008） */
+
+/**
+ * `docs/accessibility.md` §4 は、エディタを接続前・接続後・拒否の
+ * **3 状態**で検査すると約束している。`connected` は上の 2 本。ここは残りの 2 つ。
+ */
+
+/** 共有ダイアログを開く。`showModal()` はハイドレーション後にしか効かない。 */
+const openShareDialog = async (page: Page): Promise<void> => {
+  await expect(async () => {
+    await page.getByRole('button', { name: '共有' }).click()
+    await expect(page.getByRole('radio', { name: '閲覧のみ' })).toBeVisible({ timeout: 1000 })
+  }).toPass({ timeout: 20_000 })
+}
+
+/** 文書を 1 本作り、閲覧のみの共有リンクを返す。 */
+const createShareLink = async (page: Page, label: string): Promise<string> => {
+  await page.goto('/')
+  await page.getByRole('button', { name: label }).click()
+  await expect(page).toHaveURL(/\/d\/doc_[0-9a-z]{24}$/)
+  await openShareDialog(page)
+  await page.getByRole('button', { name: 'リンクを作成' }).click()
+  const link = page.getByRole('list', { name: '有効なリンク' }).locator('code').first()
+  await expect(link).toBeVisible()
+  return (await link.textContent()) ?? ''
+}
+
+test('接続できていないエディタに axe の違反がない @a11y', async ({ page }) => {
+  // WebSocket を張らせない。ピルは「接続中…」か「再接続中…」で止まる
+  await page.routeWebSocket('**/ws/**', (socket) => socket.close())
+
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Markdown で始める' }).click()
+  await expect(page.locator('.cm-content')).toBeVisible()
+  await expect(page.getByText(/接続中…|再接続中…/)).toBeVisible({ timeout: 20_000 })
+
+  const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
+  expect(results.violations).toEqual([])
+})
+
+/**
+ * 拒否（`rejected(forbidden)`）。参加者を外すと DO が 4403 で閉じ、
+ * 外された側のピルが「権限がありません」になる（realtime-protocol.md §1）。
+ */
+test('権限を失ったエディタに axe の違反がない @a11y', async ({ browser, page }) => {
+  const shareUrl = await createShareLink(page, 'Markdown で始める')
+
+  const joined = await browser.newContext()
+  try {
+    const guest = await joined.newPage()
+    await guest.goto(shareUrl)
+    await guest.getByRole('textbox', { name: '表示名' }).fill('参加者ベータ')
+    await guest.getByRole('button', { name: 'この名前で参加' }).click()
+    await expect(guest.locator('.cm-content')).toBeVisible()
+    await expect(guest.getByText(/同期済み|同期中/)).toBeVisible({ timeout: 20_000 })
+
+    // 参加者は開いたあとに増える。owner 側は読み直してから外す
+    await page.reload()
+    await openShareDialog(page)
+    await page.getByRole('button', { name: '参加者ベータさんを外す' }).click()
+    await page.getByRole('button', { name: '外す', exact: true }).click()
+
+    await expect(guest.getByText('権限がありません')).toBeVisible({ timeout: 20_000 })
+
+    const results = await new AxeBuilder({ page: guest }).withTags([...WCAG_TAGS]).analyze()
+    expect(results.violations).toEqual([])
+  } finally {
+    await joined.close()
+  }
+})

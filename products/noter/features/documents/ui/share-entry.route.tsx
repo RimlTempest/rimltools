@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
-import { parseShareToken } from '@noter/contract'
+import { parseShareTokenInput } from '@noter/documents/contract'
 import { ShareEntryScreen } from '@noter/documents/ui'
 import { makeContainer } from '../../../apps/web/src/server/container.ts'
 
@@ -20,10 +20,12 @@ type JoinResult = { readonly documentId: string | undefined }
  * ので、リダイレクト先に着いた時点でもうメンバーになっている。
  */
 const joinShareFn = createServerFn({ method: 'GET' })
-  .validator((token: string) => token)
+  // 形の合わないトークンはハンドラまで届かせない（ゲストも発行しない）。
+  // Branded 型は直列化の型を越えられないので、ブランドはハンドラで付け直す
+  .validator((token: string) => (parseShareTokenInput(token) === undefined ? undefined : token))
   .handler(async ({ data }): Promise<JoinResult> => {
-    const token = parseShareToken(data)
-    if (!token.ok) return { documentId: undefined }
+    const token = parseShareTokenInput(data)
+    if (token === undefined) return { documentId: undefined }
 
     const request = getRequest()
     const container = makeContainer(env, request)
@@ -31,7 +33,7 @@ const joinShareFn = createServerFn({ method: 'GET' })
     if (documents === undefined) return { documentId: undefined }
 
     // 使えないリンクはここで打ち切る。ゲストは発行しない
-    if (!(await documents.resolveShareLink(token.value)).ok) return { documentId: undefined }
+    if (!(await documents.resolveShareLink(token)).ok) return { documentId: undefined }
 
     let actor = await container.currentActor(request)
     if (actor.kind === 'visitor') {
@@ -46,7 +48,7 @@ const joinShareFn = createServerFn({ method: 'GET' })
       }
     }
 
-    const joined = await documents.join(actor, token.value)
+    const joined = await documents.join(actor, token)
     return { documentId: joined.ok ? joined.value : undefined }
   })
 

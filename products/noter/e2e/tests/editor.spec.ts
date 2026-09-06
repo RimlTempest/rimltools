@@ -161,6 +161,10 @@ test('表題を変えると一覧にも反映される', async ({ page }) => {
   await title.fill('設計メモ')
   await title.press('Enter')
 
+  // 保存が終わる前に遷移すると、送信中の server function が打ち切られる。
+  // 「たぶん終わったころ」ではなく、読み上げに結果が出るのを待つ
+  await expect(page.getByRole('status')).toHaveText('表題を変更しました。')
+
   await page.goto('/')
   await expect(page.getByRole('link', { name: '設計メモ' })).toBeVisible()
 })
