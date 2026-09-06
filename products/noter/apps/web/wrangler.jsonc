@@ -1,0 +1,29 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "noter-web",
+  "main": "@tanstack/react-start/server-entry",
+  "compatibility_date": "2026-08-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "workers_dev": false,
+  "routes": [{ "pattern": "noter.riml4i.com", "custom_domain": true }],
+  // DocumentRoom は noter-sync（auxiliary Worker）が持つ。
+  // noter-sync は routes を持たないので、DO へは noter-web からしか届かない（ADR-0002）。
+  "durable_objects": {
+    "bindings": [
+      { "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom", "script_name": "noter-sync" },
+    ],
+  },
+  // database_id はデプロイ時に人が書く。ローカル dev は REPLACE_ME のままで動く。
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "noter",
+      "database_id": "REPLACE_ME",
+      "migrations_dir": "./migrations",
+    },
+  ],
+  "vars": { "APP_ORIGIN": "https://noter.riml4i.com" },
+  // BETTER_AUTH_SECRET / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET は wrangler secret put で設定する。
+  // R2 と KV は使わない（ADR-0009）。
+}
