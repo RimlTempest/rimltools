@@ -30,7 +30,7 @@
 | 002 | [DocumentRoom DO と /ws 配線](002-sync-durable-object-and-ws-entry.md)                 | P1   | L    | 001      | DONE（`b7f1cb6`）                                                       |
 | 003 | [Better Auth（ゲスト + Google）](003-auth-guest-and-google.md)                         | P1   | M    | 001      | DONE（`7596f5b`）                                                       |
 | 004 | [文書・共有リンク・本認可](004-documents-sharing-and-authorization.md)                 | P1   | L    | 002, 003 | DONE（`aa66ae6`）                                                       |
-| 005 | [エディタ画面](005-editor-codemirror-presence-status.md)                               | P1   | L    | 004      | TODO                                                                    |
+| 005 | [エディタ画面](005-editor-codemirror-presence-status.md)                               | P1   | L    | 004      | DONE（`b40863a`）                                                       |
 | 006 | [フォーマット層](006-formats-parse-diagnose-preview.md)                                | P1   | L    | 001, 005 | IN PROGRESS（core + UI 部品 `4532ff1`、editor 差し込み・e2e は 005 後） |
 | 007 | [WebMCP・PWA・Deploy・smoke](007-webmcp-pwa-deploy-smoke.md)                           | P2   | M    | 005, 006 | TODO                                                                    |
 | 008 | [AAA 監査・e2e・ハードニング](008-a11y-pass-e2e-and-hardening.md)                      | P2   | M    | 007      | TODO                                                                    |
@@ -54,5 +54,9 @@ executor は完了時にこの表の自分の行だけを書き換える（revie
 - **server function の `.validator((input: X) => input)`**: 型注釈だけの素通しで実行時の形は検証していない。`parse*` を通す形に直す（plan 008 ハードニング、plan 004 レビュー）
 - **失効・除外・削除の Undo トースト（ux.md §4.4）**: v1 は確認 2 段階で AAA 3.3.6 を満たす。リンク復活・再招待 API が無いため Undo は別 plan（plan 004 executor NOTE 4）
 - **`/s/:token` の share_link 読み取り 2 回**: route の `resolveShareLink` と `join` 内の再検証。書き込みではないので許容（plan 004 レビュー）
+- **`role="toolbar"`（DESIGN.md §4.2）**: 矢印キーの roving tabindex を実装しない限り名乗らない。v1 は `<fieldset>` + 視覚的に隠した `<legend>` でグループ化（plan 005 executor NOTE 5）
+- **名前プロンプトの表示条件**: 自分で作った文書では出さず、共有リンクで参加したゲストだけ（ux.md §6.1「開いた瞬間に書ける」優先、plan 005）
+- **CodeMirror が server bundle に入る**: `ssr: 'data-only'` でもルートモジュール経由で `editor.route-*.js` が 1.44 MB（gzip 390 kB）。free tier の 3 MiB gzip には余裕があるが、`React.lazy` で `EditorScreen` を切り出す候補（plan 006b または 007、plan 005 レビュー）
+- **⋯ メニューの「複製」「ショートカット一覧」**: 複製は server function が無い、一覧は仕様が無い。v1 では置かない（plan 005）
 - **アカウント削除 UI**: 文書の扱い（所有権・メンバー）を決めてから。v1 では置かない（plan 003）
 - **`MAX_MEMBERS` 超過や日次上限の e2e**: 再現手段が無い。ユニットで UI を固定する（plan 008）
