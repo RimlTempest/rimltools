@@ -28,8 +28,11 @@ describe('DataPreview', () => {
   test('テキスト表示は整形済みの本文を出す', async () => {
     render(<DataPreview kind="json" text='{"a":1,"b":[1,2]}' />)
     await userEvent.click(screen.getByRole('button', { name: 'テキストで表示' }))
-    const code = screen.getByLabelText('整形した本文')
-    expect(code.textContent).toBe('{\n  "a": 1,\n  "b": [\n    1,\n    2\n  ]\n}\n')
+    const caption = screen.getByText('整形した本文')
+    expect(caption.tagName).toBe('FIGCAPTION')
+    expect(caption.closest('figure')?.querySelector('code')?.textContent).toBe(
+      '{\n  "a": 1,\n  "b": [\n    1,\n    2\n  ]\n}\n',
+    )
   })
 
   test('ツリー表示ではキーと値をリストの項目として並べる', () => {
@@ -76,7 +79,9 @@ describe('DataPreview', () => {
   test('壊れた文書は理由を出し、本文はそのまま見せる', () => {
     render(<DataPreview kind="json" text={'{\n  "a": 1,\n'} />)
     expect(screen.getByText(/構文エラー/)).toBeDefined()
-    expect(screen.getByLabelText('本文').textContent).toBe('{\n  "a": 1,\n')
+    const caption = screen.getByText('本文')
+    expect(caption.tagName).toBe('FIGCAPTION')
+    expect(caption.closest('figure')?.querySelector('code')?.textContent).toBe('{\n  "a": 1,\n')
   })
 
   test('ランドマークの名前は変えられる', () => {

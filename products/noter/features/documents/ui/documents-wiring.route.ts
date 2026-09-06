@@ -13,7 +13,15 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
 import type { DocumentId, Result, Role, ShareToken, UserId } from '@noter/contract'
-import { err, ok, parseDocumentId, parseRole, parseShareToken, parseUserId } from '@noter/contract'
+import {
+  err,
+  ok,
+  parseDocumentId,
+  parseDocumentKind,
+  parseRole,
+  parseShareToken,
+  parseUserId,
+} from '@noter/contract'
 import type { ActorWire, ShareRole } from '@noter/auth/contract'
 import { toActorWire } from '@noter/auth/contract'
 import type {
@@ -111,6 +119,25 @@ export const documentStateFn = createServerFn({ method: 'GET' })
       links: links.ok ? links.value.map(toShareLinkWire) : [],
       origin: new URL(getRequest().url).origin,
     })
+  })
+
+/**
+ * 種別を決めて新しい文書を作る。
+ *
+ * ホームの「〜で始める」は JavaScript が無くても動くよう `POST /new`
+ * （server route）のままにしてある。こちらは**作った文書の ID をその場で
+ * 受け取りたい**とき（エディタの「変換して新規作成」）のための入口で、
+ * 権限とゲスト発行の扱いは `documents.create` に任せる。
+ */
+export const createDocumentFn = createServerFn({ method: 'POST' })
+  .validator((kind: string) => kind)
+  .handler(async ({ data }): Promise<Result<DocumentWire, DocumentError>> => {
+    const kind = parseDocumentKind(data)
+    if (!kind.ok) return err(NOT_FOUND)
+    const ready = await withService()
+    if (!ready.ok) return ready
+    const created = await ready.value.documents.create(ready.value.actor, kind.value)
+    return created.ok ? ok(toDocumentWire(created.value)) : created
   })
 
 type RenameInput = { readonly documentId: string; readonly title: string }

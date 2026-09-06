@@ -132,7 +132,9 @@ test('表示切替でプレビューだけにできる', async ({ page }) => {
     'true',
   )
   await expect(editorOf(page)).toBeHidden()
-  await expect(page.getByRole('region', { name: 'プレビュー' })).toBeVisible()
+  // プレビュー枠（「プレビュー」）と、その中の本文（「本文のプレビュー」）を
+  // 取り違えないよう完全一致で指す
+  await expect(page.getByRole('region', { name: 'プレビュー', exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'エディタのみ' }).click()
   await expect(editorOf(page)).toBeVisible()

@@ -29,8 +29,9 @@ const editorTheme = EditorView.theme({
     color: 'var(--noter-text-muted)',
     borderRight: '1px solid var(--noter-border)',
   },
-  '.cm-activeLine': { backgroundColor: 'var(--noter-surface-hover)' },
-  '.cm-activeLineGutter': { backgroundColor: 'var(--noter-surface-hover)' },
+  // 行の塗りは薄く。濃くすると構文色がその行だけ 7:1 を割る（editor.css）
+  '.cm-activeLine': { backgroundColor: 'var(--noter-editor-active-line)' },
+  '.cm-activeLineGutter': { backgroundColor: 'var(--noter-editor-active-line)' },
   '&.cm-focused': {
     outline: 'var(--noter-focus-width) solid var(--noter-focus-ring)',
     outlineOffset: '-3px',

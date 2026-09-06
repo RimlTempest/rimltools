@@ -4,7 +4,9 @@
  * 実装依存ゼロ。CodeMirror も Yjs も知らない。
  */
 export type { DocumentActions } from './actions.ts'
+export type { ConvertOutcome } from './convert-outcome.ts'
 export type { EditorDiagnostic } from './diagnostic.ts'
+export type { FormatOutcome } from './format-outcome.ts'
 export type { ImportError } from './import-error.ts'
 export { describeImportError } from './import-error.ts'
 export type { Peer } from './peer.ts'

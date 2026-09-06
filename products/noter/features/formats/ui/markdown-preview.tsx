@@ -32,6 +32,12 @@ export const MarkdownPreview = ({ markdown, label = 'プレビュー' }: Markdow
     // 何も出さない方が安全なので、その場合は空にする。
     return DOMPurify.isSupported ? DOMPurify.sanitize(rendered, SANITIZE_OPTIONS) : ''
   }, [markdown])
+  /**
+   * **`__html` のオブジェクトは毎回作り直さない。** React 19 は
+   * `dangerouslySetInnerHTML` の値が別のオブジェクトになると innerHTML を
+   * 当て直すので、下のポータルで差し込んだ図が次の描画で消えてしまう。
+   */
+  const inner = useMemo(() => ({ __html: html }), [html])
   const blocks = useMemo(() => extractMermaidBlocks(markdown), [markdown])
   const rootRef = useRef<HTMLElement>(null)
   const [mounts, setMounts] = useState<readonly Element[]>([])
@@ -52,7 +58,7 @@ export const MarkdownPreview = ({ markdown, label = 'プレビュー' }: Markdow
         className="noter-markdown"
         aria-label={label}
         // oxlint-disable-next-line react/no-danger -- sanitized by DOMPurify
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={inner}
       />
       {mounts.map((mount, position) => {
         const block = blocks[position]

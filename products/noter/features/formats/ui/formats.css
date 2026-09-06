@@ -125,8 +125,13 @@
   background: var(--noter-surface-raised);
 }
 
+/*
+ * 図が入るまでは高さを持たせない。**display: none にしない。**
+ * 箱が無くなると IntersectionObserver が「画面に入った」と判定できず、
+ * mermaid が永遠に読み込まれない（図が出ないまま止まる）。
+ */
 .noter-mermaid-figure__svg:empty {
-  display: none;
+  block-size: 0;
 }
 
 .noter-mermaid-figure__svg svg {

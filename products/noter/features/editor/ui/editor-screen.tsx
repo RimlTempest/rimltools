@@ -5,15 +5,19 @@ import type { DocumentHeader } from '@noter/documents/contract'
 import { can } from '@noter/documents/core'
 import type { NavItem, NavLinkRenderer } from '@noter/shell/ui'
 import { Breadcrumbs } from '@noter/shell/ui'
+import type { DataDocumentKind } from '@noter/formats/contract'
 import type { ConnectionState } from '@noter/sync/contract'
 import { LiveRegion } from '@noter/ui'
 import type { Awareness } from 'y-protocols/awareness'
 import type * as Y from 'yjs'
 import type { DocumentActions } from '../contract/actions.ts'
+import type { ConvertOutcome } from '../contract/convert-outcome.ts'
 import type { EditorDiagnostic } from '../contract/diagnostic.ts'
+import type { FormatOutcome } from '../contract/format-outcome.ts'
 import type { Peer } from '../contract/peer.ts'
 import type { SaveState } from '../contract/save-state.ts'
 import type { ViewMode } from '../contract/view-mode.ts'
+import { formatMessage } from '../core/format-message.ts'
 import { joinedMessage, leftMessage } from '../core/presence.ts'
 import { statusText } from '../core/status-text.ts'
 import { nextViewMode } from '../core/view-mode.ts'
@@ -54,8 +58,17 @@ type EditorScreenProps = {
   readonly preview?: ReactNode
   /** plan 006 が差し込む。未指定なら問題パネルを出さない。 */
   readonly diagnostics?: readonly EditorDiagnostic[]
-  /** plan 006 が差し込む。未指定なら整形ボタンを出さない。 */
-  readonly formatAction?: () => void
+  /**
+   * 整形。整形そのものは配線側（`@noter/formats`）が行い、結果だけを返す。
+   * 本文の差し替えと読み上げはこの画面が引き受ける。
+   * 未指定なら整形ボタンを出さない（markdown には「正しい形」が無い）。
+   */
+  readonly formatAction?: () => FormatOutcome
+  /**
+   * 「変換して新規作成」。変換・作成・遷移は配線側が行い、この画面は
+   * 結果を読み上げるだけ。未指定なら変換の出口を出さない。
+   */
+  readonly convertAction?: (to: DataDocumentKind) => Promise<ConvertOutcome>
 }
 
 /**
@@ -92,6 +105,7 @@ export const EditorScreen = ({
   preview,
   diagnostics,
   formatAction,
+  convertAction,
 }: EditorScreenProps) => {
   const announcer = useAnnouncer()
   const announce = announcer.announce
@@ -101,6 +115,8 @@ export const EditorScreen = ({
   const knownPeers = useRef<readonly Peer[]>([])
 
   const canEdit = can(actorRole, 'edit')
+  const canFormat = canEdit && formatAction !== undefined
+  const hasProblems = diagnostics !== undefined
   const status = statusText(connection, save)
 
   const trail: readonly NavItem[] = useMemo(
@@ -129,19 +145,49 @@ export const EditorScreen = ({
     [onViewModeChange],
   )
 
+  /**
+   * 整形は **CodeMirror のトランザクションとして**当てる（`replaceAll`）。
+   * `ytext` を直接書き換えると、その変更が y-codemirror.next の
+   * `ySyncAnnotation` を通らず、undo の履歴と選択範囲の追従が普段の編集と
+   * 食い違う。取り込み（import）と同じ道を通す。
+   */
+  const runFormat = useCallback((): void => {
+    if (formatAction === undefined) return
+    const outcome = formatAction()
+    if (outcome.kind === 'formatted') handleRef.current?.replaceAll(outcome.text)
+    if (outcome.kind === 'failed') setProblemsOpen(true)
+    announce(formatMessage(outcome.kind))
+  }, [formatAction, announce])
+
+  // ショートカット（ux.md §7）。CodeMirror の中で押しても効くよう window で拾う
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== '\\' || !(event.metaKey || event.ctrlKey)) return
-      event.preventDefault()
-      setMode((current) => {
-        const next = nextViewMode(current)
-        onViewModeChange?.(next)
-        return next
-      })
+      if (!(event.metaKey || event.ctrlKey)) return
+      if (event.key === '\\') {
+        event.preventDefault()
+        setMode((current) => {
+          const next = nextViewMode(current)
+          onViewModeChange?.(next)
+          return next
+        })
+        return
+      }
+      // Shift を押していると event.key は大文字になる（'P'）
+      if (!event.shiftKey) return
+      const key = event.key.toLowerCase()
+      if (key === 'p' && hasProblems) {
+        event.preventDefault()
+        setProblemsOpen((open) => !open)
+        return
+      }
+      if (key === 'f' && canFormat) {
+        event.preventDefault()
+        runFormat()
+      }
     }
     globalThis.addEventListener('keydown', onKeyDown)
     return () => globalThis.removeEventListener('keydown', onKeyDown)
-  }, [onViewModeChange])
+  }, [onViewModeChange, hasProblems, canFormat, runFormat])
 
   const copy = async (text: string, success: string): Promise<void> => {
     announce(
@@ -149,6 +195,21 @@ export const EditorScreen = ({
         ? success
         : 'コピーできませんでした。本文を選んで手動でコピーしてください。',
     )
+  }
+
+  const runConvert = (to: DataDocumentKind): void => {
+    if (convertAction === undefined) return
+    const convert = async (): Promise<void> => {
+      const outcome = await convertAction(to)
+      if (outcome.kind === 'created') {
+        announce('変換した文書を作りました。')
+        return
+      }
+      // 直す場所があるときだけ問題パネルを開く（表せない値は開いても何も無い）
+      if ((diagnostics?.length ?? 0) > 0) setProblemsOpen(true)
+      announce(outcome.message)
+    }
+    void convert()
   }
 
   const importText = (text: string, placement: ImportPlacement): void => {
@@ -185,7 +246,8 @@ export const EditorScreen = ({
         onCopyRawUrl={() => void copy(rawUrl, 'raw の URL をコピーしました。')}
         rawUrl={rawUrl}
         onNotice={announce}
-        {...(formatAction === undefined ? {} : { formatAction })}
+        {...(canFormat ? { formatAction: runFormat } : {})}
+        {...(canEdit && convertAction !== undefined ? { onConvert: runConvert } : {})}
         {...(diagnostics === undefined
           ? {}
           : {
@@ -214,6 +276,7 @@ export const EditorScreen = ({
               undoManager={undoManager}
               kind={document.kind}
               readOnly={!canEdit}
+              {...(diagnostics === undefined ? {} : { diagnostics })}
               onNotice={announce}
               onReady={(handle) => {
                 handleRef.current = handle
