@@ -1,12 +1,12 @@
 name: Deploy
 
-# GitHub の Secrets（CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID）を
-# 登録するまでは手動実行のみ。登録できたら push トリガーを有効化する。
+# GitHub の Secrets（CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID）は
+# 2026-09-07 に登録済み。main への push で本番に出る（docs/deployment.md §2）。
 # 使う Cloudflare リソースは D1 と Durable Objects だけ（ADR-0009）。
 on:
   workflow_dispatch:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
 
 concurrency:
   group: deploy-production
