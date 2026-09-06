@@ -49,13 +49,13 @@ qrcc の「AI Native な部分」（WebMCP）を noter に合わせた形で移�
 
 ## Commands you will need
 
-| Purpose  | Command                                         | Expected                          |
-| -------- | ----------------------------------------------- | --------------------------------- |
-| Tests    | `bun test shared/webmcp features/editor`        | pass                              |
-| Build    | `bun run build`                                 | `apps/web/dist/noter_sync/wrangler.json` と `dist/server/wrangler.json` がある |
-| Smoke    | `bun run smoke http://localhost:5173/`（dev 起動中） | exit 0、`/ws/` 426 を含む     |
-| Browser smoke | `NOTER_SMOKE_URL=http://localhost:5173 bun run smoke:browser` | pass             |
-| YAML     | `python3 -c 'import yaml;yaml.safe_load(open(".github/workflows/deploy.yml"))'` | exit 0 |
+| Purpose       | Command                                                                         | Expected                                                                       |
+| ------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Tests         | `bun test shared/webmcp features/editor`                                        | pass                                                                           |
+| Build         | `bun run build`                                                                 | `apps/web/dist/noter_sync/wrangler.json` と `dist/server/wrangler.json` がある |
+| Smoke         | `bun run smoke http://localhost:5173/`（dev 起動中）                            | exit 0、`/ws/` 426 を含む                                                      |
+| Browser smoke | `NOTER_SMOKE_URL=http://localhost:5173 bun run smoke:browser`                   | pass                                                                           |
+| YAML          | `python3 -c 'import yaml;yaml.safe_load(open(".github/workflows/deploy.yml"))'` | exit 0                                                                         |
 
 ## Scope
 

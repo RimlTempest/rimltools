@@ -13,6 +13,7 @@
     "**/worker-configuration.d.ts",
     "**/*.gen.ts",
     ".agents/skills/**",
-    ".claude/skills/**"
+    ".claude/skills/**",
+    "skills-lock.json"
   ]
 }

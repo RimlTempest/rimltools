@@ -40,10 +40,10 @@
 
 ## Commands you will need
 
-| Purpose | Command                                  | Expected |
-| ------- | ---------------------------------------- | -------- |
-| Tests   | `bun test features/formats`              | pass     |
-| Check   | `bun run check`                          | exit 0   |
+| Purpose | Command                                                | Expected             |
+| ------- | ------------------------------------------------------ | -------------------- |
+| Tests   | `bun test features/formats`                            | pass                 |
+| Check   | `bun run check`                                        | exit 0               |
 | Build   | `bun run build` → `du -sh apps/web/dist/client/assets` | mermaid が別チャンク |
 
 ## Suggested executor toolkit
@@ -78,7 +78,7 @@
 - `diagnose.ts`: `diagnose(kind, text): readonly Diagnostic[]`（parse の err をそのまま、ok なら `[]`）。
 - `format.ts`: `formatDocument(kind, text): Result<string, readonly Diagnostic[]>`。yaml: `yaml.stringify(value, { indent: 2 })`、toml: `smol-toml.stringify`、json: `JSON.stringify(value, null, 2) + '\n'`、markdown: `err([])` は不自然なので `Result<string, 'unsupported' | readonly Diagnostic[]>`。
 - `convert.ts`: `convertDocument(from, to, text): Result<string, ConvertError>`（yaml ⇄ json ⇄ toml。toml へは「トップレベルが object でない」「null を含む」を `ConvertError = { reason: 'not_object' | 'null_value' | 'parse'; diagnostics? }` で返す）。
-- `mermaid-blocks.ts`: `extractMermaidBlocks(markdown): readonly { index: number; source: string; line: number }[]`（fence ```` ```mermaid ```` を抜く純粋関数）。
+- `mermaid-blocks.ts`: `extractMermaidBlocks(markdown): readonly { index: number; source: string; line: number }[]`（fence ` ```mermaid ` を抜く純粋関数）。
 
 テスト: 4 種別の正常・異常（行番号が合う）、整形の冪等、変換の往復（yaml → json → yaml で値一致）、toml 変換不能。
 

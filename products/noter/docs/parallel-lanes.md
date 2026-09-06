@@ -45,19 +45,19 @@ feat/design-system  feat/web-shell   feat/sync      feat/formats
 **自分のレーンが所有していないディレクトリを編集しない。** 必要なら
 「先にそのレーンにお願いする」か「main にマージしてから rebase する」。
 
-| レーン        | ブランチ             | 所有ディレクトリ                                             | 依存                          |
-| ------------- | -------------------- | ------------------------------------------------------------ | ----------------------------- |
-| contracts     | `feat/contracts`     | `shared/contract/**`                                         | —                             |
-| design-system | `feat/design-system` | `shared/ui/**`                                               | contracts                     |
-| web-shell     | `feat/web-shell`     | `features/shell/**`, `apps/web/**`                           | design-system                 |
-| sync          | `feat/sync`          | `features/sync/**`, `apps/sync/**`                           | contracts                     |
-| formats       | `feat/formats`       | `features/formats/**`                                        | contracts                     |
-| auth          | `feat/auth`          | `features/auth/**`, `apps/web/migrations/0001_*`             | web-shell                     |
-| documents     | `feat/documents`     | `features/documents/**`, `apps/web/migrations/0002_*` 以降   | auth, sync                    |
-| editor        | `feat/editor`        | `features/editor/**`                                         | sync, formats, design-system  |
-| webmcp        | `feat/webmcp`        | `shared/webmcp/**`                                           | documents, editor             |
-| e2e           | `feat/e2e`           | `e2e/**`                                                     | documents, editor             |
-| devops        | `chore/devops`       | `.github/**`, `scripts/**`, `docs/**`, `tools/**`            | —                             |
+| レーン        | ブランチ             | 所有ディレクトリ                                           | 依存                         |
+| ------------- | -------------------- | ---------------------------------------------------------- | ---------------------------- |
+| contracts     | `feat/contracts`     | `shared/contract/**`                                       | —                            |
+| design-system | `feat/design-system` | `shared/ui/**`                                             | contracts                    |
+| web-shell     | `feat/web-shell`     | `features/shell/**`, `apps/web/**`                         | design-system                |
+| sync          | `feat/sync`          | `features/sync/**`, `apps/sync/**`                         | contracts                    |
+| formats       | `feat/formats`       | `features/formats/**`                                      | contracts                    |
+| auth          | `feat/auth`          | `features/auth/**`, `apps/web/migrations/0001_*`           | web-shell                    |
+| documents     | `feat/documents`     | `features/documents/**`, `apps/web/migrations/0002_*` 以降 | auth, sync                   |
+| editor        | `feat/editor`        | `features/editor/**`                                       | sync, formats, design-system |
+| webmcp        | `feat/webmcp`        | `shared/webmcp/**`                                         | documents, editor            |
+| e2e           | `feat/e2e`           | `e2e/**`                                                   | documents, editor            |
+| devops        | `chore/devops`       | `.github/**`, `scripts/**`, `docs/**`, `tools/**`          | —                            |
 
 機械可読な定義は `scripts/lanes.tsv`。
 
@@ -76,12 +76,12 @@ features/<name>/
 feature の実体はディレクトリ内に閉じるが、アプリに組み込むための宣言だけは
 横断ファイルに集まる。いずれも **append-only の 1 行**で済むようにしてある。
 
-| 何を足すか               | どこに 1 行                              |
-| ------------------------ | ---------------------------------------- |
-| 画面の URL               | `apps/web/src/routes.ts`                 |
-| 画面のスタイル           | `apps/web/src/styles/app.css`            |
-| ナビの項目               | `features/shell/ui/nav-items.ts`         |
-| 文書種別（フォーマット） | `shared/contract/src/document-kind.ts`   |
+| 何を足すか               | どこに 1 行                                 |
+| ------------------------ | ------------------------------------------- |
+| 画面の URL               | `apps/web/src/routes.ts`                    |
+| 画面のスタイル           | `apps/web/src/styles/app.css`               |
+| ナビの項目               | `features/shell/ui/nav-items.ts`            |
+| 文書種別（フォーマット） | `shared/contract/src/document-kind.ts`      |
 | DO 内部ルート            | `features/sync/core/src/internal-routes.ts` |
 
 複数レーンを並行させると、これらは rebase で競合しうる。
@@ -90,18 +90,18 @@ feature の実体はディレクトリ内に閉じるが、アプリに組み込
 
 ## 3. 共有ファイルの扱い（コンフリクト回避規約）
 
-| ファイル                                                 | 規約                                                                                              |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| ルート `package.json`                                    | **触らない。** 依存は各ワークスペースの `package.json` に足す                                     |
-| `bun.lock`                                               | 競合したら解決せず `git checkout --ours bun.lock && bun install` で再生成                         |
-| ルート `tsconfig.json`                                   | `feat/contracts` が全 references を先に登録しておく                                               |
-| `apps/web/src/routes.ts`                                 | `feat/web-shell` が所有。URL 1 行の追加のみ他レーンから依頼                                       |
-| `apps/web/wrangler.jsonc`                                | `feat/web-shell` が所有。binding の追加は依頼（DO binding は `feat/sync` の契約に従う）           |
-| `apps/sync/wrangler.jsonc`                               | `feat/sync` が所有。**`routes` / `workers_dev` を書かない**                                       |
-| `apps/web/migrations/`                                   | 連番はレーン順（auth = 0001、documents = 0002〜）。番号衝突は rebase 時に後発が振り直す           |
-| `routeTree.gen.ts` / `worker-configuration.d.ts`         | **git 管理しない**。`bun run --filter @noter/web gen` で生成                                      |
-| `.oxlintrc.json` / `lefthook.yml` / `.markuplintrc.json` | `chore/devops` のみ変更可                                                                         |
-| `docs/**`                                                | 各レーンは**自分の章のみ**追記                                                                    |
+| ファイル                                                 | 規約                                                                                    |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| ルート `package.json`                                    | **触らない。** 依存は各ワークスペースの `package.json` に足す                           |
+| `bun.lock`                                               | 競合したら解決せず `git checkout --ours bun.lock && bun install` で再生成               |
+| ルート `tsconfig.json`                                   | `feat/contracts` が全 references を先に登録しておく                                     |
+| `apps/web/src/routes.ts`                                 | `feat/web-shell` が所有。URL 1 行の追加のみ他レーンから依頼                             |
+| `apps/web/wrangler.jsonc`                                | `feat/web-shell` が所有。binding の追加は依頼（DO binding は `feat/sync` の契約に従う） |
+| `apps/sync/wrangler.jsonc`                               | `feat/sync` が所有。**`routes` / `workers_dev` を書かない**                             |
+| `apps/web/migrations/`                                   | 連番はレーン順（auth = 0001、documents = 0002〜）。番号衝突は rebase 時に後発が振り直す |
+| `routeTree.gen.ts` / `worker-configuration.d.ts`         | **git 管理しない**。`bun run --filter @noter/web gen` で生成                            |
+| `.oxlintrc.json` / `lefthook.yml` / `.markuplintrc.json` | `chore/devops` のみ変更可                                                               |
+| `docs/**`                                                | 各レーンは**自分の章のみ**追記                                                          |
 
 ## 4. 手順
 
@@ -154,13 +154,13 @@ LEFTHOOK=0 git push origin --delete feat/xxx
 
 PR ごとに **変更されたレーンの範囲だけ**を実行する（`.github/workflows/ci.yml` の `paths-filter`）。
 
-| ジョブ                    | 実行条件                                                                                                          |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `fmt-lint`                | 常に                                                                                                              |
-| `typecheck`               | `**/*.ts(x)`, `tsconfig*`                                                                                         |
-| `test`                    | `features/**`, `shared/**`, `apps/**`（`bun test`、Small/Medium）                                                 |
-| `markuplint`              | `**/*.tsx`                                                                                                        |
-| `a11y` (Playwright + axe) | `apps/web/**`, `shared/ui/**`, `features/*/ui/**`                                                                 |
+| ジョブ                    | 実行条件                                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `fmt-lint`                | 常に                                                                                                               |
+| `typecheck`               | `**/*.ts(x)`, `tsconfig*`                                                                                          |
+| `test`                    | `features/**`, `shared/**`, `apps/**`（`bun test`、Small/Medium）                                                  |
+| `markuplint`              | `**/*.tsx`                                                                                                         |
+| `a11y` (Playwright + axe) | `apps/web/**`, `shared/ui/**`, `features/*/ui/**`                                                                  |
 | `guard`                   | 常に（`apps/sync` に `routes` / `workers_dev` が無い、`new_classes` を使っていない、`class` が許可場所以外に無い） |
 
 `main` へのマージは全ジョブ green が必須。

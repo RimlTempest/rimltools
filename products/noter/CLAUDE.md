@@ -8,16 +8,16 @@ Rust は使わない。Bun workspaces の monorepo。
 
 ## 作業を始める前に読むもの
 
-| 状況                             | 読むスキル                     |
-| -------------------------------- | ------------------------------ |
-| TS/TSX を書く・直す              | `noter-typescript`             |
-| 画面・マークアップ・CSS を書く   | `noter-html-a11y`              |
-| 機能追加・バグ修正               | `noter-tdd`（必ず red → green）|
-| どこに置くか迷う・機能を拡張する | `noter-architecture`           |
-| 並行作業・worktree・コンフリクト | `noter-worktree`               |
-| UI・UX を見直す                  | `better-interface`             |
-| HTML/CSS/クライアント JS を書く  | `modern-web-guidance`          |
-| Workers / DO / D1 に触る         | `workers-best-practices`       |
+| 状況                             | 読むスキル                      |
+| -------------------------------- | ------------------------------- |
+| TS/TSX を書く・直す              | `noter-typescript`              |
+| 画面・マークアップ・CSS を書く   | `noter-html-a11y`               |
+| 機能追加・バグ修正               | `noter-tdd`（必ず red → green） |
+| どこに置くか迷う・機能を拡張する | `noter-architecture`            |
+| 並行作業・worktree・コンフリクト | `noter-worktree`                |
+| UI・UX を見直す                  | `better-interface`              |
+| HTML/CSS/クライアント JS を書く  | `modern-web-guidance`           |
+| Workers / DO / D1 に触る         | `workers-best-practices`        |
 
 設計の背景は `docs/architecture.md`、`docs/realtime-protocol.md`、`docs/adr/`。
 UX は `docs/design/ux.md`、デザインシステムは `DESIGN.md`。

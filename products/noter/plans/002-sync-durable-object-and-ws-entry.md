@@ -53,17 +53,24 @@ noter の中核は「同じ文書を開いている全員に更新を届け、�
 
 ```ts
 export class DocumentRoom extends DurableObject<CloudflareEnv> {
-  #room = makeRoom({ storage: this.ctx.storage, sockets: this.ctx, now: () => Date.now(), touch: makeTouch(this.env.DB) })
+  #room = makeRoom({
+    storage: this.ctx.storage,
+    sockets: this.ctx,
+    now: () => Date.now(),
+    touch: makeTouch(this.env.DB),
+  })
   fetch = (request: Request) => this.#room.fetch(request)
-  webSocketMessage = (ws: WebSocket, message: ArrayBuffer | string) => this.#room.onMessage(ws, message)
+  webSocketMessage = (ws: WebSocket, message: ArrayBuffer | string) =>
+    this.#room.onMessage(ws, message)
   webSocketClose = (ws: WebSocket, code: number) => this.#room.onClose(ws, code)
   webSocketError = (ws: WebSocket) => this.#room.onClose(ws, 1011)
   alarm = () => this.#room.onAlarm()
 }
 ```
 
-  （`#room` フィールド初期化子で `this.ctx` を使うには `constructor(ctx, env) { super(ctx, env); this.#room = … }` が
-  必要。`class` 内の `constructor` は許可されている。`blockConcurrencyWhile` で `room.init()` を呼ぶ。）
+（`#room` フィールド初期化子で `this.ctx` を使うには `constructor(ctx, env) { super(ctx, env); this.#room = … }` が
+必要。`class` 内の `constructor` は許可されている。`blockConcurrencyWhile` で `room.init()` を呼ぶ。）
+
 - ADR-0005: 損失窓 ≤ 5 秒、write 失敗は指数バックオフ（上限 60 秒）、v1 ではクライアントに通知しない。
 - `docs/free-tier-budget.md`: 受信 20 通 = 1 リクエスト。DO は `setTimeout` / `setInterval` を使わない。
 - `apps/web/src/server.ts`（**未作成**）: TanStack Start のカスタム server entry で `/ws/` を横取りする。
@@ -77,14 +84,14 @@ export class DocumentRoom extends DurableObject<CloudflareEnv> {
 
 ## Commands you will need
 
-| Purpose    | Command                                                | Expected on success          |
-| ---------- | ------------------------------------------------------ | ---------------------------- |
-| Unit tests | `bun test features/sync`                               | 全 pass                      |
-| Check      | `bun run check`                                        | exit 0                       |
-| Build      | `bun run build`                                        | exit 0                       |
-| Dev        | `bun run dev`（background）                            | 5173 で応答                  |
+| Purpose    | Command                                                                                             | Expected on success            |
+| ---------- | --------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Unit tests | `bun test features/sync`                                                                            | 全 pass                        |
+| Check      | `bun run check`                                                                                     | exit 0                         |
+| Build      | `bun run build`                                                                                     | exit 0                         |
+| Dev        | `bun run dev`（background）                                                                         | 5173 で応答                    |
 | WS 疎通    | `bun run scripts/ws-probe.ts ws://localhost:5173/ws/doc_0000000000000000000000000`（Step 6 で作る） | `open` → `sync step2 received` |
-| e2e        | `bun run e2e -- --grep sync`                           | pass                         |
+| e2e        | `bun run e2e -- --grep sync`                                                                        | pass                           |
 
 ## Suggested executor toolkit
 
@@ -147,18 +154,30 @@ export class DocumentRoom extends DurableObject<CloudflareEnv> {
 
 - `ports.ts`:
   ```ts
-  export type RoomStorage = {   // DurableObjectStorage の使う部分だけ
-    readonly sql: { exec: (query: string, ...bindings: readonly SqlValue[]) => { toArray: () => readonly Record<string, SqlValue>[] } }
+  export type RoomStorage = {
+    // DurableObjectStorage の使う部分だけ
+    readonly sql: {
+      exec: (
+        query: string,
+        ...bindings: readonly SqlValue[]
+      ) => { toArray: () => readonly Record<string, SqlValue>[] }
+    }
     readonly getAlarm: () => Promise<number | null>
     readonly setAlarm: (at: number) => Promise<void>
     readonly deleteAll: () => Promise<void>
   }
-  export type RoomSockets = {   // DurableObjectState の使う部分だけ
+  export type RoomSockets = {
+    // DurableObjectState の使う部分だけ
     readonly acceptWebSocket: (ws: WebSocket) => void
     readonly getWebSockets: () => readonly WebSocket[]
     readonly setWebSocketAutoResponse: (pair: WebSocketRequestResponsePair) => void
   }
-  export type RoomDeps = { readonly storage: RoomStorage; readonly sockets: RoomSockets; readonly now: () => number; readonly touch: (updatedAt: number) => Promise<void> }
+  export type RoomDeps = {
+    readonly storage: RoomStorage
+    readonly sockets: RoomSockets
+    readonly now: () => number
+    readonly touch: (updatedAt: number) => Promise<void>
+  }
   ```
   `SqlValue` は `string | number | ArrayBuffer | null`。`WebSocket` は `lib.dom` ではなく workers の型なので、
   `features/sync/tsconfig.json` の `types` に `@cloudflare/workers-types` を入れず、**`worker/` を除外したままにする**ため、
@@ -180,13 +199,13 @@ export class DocumentRoom extends DurableObject<CloudflareEnv> {
 - `room.ts`: `makeRoom(deps: RoomDeps): Room`。
   ```ts
   export type Room = {
-    init(): Promise<void>                                  // migrate + loadState + setWebSocketAutoResponse('ping','pong')
-    fetch(request: Request): Promise<Response>             // Upgrade → identity 検証 → MAX_MEMBERS 判定 → accept → step1 + 既存 awareness 送信 → 101
-                                                           // POST /kick → body {actorId} の socket を 4403 で close → 204
-                                                           // GET /snapshot → text/plain
-                                                           // 他 → 404
+    init(): Promise<void> // migrate + loadState + setWebSocketAutoResponse('ping','pong')
+    fetch(request: Request): Promise<Response> // Upgrade → identity 検証 → MAX_MEMBERS 判定 → accept → step1 + 既存 awareness 送信 → 101
+    // POST /kick → body {actorId} の socket を 4403 で close → 204
+    // GET /snapshot → text/plain
+    // 他 → 404
     onMessage(socket: RoomSocket, message: ArrayBuffer | string): Promise<void>
-    onClose(socket: RoomSocket, code: number): Promise<void>   // removal 送信、最後なら flush
+    onClose(socket: RoomSocket, code: number): Promise<void> // removal 送信、最後なら flush
     onAlarm(): Promise<void>
   }
   ```
@@ -242,7 +261,11 @@ export default {
 - `apps/web/src/server/ws-authorize.ts`（plan 004 が差し替える）:
   ```ts
   /** plan 004 でセッション + document_member による認可に置き換える。 */
-  export const authorizeWs = async (request: Request, env: CloudflareEnv, documentId: DocumentId): Promise<Result<RoomIdentity, 'unauthorized' | 'not_found'>> => {
+  export const authorizeWs = async (
+    request: Request,
+    env: CloudflareEnv,
+    documentId: DocumentId,
+  ): Promise<Result<RoomIdentity, 'unauthorized' | 'not_found'>> => {
     if (env.NOTER_DEV_OPEN_WS !== '1') return err('unauthorized')
     const url = new URL(request.url)
     const name = url.searchParams.get('name') ?? 'dev'

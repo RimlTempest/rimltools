@@ -42,11 +42,11 @@
 
 ## Commands you will need
 
-| Purpose | Command                        | Expected |
-| ------- | ------------------------------ | -------- |
-| a11y    | `bun run a11y`                 | pass     |
-| e2e     | `bun run e2e`                  | pass     |
-| Check   | `bun run check && bun run test`| exit 0   |
+| Purpose | Command                         | Expected |
+| ------- | ------------------------------- | -------- |
+| a11y    | `bun run a11y`                  | pass     |
+| e2e     | `bun run e2e`                   | pass     |
+| Check   | `bun run check && bun run test` | exit 0   |
 
 ## Suggested executor toolkit
 
