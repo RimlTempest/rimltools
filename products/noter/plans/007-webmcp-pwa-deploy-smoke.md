@@ -96,8 +96,9 @@ qrcc の「AI Native な部分」（WebMCP）を noter に合わせた形で移�
 - `apps/web/public/manifest.webmanifest`: `name: "noter"`, `short_name: "noter"`, `start_url: "/"`, `display: "standalone"`,
   `theme_color` / `background_color` は `DESIGN.md` の `--noter-surface` ライト値を hex 近似、icons は plan 001 の `icon.svg` から
   生成した PNG（`bunx sharp-cli` 等が無ければ **SVG を `icons` に `type: image/svg+xml` で 1 つ**登録し、PNG は STOP せず省略して報告）。
-- `apps/web/public/sw.js`: qrcc の `sw.js` を元に、キャッシュ名 `noter-shell-v1`、プリキャッシュは `/` と `/icon.svg` のみ、
-  `fetch` は `GET` かつ `same-origin` かつ `pathname` が `/ws/` `/api/` `/d/` `/s/` で**始まらない**ときだけ stale-while-revalidate、それ以外は素通し。
+- `apps/web/public/sw.js`: qrcc の `sw.js` を元に、キャッシュ名 `noter-shell-v1`、プリキャッシュは `/icon.svg` のみ（**`/` は入れない** — サインイン中の一覧を含む HTML が共有端末に残る）、
+  `fetch` は `GET` かつ `same-origin` かつ `mode !== 'navigate'` かつ `pathname` が `/_serverFn/` `/ws/` `/api/` `/d/` `/s/` で**始まらない**ときだけ stale-while-revalidate、それ以外は素通し
+  （`/_serverFn/` は GET の server function があり、キャッシュすると一覧の失効反映が壊れる。実装時に e2e で発覚 — 事後修正済み）。
 - `features/shell/ui/register-sw.ts`（qrcc から）、`root.route.tsx` で `useEffect` 登録、`root-document.tsx` に `manifest` / `apple-touch-icon` の `<link>` を戻す。
 
 **Verify**: `bun run build` → `dist/client/sw.js` がある。`bun run a11y` → pass。

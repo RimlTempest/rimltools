@@ -32,7 +32,7 @@
 | 004 | [文書・共有リンク・本認可](004-documents-sharing-and-authorization.md)                 | P1   | L    | 002, 003 | DONE（`aa66ae6`）                       |
 | 005 | [エディタ画面](005-editor-codemirror-presence-status.md)                               | P1   | L    | 004      | DONE（`b40863a`）                       |
 | 006 | [フォーマット層](006-formats-parse-diagnose-preview.md)                                | P1   | L    | 001, 005 | DONE（006a `4532ff1` / 006b `f6a8c1a`） |
-| 007 | [WebMCP・PWA・Deploy・smoke](007-webmcp-pwa-deploy-smoke.md)                           | P2   | M    | 005, 006 | IN PROGRESS（`feat/webmcp`）            |
+| 007 | [WebMCP・PWA・Deploy・smoke](007-webmcp-pwa-deploy-smoke.md)                           | P2   | M    | 005, 006 | DONE（`b026d17`）                       |
 | 008 | [AAA 監査・e2e・ハードニング](008-a11y-pass-e2e-and-hardening.md)                      | P2   | M    | 007      | TODO                                    |
 
 状態: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED(理由)` / `STALE`。
@@ -56,9 +56,12 @@ executor は完了時にこの表の自分の行だけを書き換える（revie
 - **`/s/:token` の share_link 読み取り 2 回**: route の `resolveShareLink` と `join` 内の再検証。書き込みではないので許容（plan 004 レビュー）
 - **`role="toolbar"`（DESIGN.md §4.2）**: 矢印キーの roving tabindex を実装しない限り名乗らない。v1 は `<fieldset>` + 視覚的に隠した `<legend>` でグループ化（plan 005 executor NOTE 5）
 - **名前プロンプトの表示条件**: 自分で作った文書では出さず、共有リンクで参加したゲストだけ（ux.md §6.1「開いた瞬間に書ける」優先、plan 005）
-- **CodeMirror が server bundle に入る**: `ssr: 'data-only'` でもルートモジュール経由で `editor.route-*.js` が 1.44 MB（gzip 390 kB）。free tier の 3 MiB gzip には余裕があるが、`React.lazy` で `EditorScreen` を切り出す候補（plan 006b または 007、plan 005 レビュー）
+- **CodeMirror が server bundle に入る**: `ssr: 'data-only'` でもルートモジュール経由で `editor.route-*.js` が server 側に入る（plan 007 時点で 2.07 MB、gzip はもっと小さい）。`React.lazy` で `CodeEditor` を切り出しても Rolldown が「そこでしか使われない」と判断して route チャンクに巻き戻すため**効果ゼロ**だった（plan 007 で計測・revert）。free tier の 3 MiB gzip には余裕がある。次に試すなら `ssr: false` の別ルートに分けるか `build.rollupOptions.output.manualChunks`（plan 008 以降、急がない）
 - **⋯ メニューの「複製」「ショートカット一覧」**: 複製は server function が無い、一覧は仕様が無い。v1 では置かない（plan 005）
 - **「変換して新規作成」の本文の受け渡し**: `create` に初期本文の引数が無いので `sessionStorage`（`noter-initial-body:<id>`）に預け、接続後に `ytext` が空なら 1 回だけ挿入する。サーバ側に初期本文を持たせるなら plan 008 以降で（plan 006b）
 - **整形の本文置換は `EditorHandle.replaceAll`（CodeMirror トランザクション）経由**: `ytext` を直接書くと y-codemirror.next の `ySyncAnnotation` を通らず undo とリモートカーソルが崩れる（plan 006b）
+- **Service Worker のキャッシュ対象**: plan 007 の原案は「`/` をプリキャッシュ、`/ws/ /api/ /d/ /s/` 以外を stale-while-revalidate」だったが、(1) TanStack の server function は `GET /_serverFn/…` を使うものがあり、キャッシュすると「共有リンクを失効させたのに一覧から消えない」（e2e `share.spec.ts` が 8 本落ちて発覚）、(2) `/` の HTML はサインイン中の人の文書名を含むので、共有端末で次の人に見える。**`/_serverFn/` も除外し、HTML（`mode: navigate`）はキャッシュしない**。プリキャッシュは `/icon.svg` のみ（plan 007 executor NOTE 1・2）
+- **本番 smoke で Google ボタンを見ない**: 資格情報は本番にしか無く手元で再現できない。`docs/deployment.md` の手動確認に載せた（plan 007）
+- **ハイドレーションの判定は `__reactFiber$*` の有無**: トップは素の `<form method="post">` で JS なしでも文書を作れるため、「ボタンが押せる」は証拠にならない（plan 007 `e2e/smoke/production.spec.ts`）
 - **アカウント削除 UI**: 文書の扱い（所有権・メンバー）を決めてから。v1 では置かない（plan 003）
 - **`MAX_MEMBERS` 超過や日次上限の e2e**: 再現手段が無い。ユニットで UI を固定する（plan 008）

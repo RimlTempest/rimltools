@@ -125,8 +125,20 @@ bun run smoke:browser                                       # 本番
 NOTER_SMOKE_URL=http://localhost:5173 bun run smoke:browser  # 任意のオリジン
 ```
 
-こちらは**JavaScript が動いた結果**を見る（ハイドレーション・ゲストなしで
-サインイン画面が出ること・`noter-sync` が外から叩けないこと）。
+こちらは**JavaScript が動いた結果**を見る（トップのハイドレーション・
+サインイン画面に「ゲストのまま続ける」が出ること・`/ws/` が 426 を返すこと）。
+`/assets/` は dev サーバには無いので、手元で試すときは `bun run preview` 等の
+ビルド済みオリジンを使う。
+
+spec が見ないもの（デプロイ後に人が確認する）:
+
+- `/sign-in` に **「Google でログイン」が出ている**こと。資格情報は本番にしか
+  無いので手元では再現できない（未設定ならゲストのみになる — §シークレット）
+- **`https://noter-sync.<account>.workers.dev` が解決しない / 404 である**こと。
+  account 名が要るので spec には入れていない（ADR-0002）
+- PWA: DevTools → Application → Manifest にアイコンが 4 つ出ていて、
+  Service Worker が `noter-shell-v1` で `activated` になっていること。
+  SW は本番ビルドでしか登録されない（dev では登録しない）
 
 > **本番のデータを変えない。** サインインするとゲストの user と session が
 > D1 に増えるので、この spec では一切サインインしない。読み取り専用。
