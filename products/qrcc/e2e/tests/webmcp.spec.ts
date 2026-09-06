@@ -93,6 +93,35 @@ test('注入した modelContext 経由で generate-code を実行できる', asy
   expect(text).toContain('URL: https://example.com')
 })
 
+test('注入した modelContext 経由で generate-code を kind: vcard で実行できる', async ({ page }) => {
+  await installFakeModelContext(page)
+  await page.goto('/')
+
+  await page.waitForFunction(() => {
+    const registered = Reflect.get(window, '__webmcpRegistered')
+    return Array.isArray(registered) && registered.length === 2
+  })
+
+  const text = await page.evaluate(async () => {
+    // 標準の型定義に無いグローバルなので Reflect で取り出し、型は
+    // アサーションではなく変数の型注釈で与える（`as` は使わない）。
+    const registered: readonly {
+      readonly name: string
+      readonly execute: (
+        input: Record<string, unknown>,
+      ) => Promise<{ readonly content: readonly { readonly text: string }[] }>
+    }[] = Reflect.get(window, '__webmcpRegistered')
+    const generateTool = registered.find((tool) => tool.name === 'generate-code')
+    const result = await generateTool?.execute({
+      kind: 'vcard',
+      vcard: { name: '山田太郎', organization: '', tel: '', email: '', url: '' },
+    })
+    return result?.content[0]?.text
+  })
+
+  expect(text).toContain('名刺: 山田太郎')
+})
+
 /**
  * デコード用 wasm（rxing を含み、生成用の何倍もある）は、読み取りツールを
  * 実際に呼ぶまで取りに行ってはいけない（docs/free-tier-budget.md）。
