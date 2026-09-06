@@ -19,6 +19,7 @@
   "dependencies": {
     "@noter/contract": "workspace:*",
     "@noter/shell": "workspace:*",
+    "@noter/sync": "workspace:*",
     "@noter/ui": "workspace:*",
     "@tanstack/react-router": "1.170.32",
     "@tanstack/react-start": "1.168.49",

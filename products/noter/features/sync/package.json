@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./client": "./client/src/index.ts",
+    "./contract": "./contract/src/index.ts",
+    "./core": "./core/src/index.ts",
     "./worker": "./worker/index.ts"
   },
   "scripts": {
@@ -11,6 +14,10 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@noter/contract": "workspace:*"
+    "@noter/contract": "workspace:*",
+    "lib0": "0.2.117",
+    "y-protocols": "1.0.7",
+    "y-websocket": "3.1.0",
+    "yjs": "13.6.32"
   }
 }
