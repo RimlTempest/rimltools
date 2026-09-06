@@ -17,6 +17,7 @@ import { buildEventPayload } from '../core/payload/event.ts'
 import { buildGeoPayload } from '../core/payload/geo.ts'
 import { buildSmsPayload } from '../core/payload/sms.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
+import { buildVCardPayload } from '../core/payload/vcard.ts'
 import type { CodePayload, PayloadKind, RenderRequest, SymbologyKind } from '../contract/index.ts'
 import {
   PAYLOAD_KINDS,
@@ -157,8 +158,30 @@ const buildPayloadFromKind = (kind: PayloadKind, input: ToolInput): Result<CodeP
           return err('予定の終了日時（event.end）は開始日時より後にしてください。')
       }
     }
-    case 'vcard':
-      return err(notYetSupported('vcard'))
+    case 'vcard': {
+      const result = buildVCardPayload({
+        name: readNestedString(input, 'vcard', 'name'),
+        organization: readNestedString(input, 'vcard', 'organization'),
+        tel: readNestedString(input, 'vcard', 'tel'),
+        email: readNestedString(input, 'vcard', 'email'),
+        url: readNestedString(input, 'vcard', 'url'),
+      })
+      if (result.ok) return result
+      switch (result.error.kind) {
+        case 'invalid_name':
+          return err('名刺の氏名（vcard.name）を指定してください。')
+        case 'invalid_tel':
+          return err(
+            '名刺の電話番号（vcard.tel）に国番号から始まる番号を指定してください（例: +819012345678）。',
+          )
+        case 'invalid_email':
+          return err('名刺のメールアドレス（vcard.email）に正しい形式を指定してください。')
+        case 'invalid_url':
+          return err(
+            '名刺の URL（vcard.url）に http:// か https:// で始まる URL を指定してください。',
+          )
+      }
+    }
     case 'wifi':
       return err(notYetSupported('wifi'))
   }
@@ -280,6 +303,18 @@ export const makeGenerateTool = (render: RenderFn): WebMcpTool => ({
         },
         required: ['subject', 'start', 'end'],
         description: `kind が event のとき指定します。${PAYLOAD_META.event.description}`,
+      },
+      vcard: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: '氏名。' },
+          organization: { type: 'string', description: '組織名（省略可）。' },
+          tel: { type: 'string', description: '電話番号（省略可、例: +819012345678）。' },
+          email: { type: 'string', description: 'メールアドレス（省略可）。' },
+          url: { type: 'string', description: 'URL（省略可、http:// か https:// で始まる）。' },
+        },
+        required: ['name'],
+        description: `kind が vcard のとき指定します。${PAYLOAD_META.vcard.description}`,
       },
       symbology: {
         type: 'string',

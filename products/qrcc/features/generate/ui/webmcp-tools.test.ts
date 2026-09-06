@@ -373,6 +373,54 @@ describe('makeGenerateTool', () => {
     })
   })
 
+  describe('kind: vcard', () => {
+    test('vcard.name などから名刺の payload を組み立てる', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      await tool.execute({
+        kind: 'vcard',
+        vcard: {
+          name: '山田太郎',
+          organization: '株式会社サンプル',
+          tel: '+819012345678',
+          email: 'yamada@example.com',
+          url: 'https://example.com',
+        },
+      })
+
+      expect(calls).toHaveLength(1)
+      const request = calls[0]
+      if (typeof request === 'object' && request !== null && 'payload' in request) {
+        const payload = request.payload
+        if (typeof payload === 'object' && payload !== null && 'kind' in payload) {
+          expect(payload.kind).toBe('vcard')
+          return
+        }
+      }
+      throw new Error('request が RenderRequest ではない')
+    })
+
+    test('氏名が空なら render を呼ばず、日本語の理由を返す', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      const result = await tool.execute({
+        kind: 'vcard',
+        vcard: { name: '', organization: '', tel: '', email: '', url: '' },
+      })
+
+      expect(calls).toHaveLength(0)
+      expect(result.content[0]?.text.length).toBeGreaterThan(0)
+    })
+  })
+
   test('知らない kind を渡しても例外を投げず、理由を返す', async () => {
     const calls: unknown[] = []
     const render: RenderFn = (request) => {
