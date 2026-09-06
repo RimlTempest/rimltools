@@ -3,6 +3,7 @@
   "references": [
     { "path": "./shared/contract" },
     { "path": "./shared/ui" },
+    { "path": "./shared/webmcp" },
     { "path": "./features/auth" },
     { "path": "./features/documents" },
     { "path": "./features/editor" },
