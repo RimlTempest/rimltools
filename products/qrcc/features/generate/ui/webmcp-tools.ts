@@ -8,11 +8,20 @@
  * `inputSchema` の符号（symbology）は `SYMBOLOGY_KINDS` から組み立てる。
  * 直書きすると、対応する符号が増えても schema が追随しない。
  */
-import { parseHexColor, parseHttpUrl, parseNonEmptyText } from '@qrcc/contract'
+import { err, ok, parseHexColor, parseHttpUrl, parseNonEmptyText } from '@qrcc/contract'
+import type { Result } from '@qrcc/contract'
 import type { WebMcpTool } from '@qrcc/webmcp'
 import { textResult } from '@qrcc/webmcp'
-import type { CodePayload, RenderRequest, SymbologyKind } from '../contract/index.ts'
+import { buildEmailPayload } from '../core/payload/email.ts'
+import { buildEventPayload } from '../core/payload/event.ts'
+import { buildGeoPayload } from '../core/payload/geo.ts'
+import { buildSmsPayload } from '../core/payload/sms.ts'
+import { buildTelPayload } from '../core/payload/tel.ts'
+import { buildVCardPayload } from '../core/payload/vcard.ts'
+import { buildWifiPayload } from '../core/payload/wifi.ts'
+import type { CodePayload, PayloadKind, RenderRequest, SymbologyKind } from '../contract/index.ts'
 import {
+  PAYLOAD_KINDS,
   PAYLOAD_META,
   SYMBOLOGY_KINDS,
   SYMBOLOGY_META,
@@ -29,14 +38,39 @@ const DEFAULT_FOREGROUND = '#000000'
 const DEFAULT_BACKGROUND = '#ffffff'
 const DEFAULT_SCALE = 6
 
-const readString = (input: Readonly<Record<string, unknown>>, key: string): string | undefined =>
+type ToolInput = Readonly<Record<string, unknown>>
+
+const readString = (input: ToolInput, key: string): string | undefined =>
   typeof input[key] === 'string' ? input[key] : undefined
 
-const readBoolean = (input: Readonly<Record<string, unknown>>, key: string): boolean =>
-  input[key] === true
+const readBoolean = (input: ToolInput, key: string): boolean => input[key] === true
+
+const isRecord = (value: unknown): value is ToolInput => typeof value === 'object' && value !== null
+
+/** `kind` ごとの入れ子オブジェクト（`tel`、`email` など）を取り出す。 */
+const readObject = (input: ToolInput, key: string): ToolInput | undefined => {
+  const value = input[key]
+  return isRecord(value) ? value : undefined
+}
+
+/** 入れ子オブジェクトの文字列項目。無ければ空文字にする（ビルダーが判定する）。 */
+const readNestedString = (input: ToolInput, objectKey: string, fieldKey: string): string => {
+  const nested = readObject(input, objectKey)
+  const value = nested === undefined ? undefined : readString(nested, fieldKey)
+  return value ?? ''
+}
+
+/** 入れ子オブジェクトの真偽値項目。無ければ false にする。 */
+const readNestedBoolean = (input: ToolInput, objectKey: string, fieldKey: string): boolean => {
+  const nested = readObject(input, objectKey)
+  return nested !== undefined && readBoolean(nested, fieldKey)
+}
 
 const isSymbologyKind = (value: string): value is SymbologyKind =>
   SYMBOLOGY_KINDS.some((kind) => kind === value)
+
+const isPayloadKind = (value: string): value is PayloadKind =>
+  PAYLOAD_KINDS.some((kind) => kind === value)
 
 /**
  * 内容から payload を組み立てる。
@@ -47,6 +81,119 @@ const isSymbologyKind = (value: string): value is SymbologyKind =>
 const buildPayload = (text: string): CodePayload => {
   const url = parseHttpUrl(text)
   return url.ok ? { kind: 'url', url: url.value } : { kind: 'text', text }
+}
+
+/** `kind` を省略したときの既定の組み立て（従来どおりの url/text 自動判別）。 */
+const buildAutoPayload = (input: ToolInput): Result<CodePayload, string> => {
+  const rawText = readString(input, 'text')
+  const text = rawText === undefined ? undefined : parseNonEmptyText(rawText)
+  return text !== undefined && text.ok
+    ? ok(buildPayload(text.value))
+    : err('内容（text）を指定してください。')
+}
+
+/**
+ * `kind` ごとに対応するビルダー（`features/generate/core/payload/`）を呼ぶ。
+ * ここで失敗しても `throw` せず、エージェント向けの文言を `Result` の `error` で返す。
+ */
+const buildPayloadFromKind = (kind: PayloadKind, input: ToolInput): Result<CodePayload, string> => {
+  switch (kind) {
+    case 'text':
+    case 'url':
+      return buildAutoPayload(input)
+    case 'tel': {
+      const result = buildTelPayload(readNestedString(input, 'tel', 'number'))
+      return result.ok
+        ? result
+        : err(
+            '電話番号（tel.number）に国番号から始まる番号を指定してください（例: +819012345678）。',
+          )
+    }
+    case 'email': {
+      const result = buildEmailPayload({
+        to: readNestedString(input, 'email', 'to'),
+        subject: readNestedString(input, 'email', 'subject'),
+        body: readNestedString(input, 'email', 'body'),
+      })
+      return result.ok
+        ? result
+        : err('メールの宛先（email.to）に正しいメールアドレスを指定してください。')
+    }
+    case 'sms': {
+      const result = buildSmsPayload({
+        number: readNestedString(input, 'sms', 'number'),
+        body: readNestedString(input, 'sms', 'body'),
+      })
+      return result.ok
+        ? result
+        : err(
+            'SMS の宛先（sms.number）に国番号から始まる番号を指定してください（例: +819012345678）。',
+          )
+    }
+    case 'geo': {
+      const result = buildGeoPayload({
+        lat: readNestedString(input, 'geo', 'lat'),
+        lon: readNestedString(input, 'geo', 'lon'),
+      })
+      if (result.ok) return result
+      return err(
+        result.error.kind === 'invalid_lat'
+          ? '位置情報の緯度（geo.lat）に -90 から 90 の数値を指定してください。'
+          : '位置情報の経度（geo.lon）に -180 から 180 の数値を指定してください。',
+      )
+    }
+    case 'event': {
+      const result = buildEventPayload({
+        subject: readNestedString(input, 'event', 'subject'),
+        start: readNestedString(input, 'event', 'start'),
+        end: readNestedString(input, 'event', 'end'),
+        location: readNestedString(input, 'event', 'location'),
+      })
+      if (result.ok) return result
+      switch (result.error.kind) {
+        case 'invalid_subject':
+          return err('予定の件名（event.subject）を指定してください。')
+        case 'invalid_start':
+          return err('予定の開始日時（event.start）に YYYY-MM-DDTHH:mm の形式で指定してください。')
+        case 'invalid_end':
+          return err('予定の終了日時（event.end）に YYYY-MM-DDTHH:mm の形式で指定してください。')
+        case 'end_before_start':
+          return err('予定の終了日時（event.end）は開始日時より後にしてください。')
+      }
+    }
+    case 'vcard': {
+      const result = buildVCardPayload({
+        name: readNestedString(input, 'vcard', 'name'),
+        organization: readNestedString(input, 'vcard', 'organization'),
+        tel: readNestedString(input, 'vcard', 'tel'),
+        email: readNestedString(input, 'vcard', 'email'),
+        url: readNestedString(input, 'vcard', 'url'),
+      })
+      if (result.ok) return result
+      switch (result.error.kind) {
+        case 'invalid_name':
+          return err('名刺の氏名（vcard.name）を指定してください。')
+        case 'invalid_tel':
+          return err(
+            '名刺の電話番号（vcard.tel）に国番号から始まる番号を指定してください（例: +819012345678）。',
+          )
+        case 'invalid_email':
+          return err('名刺のメールアドレス（vcard.email）に正しい形式を指定してください。')
+        case 'invalid_url':
+          return err(
+            '名刺の URL（vcard.url）に http:// か https:// で始まる URL を指定してください。',
+          )
+      }
+    }
+    case 'wifi': {
+      const result = buildWifiPayload({
+        ssid: readNestedString(input, 'wifi', 'ssid'),
+        password: readNestedString(input, 'wifi', 'password'),
+        hidden: readNestedBoolean(input, 'wifi', 'hidden'),
+      })
+      return result.ok ? result : err('Wi-Fi のネットワーク名（wifi.ssid）を指定してください。')
+    }
+  }
 }
 
 /**
@@ -81,6 +228,10 @@ const buildRenderRequest = (
 const describeSymbologies = (): string =>
   SYMBOLOGY_KINDS.map((kind) => SYMBOLOGY_META[kind].label).join('、')
 
+/** `PAYLOAD_META` から、ツールの説明文に使う内容の種類の一覧を組み立てる。 */
+const describePayloadKinds = (): string =>
+  PAYLOAD_KINDS.map((kind) => PAYLOAD_META[kind].label).join('、')
+
 /**
  * 生成ツール。
  *
@@ -89,13 +240,106 @@ const describeSymbologies = (): string =>
  */
 export const makeGenerateTool = (render: RenderFn): WebMcpTool => ({
   name: 'generate-code',
-  description: `QR コードやバーコードを生成します。内容が http(s) の URL として読めれば ${PAYLOAD_META.url.label}、読めなければ ${PAYLOAD_META.text.label}として符号化します。対応する符号: ${describeSymbologies()}。`,
+  description: `QR コードやバーコードを生成します。kind で内容の種類を指定します（省略時は内容が http(s) の URL として読めれば ${PAYLOAD_META.url.label}、読めなければ ${PAYLOAD_META.text.label}として符号化します）。対応する内容: ${describePayloadKinds()}。対応する符号: ${describeSymbologies()}。`,
   inputSchema: {
     type: 'object',
     properties: {
+      kind: {
+        type: 'string',
+        enum: PAYLOAD_KINDS,
+        description: `内容の種類。省略時は text を http(s) の URL として読めれば ${PAYLOAD_META.url.label}、読めなければ ${PAYLOAD_META.text.label}として自動判別します。`,
+      },
       text: {
         type: 'string',
-        description: 'コードにする内容。URL ならそのまま読み取り機で開けます。',
+        description:
+          'コードにする内容。kind を省略、または text / url のとき使います。URL ならそのまま読み取り機で開けます。',
+      },
+      tel: {
+        type: 'object',
+        properties: {
+          number: {
+            type: 'string',
+            description: '国番号から始まる電話番号（例: +819012345678）。',
+          },
+        },
+        required: ['number'],
+        description: `kind が tel のとき指定します。${PAYLOAD_META.tel.description}`,
+      },
+      email: {
+        type: 'object',
+        properties: {
+          to: { type: 'string', description: '送信先のメールアドレス。' },
+          subject: { type: 'string', description: '件名（省略可）。' },
+          body: { type: 'string', description: '本文（省略可）。' },
+        },
+        required: ['to'],
+        description: `kind が email のとき指定します。${PAYLOAD_META.email.description}`,
+      },
+      sms: {
+        type: 'object',
+        properties: {
+          number: {
+            type: 'string',
+            description: '国番号から始まる送信先の電話番号（例: +819012345678）。',
+          },
+          body: { type: 'string', description: '本文（省略可）。' },
+        },
+        required: ['number'],
+        description: `kind が sms のとき指定します。${PAYLOAD_META.sms.description}`,
+      },
+      geo: {
+        type: 'object',
+        properties: {
+          lat: { type: 'string', description: '緯度（-90 から 90）。' },
+          lon: { type: 'string', description: '経度（-180 から 180）。' },
+        },
+        required: ['lat', 'lon'],
+        description: `kind が geo のとき指定します。${PAYLOAD_META.geo.description}`,
+      },
+      event: {
+        type: 'object',
+        properties: {
+          subject: { type: 'string', description: '件名。' },
+          start: {
+            type: 'string',
+            description: '開始日時（YYYY-MM-DDTHH:mm）。',
+          },
+          end: {
+            type: 'string',
+            description: '終了日時（YYYY-MM-DDTHH:mm）。開始日時より後にしてください。',
+          },
+          location: { type: 'string', description: '場所（省略可）。' },
+        },
+        required: ['subject', 'start', 'end'],
+        description: `kind が event のとき指定します。${PAYLOAD_META.event.description}`,
+      },
+      vcard: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: '氏名。' },
+          organization: { type: 'string', description: '組織名（省略可）。' },
+          tel: { type: 'string', description: '電話番号（省略可、例: +819012345678）。' },
+          email: { type: 'string', description: 'メールアドレス（省略可）。' },
+          url: { type: 'string', description: 'URL（省略可、http:// か https:// で始まる）。' },
+        },
+        required: ['name'],
+        description: `kind が vcard のとき指定します。${PAYLOAD_META.vcard.description}`,
+      },
+      wifi: {
+        type: 'object',
+        properties: {
+          ssid: { type: 'string', description: 'ネットワーク名（SSID）。' },
+          password: {
+            type: 'string',
+            description: 'パスワード（省略可。空なら認証なしのネットワークとして扱います）。',
+          },
+          hidden: {
+            type: 'boolean',
+            description: 'SSID を隠しているネットワークか（既定は false）。',
+          },
+        },
+        required: ['ssid'],
+        description: `kind が wifi のとき指定します。${PAYLOAD_META.wifi.description}このコードを読み取った人はパスワードを知ることになります。`,
       },
       symbology: {
         type: 'string',
@@ -108,22 +352,27 @@ export const makeGenerateTool = (render: RenderFn): WebMcpTool => ({
           '生成した SVG の本文も返すか（既定は false）。大きな SVG を毎回返すとエージェントの文脈を消費します。',
       },
     },
-    required: ['text'],
   },
   execute: async (input) => {
-    const rawText = readString(input, 'text')
-    const text = rawText === undefined ? undefined : parseNonEmptyText(rawText)
-    if (text === undefined || !text.ok) {
-      return textResult('内容（text）を指定してください。')
+    const kindInput = readString(input, 'kind')
+
+    const payloadResult: Result<CodePayload, string> =
+      kindInput === undefined
+        ? buildAutoPayload(input)
+        : isPayloadKind(kindInput)
+          ? buildPayloadFromKind(kindInput, input)
+          : err(`kind には次のいずれかを指定してください: ${PAYLOAD_KINDS.join('、')}`)
+
+    if (!payloadResult.ok) {
+      return textResult(payloadResult.error)
     }
+    const payload = payloadResult.value
 
     const symbologyInput = readString(input, 'symbology')
     const symbologyKind =
       symbologyInput !== undefined && isSymbologyKind(symbologyInput)
         ? symbologyInput
         : DEFAULT_SYMBOLOGY_KIND
-
-    const payload = buildPayload(text.value)
 
     if (!isPayloadCompatible(payload.kind, symbologyKind)) {
       return textResult(
