@@ -29,7 +29,7 @@
 | 001 | [足場・ツールチェーン・contract・ui・shell](001-scaffold-tooling-contract-ui-shell.md) | P1   | L    | —        | DONE（`e3b67ac`）                                                       |
 | 002 | [DocumentRoom DO と /ws 配線](002-sync-durable-object-and-ws-entry.md)                 | P1   | L    | 001      | DONE（`b7f1cb6`）                                                       |
 | 003 | [Better Auth（ゲスト + Google）](003-auth-guest-and-google.md)                         | P1   | M    | 001      | DONE（`7596f5b`）                                                       |
-| 004 | [文書・共有リンク・本認可](004-documents-sharing-and-authorization.md)                 | P1   | L    | 002, 003 | TODO                                                                    |
+| 004 | [文書・共有リンク・本認可](004-documents-sharing-and-authorization.md)                 | P1   | L    | 002, 003 | DONE（`aa66ae6`）                                                       |
 | 005 | [エディタ画面](005-editor-codemirror-presence-status.md)                               | P1   | L    | 004      | TODO                                                                    |
 | 006 | [フォーマット層](006-formats-parse-diagnose-preview.md)                                | P1   | L    | 001, 005 | IN PROGRESS（core + UI 部品 `4532ff1`、editor 差し込み・e2e は 005 後） |
 | 007 | [WebMCP・PWA・Deploy・smoke](007-webmcp-pwa-deploy-smoke.md)                           | P2   | M    | 005, 006 | TODO                                                                    |
@@ -51,5 +51,8 @@ executor は完了時にこの表の自分の行だけを書き換える（revie
 - **`Breadcrumbs` の置き場**: `@noter/auth` が `@noter/shell` に依存し shell の `root.route` が auth に依存する双方向。公開サブパス経由なので ADR-0007 の範囲内だが、plan 008 で `shared/ui` へ移す候補（plan 003 レビュー）
 - **happy-dom の `Node.prototype.nodeName` shim**: happy-dom が `nodeName` を空で返し DOMPurify が全消しするため `features/formats/ui/happy-dom-node-name.test-setup.ts` に置いた。plan 008（devops）で `shared/ui/test-setup.ts` に移す候補（plan 006a レビュー）
 - **`core/` の配置の統一**: `features/sync` は `core/src/`、`features/auth` と `features/formats` は `core/*.ts` フラット。`noter-architecture` スキルは `core/src/` 前提で書かれている。plan 008 でどちらかに寄せてスキルの記述を合わせる（plan 006a レビュー）
+- **server function の `.validator((input: X) => input)`**: 型注釈だけの素通しで実行時の形は検証していない。`parse*` を通す形に直す（plan 008 ハードニング、plan 004 レビュー）
+- **失効・除外・削除の Undo トースト（ux.md §4.4）**: v1 は確認 2 段階で AAA 3.3.6 を満たす。リンク復活・再招待 API が無いため Undo は別 plan（plan 004 executor NOTE 4）
+- **`/s/:token` の share_link 読み取り 2 回**: route の `resolveShareLink` と `join` 内の再検証。書き込みではないので許容（plan 004 レビュー）
 - **アカウント削除 UI**: 文書の扱い（所有権・メンバー）を決めてから。v1 では置かない（plan 003）
 - **`MAX_MEMBERS` 超過や日次上限の e2e**: 再現手段が無い。ユニットで UI を固定する（plan 008）
