@@ -232,25 +232,54 @@ describe('makeDocumentRepository', () => {
 
     test('作って引ける', async () => {
       unwrap(await repository.createShareLink(link))
-      expect(unwrap(await repository.findShareLink(shareToken('1')))).toEqual(link)
+      const target = unwrap(await repository.findShareLinkTarget(shareToken('1')))
+      expect(target?.link).toEqual(link)
     })
 
     test('無期限のリンクも作れる', async () => {
       unwrap(await repository.createShareLink({ ...link, expiresAt: undefined }))
-      const found = unwrap(await repository.findShareLink(shareToken('1')))
-      expect(found?.expiresAt).toBeUndefined()
+      const target = unwrap(await repository.findShareLinkTarget(shareToken('1')))
+      expect(target?.link.expiresAt).toBeUndefined()
     })
 
     test('知らないトークンは undefined', async () => {
-      expect(unwrap(await repository.findShareLink(shareToken('9')))).toBeUndefined()
+      expect(unwrap(await repository.findShareLinkTarget(shareToken('9')))).toBeUndefined()
     })
 
     test('失効すると revokedAt が入り、一覧から消える', async () => {
       unwrap(await repository.createShareLink(link))
       unwrap(await repository.revokeShareLink(shareToken('1'), LATER))
 
-      expect(unwrap(await repository.findShareLink(shareToken('1')))?.revokedAt).toEqual(LATER)
+      const target = unwrap(await repository.findShareLinkTarget(shareToken('1')))
+      expect(target?.link.revokedAt).toEqual(LATER)
       expect(unwrap(await repository.listShareLinks(documentId('1')))).toEqual([])
+    })
+
+    /** 参加してよいかの判定に要る。行き先が消えていれば入れてはいけない。 */
+    test('参照先の文書が生きているかを同じ 1 クエリで返す', async () => {
+      unwrap(await repository.createShareLink(link))
+
+      let queries = 0
+      const counting = makeDocumentRepository({
+        ...makeSqliteRunner(database),
+        all: async (statement) => {
+          queries += 1
+          return makeSqliteRunner(database).all(statement)
+        },
+      })
+      const alive = unwrap(await counting.findShareLinkTarget(shareToken('1')))
+      expect(alive?.documentExists).toBe(true)
+      expect(alive?.documentDeletedAt).toBeUndefined()
+      expect(queries).toBe(1)
+    })
+
+    test('参照先の文書が削除されていたら deletedAt が返る', async () => {
+      unwrap(await repository.createShareLink(link))
+      unwrap(await repository.softDelete(documentId('1'), LATER))
+
+      const target = unwrap(await repository.findShareLinkTarget(shareToken('1')))
+      expect(target?.documentExists).toBe(true)
+      expect(target?.documentDeletedAt).toEqual(LATER)
     })
 
     test('有効なリンクだけを一覧する', async () => {

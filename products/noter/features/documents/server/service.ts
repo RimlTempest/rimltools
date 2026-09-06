@@ -105,6 +105,13 @@ export type DocumentService = {
     userId: UserId,
     role: Role,
   ) => Promise<Result<void, DocumentError>>
+  /**
+   * トークンを検証するだけ。**書き込みも、セッションの発行も伴わない。**
+   *
+   * `/s/:token` はゲストを発行する前にこれを通す。順番を逆にすると、
+   * 当てずっぽうの URL を叩くだけで D1 に user と session の行を作れてしまう。
+   */
+  readonly resolveShareLink: (token: ShareToken) => Promise<Result<ShareLink, DocumentError>>
   /** 共有リンクを開いた人をメンバーにする。入れたら文書 ID を返す。 */
   readonly join: (actor: Actor, token: ShareToken) => Promise<Result<DocumentId, DocumentError>>
   /** `/d/:id/raw` の認可。本文の取得は呼び出し側（DO の `/snapshot`）。 */
@@ -279,9 +286,11 @@ export const makeDocumentService = (deps: DocumentServiceDeps): DocumentService 
     if (!authorized.ok) return authorized
 
     // 別の文書のトークンを失効させられないよう、文書 ID の一致を確かめる
-    const link = await repository.findShareLink(token)
-    if (!link.ok) return err(link.error)
-    if (link.value === undefined || link.value.documentId !== documentId) return err(NOT_FOUND)
+    const found = await repository.findShareLinkTarget(token)
+    if (!found.ok) return err(found.error)
+    if (found.value === undefined || found.value.link.documentId !== documentId) {
+      return err(NOT_FOUND)
+    }
 
     const revoked = await repository.revokeShareLink(token, deps.now())
     return revoked.ok ? ok(undefined) : err(revoked.error)
@@ -331,6 +340,24 @@ export const makeDocumentService = (deps: DocumentServiceDeps): DocumentService 
     return ok(undefined)
   }
 
+  const resolveShareLink = async (token: ShareToken): Promise<Result<ShareLink, DocumentError>> => {
+    const found = await repository.findShareLinkTarget(token)
+    if (!found.ok) return err(found.error)
+
+    const usable = isShareLinkUsable(found.value?.link, deps.now())
+    if (!usable.ok) return err({ kind: 'link_unusable', reason: usable.error })
+
+    // 行き先が消えていれば、リンクが生きていても入れない。
+    // 理由を分けないのは、トークンの持ち主以外に文書の有無を教えないため
+    if (found.value === undefined || !found.value.documentExists) {
+      return err({ kind: 'link_unusable', reason: 'not_found' })
+    }
+    if (found.value.documentDeletedAt !== undefined) {
+      return err({ kind: 'link_unusable', reason: 'not_found' })
+    }
+    return ok(usable.value)
+  }
+
   const join = async (
     actor: Actor,
     token: ShareToken,
@@ -338,12 +365,10 @@ export const makeDocumentService = (deps: DocumentServiceDeps): DocumentService 
     const userId = actorUserId(actor)
     if (userId === undefined) return err(SIGN_IN_REQUIRED)
 
-    const found = await repository.findShareLink(token)
-    if (!found.ok) return err(found.error)
-
-    const usable = isShareLinkUsable(found.value, deps.now())
-    if (!usable.ok) return err({ kind: 'link_unusable', reason: usable.error })
-    const link = usable.value
+    // 検証は 1 か所に置く。ここを飛ばして書き込む経路を作らない
+    const resolved = await resolveShareLink(token)
+    if (!resolved.ok) return resolved
+    const link = resolved.value
 
     const access = await repository.findForActor(link.documentId, userId)
     if (!access.ok) return err(access.error)
@@ -391,6 +416,7 @@ export const makeDocumentService = (deps: DocumentServiceDeps): DocumentService 
     listShareLinks,
     removeMember,
     changeMemberRole,
+    resolveShareLink,
     join,
     authorizeRaw,
     authorizeRead,

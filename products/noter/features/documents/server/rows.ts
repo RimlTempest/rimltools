@@ -43,6 +43,9 @@ const readDate = (row: SqlRow, key: string): Date | undefined => {
 
 export const toSeconds = (date: Date): number => Math.floor(date.getTime() / 1000)
 
+/** JOIN してきた列など、行に無いこともある日時。 */
+export const readOptionalDate = (row: SqlRow, key: string): Date | undefined => readDate(row, key)
+
 const isShareRole = (role: Role): role is ShareRole =>
   SHARE_ROLES.some((candidate) => candidate === role)
 

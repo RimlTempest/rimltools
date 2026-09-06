@@ -28,6 +28,7 @@ import {
   parseShareLinkRow,
   parseSummaryRow,
   readCount,
+  readOptionalDate,
   toSeconds,
 } from './rows.ts'
 import type { SqlRunner, SqlStatement, StorageError } from './sql.ts'
@@ -92,7 +93,21 @@ const LIST_MEMBERS = `
   LIMIT ?`
 
 const INSERT_SHARE_LINK = `INSERT INTO share_link (${SHARE_LINK_COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, NULL)`
-const FIND_SHARE_LINK = `SELECT ${SHARE_LINK_COLUMNS} FROM share_link WHERE token = ? LIMIT 1`
+
+/**
+ * リンクと**その行き先の生死**を 1 クエリで取る。
+ *
+ * 参加してよいかの判定には「リンクが生きているか」だけでなく
+ * 「文書がまだあるか」も要る。2 回に分けると、削除済みの文書へ
+ * メンバー行を書いてしまう隙ができる。
+ */
+const FIND_SHARE_LINK = `
+  SELECT s.token, s.document_id, s.role, s.created_by, s.created_at, s.expires_at, s.revoked_at,
+         d.id AS target_id, d.deleted_at AS target_deleted_at
+  FROM share_link s
+  LEFT JOIN document d ON d.id = s.document_id
+  WHERE s.token = ?
+  LIMIT 1`
 const REVOKE_SHARE_LINK =
   'UPDATE share_link SET revoked_at = ? WHERE token = ? AND revoked_at IS NULL'
 const LIST_SHARE_LINKS = `
@@ -131,6 +146,15 @@ const TRANSFER_DROP_DUPLICATES = `
     )`
 const TRANSFER_MEMBERS = 'UPDATE document_member SET user_id = ? WHERE user_id = ?'
 const TRANSFER_DOCUMENTS = 'UPDATE document SET owner_id = ? WHERE owner_id = ?'
+
+/** 共有リンクと、その行き先の文書の状態。 */
+export type ShareLinkTarget = {
+  readonly link: ShareLink
+  /** 参照先の文書の行があるか。外部キーがあるので通常は true。 */
+  readonly documentExists: boolean
+  /** soft delete されていればその時刻。 */
+  readonly documentDeletedAt: Date | undefined
+}
 
 export type DocumentRepository = {
   /** 文書とその所有者メンバー行を 1 トランザクションで作る（2 行）。 */
@@ -171,9 +195,10 @@ export type DocumentRepository = {
     documentId: DocumentId,
   ) => Promise<Result<readonly MemberSummary[], StorageError>>
   readonly createShareLink: (link: ShareLink) => Promise<Result<void, StorageError>>
-  readonly findShareLink: (
+  /** リンクと行き先の文書の状態。行き先が消えていれば参加させてはいけない。 */
+  readonly findShareLinkTarget: (
     token: ShareToken,
-  ) => Promise<Result<ShareLink | undefined, StorageError>>
+  ) => Promise<Result<ShareLinkTarget | undefined, StorageError>>
   readonly revokeShareLink: (token: ShareToken, now: Date) => Promise<Result<void, StorageError>>
   readonly listShareLinks: (
     documentId: DocumentId,
@@ -264,13 +289,21 @@ export const makeDocumentRepository = (runner: SqlRunner): DocumentRepository =>
     return collectResults(rows.value.map(parseMemberRow))
   }
 
-  const findShareLink = async (
+  const findShareLinkTarget = async (
     token: ShareToken,
-  ): Promise<Result<ShareLink | undefined, StorageError>> => {
+  ): Promise<Result<ShareLinkTarget | undefined, StorageError>> => {
     const rows = await runner.all(statement(FIND_SHARE_LINK, [token]))
     if (!rows.ok) return rows
     const row = rows.value[0]
-    return row === undefined ? ok(undefined) : parseShareLinkRow(row)
+    if (row === undefined) return ok(undefined)
+
+    const link = parseShareLinkRow(row)
+    if (!link.ok) return link
+    return ok({
+      link: link.value,
+      documentExists: typeof row['target_id'] === 'string',
+      documentDeletedAt: readOptionalDate(row, 'target_deleted_at'),
+    })
   }
 
   const listShareLinks = async (
@@ -288,7 +321,7 @@ export const makeDocumentRepository = (runner: SqlRunner): DocumentRepository =>
     countOwnedByUser,
     countMembers,
     listMembers,
-    findShareLink,
+    findShareLinkTarget,
     listShareLinks,
 
     rename: async (documentId, title, now) =>

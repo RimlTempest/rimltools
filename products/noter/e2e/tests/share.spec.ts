@@ -88,6 +88,36 @@ test('失効したリンクは無効だと伝える', async ({ browser, page }) 
   }
 })
 
+/**
+ * 使えないリンクでセッションを作らせない。
+ *
+ * 形だけ正しい URL を総当たりされるだけで user と session の行が増えると、
+ * 誰でも D1 の書き込み枠（docs/free-tier-budget.md）を削れてしまう。
+ */
+test('無効なリンクではゲストのセッションを発行しない', async ({ browser, page }) => {
+  await createDocument(page, 'Markdown で始める')
+  const shareUrl = await createShareLink(page)
+  await page.getByRole('button', { name: '閲覧のみのリンクを失効' }).click()
+  await page.getByRole('button', { name: '失効する' }).click()
+  await expect(
+    page.getByText('有効なリンクはまだありません。上のボタンで作成してください。'),
+  ).toBeVisible()
+
+  const stranger = await browser.newContext()
+  try {
+    const revoked = await stranger.request.get(shareUrl)
+    expect(revoked.headers()['set-cookie']).toBeUndefined()
+
+    // 存在しないトークンでも同じ（当てずっぽうの URL で行を作らせない）
+    const unknown = await stranger.request.get(`/s/shr_${'0'.repeat(20)}zzzz`)
+    expect(unknown.headers()['set-cookie']).toBeUndefined()
+
+    expect(await stranger.cookies()).toEqual([])
+  } finally {
+    await stranger.close()
+  }
+})
+
 test('非メンバーには文書の存在も知らせない', async ({ browser, page }) => {
   const documentUrl = await createDocument(page, 'JSON で始める')
 

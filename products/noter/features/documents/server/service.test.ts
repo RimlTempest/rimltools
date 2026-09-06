@@ -73,6 +73,23 @@ describe('makeDocumentService', () => {
 
   afterEach(() => database.close())
 
+  /** 同じ D1 を別の時計で見るサービス。期限切れの検証に使う。 */
+  const makeServiceAt = (now: Date): DocumentService =>
+    makeDocumentService({
+      repository: makeDocumentRepository(makeSqliteRunner(database)),
+      now: () => now,
+      randomBytes,
+      kick: async () => {},
+    })
+
+  /** 参加者の行数。「書いていない」ことを確かめるために数える。 */
+  const countMemberRows = (): number => {
+    const row: unknown = database.query('SELECT COUNT(*) AS n FROM document_member').get()
+    return typeof row === 'object' && row !== null && typeof Reflect.get(row, 'n') === 'number'
+      ? Reflect.get(row, 'n')
+      : -1
+  }
+
   const newDocument = async (owner: Actor = signedIn(OWNER)) =>
     unwrap(await service.create(owner, 'markdown'))
 
@@ -283,6 +300,66 @@ describe('makeDocumentService', () => {
     })
   })
 
+  describe('resolveShareLink', () => {
+    test('有効なリンクはそのまま返る', async () => {
+      const document = await newDocument()
+      const token = await shareWith(document.id, 'viewer')
+      expect(unwrap(await service.resolveShareLink(token)).token).toBe(token)
+    })
+
+    test('存在しないトークンは not_found', async () => {
+      expect(errorOf(await service.resolveShareLink(shareToken('9')))).toEqual({
+        kind: 'link_unusable',
+        reason: 'not_found',
+      })
+    })
+
+    test('失効したリンクは revoked', async () => {
+      const document = await newDocument()
+      const token = await shareWith(document.id, 'viewer')
+      unwrap(await service.revokeShareLink(signedIn(OWNER), document.id, token))
+
+      expect(errorOf(await service.resolveShareLink(token))).toEqual({
+        kind: 'link_unusable',
+        reason: 'revoked',
+      })
+    })
+
+    test('期限の切れたリンクは expired', async () => {
+      const document = await newDocument()
+      const token = await shareWith(document.id, 'viewer', 7)
+      const later = makeServiceAt(new Date('2026-09-20T00:00:00.000Z'))
+
+      expect(errorOf(await later.resolveShareLink(token))).toEqual({
+        kind: 'link_unusable',
+        reason: 'expired',
+      })
+    })
+
+    /** 行き先が消えていれば、リンク自体が生きていても入れてはいけない。 */
+    test('削除済みの文書を指すリンクは not_found', async () => {
+      const document = await newDocument()
+      const token = await shareWith(document.id, 'viewer')
+      unwrap(await service.remove(signedIn(OWNER), document.id))
+
+      expect(errorOf(await service.resolveShareLink(token))).toEqual({
+        kind: 'link_unusable',
+        reason: 'not_found',
+      })
+    })
+
+    /** 検証だけを行う。ここで 1 行でも書くと、誰でも D1 の書き込み枠を削れる。 */
+    test('検証だけで、1 行も書かない', async () => {
+      const document = await newDocument()
+      const token = await shareWith(document.id, 'viewer')
+      unwrap(await service.revokeShareLink(signedIn(OWNER), document.id, token))
+
+      const before = countMemberRows()
+      expect(errorOf(await service.resolveShareLink(token))).toBeDefined()
+      expect(countMemberRows()).toBe(before)
+    })
+  })
+
   describe('join', () => {
     test('リンクを開いた人がメンバーになる', async () => {
       const document = await newDocument()
@@ -316,6 +393,19 @@ describe('makeDocumentService', () => {
         kind: 'link_unusable',
         reason: 'not_found',
       })
+    })
+
+    test('削除済み文書のリンクでは参加できず、メンバー行を書かない', async () => {
+      const document = await newDocument()
+      const token = await shareWith(document.id, 'viewer')
+      unwrap(await service.remove(signedIn(OWNER), document.id))
+
+      const before = countMemberRows()
+      expect(errorOf(await service.join(signedIn(FRIEND), token))).toEqual({
+        kind: 'link_unusable',
+        reason: 'not_found',
+      })
+      expect(countMemberRows()).toBe(before)
     })
 
     test('visitor は参加できない（先にゲストを発行する）', async () => {
