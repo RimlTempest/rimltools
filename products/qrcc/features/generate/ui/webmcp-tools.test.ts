@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'bun:test'
-import { ok } from '@qrcc/contract'
+import { ok, parsePhoneNumber } from '@qrcc/contract'
+import { PAYLOAD_KINDS } from '../contract/index.ts'
 import type { RenderFn } from './generate-screen.tsx'
 import { makeGenerateTool } from './webmcp-tools.ts'
+
+const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
+  typeof value === 'object' && value !== null
 
 const OK_RESPONSE = {
   body: '<svg></svg>',
@@ -34,10 +38,14 @@ describe('makeGenerateTool', () => {
     expect(tool.description.length).toBeGreaterThan(0)
   })
 
-  test('inputSchema は type: object で text が required', () => {
+  test('inputSchema は type: object で、kind は PAYLOAD_KINDS 由来の enum を持つ', () => {
     const tool = makeGenerateTool(() => Promise.resolve(ok(OK_RESPONSE)))
     expect(tool.inputSchema['type']).toBe('object')
-    expect(tool.inputSchema['required']).toContain('text')
+    const properties = tool.inputSchema['properties']
+    if (!isRecord(properties)) throw new Error('properties がオブジェクトではない')
+    const kindSchema = properties['kind']
+    if (!isRecord(kindSchema)) throw new Error('kind の schema がオブジェクトではない')
+    expect(kindSchema['enum']).toEqual(PAYLOAD_KINDS)
   })
 
   test('render を 1 回呼び、URL は payload.kind = url になる', async () => {
@@ -127,6 +135,82 @@ describe('makeGenerateTool', () => {
     const tool = makeGenerateTool(render)
     // ean13 は text しか受け付けないが、URL を渡す
     const result = await tool.execute({ text: 'https://example.com', symbology: 'ean13' })
+    expect(calls).toHaveLength(0)
+    expect(result.content[0]?.text.length).toBeGreaterThan(0)
+  })
+
+  test('kind を省略すると、従来どおり URL / text を自動判別する（回帰）', async () => {
+    const calls: unknown[] = []
+    const render: RenderFn = (request) => {
+      calls.push(request)
+      return Promise.resolve(ok(OK_RESPONSE))
+    }
+    const tool = makeGenerateTool(render)
+
+    await tool.execute({ text: 'https://example.com' })
+    await tool.execute({ text: 'これはURLではない' })
+
+    expect(calls).toHaveLength(2)
+    const [urlRequest, textRequest] = calls
+    if (
+      typeof urlRequest === 'object'
+      && urlRequest !== null
+      && 'payload' in urlRequest
+      && typeof textRequest === 'object'
+      && textRequest !== null
+      && 'payload' in textRequest
+    ) {
+      expect(urlRequest.payload).toEqual({ kind: 'url', url: 'https://example.com' })
+      expect(textRequest.payload).toEqual({ kind: 'text', text: 'これはURLではない' })
+      return
+    }
+    throw new Error('request が RenderRequest ではない')
+  })
+
+  describe('kind: tel', () => {
+    test('tel.number から電話番号の payload を組み立てる', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      await tool.execute({ kind: 'tel', tel: { number: '+819012345678' } })
+
+      expect(calls).toHaveLength(1)
+      const request = calls[0]
+      const expected = parsePhoneNumber('+819012345678')
+      expect(expected.ok).toBe(true)
+      if (typeof request === 'object' && request !== null && 'payload' in request && expected.ok) {
+        expect(request.payload).toEqual({ kind: 'tel', number: expected.value })
+        return
+      }
+      throw new Error('request が RenderRequest ではない')
+    })
+
+    test('不正な電話番号は render を呼ばず、日本語の理由を返す', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      const result = await tool.execute({ kind: 'tel', tel: { number: '090-1234-5678' } })
+
+      expect(calls).toHaveLength(0)
+      expect(result.content[0]?.text.length).toBeGreaterThan(0)
+    })
+  })
+
+  test('知らない kind を渡しても例外を投げず、理由を返す', async () => {
+    const calls: unknown[] = []
+    const render: RenderFn = (request) => {
+      calls.push(request)
+      return Promise.resolve(ok(OK_RESPONSE))
+    }
+    const tool = makeGenerateTool(render)
+    const result = await tool.execute({ kind: 'not-a-real-kind', text: 'hello' })
+
     expect(calls).toHaveLength(0)
     expect(result.content[0]?.text.length).toBeGreaterThan(0)
   })
