@@ -33,7 +33,7 @@
 | 005 | [エディタ画面](005-editor-codemirror-presence-status.md)                               | P1   | L    | 004      | DONE（`b40863a`）                       |
 | 006 | [フォーマット層](006-formats-parse-diagnose-preview.md)                                | P1   | L    | 001, 005 | DONE（006a `4532ff1` / 006b `f6a8c1a`） |
 | 007 | [WebMCP・PWA・Deploy・smoke](007-webmcp-pwa-deploy-smoke.md)                           | P2   | M    | 005, 006 | DONE（`b026d17`）                       |
-| 008 | [AAA 監査・e2e・ハードニング](008-a11y-pass-e2e-and-hardening.md)                      | P2   | M    | 007      | TODO                                    |
+| 008 | [AAA 監査・e2e・ハードニング](008-a11y-pass-e2e-and-hardening.md)                      | P2   | M    | 007      | IN PROGRESS（`feat/e2e`）               |
 
 状態: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED(理由)` / `STALE`。
 executor は完了時にこの表の自分の行だけを書き換える（reviewer が索引を管理すると言った場合は触らない）。
