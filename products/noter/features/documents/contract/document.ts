@@ -58,6 +58,15 @@ export type DocumentSummary = {
   readonly updatedAt: Date
 }
 
+/** 画面に出すぶんだけの文書。本文も作成時刻も要らない。 */
+export type DocumentHeader = Pick<Document, 'id' | 'ownerId' | 'title' | 'kind' | 'updatedAt'>
+
+/** 画面に出すぶんだけの共有リンク。失効済みは一覧に出さないので `revokedAt` を持たない。 */
+export type ShareLinkView = Pick<
+  ShareLink,
+  'token' | 'documentId' | 'role' | 'createdAt' | 'expiresAt'
+>
+
 /** 文書 1 本に対する「この人の見え方」。エディタ画面と `/ws/` の認可が使う。 */
 export type DocumentAccess = {
   readonly document: Document

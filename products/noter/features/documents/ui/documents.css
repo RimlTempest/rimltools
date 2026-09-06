@@ -1,0 +1,246 @@
+/*
+ * 文書まわりの見た目。
+ *
+ * レイアウトは Grid と Container Queries だけで組み、JS で幅を測らない。
+ * 色はセマンティックトークン経由なので、ダークモードは自動で付いてくる。
+ */
+
+/* --- 新規作成 ------------------------------------------------------------ */
+
+.noter-doc-create fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.noter-doc-create legend {
+  padding: 0;
+  margin-block-end: var(--noter-space-2);
+  color: var(--noter-text-muted);
+  font-size: var(--noter-text-sm);
+}
+
+.noter-doc-create__choices {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--noter-space-2);
+  /* 狭い画面では 1 列。押し間違いを減らすため無理に詰めない */
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  max-inline-size: 44rem;
+}
+
+.noter-doc-create__choices .noter-button {
+  /* AAA 2.5.5 */
+  min-block-size: var(--noter-target-min);
+  inline-size: 100%;
+}
+
+/* --- ゲスト向けの案内 ----------------------------------------------------- */
+
+.noter-doc-notice {
+  display: grid;
+  gap: var(--noter-space-3);
+  justify-items: start;
+  margin-block: var(--noter-space-6);
+  padding: var(--noter-space-4);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  background: var(--noter-surface-raised);
+  max-inline-size: var(--noter-measure);
+}
+
+.noter-doc-notice p {
+  margin: 0;
+}
+
+/* --- 一覧 ---------------------------------------------------------------- */
+
+.noter-doc-table {
+  /* 狭い画面で本文ごと横スクロールさせない。表だけを横に流す */
+  display: block;
+  overflow-x: auto;
+  inline-size: 100%;
+  margin-block-start: var(--noter-space-6);
+  border-collapse: collapse;
+}
+
+.noter-doc-table caption {
+  margin-block-end: var(--noter-space-2);
+  font-size: var(--noter-text-xl);
+  font-weight: 700;
+  text-align: start;
+}
+
+.noter-doc-table :is(th, td) {
+  padding: var(--noter-space-2) var(--noter-space-3);
+  border-block-end: 1px solid var(--noter-border);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.noter-doc-table thead th {
+  color: var(--noter-text-muted);
+  font-size: var(--noter-text-sm);
+}
+
+.noter-doc-table tbody th {
+  font-weight: 700;
+}
+
+.noter-doc-table time {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.noter-doc-badge {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--noter-space-2);
+  min-block-size: 1.75rem;
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius-sm);
+  background: var(--noter-surface-raised);
+  font-size: var(--noter-text-sm);
+  white-space: nowrap;
+}
+
+.noter-doc-hint {
+  color: var(--noter-text-muted);
+  font-size: var(--noter-text-sm);
+}
+
+.noter-doc-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-2);
+}
+
+/* --- 文書の画面 ---------------------------------------------------------- */
+
+.noter-doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-3);
+}
+
+.noter-doc-rename {
+  display: grid;
+  gap: var(--noter-space-3);
+  justify-items: stretch;
+  max-inline-size: 28rem;
+  margin-block: var(--noter-space-4) var(--noter-space-6);
+}
+
+.noter-doc-rename .noter-button {
+  justify-self: start;
+  padding-inline: var(--noter-space-6);
+}
+
+.noter-doc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-3);
+  margin-block: var(--noter-space-6);
+}
+
+/* --- 共有ダイアログ ------------------------------------------------------- */
+
+.noter-share-dialog {
+  inline-size: min(38rem, calc(100vi - 2 * var(--noter-space-4)));
+  padding: var(--noter-space-6);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius-lg);
+  background: var(--noter-surface);
+  color: var(--noter-text);
+}
+
+.noter-share-dialog::backdrop {
+  /* 背後を暗くする。色そのものではなく「奥にある」ことを伝えるだけ */
+  background: rgb(0 0 0 / 50%);
+}
+
+.noter-share-dialog h2 {
+  margin-block-start: 0;
+}
+
+.noter-share-form {
+  display: grid;
+  gap: var(--noter-space-3);
+  justify-items: start;
+  margin-block-end: var(--noter-space-6);
+}
+
+.noter-share-form fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.noter-share-radio {
+  display: flex;
+  align-items: center;
+  gap: var(--noter-space-2);
+  /* AAA 2.5.5: ラベルごとクリックできる高さを確保する */
+  min-block-size: var(--noter-target-min);
+}
+
+.noter-share-expiry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-2);
+}
+
+.noter-share-expiry select {
+  min-block-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-2);
+  border: 1px solid var(--noter-border-strong);
+  border-radius: var(--noter-radius-sm);
+  background: var(--noter-surface);
+  color: var(--noter-text);
+  font: inherit;
+}
+
+.noter-share-links,
+.noter-share-members {
+  display: grid;
+  gap: var(--noter-space-3);
+  margin: 0 0 var(--noter-space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.noter-share-links li,
+.noter-share-members li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-2);
+  padding-block-end: var(--noter-space-3);
+  border-block-end: 1px solid var(--noter-border);
+}
+
+.noter-share-links code {
+  /* 長い URL でダイアログを広げない */
+  overflow-wrap: anywhere;
+  font-family: var(--noter-font-mono);
+  font-size: var(--noter-text-sm);
+}
+
+.noter-share-copied {
+  display: block;
+  margin-block-end: var(--noter-space-4);
+  color: var(--noter-text-muted);
+  font-size: var(--noter-text-sm);
+}
+
+@media (forced-colors: active) {
+  .noter-doc-notice,
+  .noter-doc-badge,
+  .noter-share-dialog {
+    border-color: CanvasText;
+  }
+}

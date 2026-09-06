@@ -31,6 +31,7 @@
         "@better-auth/drizzle-adapter": "1.7.3",
         "@noter/auth": "workspace:*",
         "@noter/contract": "workspace:*",
+        "@noter/documents": "workspace:*",
         "@noter/shell": "workspace:*",
         "@noter/sync": "workspace:*",
         "@noter/ui": "workspace:*",

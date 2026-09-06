@@ -22,7 +22,12 @@ const SYNC_STEP1 = 0
 const SYNC_STEP2 = 1
 
 const target = new URL(process.argv[2] ?? DEFAULT_URL)
-target.searchParams.set('name', 'probe')
+
+/**
+ * `/ws/` は本物の認可を通る（plan 004）。ブラウザ以外から繋ぐには
+ * メンバーのセッション Cookie が要る。無いと 401 で切られる。
+ */
+const cookie = process.argv[3] ?? process.env['NOTER_SESSION_COOKIE'] ?? ''
 
 const doc = new Y.Doc()
 
@@ -41,7 +46,7 @@ const fail = (reason: string): never => {
 
 const timer = setTimeout(() => fail(`timeout after ${TIMEOUT_MS}ms`), TIMEOUT_MS)
 
-const socket = new WebSocket(target.toString())
+const socket = new WebSocket(target.toString(), cookie === '' ? {} : { headers: { cookie } })
 socket.binaryType = 'arraybuffer'
 
 socket.addEventListener('open', () => {

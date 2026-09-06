@@ -8,7 +8,8 @@
     "./core": "./core/index.ts",
     "./server": "./server/index.ts",
     "./ui": "./ui/index.ts",
-    "./ui/documents.css": "./ui/documents.css"
+    "./ui/documents.css": "./ui/documents.css",
+    "./ui/wiring": "./ui/documents-wiring.route.ts"
   },
   "scripts": {
     "build": "tsc --build",
