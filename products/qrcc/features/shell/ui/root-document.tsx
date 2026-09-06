@@ -14,6 +14,14 @@ export const RootDocument = ({ children }: { readonly children: ReactNode }) => 
     <head>
       {/* 最初の描画より前に data-theme を当てて、テーマのちらつきを防ぐ */}
       <script dangerouslySetInnerHTML={themeInitHtml} />
+      {/*
+        アドレスバーの色。--qrcc-surface のライト/ダークと揃える。
+        TanStack Router の head 管理（documentHead）に置くと `name` で
+        重複排除され、後勝ちの 1 つしか配信 HTML に残らない。ここに
+        直接書けば重複排除を通らず、ライトとダーク両方が残る
+      */}
+      <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+      <meta name="theme-color" content="#0f1217" media="(prefers-color-scheme: dark)" />
     </head>
     <body>
       <SkipLink targetId="main" />
@@ -27,6 +35,10 @@ export const RootDocument = ({ children }: { readonly children: ReactNode }) => 
  * （feature がアプリの構成に手を伸ばさないため）。
  *
  * TanStack Router の head は可変配列を期待するため `as const` を付けない。
+ *
+ * **`theme-color` はここに置かない。** TanStack Router の head 管理は
+ * `name` で重複排除するため、ライト/ダークの 2 つを置いても後勝ちで
+ * 1 つしか配信 HTML に残らない（`RootDocument` に直接書いている）。
  */
 export const documentHead = (stylesheetHref: string) => () => ({
   meta: [
@@ -38,10 +50,6 @@ export const documentHead = (stylesheetHref: string) => () => ({
       content:
         'QR コードとバーコードを生成・読み取り・管理・印刷できるツール。生成と読み取りは端末側で動くので、ログインなしでも使えます。',
     },
-    // アドレスバーの色。--qrcc-surface のライト/ダークと揃える。
-    // 片方だけ書くと、テーマを切り替えたときにアドレスバーだけ食い違う
-    { name: 'theme-color', content: '#ffffff', media: '(prefers-color-scheme: light)' },
-    { name: 'theme-color', content: '#0f1217', media: '(prefers-color-scheme: dark)' },
   ],
   links: [
     { rel: 'stylesheet', href: stylesheetHref },
