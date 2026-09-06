@@ -1,4 +1,510 @@
 /*
  * エディタ画面の見た目（`DESIGN.md` §4.2 §4.3 §5）。
- * 中身は plan 005 の step 2 で入れる。
+ *
+ * レイアウトは Grid と Container Queries だけで組み、JS で幅を測らない。
+ * 色はセマンティックトークン経由なので、ダークモードは自動で付いてくる。
  */
+
+:root {
+  /*
+   * --- 構文ハイライト（6 色以内）------------------------------------
+   * すべて `--noter-surface-editor` に対して 7:1 以上。色相だけに意味を
+   * 持たせないよう、キーワードと見出しは太字も併用する（theme.ts）。
+   * comment は --noter-text-muted、見出し・キーは --noter-accent、
+   * 壊れた記述は --noter-danger を流用する。
+   */
+  --noter-syntax-keyword: light-dark(oklch(0.42 0.16 300), oklch(0.84 0.11 300));
+  --noter-syntax-string: light-dark(oklch(0.4 0.12 150), oklch(0.84 0.12 150));
+  --noter-syntax-number: light-dark(oklch(0.43 0.13 60), oklch(0.86 0.11 80));
+
+  /* 選択範囲。文字（--noter-text）との差を保つため彩度を落とす */
+  --noter-editor-selection: light-dark(oklch(0.86 0.05 255), oklch(0.36 0.06 255));
+}
+
+/* --- ヘッダー ------------------------------------------------------------ */
+
+.noter-editor-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-3);
+  padding-block: var(--noter-space-2);
+  border-block-end: 1px solid var(--noter-border);
+}
+
+.noter-editor-header__title {
+  flex: 1 1 14rem;
+  margin: 0;
+  font-size: var(--noter-text-xl);
+  font-weight: 700;
+  /* 表題は文書の名前。折り返しても読めるようにする */
+  text-wrap: balance;
+}
+
+.noter-editor-header__title input {
+  inline-size: 100%;
+  min-block-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--noter-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--noter-text-xl);
+  font-weight: 700;
+}
+
+.noter-editor-header__title input:hover {
+  border-color: var(--noter-border);
+}
+
+.noter-editor-header__title input:focus-visible {
+  border-color: var(--noter-border-strong);
+  background: var(--noter-surface);
+}
+
+.noter-editor-header__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--noter-space-2);
+  margin: 0;
+  color: var(--noter-text-muted);
+  font-size: var(--noter-text-sm);
+}
+
+/* --- 状態ピル ------------------------------------------------------------ */
+
+.noter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--noter-space-2);
+  padding-inline: var(--noter-space-3);
+  min-block-size: 1.75rem;
+  border: 1px solid var(--noter-pill-color);
+  border-radius: var(--noter-radius-lg);
+  color: var(--noter-pill-color);
+  font-size: var(--noter-text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 色は補助。丸も文言もある状態で、どちらか一方だけに頼らせない */
+.noter-pill::before {
+  content: '';
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+.noter-pill[data-tone='muted'] {
+  --noter-pill-color: var(--noter-text-muted);
+}
+.noter-pill[data-tone='success'] {
+  --noter-pill-color: var(--noter-success);
+}
+.noter-pill[data-tone='warning'] {
+  --noter-pill-color: var(--noter-warning);
+}
+.noter-pill[data-tone='danger'] {
+  --noter-pill-color: var(--noter-danger);
+}
+
+/* --- 参加者 -------------------------------------------------------------- */
+
+.noter-presence {
+  position: relative;
+}
+
+.noter-presence__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--noter-space-2);
+  min-block-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--noter-radius);
+  background: transparent;
+  color: var(--noter-text);
+  font: inherit;
+  font-size: var(--noter-text-sm);
+  cursor: pointer;
+}
+
+.noter-presence__toggle:hover {
+  background: var(--noter-surface-hover);
+}
+
+.noter-presence__avatars {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 2 つ目以降を少し重ねる。数が増えても横幅が伸びすぎないように */
+.noter-presence__avatars > * + * {
+  margin-inline-start: -0.5rem;
+}
+
+.noter-presence__more {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding-inline: var(--noter-space-1);
+  border: 2px solid var(--noter-surface-raised);
+  border-radius: 999px;
+  background: var(--noter-surface-sunken);
+  font-size: var(--noter-text-sm);
+  font-weight: 600;
+}
+
+.noter-presence__popover {
+  padding: var(--noter-space-3);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  background: var(--noter-surface-raised);
+  color: var(--noter-text);
+}
+
+.noter-presence__popover ul {
+  display: grid;
+  gap: var(--noter-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.noter-presence__popover li {
+  display: flex;
+  align-items: center;
+  gap: var(--noter-space-2);
+  white-space: nowrap;
+}
+
+/* --- その他の操作メニュー ------------------------------------------------- */
+
+.noter-menu {
+  position: relative;
+}
+
+.noter-menu__summary {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-3);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  font-size: var(--noter-text-sm);
+  cursor: pointer;
+}
+
+.noter-menu__items {
+  position: absolute;
+  z-index: 20;
+  inset-inline-end: 0;
+  display: grid;
+  gap: var(--noter-space-1);
+  margin-block-start: var(--noter-space-1);
+  padding: var(--noter-space-2);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  background: var(--noter-surface-raised);
+  list-style: none;
+  min-inline-size: 14rem;
+}
+
+.noter-menu__items button {
+  inline-size: 100%;
+  min-block-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-3);
+  border: 0;
+  border-radius: var(--noter-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.noter-menu__items button:hover {
+  background: var(--noter-surface-hover);
+}
+
+/* --- ツールバー ---------------------------------------------------------- */
+
+.noter-toolbar {
+  display: flex;
+  /* 320px でも横スクロールさせない。ラベルは省略せず折り返す */
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-2);
+  padding-block: var(--noter-space-2);
+  border-block-end: 1px solid var(--noter-border);
+}
+
+.noter-toolbar__export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-2);
+  margin-inline-start: auto;
+}
+
+.noter-toolbar__import {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ファイル入力そのものは隠さず、ラベルを押せる見た目にする */
+.noter-toolbar__file {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-3);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  font-size: var(--noter-text-sm);
+  cursor: pointer;
+}
+
+.noter-toolbar__import input {
+  inline-size: 0;
+  opacity: 0;
+  /* フォーカスは受け取れるままにする（キーボードだけで選べる） */
+  position: absolute;
+}
+
+.noter-toolbar__import:has(input:focus-visible) .noter-toolbar__file,
+.noter-toolbar__file:hover {
+  background: var(--noter-surface-hover);
+}
+
+.noter-toolbar__import:has(input:focus-visible) .noter-toolbar__file {
+  outline: var(--noter-focus-width) solid var(--noter-focus-ring);
+  outline-offset: var(--noter-focus-offset);
+}
+
+.noter-toolbar__problems {
+  min-block-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-3);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--noter-text-sm);
+  cursor: pointer;
+}
+
+/* --- 表示切替 ------------------------------------------------------------ */
+
+.noter-view-switch {
+  display: inline-flex;
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  overflow: clip;
+}
+
+.noter-view-switch__button {
+  min-block-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-3);
+  border: 0;
+  background: transparent;
+  color: var(--noter-text);
+  font: inherit;
+  font-size: var(--noter-text-sm);
+  cursor: pointer;
+}
+
+.noter-view-switch__button + .noter-view-switch__button {
+  border-inline-start: 1px solid var(--noter-border);
+}
+
+.noter-view-switch__button:hover {
+  background: var(--noter-surface-hover);
+}
+
+/* 選ばれていることを色だけで示さない。太字と下線も併用する */
+.noter-view-switch__button[aria-pressed='true'] {
+  background: var(--noter-accent);
+  color: var(--noter-on-accent);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* --- ワークスペース ------------------------------------------------------- */
+
+.noter-workspace {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--noter-space-2);
+  /* ヘッダー・ツールバー・パンくずを引いた残りを本文に使う */
+  min-block-size: 24rem;
+  block-size: calc(100dvb - var(--noter-header-h) - var(--noter-toolbar-h) - 12rem);
+  margin-block-start: var(--noter-space-3);
+}
+
+.noter-workspace[data-view='editor'] .noter-pane[data-pane='preview'],
+.noter-workspace[data-view='preview'] .noter-pane[data-pane='editor'] {
+  display: none;
+}
+
+/* 48rem 未満は縦積み（DESIGN.md §5）。分割でも 1 列にする */
+@container (min-width: 48rem) {
+  .noter-workspace[data-view='split'] {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.noter-pane {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  align-content: start;
+  min-block-size: 0;
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  background: var(--noter-surface-editor);
+  overflow: clip;
+}
+
+.noter-pane[data-pane='preview'] {
+  display: block;
+  padding: var(--noter-space-4);
+  background: var(--noter-surface);
+  overflow: auto;
+}
+
+.noter-pane[data-pane='preview'] > * {
+  max-inline-size: var(--noter-measure);
+  text-wrap: pretty;
+}
+
+.noter-editor__notice,
+.noter-editor__hint,
+.noter-editor__waiting,
+.noter-preview__waiting {
+  margin: 0;
+  padding: var(--noter-space-2) var(--noter-space-3);
+  color: var(--noter-text-muted);
+  font-size: var(--noter-text-sm);
+}
+
+.noter-editor__notice {
+  border-block-end: 1px solid var(--noter-border);
+  background: var(--noter-surface-raised);
+  color: var(--noter-text);
+}
+
+.noter-code-editor {
+  min-block-size: 0;
+  block-size: 100%;
+  overflow: auto;
+}
+
+/* --- 他人のカーソル ------------------------------------------------------- */
+
+.cm-ySelectionInfo {
+  /* 既定は serif。UI の文字に揃える */
+  font-family: var(--noter-font-sans) !important;
+  border-radius: var(--noter-radius-sm);
+}
+
+/* --- 問題パネル ---------------------------------------------------------- */
+
+.noter-problems {
+  margin-block-start: var(--noter-space-3);
+  padding: var(--noter-space-3);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  background: var(--noter-surface-sunken);
+}
+
+.noter-problems ul {
+  display: grid;
+  gap: var(--noter-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.noter-problems button {
+  inline-size: 100%;
+  min-block-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-2);
+  border: 0;
+  border-radius: var(--noter-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.noter-problems button:hover {
+  background: var(--noter-surface-hover);
+}
+
+/* --- ダイアログ ---------------------------------------------------------- */
+
+.noter-confirm,
+.noter-name-prompt {
+  max-inline-size: min(32rem, 92vw);
+  padding: var(--noter-space-6);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius-lg);
+  background: var(--noter-surface-raised);
+  color: var(--noter-text);
+}
+
+.noter-confirm::backdrop,
+.noter-name-prompt::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+.noter-confirm__body,
+.noter-name-prompt form {
+  display: grid;
+  gap: var(--noter-space-4);
+}
+
+.noter-confirm__actions,
+.noter-name-prompt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--noter-space-2);
+}
+
+/* --- 印刷 ---------------------------------------------------------------- */
+
+@media print {
+  /* 印刷するのはプレビュー（描画結果）。道具立ては紙に出さない */
+  .noter-editor-header,
+  .noter-toolbar,
+  .noter-presence,
+  .noter-problems,
+  .noter-editor__hint,
+  .noter-pane[data-pane='editor'] {
+    display: none !important;
+  }
+
+  .noter-workspace {
+    display: block;
+    block-size: auto;
+  }
+
+  .noter-pane[data-pane='preview'] {
+    border: 0;
+    padding: 0;
+    overflow: visible;
+  }
+}
+
+@media (forced-colors: active) {
+  .noter-pill,
+  .noter-pane,
+  .noter-menu__items,
+  .noter-presence__popover {
+    border-color: CanvasText;
+  }
+}

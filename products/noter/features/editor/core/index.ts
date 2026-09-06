@@ -4,6 +4,8 @@
  * I/O を持たない。CodeMirror も Yjs も DOM も知らないので、
  * すべて Small テストで確かめられる。
  */
+export type { LocalPresenceState } from './awareness.ts'
+export { localPresenceState, readPeers } from './awareness.ts'
 export { fnv1a } from './hash.ts'
 export { guestDisplayName, shouldPromptName } from './guest-name.ts'
 export { byteLength, checkImportSize } from './import-guard.ts'

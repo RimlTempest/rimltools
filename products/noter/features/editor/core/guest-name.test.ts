@@ -28,22 +28,27 @@ describe('guestDisplayName', () => {
 })
 
 describe('shouldPromptName', () => {
-  test('名前をまだ決めていないゲストには聞く', () => {
-    expect(shouldPromptName(guest('ゲスト'), undefined)).toBe(true)
-    expect(shouldPromptName(guest(''), undefined)).toBe(true)
+  test('人の文書に参加した、名前をまだ決めていないゲストには聞く', () => {
+    expect(shouldPromptName(guest('ゲスト'), undefined, true)).toBe(true)
+    expect(shouldPromptName(guest(''), undefined, true)).toBe(true)
+  })
+
+  /** 「開いた瞬間に書ける」（ux.md §2 原則 1）。自分の文書に問いを挟まない。 */
+  test('自分で作った文書を開いただけなら聞かない', () => {
+    expect(shouldPromptName(guest('ゲスト'), undefined, false)).toBe(false)
   })
 
   test('この端末で一度決めていれば聞かない（3.3.7 冗長な入力）', () => {
-    expect(shouldPromptName(guest('ゲスト'), '山田')).toBe(false)
+    expect(shouldPromptName(guest('ゲスト'), '山田', true)).toBe(false)
   })
 
   test('自分で名前を付けたゲストには聞かない', () => {
-    expect(shouldPromptName(guest('山田'), undefined)).toBe(false)
+    expect(shouldPromptName(guest('山田'), undefined, true)).toBe(false)
   })
 
   test('ログイン済み・セッション無しには聞かない', () => {
     const user: Actor = { kind: 'user', userId: userId('2'), displayName: 'ゲスト' }
-    expect(shouldPromptName(user, undefined)).toBe(false)
-    expect(shouldPromptName({ kind: 'visitor' }, undefined)).toBe(false)
+    expect(shouldPromptName(user, undefined, true)).toBe(false)
+    expect(shouldPromptName({ kind: 'visitor' }, undefined, true)).toBe(false)
   })
 })

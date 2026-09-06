@@ -22,10 +22,20 @@ export const guestDisplayName = (seed: string): string =>
 /**
  * 名前を聞くべきか。
  *
+ * 聞くのは**人の文書に参加したとき**だけ（ux.md §6.2）。自分で作った文書を
+ * 開いただけの人には聞かない — 「開いた瞬間に書ける」（§6.1 / §2 原則 1）の
+ * 前に問いを挟まない。
+ *
  * 一度この端末で決めていれば聞かない（AAA 3.3.7 冗長な入力）。
  * 自分で名前を付けたゲストにも聞かない。
  */
-export const shouldPromptName = (actor: Actor, storedName: string | undefined): boolean => {
+export const shouldPromptName = (
+  actor: Actor,
+  storedName: string | undefined,
+  /** 人の文書に参加して開いているか（= 所有者ではない）。 */
+  joined: boolean,
+): boolean => {
+  if (!joined) return false
   if (actor.kind !== 'guest') return false
   if (storedName !== undefined && storedName !== '') return false
   return actor.displayName === '' || actor.displayName === UNNAMED_GUEST
