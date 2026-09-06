@@ -5,6 +5,7 @@
     { "path": "./shared/ui" },
     { "path": "./features/auth" },
     { "path": "./features/documents" },
+    { "path": "./features/editor" },
     { "path": "./features/shell" },
     { "path": "./features/sync" },
     { "path": "./features/formats" }

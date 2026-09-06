@@ -21,6 +21,7 @@
     "@noter/auth": "workspace:*",
     "@noter/contract": "workspace:*",
     "@noter/documents": "workspace:*",
+    "@noter/editor": "workspace:*",
     "@noter/formats": "workspace:*",
     "@noter/shell": "workspace:*",
     "@noter/sync": "workspace:*",

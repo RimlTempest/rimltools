@@ -187,3 +187,45 @@ textarea.noter-field__control {
   block-size: 1.15rem;
   accent-color: var(--noter-accent);
 }
+
+/* --- 参加者のアバター ---------------------------------------------------- */
+.noter-avatar {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 50%;
+  /* 隣り合うアバターが重なっても縁で分かれて見えるようにする */
+  border: 2px solid var(--noter-surface-raised);
+  background: var(--noter-presence, var(--noter-presence-7));
+  color: var(--noter-on-presence);
+  font-size: var(--noter-text-sm);
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+}
+
+.noter-avatar[data-presence='0'] {
+  --noter-presence: var(--noter-presence-0);
+}
+.noter-avatar[data-presence='1'] {
+  --noter-presence: var(--noter-presence-1);
+}
+.noter-avatar[data-presence='2'] {
+  --noter-presence: var(--noter-presence-2);
+}
+.noter-avatar[data-presence='3'] {
+  --noter-presence: var(--noter-presence-3);
+}
+.noter-avatar[data-presence='4'] {
+  --noter-presence: var(--noter-presence-4);
+}
+.noter-avatar[data-presence='5'] {
+  --noter-presence: var(--noter-presence-5);
+}
+.noter-avatar[data-presence='6'] {
+  --noter-presence: var(--noter-presence-6);
+}
+.noter-avatar[data-presence='7'] {
+  --noter-presence: var(--noter-presence-7);
+}

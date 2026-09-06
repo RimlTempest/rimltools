@@ -15,7 +15,7 @@ export const routes = rootRoute('shell/ui/root.route.tsx', [
   // 新規作成は画面を持たない。ホームの <form method="post"> がここを叩き、
   // ゲストの Set-Cookie と 302 を 1 つの応答で返す。
   route('/new', 'documents/ui/new.route.ts'),
-  route('/d/$documentId', 'documents/ui/document.route.tsx'),
+  route('/d/$documentId', 'editor/ui/editor.route.tsx'),
   route('/d/$documentId/raw', 'documents/ui/raw.route.ts'),
   route('/s/$token', 'documents/ui/share-entry.route.tsx'),
   route('/sign-in', 'auth/ui/sign-in.route.tsx'),
