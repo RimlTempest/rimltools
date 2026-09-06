@@ -101,6 +101,7 @@ export const EditorScreen = ({
   const knownPeers = useRef<readonly Peer[]>([])
 
   const canEdit = can(actorRole, 'edit')
+  const hasProblems = diagnostics !== undefined
   const status = statusText(connection, save)
 
   const trail: readonly NavItem[] = useMemo(
@@ -129,19 +130,28 @@ export const EditorScreen = ({
     [onViewModeChange],
   )
 
+  // ショートカット（ux.md §7）。CodeMirror の中で押しても効くよう window で拾う
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== '\\' || !(event.metaKey || event.ctrlKey)) return
-      event.preventDefault()
-      setMode((current) => {
-        const next = nextViewMode(current)
-        onViewModeChange?.(next)
-        return next
-      })
+      if (!(event.metaKey || event.ctrlKey)) return
+      if (event.key === '\\') {
+        event.preventDefault()
+        setMode((current) => {
+          const next = nextViewMode(current)
+          onViewModeChange?.(next)
+          return next
+        })
+        return
+      }
+      // Shift を押していると event.key は大文字になる（'P'）
+      if (event.shiftKey && event.key.toLowerCase() === 'p' && hasProblems) {
+        event.preventDefault()
+        setProblemsOpen((open) => !open)
+      }
     }
     globalThis.addEventListener('keydown', onKeyDown)
     return () => globalThis.removeEventListener('keydown', onKeyDown)
-  }, [onViewModeChange])
+  }, [onViewModeChange, hasProblems])
 
   const copy = async (text: string, success: string): Promise<void> => {
     announce(
@@ -214,6 +224,7 @@ export const EditorScreen = ({
               undoManager={undoManager}
               kind={document.kind}
               readOnly={!canEdit}
+              {...(diagnostics === undefined ? {} : { diagnostics })}
               onNotice={announce}
               onReady={(handle) => {
                 handleRef.current = handle

@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { defaultKeymap } from '@codemirror/commands'
 import { bracketMatching, indentOnInput } from '@codemirror/language'
+import type { Diagnostic as LintDiagnostic } from '@codemirror/lint'
+import { setDiagnostics } from '@codemirror/lint'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
 import { EditorState } from '@codemirror/state'
 import {
@@ -15,8 +17,11 @@ import type { DocumentKind } from '@noter/contract'
 import { yCollab } from 'y-codemirror.next'
 import type { Awareness } from 'y-protocols/awareness'
 import type * as Y from 'yjs'
+import type { EditorDiagnostic } from '../contract/diagnostic.ts'
 import { describeImportError } from '../contract/import-error.ts'
 import { byteLength, checkImportSize } from '../core/import-guard.ts'
+import type { TextLines } from '../core/text-range.ts'
+import { rangeAt } from '../core/text-range.ts'
 import { languageOf } from './language.ts'
 import { hiddenRemoteCursors } from './remote-cursors.ts'
 import { noterTheme } from './theme.ts'
@@ -36,6 +41,8 @@ type CodeEditorProps = {
   readonly undoManager: Y.UndoManager
   readonly kind: DocumentKind
   readonly readOnly: boolean
+  /** 本文に対する指摘。波線と吹き出しで、その場に出す。 */
+  readonly diagnostics?: readonly EditorDiagnostic[]
   /** 画面にただ 1 つある live region へ流す。 */
   readonly onNotice: (message: string) => void
   /** 取っ手の受け渡し。破棄されるときは `undefined` で呼ぶ。 */
@@ -53,6 +60,8 @@ type CodeEditorProps = {
  * - `Cmd/Ctrl + S` は「押すものが無い」ことを伝えるだけ
  * - undo は Yjs の `UndoManager` に任せる。CodeMirror の `history()` を
  *   併用すると、他人の編集まで巻き戻す undo と二重に `Mod-z` を奪い合う
+ * - 指摘（`diagnostics`）は `@codemirror/lint` に流す。行・列は打鍵で
+ *   ずれるので、文書の中に収まるよう必ず丸める（`rangeAt`）
  */
 export const CodeEditor = ({
   ytext,
@@ -60,10 +69,12 @@ export const CodeEditor = ({
   undoManager,
   kind,
   readOnly,
+  diagnostics,
   onNotice,
   onReady,
 }: CodeEditorProps) => {
   const hostRef = useRef<HTMLDivElement>(null)
+  const [view, setView] = useState<EditorView | undefined>(undefined)
   // 再生成の引き金にしたくない値は ref 経由で読む。書き込みは描画の外で行う
   const noticeRef = useRef(onNotice)
   const readyRef = useRef(onReady)
@@ -78,10 +89,10 @@ export const CodeEditor = ({
     if (parent === null) return
 
     const guardPaste = EditorView.domEventHandlers({
-      paste: (event, view) => {
+      paste: (event, target) => {
         const pasted = event.clipboardData?.getData('text/plain') ?? ''
         if (pasted === '') return false
-        const size = checkImportSize(byteLength(view.state.doc.toString()) + byteLength(pasted))
+        const size = checkImportSize(byteLength(target.state.doc.toString()) + byteLength(pasted))
         if (size.ok) return false
         event.preventDefault()
         noticeRef.current(describeImportError(size.error))
@@ -89,7 +100,7 @@ export const CodeEditor = ({
       },
     })
 
-    const view = new EditorView({
+    const created = new EditorView({
       parent,
       state: EditorState.create({
         doc: ytext.toJSON(),
@@ -128,34 +139,46 @@ export const CodeEditor = ({
       }),
     })
 
-    const at = (line: number, column: number): number => {
-      const target = view.state.doc.line(Math.min(Math.max(line, 1), view.state.doc.lines))
-      return Math.min(target.from + Math.max(column - 1, 0), target.to)
-    }
-
     readyRef.current?.({
       replaceAll: (text) => {
-        view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } })
+        created.dispatch({ changes: { from: 0, to: created.state.doc.length, insert: text } })
       },
       insertAtCursor: (text) => {
-        view.dispatch(view.state.replaceSelection(text))
+        created.dispatch(created.state.replaceSelection(text))
       },
       goTo: (line, column) => {
-        const position = at(line, column)
-        view.dispatch({ selection: { anchor: position }, scrollIntoView: true })
-        view.focus()
+        const { from } = rangeAt(created.state.doc, line, column)
+        created.dispatch({ selection: { anchor: from }, scrollIntoView: true })
+        created.focus()
       },
-      focus: () => view.focus(),
+      focus: () => created.focus(),
     })
 
     // 「開いた瞬間に書ける」（ux.md §2 原則 1）。閲覧のみのときは奪わない
-    if (!readOnly) view.focus()
+    if (!readOnly) created.focus()
+    setView(created)
 
     return () => {
       readyRef.current?.(undefined)
-      view.destroy()
+      setView(undefined)
+      created.destroy()
     }
   }, [ytext, awareness, undoManager, kind, readOnly])
 
+  useEffect(() => {
+    if (view === undefined) return
+    view.dispatch(setDiagnostics(view.state, toLintDiagnostics(view.state.doc, diagnostics ?? [])))
+  }, [view, diagnostics])
+
   return <div className="noter-code-editor" ref={hostRef} />
 }
+
+/** 指摘をその行の範囲に置く。空行では長さ 0 になり、lint が印だけを出す。 */
+const toLintDiagnostics = (
+  doc: TextLines,
+  diagnostics: readonly EditorDiagnostic[],
+): readonly LintDiagnostic[] =>
+  diagnostics.map((diagnostic) => {
+    const range = rangeAt(doc, diagnostic.line, diagnostic.column)
+    return { from: range.from, to: range.to, severity: 'error', message: diagnostic.message }
+  })

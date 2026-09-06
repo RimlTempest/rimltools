@@ -27,9 +27,11 @@ import {
   parseViewMode,
   presenceIndex,
   shouldPromptName,
+  toEditorDiagnostics,
 } from '@noter/editor/core'
 import type { ViewMode } from '@noter/editor/contract'
-import { EditorScreen, NamePrompt, useDocumentSync } from '@noter/editor/ui'
+import { EditorScreen, NamePrompt, useDocumentSync, useDocumentText } from '@noter/editor/ui'
+import { diagnose } from '@noter/formats/core'
 import type { NavLinkRenderer } from '@noter/shell/ui'
 import { makeDocumentProvider } from '@noter/sync/client'
 import type { ConnectionState } from '@noter/sync/contract'
@@ -121,6 +123,13 @@ const Editor = ({ state, document, actor }: EditorProps) => {
 
   const sync = useDocumentSync({ connect, now: Date.now, presence })
 
+  // 解析・診断・プレビューはすべてこの 1 本の本文から作る（Worker を使わない）
+  const documentText = useDocumentText(sync.ytext)
+  const diagnostics = useMemo(
+    () => toEditorDiagnostics(diagnose(document.kind, documentText)),
+    [document.kind, documentText],
+  )
+
   const initialViewMode = useMemo<ViewMode>(
     () => parseViewMode(readLocal(VIEW_MODE_KEY)) ?? defaultViewMode(globalThis.innerWidth),
     [],
@@ -152,6 +161,7 @@ const Editor = ({ state, document, actor }: EditorProps) => {
       rawUrl={`${state.origin}/d/${document.id}/raw`}
       copyText={browserCopyText}
       download={(text) => downloadText(document, text)}
+      diagnostics={diagnostics}
       initialViewMode={initialViewMode}
       onViewModeChange={(mode) => writeLocal(VIEW_MODE_KEY, mode)}
       renderLink={routerLink}
@@ -199,7 +209,15 @@ const EditorPage = () => {
   const state = Route.useLoaderData()
   const document = parseDocumentWire(state.document)
   if (document === undefined) return <p>この文書を表示できませんでした。</p>
-  return <Editor state={state} document={document} actor={parseActorWire(state.actor)} />
+  // key を付けて、別の文書へ移ったときに接続と Y.Doc を作り直す
+  return (
+    <Editor
+      key={document.id}
+      state={state}
+      document={document}
+      actor={parseActorWire(state.actor)}
+    />
+  )
 }
 
 export const Route = createFileRoute('/d/$documentId')({
