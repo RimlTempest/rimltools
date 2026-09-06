@@ -93,8 +93,9 @@ export const buildAuthOptions = (deps: AuthOptionsDeps) =>
     session: {
       expiresIn: GUEST_SESSION_DAYS * DAY_SECONDS,
       updateAge: DAY_SECONDS,
-      // cookieCache は**使わない**（ADR-0010）。既定で無効なので
-      // 「書かない」ことが設定であり、テストで固定する
+      // セッションを Cookie にキャッシュする設定は**書かない**（ADR-0010）。
+      // 既定で無効なので「書かないこと」自体が設定であり、
+      // session のキーがこの 2 つだけであることをテストで固定する
     },
     advanced: {
       useSecureCookies: true,

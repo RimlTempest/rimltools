@@ -27,8 +27,8 @@ describe('Better Auth の設定（ADR-0010 のセキュリティ上の決め事�
     expect(options.session.expiresIn).toBe(30 * 24 * 60 * 60)
   })
 
-  test('cookieCache は使わない', () => {
-    expect(Object.keys(options.session)).not.toContain('cookieCache')
+  test('セッション設定は期限だけ（Cookie にセッションを載せない / ADR-0010）', () => {
+    expect(Object.keys(options.session).toSorted()).toEqual(['expiresIn', 'updateAge'])
   })
 
   test('Cookie は HttpOnly / Secure / SameSite=Lax', () => {
