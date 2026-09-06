@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ok, parseDocumentId, parseUserId } from '@noter/contract'
 import type { DocumentHeader } from '@noter/documents/contract'
@@ -167,5 +167,59 @@ describe('EditorScreen の整形', () => {
   test('整形を渡さない画面（markdown）には整形ボタンを出さない', () => {
     setup({ document: documentOf('markdown') })
     expect(screen.queryByRole('button', { name: '整形' })).toBeNull()
+  })
+})
+
+describe('EditorScreen の変換して新規作成', () => {
+  test('変換できたことを読み上げる', async () => {
+    const user = userEvent.setup()
+    const targets: string[] = []
+    setup({
+      convertAction: async (to) => {
+        targets.push(to)
+        return { kind: 'created' }
+      },
+    })
+
+    await user.click(screen.getByRole('button', { name: 'YAML に変換して新規作成' }))
+    await waitFor(() => {
+      expect(status()).toBe('変換した文書を作りました。')
+    })
+    expect(targets).toEqual(['yaml'])
+  })
+
+  test('変換できないときは理由を読み上げる', async () => {
+    const user = userEvent.setup()
+    setup({
+      convertAction: async () => ({
+        kind: 'failed',
+        message: 'TOML にできません。いちばん外側がキーと値の集まりである必要があります。',
+      }),
+    })
+
+    await user.click(screen.getByRole('button', { name: 'TOML に変換して新規作成' }))
+    await waitFor(() => {
+      expect(status()).toBe(
+        'TOML にできません。いちばん外側がキーと値の集まりである必要があります。',
+      )
+    })
+  })
+
+  test('指摘があるときは問題パネルを開いて直す場所を見せる', async () => {
+    const user = userEvent.setup()
+    setup({
+      diagnostics: DIAGNOSTICS,
+      convertAction: async () => ({ kind: 'failed', message: '変換できません。' }),
+    })
+
+    await user.click(screen.getByRole('button', { name: 'YAML に変換して新規作成' }))
+    await waitFor(() => {
+      expect(screen.getByRole('region', { name: '問題' })).toBeDefined()
+    })
+  })
+
+  test('閲覧のみの人には変換して新規作成を出さない', () => {
+    setup({ actorRole: 'viewer', convertAction: async () => ({ kind: 'created' }) })
+    expect(screen.queryByRole('button', { name: /変換して新規作成/ })).toBeNull()
   })
 })

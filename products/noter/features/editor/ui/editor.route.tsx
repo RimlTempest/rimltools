@@ -1,5 +1,5 @@
 import { Link, createFileRoute, notFound, useRouter } from '@tanstack/react-router'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FILE_EXTENSION, MIME_TYPE } from '@noter/contract'
 import { actorUserId, parseActorWire } from '@noter/auth/contract'
 import type { Actor } from '@noter/auth/contract'
@@ -13,9 +13,10 @@ import {
   parseShareLinkWire,
 } from '@noter/documents/contract'
 import { can } from '@noter/documents/core'
-import { ShareDialog } from '@noter/documents/ui'
+import { KIND_LABEL, ShareDialog } from '@noter/documents/ui'
 import {
   browserCopyText,
+  createDocumentFn,
   documentActions,
   documentStateFn,
   shareActions,
@@ -23,26 +24,33 @@ import {
 import type { DocumentState } from '@noter/documents/ui/wiring'
 import {
   defaultViewMode,
+  describeConvertError,
   guestDisplayName,
   parseViewMode,
   presenceIndex,
   shouldPromptName,
   toEditorDiagnostics,
 } from '@noter/editor/core'
-import type { FormatOutcome, ViewMode } from '@noter/editor/contract'
+import type { ConvertOutcome, FormatOutcome, ViewMode } from '@noter/editor/contract'
 import {
   DocumentPreview,
   EditorScreen,
   NamePrompt,
+  stashInitialBody,
+  takeInitialBody,
   useDocumentSync,
   useDocumentText,
 } from '@noter/editor/ui'
+import type { DataDocumentKind } from '@noter/formats/contract'
 import { isDataDocumentKind } from '@noter/formats/contract'
-import { diagnose, formatDocument } from '@noter/formats/core'
+import { convertDocument, diagnose, formatDocument } from '@noter/formats/core'
 import type { NavLinkRenderer } from '@noter/shell/ui'
 import { makeDocumentProvider } from '@noter/sync/client'
 import type { ConnectionState } from '@noter/sync/contract'
 import type * as Y from 'yjs'
+
+const FAILED_TO_CONVERT = '変換できません。この文書は変換の対象ではありません。'
+const FAILED_TO_CREATE = '新しい文書を作れませんでした。時間をおいてもう一度試してください。'
 
 const DISPLAY_NAME_KEY = 'noter-display-name'
 const VIEW_MODE_KEY = 'noter-view-mode'
@@ -155,6 +163,37 @@ const Editor = ({ state, document, actor }: EditorProps) => {
       : { kind: 'formatted', text: formatted.value }
   }, [document.kind, sync.ytext])
 
+  /**
+   * 「変換して新規作成」。文書の作成は初期本文を受け取れないので、
+   * 変換した本文を sessionStorage に預け、新しい `/d/:id` を開いたときに
+   * 入れる（下の useEffect）。
+   */
+  const convertAction = useCallback(
+    async (to: DataDocumentKind): Promise<ConvertOutcome> => {
+      const from = document.kind
+      if (!isDataDocumentKind(from)) return { kind: 'failed', message: FAILED_TO_CONVERT }
+      const converted = convertDocument(from, to, sync.ytext.toJSON())
+      if (!converted.ok) {
+        return { kind: 'failed', message: describeConvertError(converted.error, KIND_LABEL[to]) }
+      }
+      const created = await createDocumentFn({ data: to })
+      const wire = created.ok ? parseDocumentWire(created.value) : undefined
+      if (wire === undefined) return { kind: 'failed', message: FAILED_TO_CREATE }
+      stashInitialBody(wire.id, converted.value)
+      await router.navigate({ to: '/d/$documentId', params: { documentId: wire.id } })
+      return { kind: 'created' }
+    },
+    [document.kind, sync.ytext, router],
+  )
+
+  // 変換して作った文書を開いたときだけ、預けた本文を 1 回だけ入れる
+  useEffect(() => {
+    if (sync.connection.kind !== 'connected') return
+    const initial = takeInitialBody(document.id)
+    if (initial === undefined || sync.ytext.length > 0) return
+    sync.ytext.insert(0, initial)
+  }, [sync.connection.kind, sync.ytext, document.id])
+
   const ownerName =
     members.find((member) => member.userId === document.ownerId)?.displayName ?? '所有者'
 
@@ -183,7 +222,7 @@ const Editor = ({ state, document, actor }: EditorProps) => {
       download={(text) => downloadText(document, text)}
       diagnostics={diagnostics}
       preview={<DocumentPreview kind={document.kind} text={documentText} />}
-      {...(isDataDocumentKind(document.kind) ? { formatAction } : {})}
+      {...(isDataDocumentKind(document.kind) ? { formatAction, convertAction } : {})}
       initialViewMode={initialViewMode}
       onViewModeChange={(mode) => writeLocal(VIEW_MODE_KEY, mode)}
       renderLink={routerLink}

@@ -2,9 +2,12 @@ import type { ChangeEvent } from 'react'
 import { useId, useState } from 'react'
 import { FILE_EXTENSION } from '@noter/contract'
 import type { DocumentKind } from '@noter/contract'
+import { KIND_LABEL } from '@noter/documents/ui'
+import type { DataDocumentKind } from '@noter/formats/contract'
 import { Button, VisuallyHidden } from '@noter/ui'
 import { describeImportError } from '../contract/import-error.ts'
 import type { ViewMode } from '../contract/view-mode.ts'
+import { convertTargets } from '../core/convert-targets.ts'
 import { byteLength, checkImportSize } from '../core/import-guard.ts'
 import { ConfirmDialog } from './confirm-dialog.tsx'
 import { ViewSwitch } from './view-switch.tsx'
@@ -35,6 +38,11 @@ type EditorToolbarProps = {
   readonly formatAction?: () => void
   /** plan 006 が差し込む。未指定なら描画しない。 */
   readonly problems?: Problems
+  /**
+   * 「変換して新規作成」。データ種別のときだけ、ほかの 2 種別が並ぶ。
+   * 未指定なら描画しない。
+   */
+  readonly onConvert?: (to: DataDocumentKind) => void
   /** 既定はブラウザの `File.text()`。テストでは偽物を渡せる。 */
   readonly readFile?: (file: File) => Promise<string>
 }
@@ -63,6 +71,7 @@ export const EditorToolbar = ({
   onNotice,
   formatAction,
   problems,
+  onConvert,
   readFile = defaultReadFile,
 }: EditorToolbarProps) => {
   const fileId = useId()
@@ -137,6 +146,13 @@ export const EditorToolbar = ({
           raw の URL をコピー
         </Button>
         <a href={rawUrl}>本文をそのまま開く</a>
+        {onConvert === undefined || kind === undefined
+          ? undefined
+          : convertTargets(kind).map((target) => (
+              <Button key={target} variant="secondary" onClick={() => onConvert(target)}>
+                {`${KIND_LABEL[target]} に変換して新規作成`}
+              </Button>
+            ))}
       </fieldset>
 
       <ConfirmDialog

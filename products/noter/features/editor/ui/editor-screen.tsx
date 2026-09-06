@@ -5,11 +5,13 @@ import type { DocumentHeader } from '@noter/documents/contract'
 import { can } from '@noter/documents/core'
 import type { NavItem, NavLinkRenderer } from '@noter/shell/ui'
 import { Breadcrumbs } from '@noter/shell/ui'
+import type { DataDocumentKind } from '@noter/formats/contract'
 import type { ConnectionState } from '@noter/sync/contract'
 import { LiveRegion } from '@noter/ui'
 import type { Awareness } from 'y-protocols/awareness'
 import type * as Y from 'yjs'
 import type { DocumentActions } from '../contract/actions.ts'
+import type { ConvertOutcome } from '../contract/convert-outcome.ts'
 import type { EditorDiagnostic } from '../contract/diagnostic.ts'
 import type { FormatOutcome } from '../contract/format-outcome.ts'
 import type { Peer } from '../contract/peer.ts'
@@ -62,6 +64,11 @@ type EditorScreenProps = {
    * 未指定なら整形ボタンを出さない（markdown には「正しい形」が無い）。
    */
   readonly formatAction?: () => FormatOutcome
+  /**
+   * 「変換して新規作成」。変換・作成・遷移は配線側が行い、この画面は
+   * 結果を読み上げるだけ。未指定なら変換の出口を出さない。
+   */
+  readonly convertAction?: (to: DataDocumentKind) => Promise<ConvertOutcome>
 }
 
 /**
@@ -98,6 +105,7 @@ export const EditorScreen = ({
   preview,
   diagnostics,
   formatAction,
+  convertAction,
 }: EditorScreenProps) => {
   const announcer = useAnnouncer()
   const announce = announcer.announce
@@ -189,6 +197,21 @@ export const EditorScreen = ({
     )
   }
 
+  const runConvert = (to: DataDocumentKind): void => {
+    if (convertAction === undefined) return
+    const convert = async (): Promise<void> => {
+      const outcome = await convertAction(to)
+      if (outcome.kind === 'created') {
+        announce('変換した文書を作りました。')
+        return
+      }
+      // 直す場所があるときだけ問題パネルを開く（表せない値は開いても何も無い）
+      if ((diagnostics?.length ?? 0) > 0) setProblemsOpen(true)
+      announce(outcome.message)
+    }
+    void convert()
+  }
+
   const importText = (text: string, placement: ImportPlacement): void => {
     const handle = handleRef.current
     if (handle === undefined) return
@@ -224,6 +247,7 @@ export const EditorScreen = ({
         rawUrl={rawUrl}
         onNotice={announce}
         {...(canFormat ? { formatAction: runFormat } : {})}
+        {...(canEdit && convertAction !== undefined ? { onConvert: runConvert } : {})}
         {...(diagnostics === undefined
           ? {}
           : {

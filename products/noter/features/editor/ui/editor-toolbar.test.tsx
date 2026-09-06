@@ -128,4 +128,28 @@ describe('EditorToolbar', () => {
     await userEvent.click(button)
     expect(toggled).toBe(1)
   })
+
+  test('データ種別では、ほかの種別へ変換して新規作成できる', async () => {
+    const targets: string[] = []
+    setup({ kind: 'json', onConvert: (to) => targets.push(to) })
+
+    await userEvent.click(screen.getByRole('button', { name: 'YAML に変換して新規作成' }))
+    expect(screen.getByRole('button', { name: 'TOML に変換して新規作成' })).toBeDefined()
+    expect(targets).toEqual(['yaml'])
+  })
+
+  test('自分と同じ種別への変換は出さない', () => {
+    setup({ kind: 'json', onConvert: () => {} })
+    expect(screen.queryByRole('button', { name: 'JSON に変換して新規作成' })).toBeNull()
+  })
+
+  test('markdown からは変換して新規作成しない', () => {
+    setup({ kind: 'markdown', onConvert: () => {} })
+    expect(screen.queryByRole('button', { name: /変換して新規作成/ })).toBeNull()
+  })
+
+  test('変換を渡さない画面には出さない', () => {
+    setup({ kind: 'json' })
+    expect(screen.queryByRole('button', { name: /変換して新規作成/ })).toBeNull()
+  })
 })

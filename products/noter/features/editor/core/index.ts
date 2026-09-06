@@ -6,6 +6,8 @@
  */
 export type { LocalPresenceState } from './awareness.ts'
 export { localPresenceState, readPeers } from './awareness.ts'
+export { describeConvertError } from './convert-message.ts'
+export { convertTargets } from './convert-targets.ts'
 export type { Debounced, TimerPort } from './debounce.ts'
 export { debounce } from './debounce.ts'
 export { toEditorDiagnostics } from './diagnostics.ts'
