@@ -13,6 +13,7 @@ import type { Result } from '@qrcc/contract'
 import type { WebMcpTool } from '@qrcc/webmcp'
 import { textResult } from '@qrcc/webmcp'
 import { buildEmailPayload } from '../core/payload/email.ts'
+import { buildEventPayload } from '../core/payload/event.ts'
 import { buildGeoPayload } from '../core/payload/geo.ts'
 import { buildSmsPayload } from '../core/payload/sms.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
@@ -137,8 +138,25 @@ const buildPayloadFromKind = (kind: PayloadKind, input: ToolInput): Result<CodeP
           : '位置情報の経度（geo.lon）に -180 から 180 の数値を指定してください。',
       )
     }
-    case 'event':
-      return err(notYetSupported('event'))
+    case 'event': {
+      const result = buildEventPayload({
+        subject: readNestedString(input, 'event', 'subject'),
+        start: readNestedString(input, 'event', 'start'),
+        end: readNestedString(input, 'event', 'end'),
+        location: readNestedString(input, 'event', 'location'),
+      })
+      if (result.ok) return result
+      switch (result.error.kind) {
+        case 'invalid_subject':
+          return err('予定の件名（event.subject）を指定してください。')
+        case 'invalid_start':
+          return err('予定の開始日時（event.start）に YYYY-MM-DDTHH:mm の形式で指定してください。')
+        case 'invalid_end':
+          return err('予定の終了日時（event.end）に YYYY-MM-DDTHH:mm の形式で指定してください。')
+        case 'end_before_start':
+          return err('予定の終了日時（event.end）は開始日時より後にしてください。')
+      }
+    }
     case 'vcard':
       return err(notYetSupported('vcard'))
     case 'wifi':
@@ -245,6 +263,23 @@ export const makeGenerateTool = (render: RenderFn): WebMcpTool => ({
         },
         required: ['lat', 'lon'],
         description: `kind が geo のとき指定します。${PAYLOAD_META.geo.description}`,
+      },
+      event: {
+        type: 'object',
+        properties: {
+          subject: { type: 'string', description: '件名。' },
+          start: {
+            type: 'string',
+            description: '開始日時（YYYY-MM-DDTHH:mm）。',
+          },
+          end: {
+            type: 'string',
+            description: '終了日時（YYYY-MM-DDTHH:mm）。開始日時より後にしてください。',
+          },
+          location: { type: 'string', description: '場所（省略可）。' },
+        },
+        required: ['subject', 'start', 'end'],
+        description: `kind が event のとき指定します。${PAYLOAD_META.event.description}`,
       },
       symbology: {
         type: 'string',

@@ -321,6 +321,58 @@ describe('makeGenerateTool', () => {
     })
   })
 
+  describe('kind: event', () => {
+    test('event.subject / start / end / location から予定の payload を組み立てる', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      await tool.execute({
+        kind: 'event',
+        event: {
+          subject: '定例会議',
+          start: '2026-10-01T13:00',
+          end: '2026-10-01T14:00',
+          location: '会議室A',
+        },
+      })
+
+      expect(calls).toHaveLength(1)
+      const request = calls[0]
+      if (typeof request === 'object' && request !== null && 'payload' in request) {
+        const payload = request.payload
+        if (typeof payload === 'object' && payload !== null && 'kind' in payload) {
+          expect(payload.kind).toBe('event')
+          return
+        }
+      }
+      throw new Error('request が RenderRequest ではない')
+    })
+
+    test('終了日時が開始日時より前なら render を呼ばず、日本語の理由を返す', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      const result = await tool.execute({
+        kind: 'event',
+        event: {
+          subject: '定例会議',
+          start: '2026-10-01T14:00',
+          end: '2026-10-01T13:00',
+          location: '',
+        },
+      })
+
+      expect(calls).toHaveLength(0)
+      expect(result.content[0]?.text.length).toBeGreaterThan(0)
+    })
+  })
+
   test('知らない kind を渡しても例外を投げず、理由を返す', async () => {
     const calls: unknown[] = []
     const render: RenderFn = (request) => {
