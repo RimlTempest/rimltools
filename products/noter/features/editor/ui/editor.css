@@ -648,6 +648,17 @@
 }
 
 @media (forced-colors: active) {
+  /*
+   * 押されている表示切替は、既定では --noter-accent の上に --noter-on-accent を
+   * 載せている。ハイコントラストでは面の色がユーザーの配色に置き換わるので、
+   * 文字色だけが残ると読めなくなる（ダークで 1.09:1 まで落ちた）。
+   * 選択は OS の Highlight に任せる。太字と下線はそのまま残る。
+   */
+  .noter-view-switch__button[aria-pressed='true'] {
+    background: Highlight;
+    color: HighlightText;
+  }
+
   .noter-pill,
   .noter-pane,
   .noter-menu__items,
