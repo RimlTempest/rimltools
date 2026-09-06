@@ -57,6 +57,16 @@ export default defineConfig({
       'bun run --filter @noter/web db:local',
       `bun run --filter @noter/web preview -- --port ${PORT} --strictPort`,
     ].join(' && '),
+    /*
+     * plan 002: 認証はまだ無いので、e2e の間だけ /ws の認可を開ける。
+     * plan 004 が本物の認可に差し替えたら両方消す（apps/web/src/server/ws-authorize.ts）。
+     *
+     * Worker の env は既定で `.dev.vars` / `.env` からしか作られない。どちらも
+     * git 管理外なので CI には存在しない。`CLOUDFLARE_INCLUDE_PROCESS_ENV` で
+     * プロセスの環境変数を binding に載せる（`.dev.vars` があるとそちらが優先される
+     * ので、手元で使っているなら NOTER_DEV_OPEN_WS=1 をそこにも書く）。
+     */
+    env: { NOTER_DEV_OPEN_WS: '1', CLOUDFLARE_INCLUDE_PROCESS_ENV: 'true' },
     stdout: 'pipe',
     stderr: 'pipe',
     url: baseURL,
