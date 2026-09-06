@@ -421,6 +421,82 @@ describe('makeGenerateTool', () => {
     })
   })
 
+  describe('kind: wifi', () => {
+    test('wifi.ssid / password から Wi-Fi の payload を組み立てる', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      await tool.execute({
+        kind: 'wifi',
+        wifi: { ssid: 'my-network', password: 'sw0rdfish', hidden: false },
+      })
+
+      expect(calls).toHaveLength(1)
+      const request = calls[0]
+      if (typeof request === 'object' && request !== null && 'payload' in request) {
+        expect(request.payload).toEqual({
+          kind: 'wifi',
+          ssid: 'my-network',
+          auth: { kind: 'wpa', password: 'sw0rdfish' },
+          hidden: false,
+        })
+        return
+      }
+      throw new Error('request が RenderRequest ではない')
+    })
+
+    test('パスワードが空なら認証なし（nopass）にする', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      await tool.execute({ kind: 'wifi', wifi: { ssid: 'my-network', password: '', hidden: true } })
+
+      expect(calls).toHaveLength(1)
+      const request = calls[0]
+      if (typeof request === 'object' && request !== null && 'payload' in request) {
+        expect(request.payload).toEqual({
+          kind: 'wifi',
+          ssid: 'my-network',
+          auth: { kind: 'nopass' },
+          hidden: true,
+        })
+        return
+      }
+      throw new Error('request が RenderRequest ではない')
+    })
+
+    test('ネットワーク名が空なら render を呼ばず、日本語の理由を返す', async () => {
+      const calls: unknown[] = []
+      const render: RenderFn = (request) => {
+        calls.push(request)
+        return Promise.resolve(ok(OK_RESPONSE))
+      }
+      const tool = makeGenerateTool(render)
+      const result = await tool.execute({
+        kind: 'wifi',
+        wifi: { ssid: '', password: '', hidden: false },
+      })
+
+      expect(calls).toHaveLength(0)
+      expect(result.content[0]?.text.length).toBeGreaterThan(0)
+    })
+
+    test('説明文にパスワードが読み取れる旨が含まれる', () => {
+      const tool = makeGenerateTool(() => Promise.resolve(ok(OK_RESPONSE)))
+      const properties = tool.inputSchema['properties']
+      if (!isRecord(properties)) throw new Error('properties がオブジェクトではない')
+      const wifiSchema = properties['wifi']
+      if (!isRecord(wifiSchema)) throw new Error('wifi の schema がオブジェクトではない')
+      expect(wifiSchema['description']).toContain('パスワード')
+    })
+  })
+
   test('知らない kind を渡しても例外を投げず、理由を返す', async () => {
     const calls: unknown[] = []
     const render: RenderFn = (request) => {

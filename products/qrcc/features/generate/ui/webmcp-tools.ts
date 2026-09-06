@@ -18,6 +18,7 @@ import { buildGeoPayload } from '../core/payload/geo.ts'
 import { buildSmsPayload } from '../core/payload/sms.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
 import { buildVCardPayload } from '../core/payload/vcard.ts'
+import { buildWifiPayload } from '../core/payload/wifi.ts'
 import type { CodePayload, PayloadKind, RenderRequest, SymbologyKind } from '../contract/index.ts'
 import {
   PAYLOAD_KINDS,
@@ -59,6 +60,12 @@ const readNestedString = (input: ToolInput, objectKey: string, fieldKey: string)
   return value ?? ''
 }
 
+/** 入れ子オブジェクトの真偽値項目。無ければ false にする。 */
+const readNestedBoolean = (input: ToolInput, objectKey: string, fieldKey: string): boolean => {
+  const nested = readObject(input, objectKey)
+  return nested !== undefined && readBoolean(nested, fieldKey)
+}
+
 const isSymbologyKind = (value: string): value is SymbologyKind =>
   SYMBOLOGY_KINDS.some((kind) => kind === value)
 
@@ -84,10 +91,6 @@ const buildAutoPayload = (input: ToolInput): Result<CodePayload, string> => {
     ? ok(buildPayload(text.value))
     : err('内容（text）を指定してください。')
 }
-
-/** まだこのツールから指定できない内容の種類向けの、エージェント向け文言。 */
-const notYetSupported = (kind: PayloadKind): string =>
-  `${PAYLOAD_META[kind].label}はこのツールからはまだ指定できません。`
 
 /**
  * `kind` ごとに対応するビルダー（`features/generate/core/payload/`）を呼ぶ。
@@ -182,8 +185,14 @@ const buildPayloadFromKind = (kind: PayloadKind, input: ToolInput): Result<CodeP
           )
       }
     }
-    case 'wifi':
-      return err(notYetSupported('wifi'))
+    case 'wifi': {
+      const result = buildWifiPayload({
+        ssid: readNestedString(input, 'wifi', 'ssid'),
+        password: readNestedString(input, 'wifi', 'password'),
+        hidden: readNestedBoolean(input, 'wifi', 'hidden'),
+      })
+      return result.ok ? result : err('Wi-Fi のネットワーク名（wifi.ssid）を指定してください。')
+    }
   }
 }
 
@@ -315,6 +324,22 @@ export const makeGenerateTool = (render: RenderFn): WebMcpTool => ({
         },
         required: ['name'],
         description: `kind が vcard のとき指定します。${PAYLOAD_META.vcard.description}`,
+      },
+      wifi: {
+        type: 'object',
+        properties: {
+          ssid: { type: 'string', description: 'ネットワーク名（SSID）。' },
+          password: {
+            type: 'string',
+            description: 'パスワード（省略可。空なら認証なしのネットワークとして扱います）。',
+          },
+          hidden: {
+            type: 'boolean',
+            description: 'SSID を隠しているネットワークか（既定は false）。',
+          },
+        },
+        required: ['ssid'],
+        description: `kind が wifi のとき指定します。${PAYLOAD_META.wifi.description}このコードを読み取った人はパスワードを知ることになります。`,
       },
       symbology: {
         type: 'string',
