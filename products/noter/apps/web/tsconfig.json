@@ -27,6 +27,9 @@
     },
     {
       "path": "../../features/sync"
+    },
+    {
+      "path": "../../features/formats"
     }
   ]
 }

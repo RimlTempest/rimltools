@@ -1,0 +1,165 @@
+/*
+ * プレビューの見た目。
+ *
+ * `apps/web/src/styles/app.css` から `layer(components)` で読み込む前提なので、
+ * このファイル自身は `@layer` を宣言しない（`@noter/ui` の順序に従う）。
+ * 色・寸法はセマンティックトークンだけを参照する。
+ */
+
+/* --- Markdown プレビュー ------------------------------------------------ */
+
+.noter-markdown {
+  container-type: inline-size;
+  /* AAA 1.4.8: 本文は 80 文字以内 */
+  max-inline-size: var(--noter-measure);
+  color: var(--noter-text);
+  text-wrap: pretty;
+  line-height: 1.7;
+}
+
+.noter-markdown > * {
+  margin-block: 0 var(--noter-space-4);
+}
+
+.noter-markdown > :last-child {
+  margin-block-end: 0;
+}
+
+.noter-markdown :is(h1, h2, h3, h4, h5, h6) {
+  margin-block: var(--noter-space-8) var(--noter-space-3);
+  text-wrap: balance;
+  line-height: 1.3;
+  /* sticky なツールバーにフォーカス先が隠れないようにする（AAA 2.4.12） */
+  scroll-margin-block-start: var(--noter-space-8);
+}
+
+.noter-markdown > :is(h1, h2, h3, h4, h5, h6):first-child {
+  margin-block-start: 0;
+}
+
+.noter-markdown h1 {
+  font-size: var(--noter-text-2xl);
+}
+.noter-markdown h2 {
+  font-size: var(--noter-text-xl);
+}
+.noter-markdown h3 {
+  font-size: var(--noter-text-lg);
+}
+.noter-markdown :is(h4, h5, h6) {
+  font-size: var(--noter-text-base);
+}
+
+.noter-markdown a {
+  color: var(--noter-accent);
+}
+
+.noter-markdown a:hover {
+  color: var(--noter-accent-hover);
+}
+
+.noter-markdown :is(ul, ol) {
+  padding-inline-start: var(--noter-space-6);
+}
+
+.noter-markdown li + li {
+  margin-block-start: var(--noter-space-1);
+}
+
+.noter-markdown blockquote {
+  padding-inline-start: var(--noter-space-4);
+  border-inline-start: 3px solid var(--noter-border-strong);
+  color: var(--noter-text-muted);
+}
+
+.noter-markdown code {
+  font-family: var(--noter-font-mono);
+  font-size: var(--noter-text-code);
+}
+
+.noter-markdown :not(pre) > code {
+  padding-inline: var(--noter-space-1);
+  border-radius: var(--noter-radius-sm);
+  background: var(--noter-surface-sunken);
+}
+
+.noter-markdown pre {
+  /* 長い行はここだけで横スクロールさせ、ページ全体は横に伸ばさない（1.4.10） */
+  overflow-x: auto;
+  padding: var(--noter-space-3);
+  border-radius: var(--noter-radius);
+  background: var(--noter-surface-sunken);
+  line-height: var(--noter-line-code);
+}
+
+.noter-markdown table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.noter-markdown :is(th, td) {
+  padding: var(--noter-space-1) var(--noter-space-3);
+  border: 1px solid var(--noter-border);
+  text-align: start;
+}
+
+.noter-markdown hr {
+  border: 0;
+  border-block-start: 1px solid var(--noter-border);
+}
+
+.noter-markdown img {
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+/* --- mermaid ------------------------------------------------------------ */
+
+.noter-mermaid {
+  display: grid;
+  gap: var(--noter-space-2);
+  padding: var(--noter-space-3);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius-lg);
+  background: var(--noter-surface-raised);
+}
+
+.noter-mermaid-figure__svg:empty {
+  display: none;
+}
+
+.noter-mermaid-figure__svg svg {
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+.noter-mermaid-figure__error {
+  margin: 0;
+  padding: var(--noter-space-3);
+  border: 2px solid var(--noter-danger);
+  border-radius: var(--noter-radius);
+  color: var(--noter-text);
+}
+
+.noter-mermaid-source summary {
+  /* AAA 2.5.5: 開閉のクリック対象を確保する */
+  display: flex;
+  align-items: center;
+  min-block-size: var(--noter-target-min);
+  color: var(--noter-text-muted);
+  cursor: pointer;
+}
+
+.noter-mermaid-source pre {
+  margin-block: var(--noter-space-2) 0;
+}
+
+/* --- 印刷 --------------------------------------------------------------- */
+
+@media print {
+  /* 図のソースは開いた状態で刷る（畳んだままだと情報が落ちる） */
+  .noter-mermaid-source {
+    display: block;
+  }
+}
