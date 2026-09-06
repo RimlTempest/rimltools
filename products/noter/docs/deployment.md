@@ -151,17 +151,17 @@ spec が見ないもの（デプロイ後に人が確認する）:
 
 qrcc と同じ手順で、**手元の wrangler から**ブートストラップした。
 
-| 項目                                           | 状態                                                    |
-| ---------------------------------------------- | ------------------------------------------------------- |
-| D1 `noter`（APAC）+ マイグレーション 2 本      | 済                                                      |
-| `noter-sync` デプロイ（targets 無し = 非公開） | 済                                                      |
-| `noter-web` デプロイ + `noter.riml4i.com`      | 済（custom domain は deploy が自動登録）                |
-| `BETTER_AUTH_SECRET`                           | 済（`openssl rand` を標準入力から渡した）               |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`    | **未**（ゲストのみで動いている）                        |
-| GitHub Secrets                                 | **未**（Deploy workflow は `workflow_dispatch` のまま） |
-| smoke（HTTP 全資産 + `/ws` 426）               | 合格                                                    |
-| smoke:browser（3 本）                          | 合格                                                    |
-| `noter-sync.<account>.workers.dev`             | 解決しない（非公開を確認）                              |
+| 項目                                           | 状態                                                       |
+| ---------------------------------------------- | ---------------------------------------------------------- |
+| D1 `noter`（APAC）+ マイグレーション 2 本      | 済                                                         |
+| `noter-sync` デプロイ（targets 無し = 非公開） | 済                                                         |
+| `noter-web` デプロイ + `noter.riml4i.com`      | 済（custom domain は deploy が自動登録）                   |
+| `BETTER_AUTH_SECRET`                           | 済（`openssl rand` を標準入力から渡した）                  |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`    | 済（`/sign-in` に Google ボタンが出る）                    |
+| GitHub Secrets                                 | 済（`push` トリガー有効、`main` への push で自動デプロイ） |
+| smoke（HTTP 全資産 + `/ws` 426）               | 合格                                                       |
+| smoke:browser（3 本）                          | 合格                                                       |
+| `noter-sync.<account>.workers.dev`             | 解決しない（非公開を確認）                                 |
 
 初回デプロイ時の `noter-web` のアップロードは **gzip 2.4 MiB**（Free の上限は
 3 MiB）。大半は server bundle に入る CodeMirror（`plans/README.md` の検討項目）。
