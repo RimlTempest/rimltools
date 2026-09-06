@@ -67,10 +67,12 @@ test('ログイン画面にゲストの導線が出る', async ({ page }) => {
  *
  * 文書 ID は実在しなくてよい。Upgrade の判定が先に来るので、認可も
  * 検索も走らず、本番のデータには一切触れない。
+ *
+ * `page.request.get` ではなく実ブラウザの遷移で叩く。GitHub Actions の
+ * runner から `page.request` で叩くと Cloudflare の bot 対策に 403 で弾かれた
+ * （同じ runner の `bun run smoke`（Bun fetch）と、実ブラウザの遷移は通る）。
  */
 test('WebSocket の入口がルータより手前で応えている', async ({ page }) => {
-  const response = await page.request.get('/ws/doc_000000000000000000000000', {
-    failOnStatusCode: false,
-  })
-  expect(response.status()).toBe(426)
+  const response = await page.goto('/ws/doc_000000000000000000000000')
+  expect(response?.status()).toBe(426)
 })
