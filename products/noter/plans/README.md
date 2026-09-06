@@ -24,16 +24,16 @@
 
 ## 状態
 
-| #   | 計画                                                                                   | 優先 | 規模 | 依存     | 状態 |
-| --- | -------------------------------------------------------------------------------------- | ---- | ---- | -------- | ---- |
-| 001 | [足場・ツールチェーン・contract・ui・shell](001-scaffold-tooling-contract-ui-shell.md) | P1   | L    | —        | TODO |
-| 002 | [DocumentRoom DO と /ws 配線](002-sync-durable-object-and-ws-entry.md)                 | P1   | L    | 001      | TODO |
-| 003 | [Better Auth（ゲスト + Google）](003-auth-guest-and-google.md)                         | P1   | M    | 001      | TODO |
-| 004 | [文書・共有リンク・本認可](004-documents-sharing-and-authorization.md)                 | P1   | L    | 002, 003 | TODO |
-| 005 | [エディタ画面](005-editor-codemirror-presence-status.md)                               | P1   | L    | 004      | TODO |
-| 006 | [フォーマット層](006-formats-parse-diagnose-preview.md)                                | P1   | L    | 001, 005 | TODO |
-| 007 | [WebMCP・PWA・Deploy・smoke](007-webmcp-pwa-deploy-smoke.md)                           | P2   | M    | 005, 006 | TODO |
-| 008 | [AAA 監査・e2e・ハードニング](008-a11y-pass-e2e-and-hardening.md)                      | P2   | M    | 007      | TODO |
+| #   | 計画                                                                                   | 優先 | 規模 | 依存     | 状態                                                          |
+| --- | -------------------------------------------------------------------------------------- | ---- | ---- | -------- | ------------------------------------------------------------- |
+| 001 | [足場・ツールチェーン・contract・ui・shell](001-scaffold-tooling-contract-ui-shell.md) | P1   | L    | —        | DONE（`feat/scaffold` e1f0ca0、レビュー APPROVE。マージ待ち） |
+| 002 | [DocumentRoom DO と /ws 配線](002-sync-durable-object-and-ws-entry.md)                 | P1   | L    | 001      | TODO                                                          |
+| 003 | [Better Auth（ゲスト + Google）](003-auth-guest-and-google.md)                         | P1   | M    | 001      | TODO                                                          |
+| 004 | [文書・共有リンク・本認可](004-documents-sharing-and-authorization.md)                 | P1   | L    | 002, 003 | TODO                                                          |
+| 005 | [エディタ画面](005-editor-codemirror-presence-status.md)                               | P1   | L    | 004      | TODO                                                          |
+| 006 | [フォーマット層](006-formats-parse-diagnose-preview.md)                                | P1   | L    | 001, 005 | TODO                                                          |
+| 007 | [WebMCP・PWA・Deploy・smoke](007-webmcp-pwa-deploy-smoke.md)                           | P2   | M    | 005, 006 | TODO                                                          |
+| 008 | [AAA 監査・e2e・ハードニング](008-a11y-pass-e2e-and-hardening.md)                      | P2   | M    | 007      | TODO                                                          |
 
 状態: `TODO` / `IN PROGRESS` / `DONE` / `BLOCKED(理由)` / `STALE`。
 executor は完了時にこの表の自分の行だけを書き換える（reviewer が索引を管理すると言った場合は触らない）。
