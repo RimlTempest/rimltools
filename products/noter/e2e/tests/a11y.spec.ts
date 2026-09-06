@@ -17,6 +17,7 @@ const WCAG_TAGS = [
 
 const PAGES = [
   { path: '/', name: '文書一覧' },
+  { path: '/sign-in', name: 'ログイン' },
   { path: '/settings/account', name: 'アカウント設定' },
 ] as const
 

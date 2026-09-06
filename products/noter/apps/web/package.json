@@ -17,12 +17,16 @@
     "db:local": "wrangler d1 migrations apply noter --local"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "1.7.3",
+    "@noter/auth": "workspace:*",
     "@noter/contract": "workspace:*",
     "@noter/shell": "workspace:*",
     "@noter/sync": "workspace:*",
     "@noter/ui": "workspace:*",
     "@tanstack/react-router": "1.170.32",
     "@tanstack/react-start": "1.168.49",
+    "better-auth": "1.7.3",
+    "drizzle-orm": "0.45.2",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

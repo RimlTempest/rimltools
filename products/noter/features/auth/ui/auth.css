@@ -1,0 +1,109 @@
+/*
+ * ログインまわりの見た目。
+ *
+ * レイアウトは Grid と Container Queries だけで組み、JS で幅を測らない。
+ * 色はセマンティックトークン経由なので、ダークモードは自動で付いてくる。
+ */
+
+.noter-auth-choices {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--noter-space-3);
+  margin-block: var(--noter-space-6);
+  /* 選択肢は縦に積む。押し間違いを減らすため横並びにしない */
+  justify-items: stretch;
+  max-inline-size: 32rem;
+}
+
+.noter-auth-choices p {
+  margin: 0;
+  max-inline-size: var(--noter-measure);
+}
+
+/* ボタンは狭い画面でも 44x44 を割らない（AAA 2.5.5） */
+.noter-auth-choices .noter-button,
+.noter-auth-form .noter-button {
+  min-block-size: var(--noter-target-min);
+  inline-size: 100%;
+}
+
+@container (min-width: 30rem) {
+  .noter-auth-choices .noter-button {
+    inline-size: auto;
+    justify-self: start;
+    padding-inline: var(--noter-space-8);
+  }
+}
+
+.noter-auth-form {
+  display: grid;
+  gap: var(--noter-space-3);
+  justify-items: stretch;
+  max-inline-size: 28rem;
+  margin-block: var(--noter-space-4) var(--noter-space-6);
+}
+
+.noter-auth-form .noter-button {
+  justify-self: start;
+  inline-size: auto;
+  padding-inline: var(--noter-space-6);
+}
+
+.noter-auth-guide {
+  margin-block-start: var(--noter-space-8);
+  padding: var(--noter-space-4);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  background: var(--noter-surface-raised);
+  max-inline-size: var(--noter-measure);
+}
+
+.noter-auth-guide h2 {
+  margin-block-start: 0;
+  font-size: var(--noter-text-lg);
+}
+
+.noter-auth-guide ul {
+  margin-block-end: 0;
+  padding-inline-start: var(--noter-space-6);
+}
+
+.noter-auth-guide li + li {
+  margin-block-start: var(--noter-space-2);
+}
+
+/* ヘッダー右の「いま誰として使っているか」 */
+.noter-auth-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-2);
+  margin: 0;
+  font-size: var(--noter-text-sm);
+  color: var(--noter-text-muted);
+}
+
+.noter-auth-status__who {
+  /* 長い表示名でヘッダーを壊さない */
+  max-inline-size: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.noter-auth-status a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* AAA 2.5.5。単独のクリック対象なので 44x44 を満たす */
+  min-block-size: var(--noter-target-min);
+  min-inline-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-2);
+  border-radius: var(--noter-radius-sm);
+}
+
+@media (forced-colors: active) {
+  .noter-auth-guide {
+    border-color: CanvasText;
+  }
+}

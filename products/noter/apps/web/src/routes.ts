@@ -12,5 +12,8 @@ import { index, rootRoute, route } from '@tanstack/virtual-file-routes'
 
 export const routes = rootRoute('shell/ui/root.route.tsx', [
   index('shell/ui/home.route.tsx'),
-  route('/settings/account', 'shell/ui/settings.route.tsx'),
+  route('/sign-in', 'auth/ui/sign-in.route.tsx'),
+  route('/settings/account', 'auth/ui/settings.route.tsx'),
+  // Better Auth の HTTP エンドポイント。画面を持たない server route。
+  route('/api/auth/$', 'auth/ui/api.route.ts'),
 ])

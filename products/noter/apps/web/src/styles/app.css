@@ -8,3 +8,4 @@
  */
 @import '@noter/ui/styles.css';
 @import '@noter/shell/ui/shell.css' layer(components);
+@import '@noter/auth/ui/auth.css' layer(components);
