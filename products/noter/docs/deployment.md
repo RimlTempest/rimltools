@@ -12,7 +12,8 @@
 bunx wrangler d1 create noter
 ```
 
-出力された `database_id` を次の 2 ファイルの `REPLACE_ME` に書き込む。
+出力された `database_id` を次の 2 ファイルに書き込む（**2026-09-07 に実施済み**。
+本番 D1 `noter` は APAC に作成し、ID は両ファイルにコミットしてある）。
 
 - `apps/web/wrangler.jsonc`
 - `apps/sync/wrangler.jsonc`
@@ -145,6 +146,27 @@ spec が見ないもの（デプロイ後に人が確認する）:
 
 設定は `e2e/playwright.prod.config.ts`。`webServer` を持たず、既に動いている
 オリジンを外から叩くだけ。
+
+### 初回セットアップの記録（2026-09-07）
+
+qrcc と同じ手順で、**手元の wrangler から**ブートストラップした。
+
+| 項目                                           | 状態                                                    |
+| ---------------------------------------------- | ------------------------------------------------------- |
+| D1 `noter`（APAC）+ マイグレーション 2 本      | 済                                                      |
+| `noter-sync` デプロイ（targets 無し = 非公開） | 済                                                      |
+| `noter-web` デプロイ + `noter.riml4i.com`      | 済（custom domain は deploy が自動登録）                |
+| `BETTER_AUTH_SECRET`                           | 済（`openssl rand` を標準入力から渡した）               |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`    | **未**（ゲストのみで動いている）                        |
+| GitHub Secrets                                 | **未**（Deploy workflow は `workflow_dispatch` のまま） |
+| smoke（HTTP 全資産 + `/ws` 426）               | 合格                                                    |
+| smoke:browser（3 本）                          | 合格                                                    |
+| `noter-sync.<account>.workers.dev`             | 解決しない（非公開を確認）                              |
+
+初回デプロイ時の `noter-web` のアップロードは **gzip 2.4 MiB**（Free の上限は
+3 MiB）。大半は server bundle に入る CodeMirror（`plans/README.md` の検討項目）。
+依存を足すたびに `wrangler deploy` の `Total Upload` を見て、2.7 MiB を超えたら
+`ssr: false` のルート分割を先にやる。
 
 ## 2. 通常のデプロイ
 
