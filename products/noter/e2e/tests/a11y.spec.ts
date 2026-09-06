@@ -1,4 +1,5 @@
 import { AxeBuilder } from '@axe-core/playwright'
+import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 
 /**
@@ -162,4 +163,43 @@ test('単独のクリック対象が 44x44 CSS px 以上ある @a11y', async ({ 
     expect(box?.height ?? 0, `target: ${label}`).toBeGreaterThanOrEqual(44)
     expect(box?.width ?? 0, `target: ${label}`).toBeGreaterThanOrEqual(44)
   }
+})
+
+/**
+ * プレビューと問題パネルが出た状態のエディタ（plan 006）。
+ *
+ * 図もツリーも出ていない画面を見ても、ランドマークの名前が重ならないことや
+ * 指摘の読み上げ順は分からない。分割表示になる幅で開いて中身まで出す。
+ */
+const openWideEditor = async (page: Page, label: string): Promise<void> => {
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/')
+  await page.getByRole('button', { name: label }).click()
+  await expect(page.locator('.cm-content')).toBeVisible()
+}
+
+test('mermaid を含む Markdown のエディタに axe の違反がない @a11y', async ({ page }) => {
+  await openWideEditor(page, 'Markdown で始める')
+  await page.locator('input[type="file"]').setInputFiles({
+    name: 'memo.md',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('# 図\n\n```mermaid\nflowchart TD\n  A[開始] --> B[終了]\n```\n', 'utf8'),
+  })
+  await page.getByRole('button', { name: '置き換える' }).click()
+  await expect(page.locator('svg[role="img"]')).toBeVisible({ timeout: 30_000 })
+
+  const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
+  expect(results.violations).toEqual([])
+})
+
+test('JSON のエディタ（プレビューと問題）に axe の違反がない @a11y', async ({ page }) => {
+  await openWideEditor(page, 'JSON で始める')
+  await page.locator('.cm-content').click()
+  await page.keyboard.type('{"name":"設計",')
+
+  await page.getByRole('button', { name: '問題 1 件' }).click()
+  await expect(page.getByRole('region', { name: '問題' })).toBeVisible()
+
+  const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
+  expect(results.violations).toEqual([])
 })
