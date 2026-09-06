@@ -99,7 +99,7 @@ describe('EditorHeader', () => {
     expect(screen.getByText('あなたの権限: 閲覧のみ')).toBeDefined()
   })
 
-  test('タイトルを変えて Enter で送ると保存され、結果を読み上げる', async () => {
+  test('タイトルを変えて Enter で送ると反映され、結果を読み上げる', async () => {
     const calls = setup('editor')
     const field = screen.getByLabelText('文書のタイトル')
     await userEvent.clear(field)
@@ -114,7 +114,7 @@ describe('EditorHeader', () => {
     expect(calls.renamed).toEqual([])
   })
 
-  test('保存に失敗したら理由を読み上げる', async () => {
+  test('表題の変更に失敗したら理由を読み上げる', async () => {
     const calls = setup('editor', { rename: async () => err({ kind: 'forbidden' }) })
     const field = screen.getByLabelText('文書のタイトル')
     await userEvent.clear(field)
