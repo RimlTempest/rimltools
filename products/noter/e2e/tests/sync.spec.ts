@@ -5,25 +5,47 @@ import * as encoding from 'lib0/encoding'
 import * as Y from 'yjs'
 
 /**
- * 2 つのブラウザコンテキストを繋いで、片方の更新がもう片方に届くことを確かめる。
+ * 同時編集の結合テスト。`/ws/` は本物の認可を通る（plan 004）ので、
+ * **文書を作り、共有リンクで相手を参加させてから**繋ぐ。
  *
- * plan 002 の時点では `/d/:id` の画面もエディタも無いので、生の WebSocket を
- * 開いてワイヤ形式のまま検証する。plan 005 が本物の画面越しのテストに置き換える。
- * 認可は `NOTER_DEV_OPEN_WS`（playwright.config.ts の webServer.env）で開けている。
+ * plan 005 でエディタが載るまではエディタ画面が無いので、ここでは生の
+ * WebSocket をブラウザのコンテキスト（= セッション Cookie 付き）で開き、
+ * ワイヤ形式のまま検証する。
  */
 
 const MESSAGE_SYNC = 0
 const SYNC_STEP1 = 0
 const SYNC_UPDATE = 2
-const CROCKFORD = '0123456789abcdefghjkmnpqrstvwxyz'
 
-/** DO の状態は文書 ID ごとに残るので、実行ごとに新しい部屋を使う。 */
-const newDocumentId = (): string => {
-  const body = Array.from(
-    { length: 24 },
-    () => CROCKFORD[Math.floor(Math.random() * CROCKFORD.length)],
-  ).join('')
-  return `doc_${body}`
+const documentIdOf = (url: string): string => new URL(url).pathname.replace('/d/', '')
+
+const createDocument = async (page: Page): Promise<string> => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Markdown で始める' }).click()
+  await expect(page).toHaveURL(/\/d\/doc_[0-9a-z]{24}$/)
+  return page.url()
+}
+
+/**
+ * 共有ダイアログを開く。
+ *
+ * `showModal()` はハイドレーション後にしか動かないので、押しても開かない
+ * ことがある（SSR 直後の 1 瞬）。開くまで押し直す — `waitForTimeout` で
+ * 「たぶん終わったころ」を待つより、実際の状態を待つほうが安定する。
+ */
+const openShareDialog = async (page: Page): Promise<void> => {
+  await expect(async () => {
+    await page.getByRole('button', { name: '共有' }).click()
+    await expect(page.getByRole('radio', { name: '閲覧のみ' })).toBeVisible({ timeout: 1000 })
+  }).toPass({ timeout: 20_000 })
+}
+
+const createShareLink = async (page: Page): Promise<string> => {
+  await openShareDialog(page)
+  await page.getByRole('button', { name: 'リンクを作成' }).click()
+  const link = page.getByRole('list', { name: '有効なリンク' }).locator('code').first()
+  await expect(link).toBeVisible()
+  return (await link.textContent()) ?? ''
 }
 
 const syncUpdateMessage = (text: string): number[] => {
@@ -113,32 +135,44 @@ const sendRepeatedly = (page: Page, path: string, message: number[]): Promise<vo
     { path, message },
   )
 
-test('接続すると sync step1 が届く', async ({ page, baseURL }) => {
-  await page.goto(baseURL ?? '/')
-  const frame = await firstFrame(page, `/ws/${newDocumentId()}?name=e2e`, null)
+test('メンバーが接続すると sync step1 が届く', async ({ page }) => {
+  const documentUrl = await createDocument(page)
+  const frame = await firstFrame(page, `/ws/${documentIdOf(documentUrl)}`, null)
   expect(frame[0]).toBe(MESSAGE_SYNC)
   expect(frame[1]).toBe(SYNC_STEP1)
 })
 
-test('別のコンテキストで送った更新がもう一方に届く', async ({ browser, baseURL }) => {
-  const path = `/ws/${newDocumentId()}?name=e2e`
-  const [senderContext, receiverContext] = await Promise.all([
-    browser.newContext(),
-    browser.newContext(),
-  ])
+test('セッションが無いと接続できない', async ({ browser, page }) => {
+  const documentUrl = await createDocument(page)
+  const documentId = documentIdOf(documentUrl)
 
+  const stranger = await browser.newContext()
   try {
-    const [sender, receiver] = await Promise.all([
-      senderContext.newPage(),
-      receiverContext.newPage(),
-    ])
-    await Promise.all([sender.goto(baseURL ?? '/'), receiver.goto(baseURL ?? '/')])
+    const outsider = await stranger.newPage()
+    await outsider.goto('/')
+    // 非メンバーは 404 で拒否され、ソケットは開かないまま閉じる
+    await expect(firstFrame(outsider, `/ws/${documentId}`, null)).rejects.toThrow()
+  } finally {
+    await stranger.close()
+  }
+})
+
+test('共有リンクで参加した人に更新が届く', async ({ browser, page }) => {
+  const documentUrl = await createDocument(page)
+  const shareUrl = await createShareLink(page)
+  const path = `/ws/${documentIdOf(documentUrl)}`
+
+  const joined = await browser.newContext()
+  try {
+    const receiver = await joined.newPage()
+    await receiver.goto(shareUrl)
+    await expect(receiver).toHaveURL(/\/d\/doc_[0-9a-z]{24}$/)
 
     const receiving = firstFrame(receiver, path, SYNC_UPDATE)
-    void sendRepeatedly(sender, path, syncUpdateMessage('hello from e2e')).catch(() => undefined)
+    void sendRepeatedly(page, path, syncUpdateMessage('hello from e2e')).catch(() => undefined)
 
     expect(textOfUpdateFrame(await receiving)).toBe('hello from e2e')
   } finally {
-    await Promise.all([senderContext.close(), receiverContext.close()])
+    await joined.close()
   }
 })
