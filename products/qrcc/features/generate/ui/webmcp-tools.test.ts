@@ -509,4 +509,22 @@ describe('makeGenerateTool', () => {
     expect(calls).toHaveLength(0)
     expect(result.content[0]?.text.length).toBeGreaterThan(0)
   })
+
+  test('新しい内容の種類でも互換性の判定が効く（vcard × ean13 は拒否）', async () => {
+    const calls: unknown[] = []
+    const render: RenderFn = (request) => {
+      calls.push(request)
+      return Promise.resolve(ok(OK_RESPONSE))
+    }
+    const tool = makeGenerateTool(render)
+    // ean13 は text しか受け付けないが、vcard を渡す
+    const result = await tool.execute({
+      kind: 'vcard',
+      vcard: { name: '山田太郎', organization: '', tel: '', email: '', url: '' },
+      symbology: 'ean13',
+    })
+
+    expect(calls).toHaveLength(0)
+    expect(result.content[0]?.text.length).toBeGreaterThan(0)
+  })
 })
