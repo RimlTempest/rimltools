@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "arrowParens": "always",
+  "experimentalOperatorPosition": "start",
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/.output/**",
+    "**/routeTree.gen.ts",
+    "**/worker-configuration.d.ts",
+    "**/*.gen.ts",
+    ".agents/skills/**",
+    ".claude/skills/**"
+  ]
+}
