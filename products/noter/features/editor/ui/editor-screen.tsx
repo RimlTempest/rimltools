@@ -11,9 +11,11 @@ import type { Awareness } from 'y-protocols/awareness'
 import type * as Y from 'yjs'
 import type { DocumentActions } from '../contract/actions.ts'
 import type { EditorDiagnostic } from '../contract/diagnostic.ts'
+import type { FormatOutcome } from '../contract/format-outcome.ts'
 import type { Peer } from '../contract/peer.ts'
 import type { SaveState } from '../contract/save-state.ts'
 import type { ViewMode } from '../contract/view-mode.ts'
+import { formatMessage } from '../core/format-message.ts'
 import { joinedMessage, leftMessage } from '../core/presence.ts'
 import { statusText } from '../core/status-text.ts'
 import { nextViewMode } from '../core/view-mode.ts'
@@ -54,8 +56,12 @@ type EditorScreenProps = {
   readonly preview?: ReactNode
   /** plan 006 が差し込む。未指定なら問題パネルを出さない。 */
   readonly diagnostics?: readonly EditorDiagnostic[]
-  /** plan 006 が差し込む。未指定なら整形ボタンを出さない。 */
-  readonly formatAction?: () => void
+  /**
+   * 整形。整形そのものは配線側（`@noter/formats`）が行い、結果だけを返す。
+   * 本文の差し替えと読み上げはこの画面が引き受ける。
+   * 未指定なら整形ボタンを出さない（markdown には「正しい形」が無い）。
+   */
+  readonly formatAction?: () => FormatOutcome
 }
 
 /**
@@ -101,6 +107,7 @@ export const EditorScreen = ({
   const knownPeers = useRef<readonly Peer[]>([])
 
   const canEdit = can(actorRole, 'edit')
+  const canFormat = canEdit && formatAction !== undefined
   const hasProblems = diagnostics !== undefined
   const status = statusText(connection, save)
 
@@ -130,6 +137,20 @@ export const EditorScreen = ({
     [onViewModeChange],
   )
 
+  /**
+   * 整形は **CodeMirror のトランザクションとして**当てる（`replaceAll`）。
+   * `ytext` を直接書き換えると、その変更が y-codemirror.next の
+   * `ySyncAnnotation` を通らず、undo の履歴と選択範囲の追従が普段の編集と
+   * 食い違う。取り込み（import）と同じ道を通す。
+   */
+  const runFormat = useCallback((): void => {
+    if (formatAction === undefined) return
+    const outcome = formatAction()
+    if (outcome.kind === 'formatted') handleRef.current?.replaceAll(outcome.text)
+    if (outcome.kind === 'failed') setProblemsOpen(true)
+    announce(formatMessage(outcome.kind))
+  }, [formatAction, announce])
+
   // ショートカット（ux.md §7）。CodeMirror の中で押しても効くよう window で拾う
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -144,14 +165,21 @@ export const EditorScreen = ({
         return
       }
       // Shift を押していると event.key は大文字になる（'P'）
-      if (event.shiftKey && event.key.toLowerCase() === 'p' && hasProblems) {
+      if (!event.shiftKey) return
+      const key = event.key.toLowerCase()
+      if (key === 'p' && hasProblems) {
         event.preventDefault()
         setProblemsOpen((open) => !open)
+        return
+      }
+      if (key === 'f' && canFormat) {
+        event.preventDefault()
+        runFormat()
       }
     }
     globalThis.addEventListener('keydown', onKeyDown)
     return () => globalThis.removeEventListener('keydown', onKeyDown)
-  }, [onViewModeChange, hasProblems])
+  }, [onViewModeChange, hasProblems, canFormat, runFormat])
 
   const copy = async (text: string, success: string): Promise<void> => {
     announce(
@@ -195,7 +223,7 @@ export const EditorScreen = ({
         onCopyRawUrl={() => void copy(rawUrl, 'raw の URL をコピーしました。')}
         rawUrl={rawUrl}
         onNotice={announce}
-        {...(formatAction === undefined ? {} : { formatAction })}
+        {...(canFormat ? { formatAction: runFormat } : {})}
         {...(diagnostics === undefined
           ? {}
           : {

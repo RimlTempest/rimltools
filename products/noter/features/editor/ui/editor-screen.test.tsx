@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { ok, parseDocumentId, parseUserId } from '@noter/contract'
 import type { DocumentHeader } from '@noter/documents/contract'
 import * as Y from 'yjs'
-import type { DocumentActions, EditorDiagnostic, Peer } from '../contract/index.ts'
+import type { DocumentActions, EditorDiagnostic, FormatOutcome, Peer } from '../contract/index.ts'
 import { EditorScreen } from './editor-screen.tsx'
 
 afterEach(cleanup)
@@ -67,6 +67,9 @@ const setup = (overrides: Partial<Props> = {}) => {
   )
 }
 
+/** 画面にただ 1 つある読み上げ領域の中身。 */
+const status = (): string | null => screen.getByRole('status').textContent
+
 const DIAGNOSTICS: readonly EditorDiagnostic[] = [
   { line: 3, column: 5, message: '閉じ括弧がありません。' },
 ]
@@ -112,5 +115,57 @@ describe('EditorScreen の問題パネル', () => {
   test('指摘を渡さない画面には問題パネルを出さない', () => {
     setup()
     expect(screen.queryByRole('button', { name: /問題/ })).toBeNull()
+  })
+})
+
+describe('EditorScreen の整形', () => {
+  test('整形できたら本文を置き換えたことを読み上げる', async () => {
+    const user = userEvent.setup()
+    setup({ formatAction: () => ({ kind: 'formatted', text: '{\n  "a": 1\n}\n' }) })
+
+    await user.click(screen.getByRole('button', { name: '整形' }))
+    expect(status()).toBe('整形しました。')
+  })
+
+  test('すでに整形されているときは、そう伝える', async () => {
+    const user = userEvent.setup()
+    setup({ formatAction: () => ({ kind: 'unchanged' }) })
+
+    await user.click(screen.getByRole('button', { name: '整形' }))
+    expect(status()).toBe('すでに整形されています。')
+  })
+
+  test('整形できないときは問題パネルを開いて理由を読み上げる', async () => {
+    const user = userEvent.setup()
+    setup({ formatAction: () => ({ kind: 'failed' }), diagnostics: DIAGNOSTICS })
+
+    await user.click(screen.getByRole('button', { name: '整形' }))
+    expect(screen.getByRole('region', { name: '問題' })).toBeDefined()
+    expect(status()).toBe('整形できません。問題を開いて、指摘された行を直してください。')
+  })
+
+  test('Cmd/Ctrl + Shift + F で整形する', async () => {
+    const user = userEvent.setup()
+    const outcomes: FormatOutcome[] = []
+    setup({
+      formatAction: () => {
+        const outcome: FormatOutcome = { kind: 'unchanged' }
+        outcomes.push(outcome)
+        return outcome
+      },
+    })
+
+    await user.keyboard('{Control>}{Shift>}F{/Shift}{/Control}')
+    expect(outcomes).toHaveLength(1)
+  })
+
+  test('閲覧のみの人には整形ボタンを出さない', () => {
+    setup({ actorRole: 'viewer', formatAction: () => ({ kind: 'unchanged' }) })
+    expect(screen.queryByRole('button', { name: '整形' })).toBeNull()
+  })
+
+  test('整形を渡さない画面（markdown）には整形ボタンを出さない', () => {
+    setup({ document: documentOf('markdown') })
+    expect(screen.queryByRole('button', { name: '整形' })).toBeNull()
   })
 })

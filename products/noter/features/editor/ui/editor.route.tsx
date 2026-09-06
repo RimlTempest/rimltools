@@ -29,9 +29,10 @@ import {
   shouldPromptName,
   toEditorDiagnostics,
 } from '@noter/editor/core'
-import type { ViewMode } from '@noter/editor/contract'
+import type { FormatOutcome, ViewMode } from '@noter/editor/contract'
 import { EditorScreen, NamePrompt, useDocumentSync, useDocumentText } from '@noter/editor/ui'
-import { diagnose } from '@noter/formats/core'
+import { isDataDocumentKind } from '@noter/formats/contract'
+import { diagnose, formatDocument } from '@noter/formats/core'
 import type { NavLinkRenderer } from '@noter/shell/ui'
 import { makeDocumentProvider } from '@noter/sync/client'
 import type { ConnectionState } from '@noter/sync/contract'
@@ -135,6 +136,19 @@ const Editor = ({ state, document, actor }: EditorProps) => {
     [],
   )
 
+  /**
+   * 整形（`Cmd/Ctrl + Shift + F`）。ここは「整形するとどうなるか」だけを返し、
+   * 本文の差し替えと読み上げは `EditorScreen` に任せる。
+   */
+  const formatAction = useCallback((): FormatOutcome => {
+    const current = sync.ytext.toJSON()
+    const formatted = formatDocument(document.kind, current)
+    if (!formatted.ok) return { kind: 'failed' }
+    return formatted.value === current
+      ? { kind: 'unchanged' }
+      : { kind: 'formatted', text: formatted.value }
+  }, [document.kind, sync.ytext])
+
   const ownerName =
     members.find((member) => member.userId === document.ownerId)?.displayName ?? '所有者'
 
@@ -162,6 +176,7 @@ const Editor = ({ state, document, actor }: EditorProps) => {
       copyText={browserCopyText}
       download={(text) => downloadText(document, text)}
       diagnostics={diagnostics}
+      {...(isDataDocumentKind(document.kind) ? { formatAction } : {})}
       initialViewMode={initialViewMode}
       onViewModeChange={(mode) => writeLocal(VIEW_MODE_KEY, mode)}
       renderLink={routerLink}
