@@ -12,3 +12,4 @@ export {
 export { DownloadControls } from './download-controls.tsx'
 export type { GenerateMode, RenderFailure, RenderFn } from './generate-screen.tsx'
 export { GenerateScreen } from './generate-screen.tsx'
+export { makeGenerateTool } from './webmcp-tools.ts'
