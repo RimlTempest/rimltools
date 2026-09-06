@@ -1,7 +1,12 @@
 {
   "name": "noter",
   "private": true,
-  "workspaces": ["apps/*", "features/*", "shared/*", "e2e"],
+  "workspaces": [
+    "apps/*",
+    "features/*",
+    "shared/*",
+    "e2e"
+  ],
   "type": "module",
   "scripts": {
     "dev": "bun run --filter '@noter/web' dev",
@@ -33,6 +38,9 @@
     "typescript": "7.0.2",
     "wrangler": "4.127.1"
   },
-  "engines": { "bun": ">=1.4.0", "node": ">=26" },
+  "engines": {
+    "bun": ">=1.4.0",
+    "node": ">=26"
+  },
   "packageManager": "bun@1.4.0"
 }

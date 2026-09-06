@@ -9,7 +9,7 @@
   // ここに routes を足すと認可が二重化して権限昇格の穴になるので、CI の guard が落とす。
   "workers_dev": false,
   "durable_objects": { "bindings": [{ "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom" }] },
-  // Free プランでは new_sqlite_classes のみ使える（new_classes は Paid 限定、ADR-0009）。
+  // Free プランは SQLite backed の DO のみ（key-value backed は Paid 限定、ADR-0009）。
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentRoom"] }],
   "d1_databases": [{ "binding": "DB", "database_name": "noter", "database_id": "REPLACE_ME" }],
 }
