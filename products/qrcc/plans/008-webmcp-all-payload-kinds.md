@@ -78,8 +78,42 @@ export type VCardInput = {
 }
 ```
 
-`tel` と `wifi` のビルダーも同じ場所にある。**各ファイルを開いて、
-入力の形とエラーの種類を自分で確かめること。**
+`tel` のビルダーもある。ただし **`buildTelPayload` は文字列を直接受け取る**
+（オブジェクトではない）。**各ファイルを開いて、入力の形とエラーの種類を
+自分で確かめること。**
+
+### ⚠ `wifi` のビルダーは存在しない（2026-09-06 に修正）
+
+**この計画の初版は「`wifi` のビルダーもある」と書いていたが、誤りだった。**
+実行者が実際にディレクトリを調べて指摘した。あるのは 7 本:
+
+```
+email.ts  event.ts  geo.ts  phone.ts(共有ヘルパ)  sms.ts  tel.ts  vcard.ts
+```
+
+`wifi` は **003 より前からある種類**なので、ビルダーが作られたことがなく、
+画面（`generate-screen.tsx` の `buildPayload`）が直接組み立てている:
+
+```ts
+case 'wifi': {
+  const ssid = parseNonEmptyText(state.ssid)
+  return ssid.ok
+    ? { ok: true, value: {
+        kind: 'wifi', ssid: ssid.value,
+        auth: state.password.length === 0
+          ? { kind: 'nopass' }
+          : { kind: 'wpa', password: state.password },
+        hidden: state.hidden,
+      } }
+    : { ok: false, error: { field: 'ネットワーク名', reason: 'ネットワーク名を入力してください' } }
+}
+```
+
+**対応方針（この計画で行う）**: `features/generate/core/payload/wifi.ts` を
+**新しく作り**、他の 6 本と同じ形（`WifiInput` を受け取り `Result` を返す）に
+そろえる。そのうえで**ツールと画面の両方がそれを呼ぶ**ようにする。
+検証を 2 箇所に持たないため。振る舞いは変えない
+（`ssid` が空なら失敗、パスワードが空なら `nopass`）。
 
 `features/generate/ui/webmcp-tools.ts` は同じ feature の中なので、
 **相対パス（`../core/payload/email.ts`）で import してよい**。
@@ -128,13 +162,20 @@ reason: '正しいメールアドレスを入力してください'
 
 - `features/generate/ui/webmcp-tools.ts`
 - `features/generate/ui/webmcp-tools.test.ts`
+- `features/generate/core/payload/wifi.ts`（**新規**。上の ⚠ を参照）
+- `features/generate/core/payload/wifi.test.ts`（**新規**）
+- `features/generate/ui/generate-screen.tsx` — **`buildPayload` の `wifi` の case だけ**。
+  新しいビルダーを呼ぶ形に置き換える。**他の case・入力欄・フォームには触らない**
+- `features/generate/ui/generate-screen.test.tsx`（既存テストが通り続けること）
 - `e2e/tests/webmcp.spec.ts`
 - `docs/adr/0010-webmcp.md`（公開範囲の記述を実態に合わせる）
 
 **Out of scope**（触らない）:
 
-- `features/generate/core/payload/**` — **ビルダーは変えない。** そのまま呼ぶ
-- `features/generate/ui/generate-screen.tsx` — 画面は変えない
+- `features/generate/core/payload/` の**既存 7 本** — 変えない。そのまま呼ぶ
+  （新規に `wifi.ts` を足すのだけが例外）
+- `features/generate/ui/generate-screen.tsx` の **`wifi` 以外**の部分 —
+  入力欄・他の case・レイアウトには触らない
 - `features/generate/contract/**` — 種類を増やさない
 - `features/scan/**`、`shared/webmcp/**` — 読み取りツールと登録層は完成している
 - `features/generate/package.json` — `./core` の公開は**不要**（同じ feature 内）
@@ -193,7 +234,11 @@ reason: '正しいメールアドレスを入力してください'
 
 **1 種類ごとにコミットし、その都度 Step 1 の検証を通すこと。**
 
-`wifi` を最後にする。パスワードを含むので、説明文に
+`wifi` を最後にする。**`wifi` だけは先にビルダーを作る**（上の ⚠）。
+画面側の `wifi` の case もそのビルダーを呼ぶ形に置き換え、
+`generate-screen.test.tsx` の既存テストが通り続けることを確認すること。
+
+パスワードを含むので、説明文に
 「このコードを読み取った人はパスワードを知ることになる」旨を書き添えること
 （画面の `PAYLOAD_META.wifi.description` と同じ趣旨）。
 
@@ -244,8 +289,9 @@ reason: '正しいメールアドレスを入力してください'
       （enum を直書きしていない証拠）
 - [ ] `inputSchema` に 7 種類ぶんの入れ子オブジェクトがある
 - [ ] `kind` を省略したときの自動判別が残っている（テストで確認）
-- [ ] `features/generate/core/payload/` と `generate-screen.tsx` が
-      **変更されていない**（`git diff --name-only`）
+- [ ] `features/generate/core/payload/` の**既存 7 本**が変更されていない
+      （`git diff --name-only` に `wifi.ts` 以外の `core/payload/` が出ない）
+- [ ] `generate-screen.tsx` の差分が **`wifi` の case だけ**である
 - [ ] In scope 以外のファイルが変更されていない
 - [ ] `plans/README.md` の 008 の行が DONE
 
@@ -254,8 +300,10 @@ reason: '正しいメールアドレスを入力してください'
 止めて報告すること:
 
 - Drift check で「Current state」の引用と実際のコードが食い違っている。
-- ビルダー（`core/payload/**`）を変えないと呼べない。**範囲外**。
-- `generate-screen.tsx` を触りたくなった。範囲外。
+- **既存の**ビルダー（`core/payload/` の 7 本）を変えないと呼べない。**範囲外**。
+  新規の `wifi.ts` を足すのは範囲内。
+- `generate-screen.tsx` の **`wifi` の case 以外**を触りたくなった。範囲外。
+- `wifi` のビルダーを作ると画面の既存テストが落ち、振る舞いを変えないと直せない。
 - `kind` 省略時の既存の挙動を変えないと実装できない。
 - 検証コマンドが、妥当な修正を 1 回試しても 2 回連続で失敗する。
 
