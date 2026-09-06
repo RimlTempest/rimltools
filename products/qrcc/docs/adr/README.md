@@ -11,3 +11,4 @@
 | [0004](0004-auth-guest-and-google.md)  | Better Auth で匿名ゲスト + Google、後からアカウント昇格         | Accepted |
 | [0005](0005-pdf-and-label-printing.md) | ラベル印刷はブラウザ印刷が主、PDF は Rust で生成                | Accepted |
 | [0006](0006-typescript-7-and-oxc.md)   | TypeScript 7 + oxlint/oxfmt を採用し ESLint/Prettier を使わない | Accepted |
+| [0010](0010-webmcp.md)                 | 生成と読み取りを WebMCP のツールとして公開する                  | Accepted |
