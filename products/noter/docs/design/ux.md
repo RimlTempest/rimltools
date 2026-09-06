@@ -29,7 +29,7 @@
 /d/:id                 エディタ（本体）
 /s/:token              共有リンク入口（表示なし → 即 /d/:id へ。失効時のみ画面）
 /sign-in               ログイン
-/settings/account      アカウント（Google 連携、表示名、削除）
+/settings/account      アカウント（Google 連携、表示名。アカウント削除は v1 では置かない）
 ```
 
 ナビゲーションは `AppShell` のヘッダに **ホーム / 新規作成 / アカウント** の 3 つだけ。

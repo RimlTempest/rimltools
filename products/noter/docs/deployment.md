@@ -1,7 +1,8 @@
 # デプロイ手順
 
 本番: `https://noter.riml4i.com`。Worker は 2 つ（`noter-web` = entry、
-`noter-sync` = auxiliary）だが、**デプロイは entry の 1 回で両方が上がる**。
+`noter-sync` = auxiliary）。**auxiliary は entry に同梱されない**ので、
+ビルドが生成した設定で `noter-sync` → `noter-web` の順に 2 回デプロイする。
 
 ## 1. 初回セットアップ（1 回だけ）
 
@@ -143,11 +144,18 @@ NOTER_SMOKE_URL=http://localhost:5173 bun run smoke:browser  # 任意のオリ�
 ```bash
 bun run build
 bunx wrangler d1 migrations apply noter --remote --config apps/web/wrangler.jsonc
-bunx wrangler deploy --config apps/web/wrangler.jsonc
+bunx wrangler deploy -c apps/web/dist/noter_sync/wrangler.json   # 先に DO を持つ側
+bunx wrangler deploy -c apps/web/dist/server/wrangler.json       # 次に entry
 ```
 
-`noter-sync` は auxiliary Worker なので **entry (`noter-web`) のデプロイに含まれる**。
-個別にデプロイしない。
+> **元の `wrangler.jsonc` を直接渡さない。** `main` が framework の仮想エントリ
+> （またはソースの `src/server.ts`）を指しているので "entry-point file was not found"
+> で落ちる。デプロイにはビルドが `apps/web/dist/` に生成した `wrangler.json` を渡す。
+>
+> **順序は `noter-sync` → `noter-web`。** `noter-web` の DO binding は
+> `script_name: "noter-sync"` を参照するため、先に `noter-sync` が存在している
+> 必要がある（qrcc で service binding について同じ理由で確認済み）。
+> `.github/workflows/deploy.yml` はこの順で書いてある。
 
 > **デプロイは接続中の WebSocket をすべて切る。** DO のインスタンスが
 > 入れ替わるため。クライアントは自動再接続し（`reconnecting` → `connected`）、
