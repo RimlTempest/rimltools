@@ -38,6 +38,15 @@ export const documentHead = (stylesheetHref: string) => () => ({
       content:
         'QR コードとバーコードを生成・読み取り・管理・印刷できるツール。生成と読み取りは端末側で動くので、ログインなしでも使えます。',
     },
+    // アドレスバーの色。--qrcc-surface のライト/ダークと揃える。
+    // 片方だけ書くと、テーマを切り替えたときにアドレスバーだけ食い違う
+    { name: 'theme-color', content: '#ffffff', media: '(prefers-color-scheme: light)' },
+    { name: 'theme-color', content: '#0f1217', media: '(prefers-color-scheme: dark)' },
   ],
-  links: [{ rel: 'stylesheet', href: stylesheetHref }],
+  links: [
+    { rel: 'stylesheet', href: stylesheetHref },
+    { rel: 'manifest', href: '/manifest.webmanifest' },
+    { rel: 'icon', href: '/icon.svg', type: 'image/svg+xml' },
+    { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+  ],
 })
