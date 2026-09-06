@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen } from '@testing-library/react'
-// DOMPurify を読み込む import より前に評価する必要がある（理由は当該ファイル）。
-// oxlint-disable-next-line import/no-unassigned-import -- テスト環境の当て木（副作用のみ）
-import './happy-dom-node-name.test-setup.ts'
 import { MarkdownPreview } from './markdown-preview.tsx'
 
 afterEach(cleanup)
