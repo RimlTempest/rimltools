@@ -107,12 +107,12 @@
       "rules": { "noter/no-throw-in-domain": "error" }
     },
     {
-      "$comment": "Durable Object は class でしか書けない。ここだけが例外（ADR-0004）。",
+      // Durable Object は class でしか書けない。ここだけが例外（ADR-0004）。
       "files": ["features/sync/worker/document-room.ts"],
       "rules": { "noter/no-class": "off" }
     },
     {
-      "$comment": "Worker のエントリは default export でしか宣言できない。",
+      // Worker のエントリは default export でしか宣言できない。
       "files": ["apps/sync/src/index.ts"],
       "rules": { "import/no-default-export": "off" }
     },
