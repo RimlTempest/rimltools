@@ -1,0 +1,185 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # 手動実行では paths-filter を無視して全ジョブを走らせる
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# paths-filter は pull_request で GitHub API の listFiles を呼ぶため、
+# 既定の制限された GITHUB_TOKEN では "Resource not accessible by integration" になる。
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      ts: ${{ steps.filter.outputs.ts }}
+      markup: ${{ steps.filter.outputs.markup }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ts:
+              - 'apps/**'
+              - 'features/**'
+              - 'shared/**'
+              - 'e2e/**'
+              - 'scripts/**'
+              - 'tsconfig*.json'
+              - '.oxlintrc.json'
+              - 'package.json'
+              - 'bun.lock'
+            markup:
+              - '**/*.tsx'
+              - '.markuplintrc.json'
+            web:
+              - 'apps/**'
+              - 'features/**'
+              - 'shared/ui/**'
+              - 'e2e/**'
+
+  guard:
+    name: 不変条件の検査
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: noter-sync は公開されていないこと (ADR-0002)
+        run: |
+          if grep -qE '^\s*"routes"\s*:' apps/sync/wrangler.jsonc; then
+            echo "::error file=apps/sync/wrangler.jsonc::noter-sync must not be reachable from the internet. Remove 'routes' (ADR-0002)."
+            exit 1
+          fi
+          # workers_dev は既定が true。routes が無くても
+          # noter-sync.<subdomain>.workers.dev で公開されるので、明示的な false を要求する。
+          if ! grep -qE '^\s*"workers_dev"\s*:\s*false\s*,?\s*$' apps/sync/wrangler.jsonc; then
+            echo "::error file=apps/sync/wrangler.jsonc::noter-sync must set \"workers_dev\": false. It defaults to true and publishes the Worker on workers.dev even without routes (ADR-0002)."
+            exit 1
+          fi
+      - name: 従量課金されるバインディングを足していないこと (ADR-0009)
+        run: |
+          # R2 は Cloudflare 側で利用上限を設定できず、超過分が従量課金される。
+          # 「無料で運用する」を構造的に守るため、宣言そのものを禁じる。
+          # KV は課金されないが、用途が無いので併せて弾く（ADR-0009）。
+          for f in apps/web/wrangler.jsonc apps/sync/wrangler.jsonc; do
+            if grep -qE '^\s*"(r2_buckets|kv_namespaces)"\s*:' "$f"; then
+              echo "::error file=$f::R2/KV bindings are forbidden. R2 has no spending cap and would break free-tier operation (ADR-0009)."
+              exit 1
+            fi
+          done
+      - name: Durable Object は SQLite backed であること (ADR-0009)
+        run: |
+          # new_classes（key-value backed）は Paid プラン限定。Free では
+          # new_sqlite_classes しか使えない。
+          if grep -qE '"new_classes"' apps/sync/wrangler.jsonc; then
+            echo "::error file=apps/sync/wrangler.jsonc::use new_sqlite_classes (ADR-0009)"
+            exit 1
+          fi
+      - name: class は Durable Object の殻だけであること (ADR-0004)
+        run: |
+          # .d.ts は生成物・型定義なので対象外（wrangler types / @types/react が class を含む）
+          hits=$(grep -rlE '^\s*(export\s+)?(abstract\s+)?class\s' \
+            --include='*.ts' --include='*.tsx' --exclude='*.d.ts' \
+            --exclude-dir=node_modules --exclude-dir=dist \
+            shared features apps scripts \
+            | grep -v 'features/sync/worker/document-room.ts' || true)
+          if [ -n "$hits" ]; then
+            echo "$hits"
+            echo "::error::class is only allowed in features/sync/worker/document-room.ts (ADR-0004)"
+            exit 1
+          fi
+      - name: ドメイン層に I/O が漏れていないこと
+        run: |
+          hits=$(find shared/contract/src features/*/contract features/*/core -name '*.ts' ! -name '*.test.ts' 2>/dev/null \
+            | xargs -r grep -nE '\b(fetch|localStorage|process\.env)\b' || true)
+          if [ -n "$hits" ]; then
+            echo "$hits"
+            echo "::error::contract and core layers must stay I/O free. Inject dependencies instead."
+            exit 1
+          fi
+      - name: feature 同士が内部を直接 import していないこと (ADR-0007)
+        run: |
+          hits=$(find features -name '*.ts' -o -name '*.tsx' 2>/dev/null \
+            | xargs -r grep -nE "from '\\.\\./\\.\\./[a-z-]+/(contract|core|ui|server|client|worker)/" || true)
+          if [ -n "$hits" ]; then
+            echo "$hits"
+            echo "::error::features must not reach into each other by relative path. Import via the '@noter/<feature>' entry points."
+            exit 1
+          fi
+
+  fmt-lint:
+    name: fmt + lint (oxfmt / oxlint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v3
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - run: bun run fmt:check
+      - run: bun run lint
+
+  typecheck:
+    name: typecheck (TypeScript 7)
+    needs: changes
+    if: needs.changes.outputs.ts == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v3
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+
+  test-ts:
+    name: test (bun)
+    needs: changes
+    if: needs.changes.outputs.ts == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v3
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+
+  markuplint:
+    name: markuplint (a11y)
+    needs: changes
+    if: needs.changes.outputs.markup == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v3
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - run: bun run lint:html
+
+  build-and-a11y:
+    name: build + axe (WCAG AAA)
+    needs: changes
+    if: needs.changes.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: jdx/mise-action@v3
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bun run --filter '@noter/e2e' install-browsers
+      - run: bun run a11y
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
