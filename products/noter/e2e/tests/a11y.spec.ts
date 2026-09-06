@@ -65,13 +65,39 @@ test('ゲストのホームに axe の違反がない @a11y', async ({ page }) =
   expect(results.violations).toEqual([])
 })
 
-test('文書の画面に axe の違反がない @a11y', async ({ page }) => {
+/**
+ * エディタは接続できた状態（`connected`）で検査する。骨組みだけの状態を
+ * 見ても、CodeMirror が載ったあとの読み上げ順は分からない。
+ * `connecting` / `rejected` の検査は plan 008。
+ */
+test('エディタの画面に axe の違反がない @a11y', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Markdown で始める' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: '無題' })).toBeVisible()
+  await expect(page.locator('.cm-content')).toBeVisible()
+  await expect(page.getByText(/同期済み|同期中/)).toBeVisible({ timeout: 20_000 })
 
   const results = await new AxeBuilder({ page }).withTags([...WCAG_TAGS]).analyze()
   expect(results.violations).toEqual([])
+})
+
+/** 表題が `<input>` になっても、ページの見出しは 1 つ残す。 */
+test('エディタの見出しが h1 から始まる @a11y', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Markdown で始める' }).click()
+  await expect(page.locator('.cm-content')).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+})
+
+test('エディタが 320px 幅で横スクロールしない @a11y', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Markdown で始める' }).click()
+  await expect(page.locator('.cm-content')).toBeVisible()
+
+  const overflows = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )
+  expect(overflows).toBe(false)
 })
 
 test('共有ダイアログに axe の違反がない @a11y', async ({ page }) => {
