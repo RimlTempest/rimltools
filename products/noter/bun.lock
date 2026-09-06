@@ -37,6 +37,7 @@
         "@noter/shell": "workspace:*",
         "@noter/sync": "workspace:*",
         "@noter/ui": "workspace:*",
+        "@noter/webmcp": "workspace:*",
         "@tanstack/react-router": "1.170.32",
         "@tanstack/react-start": "1.168.49",
         "better-auth": "1.7.3",
@@ -241,6 +242,13 @@
       "peerDependencies": {
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
+      },
+    },
+    "shared/webmcp": {
+      "name": "@noter/webmcp",
+      "version": "0.1.0",
+      "dependencies": {
+        "@noter/contract": "workspace:*",
       },
     },
   },
@@ -522,6 +530,8 @@
     "@noter/ui": ["@noter/ui@workspace:shared/ui"],
 
     "@noter/web": ["@noter/web@workspace:apps/web"],
+
+    "@noter/webmcp": ["@noter/webmcp@workspace:shared/webmcp"],
 
     "@oozcitak/dom": ["@oozcitak/dom@2.0.2", "", { "dependencies": { "@oozcitak/infra": "^2.0.2", "@oozcitak/url": "^3.0.0", "@oozcitak/util": "^10.0.0" } }, "sha512-GjpKhkSYC3Mj4+lfwEyI1dqnsKTgwGy48ytZEhm4A/xnH/8z9M3ZVXKr/YGQi3uCLs1AEBS+x5T2JPiueEDW8w=="],
 

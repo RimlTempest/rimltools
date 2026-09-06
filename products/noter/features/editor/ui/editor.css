@@ -454,6 +454,83 @@
   background: var(--noter-surface-hover);
 }
 
+/* --- 編集の提案 ----------------------------------------------------------- */
+
+.noter-proposal {
+  margin-block-start: var(--noter-space-3);
+  padding: var(--noter-space-4);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius);
+  background: var(--noter-surface-raised);
+}
+
+.noter-proposal__title {
+  margin: 0;
+  font-size: var(--noter-text-lg);
+}
+
+.noter-proposal__lead {
+  margin-block: var(--noter-space-2);
+  max-inline-size: var(--noter-measure);
+  color: var(--noter-text-muted);
+  font-size: var(--noter-text-sm);
+  text-wrap: pretty;
+}
+
+.noter-proposal__diff {
+  /* 行数が多くても画面を押し流さない。長い行は折り返して横スクロールを出さない */
+  max-block-size: 22rem;
+  margin: 0;
+  padding: var(--noter-space-2);
+  border: 1px solid var(--noter-border);
+  border-radius: var(--noter-radius-sm);
+  background: var(--noter-surface-sunken);
+  font-family: var(--noter-font-mono);
+  font-size: var(--noter-text-sm);
+  list-style: none;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.noter-proposal__diff li {
+  display: flex;
+  gap: var(--noter-space-2);
+}
+
+/* 記号は補助。追加・削除は読み上げにも語で載せてある（VisuallyHidden） */
+.noter-proposal__marker {
+  flex: none;
+  inline-size: 1ch;
+  color: var(--noter-text-muted);
+}
+
+.noter-proposal__diff ins,
+.noter-proposal__diff del {
+  /* 下線・打ち消し線を消さない。色だけに意味を持たせないため */
+  display: block;
+  inline-size: 100%;
+  padding-inline: var(--noter-space-1);
+  border-radius: var(--noter-radius-sm);
+}
+
+.noter-proposal__diff ins {
+  background: color-mix(in oklab, var(--noter-success) 14%, transparent);
+  color: var(--noter-text);
+}
+
+.noter-proposal__diff del {
+  background: color-mix(in oklab, var(--noter-danger) 14%, transparent);
+  color: var(--noter-text);
+}
+
+.noter-proposal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--noter-space-2);
+  margin-block-start: var(--noter-space-3);
+}
+
 /* --- ダイアログ ---------------------------------------------------------- */
 
 .noter-confirm,
@@ -492,6 +569,7 @@
   .noter-toolbar,
   .noter-presence,
   .noter-problems,
+  .noter-proposal,
   .noter-editor__hint,
   .noter-pane[data-pane='editor'] {
     display: none !important;
@@ -513,7 +591,9 @@
   .noter-pill,
   .noter-pane,
   .noter-menu__items,
-  .noter-presence__popover {
+  .noter-presence__popover,
+  .noter-proposal,
+  .noter-proposal__diff {
     border-color: CanvasText;
   }
 }

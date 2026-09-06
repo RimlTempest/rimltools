@@ -51,9 +51,11 @@ export const documentHead = (stylesheetHref: string) => () => ({
         'markdown・yaml・toml・json を複数人で同時に編集できるノート。共有リンクを開くだけで参加できます。',
     },
   ],
-  // manifest / apple-touch-icon は PWA を入れる plan 007 で足す。
   links: [
     { rel: 'stylesheet', href: stylesheetHref },
     { rel: 'icon', href: '/icon.svg', type: 'image/svg+xml' },
+    { rel: 'manifest', href: '/manifest.webmanifest' },
+    // iOS はマスカブルも SVG も見ない。ホーム画面用の PNG を別に渡す
+    { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
   ],
 })

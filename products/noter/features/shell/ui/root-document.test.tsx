@@ -11,11 +11,10 @@ describe('documentHead', () => {
     expect(description).toBeDefined()
   })
 
-  /** PWA は plan 007 で入れる。それまでは 404 になるリンクを配信しない。 */
-  test('manifest / apple-touch-icon へのリンクはまだ出さない', () => {
-    const rels = head.links.map((link) => link.rel)
-    expect(rels).not.toContain('manifest')
-    expect(rels).not.toContain('apple-touch-icon')
+  /** PWA（plan 007）。どちらも `apps/web/public` に実体がある。 */
+  test('manifest と apple-touch-icon へのリンクが出る', () => {
+    expect(head.links).toContainEqual({ rel: 'manifest', href: '/manifest.webmanifest' })
+    expect(head.links).toContainEqual({ rel: 'apple-touch-icon', href: '/apple-touch-icon.png' })
   })
 
   test('favicon（SVG）へのリンクが出る', () => {

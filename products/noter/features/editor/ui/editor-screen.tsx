@@ -69,6 +69,20 @@ type EditorScreenProps = {
    * 結果を読み上げるだけ。未指定なら変換の出口を出さない。
    */
   readonly convertAction?: (to: DataDocumentKind) => Promise<ConvertOutcome>
+  /**
+   * 編集の提案パネル（`ProposalPanel`）。配線側が組み立てて差し込む。
+   * 未指定なら何も出さない。
+   */
+  readonly proposal?: ReactNode
+  /**
+   * 本文の差し替え口を配線側へ渡す（`CodeEditor` の `onReady` と同じ形。
+   * 壊されるときは `undefined` で呼ぶ）。
+   *
+   * 提案の適用は **CodeMirror のトランザクション**として当てなければ
+   * ならず、その取っ手を持っているのはこの画面だけ。提案パネルが
+   * `Y.Text` に直接触らずに済むよう、当てる関数の方を配線側へ渡す。
+   */
+  readonly onApplyReady?: (applyText: ((text: string) => void) | undefined) => void
 }
 
 /**
@@ -106,6 +120,8 @@ export const EditorScreen = ({
   diagnostics,
   formatAction,
   convertAction,
+  proposal,
+  onApplyReady,
 }: EditorScreenProps) => {
   const announcer = useAnnouncer()
   const announce = announcer.announce
@@ -158,6 +174,15 @@ export const EditorScreen = ({
     if (outcome.kind === 'failed') setProblemsOpen(true)
     announce(formatMessage(outcome.kind))
   }, [formatAction, announce])
+
+  /** 提案の適用。整形と同じく、必ず CodeMirror のトランザクションを通す。 */
+  const applyText = useCallback(
+    (text: string): void => {
+      handleRef.current?.replaceAll(text)
+      announce('提案を本文に取り込みました。')
+    },
+    [announce],
+  )
 
   // ショートカット（ux.md §7）。CodeMirror の中で押しても効くよう window で拾う
   useEffect(() => {
@@ -280,6 +305,7 @@ export const EditorScreen = ({
               onNotice={announce}
               onReady={(handle) => {
                 handleRef.current = handle
+                onApplyReady?.(handle === undefined ? undefined : applyText)
               }}
             />
           )}
@@ -289,6 +315,12 @@ export const EditorScreen = ({
           {preview ?? <p className="noter-preview__waiting">プレビューは準備中です</p>}
         </section>
       </div>
+
+      {/*
+        提案は本文を読み返しながら判断するものなので、モーダルにしない。
+        ワークスペースの下に敷き、分割の 2 ペインを潰さない
+      */}
+      {proposal}
 
       {diagnostics === undefined || !problemsOpen ? undefined : (
         <section className="noter-problems" aria-label="問題">

@@ -1,5 +1,5 @@
 import { Link, createFileRoute, notFound, useRouter } from '@tanstack/react-router'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FILE_EXTENSION, MIME_TYPE } from '@noter/contract'
 import { actorUserId, parseActorWire } from '@noter/auth/contract'
 import type { Actor } from '@noter/auth/contract'
@@ -36,6 +36,7 @@ import {
   DocumentPreview,
   EditorScreen,
   NamePrompt,
+  ProposalPanel,
   stashInitialBody,
   takeInitialBody,
   useDocumentSync,
@@ -47,6 +48,7 @@ import { convertDocument, diagnose, formatDocument } from '@noter/formats/core'
 import type { NavLinkRenderer } from '@noter/shell/ui'
 import { makeDocumentProvider } from '@noter/sync/client'
 import type { ConnectionState } from '@noter/sync/contract'
+import { recallDocumentList, registerDocumentTools } from '@noter/webmcp'
 import type * as Y from 'yjs'
 
 const FAILED_TO_CONVERT = '変換できません。この文書は変換の対象ではありません。'
@@ -112,6 +114,12 @@ const Editor = ({ state, document, actor }: EditorProps) => {
     shouldPromptName(actor, readLocal(DISPLAY_NAME_KEY), actorRole !== 'owner'),
   )
   const [shareOpen, setShareOpen] = useState(false)
+  /** WebMCP から届いた提案の本文。`undefined` のあいだはパネルを出さない。 */
+  const [proposal, setProposal] = useState<string | undefined>(undefined)
+  /** 本文の差し替え口。`EditorScreen` が CodeMirror の準備できた時点で渡す。 */
+  const applyText = useRef<((text: string) => void) | undefined>(undefined)
+
+  const canEdit = can(actorRole, 'edit')
 
   const actorId = actorUserId(actor) ?? ''
   const displayName = storedName ?? (actor.kind === 'visitor' ? 'ゲスト' : actor.displayName)
@@ -194,6 +202,38 @@ const Editor = ({ state, document, actor }: EditorProps) => {
     sync.ytext.insert(0, initial)
   }, [sync.connection.kind, sync.ytext, document.id])
 
+  /**
+   * WebMCP のツール（ADR-0012）。
+   *
+   * 本文も指摘も打鍵のたびに変わるので、**ツールは 1 度だけ登録**して
+   * 中身は ref から読む（登録し直すと打鍵のたびにブラウザの API を叩く）。
+   * `propose-edit` はここで提案を預かるだけで、文書には触れない。
+   */
+  const live = useRef({ ytext: sync.ytext, kind: document.kind, diagnostics, canEdit })
+  // 描画中に ref を書かない。ツールが呼ばれるのは描画のあと（ブラウザの
+  // エージェント経由）なので、毎描画のあとに詰め替えれば足りる
+  useEffect(() => {
+    live.current = { ytext: sync.ytext, kind: document.kind, diagnostics, canEdit }
+  })
+
+  useEffect(
+    () =>
+      registerDocumentTools({
+        readDocument: () => ({
+          kind: live.current.kind,
+          text: live.current.ytext.toJSON(),
+        }),
+        diagnose: () => live.current.diagnostics,
+        // 一覧は文書一覧の画面が預けたものを返す（追加のリクエストを出さない）
+        listDocuments: () => recallDocumentList(),
+        // 閲覧のみの人には提案を出さない（適用できないものを見せない）
+        proposeEdit: (text) => {
+          if (live.current.canEdit) setProposal(text)
+        },
+      }),
+    [],
+  )
+
   const ownerName =
     members.find((member) => member.userId === document.ownerId)?.displayName ?? '所有者'
 
@@ -226,6 +266,23 @@ const Editor = ({ state, document, actor }: EditorProps) => {
       initialViewMode={initialViewMode}
       onViewModeChange={(mode) => writeLocal(VIEW_MODE_KEY, mode)}
       renderLink={routerLink}
+      onApplyReady={(apply) => {
+        applyText.current = apply
+      }}
+      proposal={
+        proposal === undefined ? undefined : (
+          <ProposalPanel
+            open
+            current={documentText}
+            proposed={proposal}
+            onApply={(text) => {
+              applyText.current?.(text)
+              setProposal(undefined)
+            }}
+            onDiscard={() => setProposal(undefined)}
+          />
+        )
+      }
       {...(can(actorRole, 'share') ? { onShare: () => setShareOpen(true) } : {})}
       onChanged={() => void router.invalidate()}
       onLeft={() => void router.navigate({ to: '/' })}

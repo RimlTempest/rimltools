@@ -23,7 +23,25 @@ export type SmokeResult = {
   readonly documentStatus: number
   readonly documentBytes: number
   readonly assets: readonly AssetProbe[]
+  /**
+   * `/ws/:documentId` を **Upgrade ヘッダ無しで** GET したときの状態コード。
+   * 426 が正解（`apps/web/src/server/ws-gate.ts`）。
+   */
+  readonly wsProbe: number
 }
+
+/**
+ * WebSocket の入口を試す path。
+ *
+ * `/ws/` はルータより手前で `src/server.ts` が横取りする（ADR-0002）。
+ * この配線が外れると、Upgrade 無しの GET が 426 ではなくルータの応答を
+ * 返すようになり、同時編集だけが静かに死ぬ。文書 ID は実在しなくてよい
+ * （Upgrade の判定が先に来るので、認可も検索も走らない）。
+ */
+export const WS_PROBE_PATH = '/ws/doc_000000000000000000000000'
+
+/** Upgrade 無しの `/ws/` に期待する状態コード。 */
+const WS_EXPECTED_STATUS = 426
 
 export type SmokeVerdict =
   | { readonly ok: true }
@@ -63,6 +81,12 @@ export const smokeVerdict = (result: SmokeResult): SmokeVerdict => {
       reasons.push(`${asset.path} は 200 だが中身が空だった`)
     }
   }
+  if (result.wsProbe !== WS_EXPECTED_STATUS) {
+    reasons.push(
+      `${WS_PROBE_PATH} が ${result.wsProbe} を返した`
+        + `（${WS_EXPECTED_STATUS} のはず。WebSocket の入口が繋がっていない）`,
+    )
+  }
 
   return reasons.length === 0 ? { ok: true } : { ok: false, reasons }
 }
@@ -75,6 +99,10 @@ export const describeSmokeResult = (result: SmokeResult): string => {
     const mark = asset.status === 200 && asset.bytes > 0 ? '✓' : '✘'
     lines.push(`  ${mark} ${asset.status} ${String(asset.bytes).padStart(8)} B  ${asset.path}`)
   }
+  lines.push(
+    `  ${result.wsProbe === WS_EXPECTED_STATUS ? '✓' : '✘'} ${result.wsProbe}`
+      + `             ${WS_PROBE_PATH}（Upgrade 無し）`,
+  )
   const verdict = smokeVerdict(result)
   lines.push('')
   lines.push(
@@ -102,5 +130,14 @@ export const runSmoke = async (baseUrl: string, fetchLike: FetchLike): Promise<S
     }),
   )
 
-  return { documentStatus: document.status, documentBytes: html.length, assets }
+  // Upgrade を付けない。ここで見たいのは「入口が繋がっているか」だけ
+  const ws = await fetchLike(new URL(WS_PROBE_PATH, baseUrl).toString())
+  await ws.text()
+
+  return {
+    documentStatus: document.status,
+    documentBytes: html.length,
+    assets,
+    wsProbe: ws.status,
+  }
 }
