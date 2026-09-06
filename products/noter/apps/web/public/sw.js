@@ -5,9 +5,9 @@
 // こと**。増やしたくなったら、ビルドに組み込む判断を改めてする。
 //
 // キャッシュの方針（plan 007）:
-//   /ws/ /api/ /d/ /s/  … 素通し（WebSocket・認証・文書本体・共有リンクの入口）
-//   ページ（HTML）      … 素通し（下記）
-//   それ以外の GET      … stale-while-revalidate（/assets/ は内容ハッシュ付き）
+//   /_serverFn/ /ws/ /api/ /d/ /s/ … 素通し
+//   ページ（HTML）                 … 素通し（下記）
+//   それ以外の GET                 … stale-while-revalidate（/assets/ は内容ハッシュ付き）
 //
 // **文書の本文はキャッシュしない。** 本文は Yjs がメモリと再送で持っている。
 // 古い本文を返す層を挟んでも、遅れて上書きされるだけで害しかない。
@@ -26,11 +26,15 @@ const CACHE_NAME = 'noter-shell-v1'
 const PRECACHE = ['/icon.svg']
 
 // ネットワークへ直行させる path の接頭辞。
-//   /ws/  … Durable Object への WebSocket。SW が触ってよいものが何もない
-//   /api/ … 認証（Better Auth）
-//   /d/   … 文書（画面と raw）。中身は Yjs が持つ
-//   /s/   … 共有リンクの入口。トークンの解決は毎回サーバで行う
-const BYPASS_PREFIXES = ['/ws/', '/api/', '/d/', '/s/']
+//   /_serverFn/ … 一覧・保存・共有（TanStack の server function）。
+//                 GET のものがあり、これをキャッシュすると「共有リンクを
+//                 失効させたのに一覧から消えない」が起きる。実際に e2e で
+//                 再現した。利用者ごとに違う値でもあるので端末に残さない
+//   /ws/        … Durable Object への WebSocket。SW が触ってよいものが無い
+//   /api/       … 認証（Better Auth）
+//   /d/         … 文書（画面と raw）。中身は Yjs が持つ
+//   /s/         … 共有リンクの入口。トークンの解決は毎回サーバで行う
+const BYPASS_PREFIXES = ['/_serverFn/', '/ws/', '/api/', '/d/', '/s/']
 
 self.addEventListener('install', (event) => {
   // ここで即時有効化（skipWaiting）はしない
