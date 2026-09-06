@@ -7,6 +7,7 @@
  * 方針は .claude/skills/noter-html-a11y に従う:
  * 意味の合う HTML 要素を最優先し、ARIA は補強にだけ使う。
  */
+export { Avatar } from './components/avatar.tsx'
 export { Button } from './components/button.tsx'
 export type { ButtonVariant } from './components/button.tsx'
 export { Field } from './components/field.tsx'
