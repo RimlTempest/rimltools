@@ -16,12 +16,20 @@ export type { DocumentError, ShareLinkUnusable, TitleError } from './errors.ts'
 export { describeDocumentError } from './errors.ts'
 export type { DocumentSummaryWire, DocumentWire, MemberSummaryWire, ShareLinkWire } from './wire.ts'
 export {
+  parseCreateLinkInput,
+  parseDocumentIdInput,
+  parseDocumentKindInput,
   parseDocumentSummaryWire,
   parseDocumentWire,
   parseList,
+  parseMemberInput,
+  parseMemberRoleInput,
   parseMemberSummaryWire,
+  parseRenameInput,
   parseRoleOrViewer,
   parseShareLinkWire,
+  parseShareTokenInput,
+  parseTokenInput,
   toDocumentSummaryWire,
   toDocumentWire,
   toMemberSummaryWire,

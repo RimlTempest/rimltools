@@ -11,7 +11,7 @@ import {
   parseShareToken,
   parseUserId,
 } from '@noter/contract'
-import type { Role } from '@noter/contract'
+import type { DocumentId, DocumentKind, Role, ShareToken, UserId } from '@noter/contract'
 import { SHARE_ROLES } from '@noter/auth/contract'
 import type { ShareRole } from '@noter/auth/contract'
 import type { DocumentHeader, DocumentSummary, MemberSummary, ShareLinkView } from './document.ts'
@@ -176,4 +176,119 @@ export const parseList = <T>(
     if (one !== undefined) parsed.push(one)
   }
   return parsed
+}
+
+/* ------------------------------------------------ server function の入力 */
+
+/**
+ * server function の入力は**ネットワークから届く**ので、呼び出し側の型注釈は
+ * 実行時の約束にならない。`.validator()` はここを通し、ハンドラには
+ * 検証済みの値だけを渡す。
+ *
+ * 読めない入力は `undefined`。ハンドラはそれを既存の「見つかりません」に
+ * 畳む（境界で `throw` せず、値のまま返す）。
+ */
+
+const readOptionalString = (source: Record<string, unknown>, key: string): string | undefined => {
+  const value = source[key]
+  return typeof value === 'string' ? value : undefined
+}
+
+export const parseDocumentIdInput = (value: unknown): DocumentId | undefined => {
+  if (typeof value !== 'string') return undefined
+  const parsed = parseDocumentId(value)
+  return parsed.ok ? parsed.value : undefined
+}
+
+export const parseDocumentKindInput = (value: unknown): DocumentKind | undefined => {
+  if (typeof value !== 'string') return undefined
+  const parsed = parseDocumentKind(value)
+  return parsed.ok ? parsed.value : undefined
+}
+
+export const parseShareTokenInput = (value: unknown): ShareToken | undefined => {
+  if (typeof value !== 'string') return undefined
+  const parsed = parseShareToken(value)
+  return parsed.ok ? parsed.value : undefined
+}
+
+const parseRoleInput = (value: unknown): Role | undefined => {
+  if (typeof value !== 'string') return undefined
+  const parsed = parseRole(value)
+  return parsed.ok ? parsed.value : undefined
+}
+
+export const parseRenameInput = (
+  value: unknown,
+): { readonly documentId: DocumentId; readonly title: string } | undefined => {
+  const source = asRecord(value)
+  if (source === undefined) return undefined
+  const id = parseDocumentIdInput(source['documentId'])
+  const title = readOptionalString(source, 'title')
+  if (id === undefined || title === undefined) return undefined
+  return { documentId: id, title }
+}
+
+/**
+ * 有効期限は「`null`（無期限）」か「1 以上の整数（日）」だけ。
+ * 数でない値を通すと `expiryFromDays` が Invalid Date を作り、
+ * 二度と使えないリンクが D1 に残る。
+ */
+const parseExpiresInDays = (value: unknown): { readonly days: number | undefined } | undefined => {
+  if (value === null) return { days: undefined }
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) return undefined
+  return { days: value }
+}
+
+export const parseCreateLinkInput = (
+  value: unknown,
+):
+  | {
+      readonly documentId: DocumentId
+      readonly role: Role
+      readonly expiresInDays: number | undefined
+    }
+  | undefined => {
+  const source = asRecord(value)
+  if (source === undefined) return undefined
+  const id = parseDocumentIdInput(source['documentId'])
+  const role = parseRoleInput(source['role'])
+  const expiry = parseExpiresInDays(source['expiresInDays'])
+  if (id === undefined || role === undefined || expiry === undefined) return undefined
+  return { documentId: id, role, expiresInDays: expiry.days }
+}
+
+export const parseTokenInput = (
+  value: unknown,
+): { readonly documentId: DocumentId; readonly token: ShareToken } | undefined => {
+  const source = asRecord(value)
+  if (source === undefined) return undefined
+  const id = parseDocumentIdInput(source['documentId'])
+  const token = parseShareTokenInput(source['token'])
+  if (id === undefined || token === undefined) return undefined
+  return { documentId: id, token }
+}
+
+export const parseMemberInput = (
+  value: unknown,
+): { readonly documentId: DocumentId; readonly userId: UserId } | undefined => {
+  const source = asRecord(value)
+  if (source === undefined) return undefined
+  const id = parseDocumentIdInput(source['documentId'])
+  const raw = readOptionalString(source, 'userId')
+  const user = raw === undefined ? undefined : parseUserId(raw)
+  if (id === undefined || user === undefined || !user.ok) return undefined
+  return { documentId: id, userId: user.value }
+}
+
+export const parseMemberRoleInput = (
+  value: unknown,
+):
+  | { readonly documentId: DocumentId; readonly userId: UserId; readonly role: Role }
+  | undefined => {
+  const member = parseMemberInput(value)
+  const source = asRecord(value)
+  if (member === undefined || source === undefined) return undefined
+  const role = parseRoleInput(source['role'])
+  return role === undefined ? undefined : { ...member, role }
 }
