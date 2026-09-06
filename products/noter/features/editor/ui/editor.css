@@ -17,6 +17,15 @@
   --noter-syntax-string: light-dark(oklch(0.4 0.12 150), oklch(0.84 0.12 150));
   --noter-syntax-number: light-dark(oklch(0.43 0.13 60), oklch(0.86 0.11 80));
 
+  /*
+   * カーソル行の塗り。**--noter-surface-hover より薄い。**
+   * 構文色はどれも `--noter-surface-editor` に対して 7:1 で選んであるので、
+   * 行の塗りを hover 面（0.93）まで濃くすると、カーソルのある行だけ
+   * AAA（1.4.6）を割る（JSON のキーで実際に 6.4:1 まで落ちた）。
+   * ダークは元の hover 面のままで 7:1 を保てている。
+   */
+  --noter-editor-active-line: light-dark(oklch(0.97 0.006 265), oklch(0.3 0.016 265));
+
   /* 選択範囲。文字（--noter-text）との差を保つため彩度を落とす */
   --noter-editor-selection: light-dark(oklch(0.86 0.05 255), oklch(0.36 0.06 255));
 }
