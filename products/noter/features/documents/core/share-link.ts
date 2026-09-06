@@ -6,9 +6,7 @@
 import { SHARE_LINK_MAX_AGE_MS, err, ok } from '@noter/contract'
 import type { Result } from '@noter/contract'
 import type { ShareLink } from '../contract/document.ts'
-
-/** 使えない理由。画面の文言はこの 3 つを 1 つの説明に畳む（UX §4.3）。 */
-export type ShareLinkUnusable = 'not_found' | 'revoked' | 'expired'
+import type { ShareLinkUnusable } from '../contract/errors.ts'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 

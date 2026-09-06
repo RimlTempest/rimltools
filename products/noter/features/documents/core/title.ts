@@ -7,11 +7,10 @@
  */
 import { MAX_TITLE_LENGTH, err, ok } from '@noter/contract'
 import type { Result } from '@noter/contract'
+import type { TitleError } from '../contract/errors.ts'
 
 /** 新規作成時の表題。UI に出る文言なので、ここを唯一の定義元にする。 */
 export const DEFAULT_TITLE = '無題'
-
-export type TitleError = 'empty' | 'too_long'
 
 /** サロゲートペアを 2 文字と数えないよう、コードポイント単位で数える。 */
 const lengthInCodePoints = (value: string): number => Array.from(value).length

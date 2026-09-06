@@ -10,3 +10,5 @@ export type {
   MemberSummary,
   ShareLink,
 } from './document.ts'
+export type { DocumentError, ShareLinkUnusable, TitleError } from './errors.ts'
+export { describeDocumentError } from './errors.ts'

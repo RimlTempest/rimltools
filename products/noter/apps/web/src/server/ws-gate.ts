@@ -7,10 +7,10 @@
  */
 import { parseDocumentId } from '@noter/contract'
 import { encodeIdentity } from '@noter/sync/contract'
-import type { WsAuthorizeEnv } from './ws-authorize.ts'
+import type { WebEnv } from './container.ts'
 import { authorizeWs } from './ws-authorize.ts'
 
-type WsGateEnv = WsAuthorizeEnv & {
+type WsGateEnv = WebEnv & {
   readonly DOCUMENT_ROOM: CloudflareEnv['DOCUMENT_ROOM']
 }
 

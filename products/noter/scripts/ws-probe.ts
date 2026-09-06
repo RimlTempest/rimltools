@@ -6,9 +6,10 @@
  * （auxiliary Worker 間の DO binding と Hibernation API）がここに出る。
  *
  *   bun run dev            # 別のシェルで
- *   bun run scripts/ws-probe.ts ws://localhost:5173/ws/doc_000000000000000000000000
+ *   bun run scripts/ws-probe.ts 'ws://localhost:5173/ws/doc_…' 'better-auth.session_token=…'
  *
- * `NOTER_DEV_OPEN_WS=1` を `apps/web/.dev.vars` に書いておくこと。
+ * `/ws/` は本物の認可を通る（plan 004）。第 2 引数にメンバーのセッション Cookie を
+ * 渡さないと 401 で切られる。Cookie はブラウザの開発者ツールから取る。
  */
 import * as decoding from 'lib0/decoding'
 import * as encoding from 'lib0/encoding'
