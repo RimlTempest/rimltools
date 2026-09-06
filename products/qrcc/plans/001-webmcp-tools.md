@@ -6,7 +6,7 @@
 > 完了したら `plans/README.md` の該当行を更新すること。
 >
 > **Drift check（最初に実行）**:
-> `git diff --stat ac0d989..HEAD -- features/generate features/scan features/shell shared package.json tsconfig.json`
+> `git diff --stat 87d8897..HEAD -- features/generate features/scan features/shell shared package.json tsconfig.json`
 > 出力が空でなければ、下の「Current state」の引用と実際のコードを突き合わせること。
 > 食い違っていたら STOP condition として扱うこと。
 
@@ -18,6 +18,7 @@
 - **Depends on**: none
 - **Category**: direction
 - **Planned at**: commit `ac0d989`, 2026-09-03
+- **Reconciled at**: commit `87d8897`, 2026-09-06（下記「2026-09-06 の見直し」を参照）
 
 ## Why this matters
 
@@ -36,6 +37,53 @@ Safari は標準化ポジションの表明のみ）。**この計画では Orig
 登録しない**とオーナーが決めている。したがって実装は「API があれば登録し、
 無ければ何もしない」形にし、**API が無い環境で挙動が一切変わらないこと**を
 テストで固定する。仕様が正式化すれば自動的に効き始める。
+
+## 2026-09-06 の見直し（この計画を書いたあとに入った変更）
+
+この計画は `ac0d989` の時点で書かれた。そのあと plans/002〜007 が入り、
+**前提が 3 つ変わっている**。着手前に必ず読むこと。
+
+### 1. 内容の種類が 3 → 9、符号が 3 → 8 に増えた
+
+|                   | 当時                 | いま                                      |
+| ----------------- | -------------------- | ----------------------------------------- |
+| `PAYLOAD_KINDS`   | text / url / wifi    | + tel / email / sms / geo / event / vcard |
+| `SYMBOLOGY_KINDS` | qr / code128 / ean13 | + code39 / code93 / ean8 / itf / codabar  |
+
+**生成ツールの `inputSchema` に種類を直書きしないこと。** `PAYLOAD_KINDS` と
+`SYMBOLOGY_KINDS` から組み立てれば、今後増えても追随する。
+`SYMBOLOGY_META[kind].label` と `PAYLOAD_META[kind].description` が
+そのままツールの説明文に使える。
+
+`isPayloadCompatible(payloadKind, symbologyKind)` で相性が引ける（plans/002）。
+エージェントが載らない組み合わせを指定したとき、ここで弾いて理由を返すこと。
+
+### 2. 読み取り結果を解釈する仕組みができた（plans/005）
+
+`features/scan/core/interpret/` に `interpret(text): Interpretation` がある。
+GS1 の識別子・名刺・Wi-Fi・メール・電話・SMS・地図・予定を構造化して返し、
+どれにも当てはまらなければ `{ kind: 'plain' }` に落ちる。
+
+**読み取りツールはこれを使うこと。** 生の文字列だけを返すのは、
+エージェントに再度パースさせることになって筋が悪い。`content` には
+**生テキストと解釈結果の両方**を入れる（解釈が外れたときに元が失われないため）。
+
+ただし `features/scan/package.json` の `exports` に `"./core"` がまだ無い。
+**この計画で足すこと**（`features/scan/package.json` は既に in scope）。
+
+### 3. トップページの配線は変わっていない
+
+`features/shell/ui/home.route.tsx` は当時の引用と**完全に一致**する
+（確認済み）。下の「いま qrcc 側にあるもの」の引用はそのまま使える。
+
+### 変わっていないこと
+
+- WebMCP は 2026-09 時点でも Origin Trial（Chrome 149 / Edge 150）。
+  **トークンは登録しない**という判断は変わらない
+- `shared/wasm` の `makeWasmRenderer` / `makeWasmDecoder` の形
+- `features/scan/contract/decode.ts` の `Detection` / `DecodeResponse`
+  （plans/005 は意図的に触っていない）
+- `features/scan/ui/browser-scan.ts` の `browserImageDecoder`
 
 ## Current state
 
@@ -163,7 +211,7 @@ await document.modelContext.registerTool(
   `decodeRenderResponse`, `decodeRenderError`, `describeRenderError`。
 
   `RenderRequest` を組み立てる実例が
-  `features/generate/ui/generate-screen.tsx` の `buildRequest`（135-160 行付近）に
+  `features/generate/ui/generate-screen.tsx` の `buildRequest`（**285 行目付近**）に
   ある。**そこを読んで、同じ形の値を作ること**（`style` には
   `foreground` / `background` / `scale` / `quiet_zone` / `module_shape` /
   `bar_height` / `human_readable` が要る）。
@@ -457,6 +505,9 @@ covering:
 6. 検出結果が 0 件のとき「見つからなかった」旨を返す。
 7. 検出結果が複数のとき、全部の `text` と `symbology` が本文に入る。
 8. `decodeBytes` が失敗を返したとき、`describeScanFailure` の文言を返す。
+9. **解釈結果が本文に入る。** `WIFI:S:MyNet;T:WPA;P:secret;;` を読ませたら、
+   `interpret`（`@qrcc/scan/core`）が返した構造化結果が本文に含まれること。
+   **生テキストも同時に含まれること**（解釈が外れても元が失われない）。
 
 **Verify**: `bun test features/scan/ui/webmcp-tools.test.ts` → 全 fail。
 
@@ -471,6 +522,8 @@ covering:
   コメントで「サーバ側デコードの上限（`docs/free-tier-budget.md`）と揃える」と残す。
 - `features/scan/ui/index.ts` に
   `export { makeDecodeTool } from './webmcp-tools.ts'` を追記。
+- `features/scan/package.json` の `exports` に `"./core": "./core/index.ts"` を
+  追記（`interpret` を composition root から使えるようにするため）。
 - `features/scan/package.json` の `dependencies` に
   `"@qrcc/webmcp": "workspace:*"` を追記。
 
