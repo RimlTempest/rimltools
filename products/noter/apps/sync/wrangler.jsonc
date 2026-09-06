@@ -11,5 +11,11 @@
   "durable_objects": { "bindings": [{ "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom" }] },
   // Free プランは SQLite backed の DO のみ（key-value backed は Paid 限定、ADR-0009）。
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DocumentRoom"] }],
-  "d1_databases": [{ "binding": "DB", "database_name": "noter", "database_id": "REPLACE_ME" }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "noter",
+      "database_id": "91947d9a-2361-476b-b53e-fbb23e3b4c67",
+    },
+  ],
 }

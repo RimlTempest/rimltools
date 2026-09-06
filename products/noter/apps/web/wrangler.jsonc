@@ -14,12 +14,12 @@
       { "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom", "script_name": "noter-sync" },
     ],
   },
-  // database_id はデプロイ時に人が書く。ローカル dev は REPLACE_ME のままで動く。
+  // database_id は本番 D1 `noter`（2026-09-07 作成、APAC）。ローカル dev は Miniflare が別 DB を持つ。
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "noter",
-      "database_id": "REPLACE_ME",
+      "database_id": "91947d9a-2361-476b-b53e-fbb23e3b4c67",
       "migrations_dir": "./migrations",
     },
   ],
