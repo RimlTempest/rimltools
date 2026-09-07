@@ -20,7 +20,7 @@ import {
   toRestoreDraft,
 } from '@qrcc/manage/core'
 import { describeManageFailure } from '@qrcc/manage/server'
-import { Button, Field, LiveRegion } from '@qrcc/ui'
+import { Button, Field, LiveRegion, Window } from '@qrcc/ui'
 import { CodeTable } from './code-table.tsx'
 import { ConfirmDialog } from './confirm-dialog.tsx'
 import type { CodeLinkRenderer, ManageDeps } from './manage-deps.tsx'
@@ -325,8 +325,7 @@ const SignedInCodes = ({
         </p>
       )}
 
-      <section aria-labelledby="qrcc-manage-new">
-        <h2 id="qrcc-manage-new">新しいコードを保存する</h2>
+      <Window title="新しいコードを保存する">
         <form
           onSubmit={(event) => {
             event.preventDefault()
@@ -425,10 +424,9 @@ const SignedInCodes = ({
             保存する
           </Button>
         </form>
-      </section>
+      </Window>
 
-      <section aria-labelledby="qrcc-manage-folders">
-        <h2 id="qrcc-manage-folders">フォルダ</h2>
+      <Window title="フォルダ">
         <form
           onSubmit={(event) => {
             event.preventDefault()
@@ -481,11 +479,9 @@ const SignedInCodes = ({
             ))}
           </ul>
         )}
-      </section>
+      </Window>
 
-      <section aria-labelledby="qrcc-manage-list">
-        <h2 id="qrcc-manage-list">保存したコードの一覧</h2>
-
+      <Window title="保存したコードの一覧">
         <form
           className="qrcc-manage-filters"
           onSubmit={(event) => {
@@ -547,7 +543,7 @@ const SignedInCodes = ({
             ) : undefined}
           </>
         )}
-      </section>
+      </Window>
 
       <ConfirmDialog
         open={pendingDelete !== undefined}

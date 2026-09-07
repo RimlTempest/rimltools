@@ -4,7 +4,7 @@ import { MAX_SHARE_DAYS, SHARE_DAYS_DEFAULT, describeShareDenial } from '@qrcc/a
 import type { ShareLink } from '@qrcc/manage/contract'
 import { shareUrl } from '@qrcc/manage/contract'
 import type { ShareDraftError } from '@qrcc/manage/core'
-import { Button } from '@qrcc/ui'
+import { Button, Window } from '@qrcc/ui'
 import { formatDate } from './format.ts'
 
 /** 期限の選択肢。ゲストが選べない「期限なし」も**隠さずに**出し、理由を添える。 */
@@ -61,12 +61,10 @@ export const SharePanel = ({
   const [expiry, setExpiry] = useState<ExpiryChoice>('default')
   const permissionGroup = useId()
   const expiryId = useId()
-  const headingId = useId()
   const isGuest = actor.kind === 'guest'
 
   return (
-    <section aria-labelledby={headingId}>
-      <h2 id={headingId}>共有リンク</h2>
+    <Window title="共有リンク">
       <p>
         リンクを知っている人が、サインインしなくてもこのコードを開けるようになります。
         取り消すと、そのリンクはすぐに使えなくなります。
@@ -166,6 +164,6 @@ export const SharePanel = ({
           })}
         </ul>
       )}
-    </section>
+    </Window>
   )
 }
