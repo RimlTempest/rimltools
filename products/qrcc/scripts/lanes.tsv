@@ -13,3 +13,4 @@ feat/api-worker	feat/shared-kernel	apps/api	workers-rs の auxiliary Worker と 
 feat/share-view	feat/manage	features/manage/ui/shared,e2e/tests/shared.spec.ts	共有リンクの閲覧画面。サインイン不要で読めること
 feat/manage-polish	feat/manage	features/manage/ui,e2e/tests/manage.spec.ts	編集画面のプレビューとフォルダの改名・削除 UI
 chore/devops	-	.github,scripts,docs	CI/CD・デプロイ・運用ドキュメント
+feat/riml-ds-tokens	feat/shared-ui	shared/ui/src/styles,shared/ui/package.json,vendor/riml-ds,scripts/vendor-riml-ds.sh,bun.lock,docs/adr/0011-riml-ds-tokens.md,docs/adr/README.md	デザイントークンを riml-ds から取る（plan 010）: --qrcc-* を --rd-* の別名にする
