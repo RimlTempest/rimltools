@@ -474,16 +474,19 @@ const expectWindow = (name: string) => {
 }
 
 describe('GenerateScreen の区画', () => {
-  test('できあがりは窓として出る', async () => {
+  test('生成したコードは窓として出て、プレビューはその中に入る', async () => {
     const { fn } = recording({ ok: true, value: response() })
     render(<GenerateScreen render={fn} mode="live" debounceMs={0} />)
-    await screen.findByRole('region', { name: 'できあがり' })
-    expectWindow('できあがり')
+    await screen.findByRole('figure')
+    expectWindow('生成したコード')
+    // 窓は画面の区画の単位。プレビューは窓の中身であって、それ自体は窓にしない
+    const region = screen.getByRole('region', { name: '生成したコード' })
+    expect(within(region).getByRole('figure')).toBeDefined()
   })
 
   test('埋め込むと窓の帯は 1 段下がる（AAA 2.4.10）', async () => {
     const { fn } = recording({ ok: true, value: response() })
     render(<GenerateScreen render={fn} mode="live" debounceMs={0} headingLevel={2} />)
-    expect(await screen.findByRole('heading', { level: 4, name: 'できあがり' })).toBeDefined()
+    expect(await screen.findByRole('heading', { level: 3, name: '生成したコード' })).toBeDefined()
   })
 })

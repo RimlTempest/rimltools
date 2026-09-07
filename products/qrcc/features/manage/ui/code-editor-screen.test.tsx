@@ -329,4 +329,15 @@ describe('編集画面の区画', () => {
     expectWindow('プレビュー')
     expectWindow('共有リンク')
   })
+
+  test('プレビューの窓の中に窓を入れ子にしない', async () => {
+    setup()
+    await waitFor(() =>
+      expect(screen.getByLabelText<HTMLInputElement>('名前').value).toBe('在庫ラベル'),
+    )
+    const preview = within(screen.getByRole('region', { name: 'プレビュー' }))
+    await waitFor(() => expect(preview.getByRole('figure')).toBeDefined())
+    expect(preview.queryByRole('region')).toBeNull()
+    expect(preview.queryByRole('heading')).toBeNull()
+  })
 })
