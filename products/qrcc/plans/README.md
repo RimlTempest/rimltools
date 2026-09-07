@@ -19,7 +19,7 @@ improve スキルが作成（001 は 2026-09-03、002〜006 は 2026-09-06、011
 | 009  | PWA にする（ホーム画面に追加・オフラインで生成と読み取り）                                          | P2       | M      | —                | DONE   |
 | 010  | デザイントークンを riml-ds から取る（段階 1: `--qrcc-*` を `--rd-*` の別名にする）                  | P2       | M      | riml-ds 013      | DONE   |
 | 011  | 窓（Mado）の見た目を qrcc に入れる — 基盤（shared/ui: patterns.css・ピルボタン・`<Window>`）        | P1       | M      | 010, riml-ds 015 | DONE   |
-| 012  | 窓（Mado）の見た目を qrcc に入れる — 画面（features/*/ui の板を `<Window>` に、シェルを窓の言語に） | P1       | M      | 011              | TODO   |
+| 012  | 窓（Mado）の見た目を qrcc に入れる — 画面（features/*/ui の板を `<Window>` に、シェルを窓の言語に） | P1       | M      | 011              | DONE   |
 
 Status の値: TODO / IN PROGRESS / DONE / BLOCKED（理由を 1 行）/ REJECTED（理由を 1 行）
 
@@ -155,3 +155,20 @@ Status の値: TODO / IN PROGRESS / DONE / BLOCKED（理由を 1 行）/ REJECTE
 - **`--qrcc-radius-lg` が 1.5rem → 1rem** になったので `features/{scan,generate,manage}/ui/*.css` のカード角丸が小さくなっている。
   見た目の最終判断は 012 で（012 はそのカードを `<Window>` に置き換える）
 - a11y 180 passed / e2e 428 passed / `bun run check` exit 0（レビュー時に main 側でも再実行）
+
+### 012 の実行メモ（2026-09-08）
+
+- マージ済み。`<Window>` は 13 か所（scan 3 / manage 5 / print 1 / auth 1 / nfc 1 / generate 1 / …）。`grep -rn 'できあがり' features e2e` は 0 件
+- 計画から変えたもの: red テストは `region.firstElementChild` では赤くならなかった（見出しが元から先頭）ため、
+  `expectWindow()`（region → 帯の見出し → 本文、というロール構造の検査）に置き換えた。`features/shell/ui/shell.css` に
+  `main .rd-window { margin-block-end: var(--rd-space-6) }` を足して窓の間隔を 1 か所で持つ。窓の中の板（一覧の行・NFC の
+  プレビュー）は raised on raised で見えなくなるため**沈んだ面（sunken）**に変えた。`confirm-dialog` の `padding: 0` は本文ラッパが
+  無いので見送り。ナビは current = sunken、hover = raised
+- **レビューで直したもの**（`99d9aa2`）: `CodePreview` が自前で `<Window title="できあがり">` を出していたため、編集画面で窓の入れ子、
+  生成画面で見出しの重複（`生成したコード` の次に `できあがり`）が起きていた。`CodePreview` から窓を外し、呼び出し側が区画を決める形にした
+- 残したもの（→ plan 013）: `.qrcc-manage-undo` の板、`features/manage/ui/shared/shared-code-screen.tsx` の「共有されたコード」
+  （`.qrcc-code-preview` から板の装飾を外したので、この画面だけプレビューがページ面に直置きになっている）、角丸の同心円
+  （`radius-lg` の窓の中に `radius-md` の板）、実ブラウザでの見た目確認（スクリーンショット無し）
+- e2e で `e2e/tests/auth.spec.ts:153`（mobile）が 1 回だけ 15s タイムアウトで flake。再実行は 428 passed。窓とは無関係の
+  URL 入力 → プレビュー更新待ちで、負荷時のタイミング依存。安定化は別途
+- check exit 0 / test 913 pass / a11y 180 passed / e2e 428 passed
