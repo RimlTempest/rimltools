@@ -142,9 +142,8 @@ padding: 0`、中の見出しを帯にはしない（段階 3 で `rd-dialog` �
   `main` の中にあれば問題ない）
 - `bun run e2e` → 既存 spec が通る。`getByRole('heading', { name })` で取っている spec は変わらない。
   `locator('section')` の数を数えている spec があれば role ベースに直す（ファイル名を報告メモに）
-- 320px 幅で横スクロールが出ないこと（既存の a11y spec が見ている。窓の影 0.25rem が右端で溢れたら、画面ルートに
-  `padding-inline-end: var(--rd-space-1)` ではなく **`.rd-window` の親に `overflow: visible` のまま `margin-inline-end`** を足さず、
-  riml-ds 側の問題として報告して STOP）
+- 320px 幅で横スクロールが出ないこと（既存の a11y spec が見ている）。窓の影（右下 0.25rem）が画面右端で溢れて出るなら、
+  feature 側で誤魔化さず（`overflow: hidden` を足さない）、riml-ds 側の `patterns.css` の問題として報告して STOP
 
 ## Done criteria
 
