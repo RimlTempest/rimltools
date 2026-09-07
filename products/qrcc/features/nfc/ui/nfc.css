@@ -2,22 +2,32 @@
  * NFC 書き込み画面。
  *
  * レイアウトは Grid だけで決める。JS では計算しない。
+ * 確認の区画は窓（Window）の中身なので、板の装飾は `.rd-window` に任せる。
  */
 .qrcc-nfc__confirm,
 .qrcc-nfc__done {
   display: grid;
-  gap: var(--qrcc-space-3);
+  gap: var(--rd-space-3);
   justify-items: start;
   max-inline-size: var(--qrcc-measure);
-  margin-block-start: var(--qrcc-space-4);
 }
 
+.qrcc-nfc__done {
+  margin-block-start: var(--rd-space-4);
+}
+
+/* 書き込む中身は窓の中の窪み。板を入れ子にしない（riml-ds docs/brand.md §4） */
 .qrcc-nfc__preview {
-  padding: var(--qrcc-space-3);
+  padding: var(--rd-space-3);
   margin: 0;
   overflow-wrap: anywhere;
   font-family: var(--qrcc-font-mono);
-  background: var(--qrcc-surface-raised);
-  border: 1px solid var(--qrcc-border);
-  border-radius: var(--qrcc-radius-sm);
+  background: var(--rd-color-surface-sunken);
+  border-radius: var(--rd-radius-md);
+}
+
+@media (forced-colors: active) {
+  .qrcc-nfc__preview {
+    border: var(--rd-border-width-default) solid CanvasText;
+  }
 }
