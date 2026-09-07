@@ -4,19 +4,17 @@
  * レイアウトは Grid と Container Queries だけで決める。JS では計算しない。
  * 見た目の状態（カメラが動いているか）も data 属性 + CSS で表す。
  */
+/*
+ * 窓（Window）の中身。板の装飾（背景・枠・角丸・余白）は riml-ds の
+ * `.rd-window` / `.rd-window-body` が持つので、ここはレイアウトだけ。
+ */
 .qrcc-scan__panel {
   display: grid;
   /* minmax(0, 1fr) が無いと、ファイル選択欄の max-content 幅で列が広がり、
      320px 幅で横スクロールが出る（AAA 1.4.10） */
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--qrcc-space-3);
+  gap: var(--rd-space-3);
   justify-items: start;
-  margin-block-end: var(--qrcc-space-6);
-  padding: var(--qrcc-space-4);
-  background: var(--qrcc-surface-raised);
-  border: 1px solid var(--qrcc-border);
-  /* 中身（0.5rem）+ padding（1rem）= 1.5rem。入れ子の角丸を同心にする */
-  border-radius: var(--qrcc-radius-lg);
   /* ページ幅ではなく自分の幅で中身を組み替える */
   container-type: inline-size;
 }
