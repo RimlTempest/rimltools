@@ -17,7 +17,7 @@ improve スキルが作成（001 は 2026-09-03、002〜006 は 2026-09-06）。
 | 001  | トップページの生成と読み取りを WebMCP のツールとしてエージェントに公開する                          | P2       | M      | —           | DONE   |
 | 008  | 生成ツールから 9 種類すべての内容を作れるようにする                                                 | P2       | M      | 001, 003    | DONE   |
 | 009  | PWA にする（ホーム画面に追加・オフラインで生成と読み取り）                                          | P2       | M      | —           | DONE   |
-| 010  | デザイントークンを riml-ds から取る（段階 1: `--qrcc-*` を `--rd-*` の別名にする）                  | P2       | M      | riml-ds 013 | TODO   |
+| 010  | デザイントークンを riml-ds から取る（段階 1: `--qrcc-*` を `--rd-*` の別名にする）                  | P2       | M      | riml-ds 013 | DONE   |
 
 Status の値: TODO / IN PROGRESS / DONE / BLOCKED（理由を 1 行）/ REJECTED（理由を 1 行）
 
@@ -124,3 +124,15 @@ Status の値: TODO / IN PROGRESS / DONE / BLOCKED（理由を 1 行）/ REJECTE
   誰も確認していない。
 - **WebMCP の Origin Trial トークンは未登録。** 仕様が正式化するまで実ユーザーには
   効かない。登録するなら docs/adr/0010-webmcp.md を参照。
+
+### 010 の実行メモ（2026-09-07）
+
+- riml-ds は npm 未公開のため `vendor/riml-ds/*.tgz` を `file:` 依存で取り込んでいる（`scripts/vendor-riml-ds.sh`）。
+  `bun install --frozen-lockfile` は tgz の整合性ハッシュで通る。公開後は `shared/ui/package.json` の 1 行と
+  `vendor/` の削除だけ（ADR-0011）
+- `--qrcc-*` は全部 `var(--rd-*)` の別名になった。残した生値は `radius-lg` / `measure` / `text-base|lg|xl|2xl` の 6 つ
+  （`shared/ui/src/styles/tokens.test.ts` の `KEPT_LOCAL`）。新しい `--qrcc-*` を足すとテストが落ちる。新しい CSS は `--rd-*` を直接使う
+- 新規 worktree で `apps/web` 単体ビルドをする前に `bun run build`（wasm / api 込み）が要る（`apps/api/build/worker/shim.mjs` が無いと
+  @cloudflare/vite-plugin が失敗）。トークンとは無関係
+- 受け入れた視覚差分（border が 0.72→0.6 で 3:1 を満たすようになった等）は ADR-0011 の表。a11y 180 passed、テスト 890
+- 段階 2（riml-ds の reset / base）は css tgz の peerDependency 解決（registry 404）を解く必要がある。npm 公開後に始める
