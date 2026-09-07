@@ -81,7 +81,7 @@ riml-ds 側（main、plan 015 以降）で参照するもの:
 
 - `system/css/dist/patterns.css` — `@layer rd.components { .rd-window { … } .rd-window-title { … } .rd-window-body { … } [data-tone=…] … }`
   マークアップ: `<section class="rd-window"><h2 class="rd-window-title">題</h2><div class="rd-window-body">…</div></section>`。
-  トーンは `data-tone="accent" | "warning" | "danger"`
+  トーンは **見出し**に `data-tone="accent" | "warning" | "danger"`（`.rd-window-title[data-tone]`。section ではない）
 - `library/elements/src/button/button.css`, `text-field/text-field.css`, `checkbox/checkbox.css`, `select/select.css` — 窓の言語で書き直された
   tier A の CSS。**qrcc の `.qrcc-*` セレクタに読み替えて写す**（riml-ds は `rd-button > button` のような要素セレクタ、qrcc はクラス）
 - `system/tokens/dist/tokens.css` に `--rd-font-family-display`, `--rd-radius-lg: 1rem`, `--rd-radius-full`, `--rd-shadow-raised`,
@@ -272,16 +272,16 @@ describe('Window', () => {
     expect(screen.getByRole('heading', { level: 3, name: '詳細' })).toBeDefined()
   })
 
-  test('トーンは data-tone で渡し、既定では付かない', () => {
+  test('トーンは見出し（帯）の data-tone で渡し、既定では付かない', () => {
     render(
       <Window title="注意" tone="warning">
         x
       </Window>,
     )
-    expect(screen.getByRole('region', { name: '注意' }).dataset['tone']).toBe('warning')
+    expect(screen.getByRole('heading', { name: '注意' }).dataset['tone']).toBe('warning')
     cleanup()
     render(<Window title="ふつう">x</Window>)
-    expect(screen.getByRole('region', { name: 'ふつう' }).dataset['tone']).toBeUndefined()
+    expect(screen.getByRole('heading', { name: 'ふつう' }).dataset['tone']).toBeUndefined()
   })
 
   test('id を渡すとその id が section に付き、aria-labelledby は見出しを指す', () => {
@@ -405,6 +405,8 @@ type WindowProps = {
 
 /**
  * 窓（Mado）。riml-ds の `.rd-window`（@rimltempest/riml-ds-css/patterns.css）をそのまま使う。
+ * トーン（帯の色）は riml-ds の決まりで見出し側の data-tone が受ける。
+ * 長い題を 1 行で切りたいときは title を <span> で渡す（素のテキストには text-overflow が効かない）。
  * `<section aria-labelledby>` なので支援技術には「region: <題>」として見える。
  * 題の無い箱が要るなら Window ではなく普通の div を使う（帯だけの窓は作らない）。
  */
@@ -412,8 +414,8 @@ export const Window = ({ title, headingLevel = 2, tone, id, children }: WindowPr
   const titleId = useId()
   const Heading = `h${headingLevel}` satisfies 'h2' | 'h3' | 'h4'
   return (
-    <section className="rd-window" data-tone={tone} id={id} aria-labelledby={titleId}>
-      <Heading className="rd-window-title" id={titleId}>
+    <section className="rd-window" id={id} aria-labelledby={titleId}>
+      <Heading className="rd-window-title" id={titleId} data-tone={tone}>
         {title}
       </Heading>
       <div className="rd-window-body">{children}</div>

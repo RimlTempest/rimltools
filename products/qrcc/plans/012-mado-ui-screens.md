@@ -40,7 +40,7 @@ plan 011 で `@qrcc/ui` に **窓（Mado）** の基盤が入った: riml-ds の
 <Window title={ReactNode} headingLevel={2 | 3 | 4 = 2} tone={'accent' | 'warning' | 'danger'} id={string}>
   {children}
 </Window>
-// → <section class="rd-window" aria-labelledby=… data-tone=…><h2 class="rd-window-title">…</h2><div class="rd-window-body">…</div></section>
+// → <section class="rd-window" aria-labelledby=…><h2 class="rd-window-title" data-tone=…>…</h2><div class="rd-window-body">…</div></section>
 ```
 
 窓の中身にレイアウト（grid / gap）が要るなら、**children を自分の div で包む**（`<Window title="…"><div className="qrcc-scan__panel">…</div></Window>`）。
