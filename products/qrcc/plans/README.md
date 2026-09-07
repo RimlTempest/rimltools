@@ -18,7 +18,7 @@ improve スキルが作成（001 は 2026-09-03、002〜006 は 2026-09-06、011
 | 008  | 生成ツールから 9 種類すべての内容を作れるようにする                                                 | P2       | M      | 001, 003         | DONE   |
 | 009  | PWA にする（ホーム画面に追加・オフラインで生成と読み取り）                                          | P2       | M      | —                | DONE   |
 | 010  | デザイントークンを riml-ds から取る（段階 1: `--qrcc-*` を `--rd-*` の別名にする）                  | P2       | M      | riml-ds 013      | DONE   |
-| 011  | 窓（Mado）の見た目を qrcc に入れる — 基盤（shared/ui: patterns.css・ピルボタン・`<Window>`）        | P1       | M      | 010, riml-ds 015 | TODO   |
+| 011  | 窓（Mado）の見た目を qrcc に入れる — 基盤（shared/ui: patterns.css・ピルボタン・`<Window>`）        | P1       | M      | 010, riml-ds 015 | DONE   |
 | 012  | 窓（Mado）の見た目を qrcc に入れる — 画面（features/*/ui の板を `<Window>` に、シェルを窓の言語に） | P1       | M      | 011              | TODO   |
 
 Status の値: TODO / IN PROGRESS / DONE / BLOCKED（理由を 1 行）/ REJECTED（理由を 1 行）
@@ -138,3 +138,20 @@ Status の値: TODO / IN PROGRESS / DONE / BLOCKED（理由を 1 行）/ REJECTE
   @cloudflare/vite-plugin が失敗）。トークンとは無関係
 - 受け入れた視覚差分（border が 0.72→0.6 で 3:1 を満たすようになった等）は ADR-0011 の表。a11y 180 passed、テスト 890
 - 段階 2（riml-ds の reset / base）は css tgz の peerDependency 解決（registry 404）を解く必要がある。npm 公開後に始める
+
+### 011 の実行メモ（2026-09-08）
+
+- マージ `6e606d8`。`shared/ui` に `@rimltempest/riml-ds-css` 0.2.0（`patterns.css`）が入り、層順は
+  `reset, base, rd.tokens, rd.components, tokens, components, utilities`（理由は ADR-0012 §4、実ブラウザの勝ち負けは
+  `e2e/tests/mado.spec.ts`）。`<Window>` は `shared/ui/src/components/window.tsx`、トーンは**見出し側**の `data-tone`
+- **css tgz の peerDependency 404 は解けた**: `scripts/vendor-riml-ds.sh` が vendor する css tgz の中で
+  `peerDependenciesMeta.optional` を立てて詰め直す（`bun pm pack` で詰め直すのでハッシュは安定）。
+  本筋は riml-ds 側で `peerDependenciesMeta` を持つこと → riml-ds の次の小 plan に載せる。npm 公開でブロックごと消える
+- riml-ds を正として計画から変えたもの: ボタン `padding-inline` は `--rd-space-4`、transition は `background-color, color` だけ
+  （押下 `translate` は `prefers-reduced-motion: no-preference` の中）、入力欄の inset 影は入れない。
+  計画を採ったのは無効ボタン（`grayscale` + 内側の破線 outline、AAA 1.4.1）。詳細は ADR-0012 の表
+- red コミット（`7d8e472`、`eed9459`）は `window.tsx` 未作成のため typecheck が通らない。fmt + lint のみで commit している
+  （red → green の順序上避けられない）。以降は毎コミット `bun run check` 通過
+- **`--qrcc-radius-lg` が 1.5rem → 1rem** になったので `features/{scan,generate,manage}/ui/*.css` のカード角丸が小さくなっている。
+  見た目の最終判断は 012 で（012 はそのカードを `<Window>` に置き換える）
+- a11y 180 passed / e2e 428 passed / `bun run check` exit 0（レビュー時に main 側でも再実行）
