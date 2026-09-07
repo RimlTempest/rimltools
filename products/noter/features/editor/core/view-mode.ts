@@ -19,6 +19,6 @@ export const nextViewMode = (mode: ViewMode): ViewMode => {
   return VIEW_MODES[(index + 1) % VIEW_MODES.length] ?? 'editor'
 }
 
-/** `localStorage` から読み戻す。読めない値は `undefined`（既定に任せる）。 */
+/** 端末に保存した値（features/editor/ui が読む）を復元する。読めない値は `undefined`（既定に任せる）。 */
 export const parseViewMode = (value: unknown): ViewMode | undefined =>
   VIEW_MODES.find((candidate) => candidate === value)
