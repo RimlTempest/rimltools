@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useState } from 'react'
 import type { HexColor, Result } from '@qrcc/contract'
 import { parseHexColor } from '@qrcc/contract'
-import { Button, Field, LiveRegion } from '@qrcc/ui'
+import { Button, Field, LiveRegion, Window } from '@qrcc/ui'
 import type { RenderError, RenderRequest, RenderResponse } from '@qrcc/generate/contract'
 import { describeRenderError } from '@qrcc/generate/contract'
 import type {
@@ -327,26 +327,28 @@ export const PrintScreen = ({
 
       <LiveRegion message={problem ?? message} />
 
-      <section className="qrcc-no-print" aria-labelledby="qrcc-print-list">
-        <h2 id="qrcc-print-list">印刷するものの一覧</h2>
-        {items.length === 0 ? (
-          <p>まだ何も入力されていません。上の「印刷するコード」に 1 行ずつ書いてください。</p>
-        ) : (
-          <>
-            <p>
-              全 {pages.length} ページ・ラベル {labelCount} 枚。{state.startCell}{' '}
-              番目のセルから印刷します。
-            </p>
-            <ol>
-              {withKeys(items).map(({ key, item }) => (
-                <li key={key}>
-                  {describeItem(item)} — {item.copies} 枚
-                </li>
-              ))}
-            </ol>
-          </>
-        )}
-      </section>
+      {/* 紙に出すのは台紙だけ。窓ごと落とすので外から包む */}
+      <div className="qrcc-no-print">
+        <Window title="印刷するものの一覧">
+          {items.length === 0 ? (
+            <p>まだ何も入力されていません。上の「印刷するコード」に 1 行ずつ書いてください。</p>
+          ) : (
+            <>
+              <p>
+                全 {pages.length} ページ・ラベル {labelCount} 枚。{state.startCell}{' '}
+                番目のセルから印刷します。
+              </p>
+              <ol>
+                {withKeys(items).map(({ key, item }) => (
+                  <li key={key}>
+                    {describeItem(item)} — {item.copies} 枚
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
+        </Window>
+      </div>
 
       <PrintPreview
         sheet={sheet}

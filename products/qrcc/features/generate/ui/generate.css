@@ -1,12 +1,11 @@
+/*
+ * 窓（Window）の中身。板の装飾は riml-ds の `.rd-window` が持つので、
+ * ここはレイアウトだけ。
+ */
 .qrcc-code-preview {
   display: grid;
-  gap: var(--qrcc-space-4);
+  gap: var(--rd-space-4);
   margin: 0;
-  padding: var(--qrcc-space-4);
-  background: var(--qrcc-surface-raised);
-  border: 1px solid var(--qrcc-border);
-  /* 中身（0.5rem）+ padding（1rem）= 1.5rem。入れ子の角丸を同心にする */
-  border-radius: var(--qrcc-radius-lg);
   /* 内容に応じて 1 段組と 2 段組を切り替える。ページ幅ではなく自分の幅で決める */
   container-type: inline-size;
 }

@@ -1,5 +1,5 @@
-import { useId, useState } from 'react'
-import { Button, LiveRegion } from '@qrcc/ui'
+import { useState } from 'react'
+import { Button, LiveRegion, Window } from '@qrcc/ui'
 import type { Actor } from '../contract/actor.ts'
 import { GUEST_SESSION_DAYS } from './guest-guide.ts'
 import type { AuthActionResult, AuthActions } from './auth-actions.ts'
@@ -35,7 +35,6 @@ export const SignInScreen = ({
 }: SignInScreenProps) => {
   const [message, setMessage] = useState<string | undefined>(undefined)
   const [busy, setBusy] = useState(false)
-  const guideId = useId()
 
   const run = async (
     action: () => Promise<AuthActionResult>,
@@ -111,15 +110,19 @@ export const SignInScreen = ({
 
       <LiveRegion message={message} />
 
-      <section aria-labelledby={guideId} className="qrcc-auth-guide">
-        <h2 id={guideId}>ゲストで使うときの注意</h2>
-        <ul>
-          <li>保存したコードは {GUEST_SESSION_DAYS} 日で消えます。使い続けると期限は延びます。</li>
-          <li>編集できる共有リンクは作れません（閲覧用のリンクは作れます）。</li>
-          <li>期限なしの共有リンクは作れません。共有リンクには必ず期限が付きます。</li>
-          <li>あとから Google で続けると、ゲストのときに作ったコードをそのまま引き継げます。</li>
-        </ul>
-      </section>
+      {/* 注意書きなので帯は warning。何が起きるかを選ぶ前に読ませる */}
+      <Window title="ゲストで使うときの注意" tone="warning">
+        <div className="qrcc-auth-guide">
+          <ul>
+            <li>
+              保存したコードは {GUEST_SESSION_DAYS} 日で消えます。使い続けると期限は延びます。
+            </li>
+            <li>編集できる共有リンクは作れません（閲覧用のリンクは作れます）。</li>
+            <li>期限なしの共有リンクは作れません。共有リンクには必ず期限が付きます。</li>
+            <li>あとから Google で続けると、ゲストのときに作ったコードをそのまま引き継げます。</li>
+          </ul>
+        </div>
+      </Window>
     </>
   )
 }

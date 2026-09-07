@@ -9,7 +9,7 @@ import { buildCodeDraft, toCodeForm } from '@qrcc/manage/core'
 import { describeManageFailure } from '@qrcc/manage/server'
 import { CodePreview } from '@qrcc/generate/ui'
 import type { RenderFn } from '@qrcc/generate/ui'
-import { Button, Field, LiveRegion } from '@qrcc/ui'
+import { Button, Field, LiveRegion, Window } from '@qrcc/ui'
 import type { CodeLinkRenderer, ManageDeps } from './manage-deps.tsx'
 import { defaultRenderLink } from './manage-deps.tsx'
 import { SharePanel, describeShareDraftError } from './share-panel.tsx'
@@ -173,8 +173,7 @@ export const CodeEditorScreen = ({
         <p>コードを読み込んでいます。</p>
       ) : (
         <>
-          <section aria-labelledby="qrcc-editor-basics">
-            <h2 id="qrcc-editor-basics">内容と見た目</h2>
+          <Window title="内容と見た目">
             <form
               onSubmit={(event) => {
                 event.preventDefault()
@@ -334,17 +333,16 @@ export const CodeEditorScreen = ({
                 保存する
               </Button>
             </form>
-          </section>
+          </Window>
 
-          <section aria-labelledby="qrcc-editor-preview">
-            <h2 id="qrcc-editor-preview">プレビュー</h2>
+          <Window title="プレビュー">
             {preview === undefined ? (
               <p>設定を読み込むと、ここにコードのプレビューが出ます。</p>
             ) : (
               /* 保存はこの画面の仕事。書き出しはトップの生成画面に任せる */
               <CodePreview response={preview} showDownloads={false} />
             )}
-          </section>
+          </Window>
 
           <SharePanel
             actor={actor}

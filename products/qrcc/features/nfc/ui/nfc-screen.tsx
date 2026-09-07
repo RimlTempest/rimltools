@@ -1,7 +1,7 @@
 import type { FormEvent } from 'react'
-import { useId, useReducer, useState } from 'react'
+import { useReducer, useState } from 'react'
 import { parseHttpUrl, parseNonEmptyText } from '@qrcc/contract'
-import { Button, Field, LiveRegion } from '@qrcc/ui'
+import { Button, Field, LiveRegion, Window } from '@qrcc/ui'
 import type { NfcRecord } from '../contract/index.ts'
 import type { WriteNfc } from './browser-nfc.ts'
 import { INITIAL_NFC_STATE, reduceNfc } from './nfc-state.ts'
@@ -48,7 +48,6 @@ export const NfcScreen = ({ writeNfc }: NfcScreenProps) => {
   const [state, dispatch] = useReducer(reduceNfc, INITIAL_NFC_STATE)
   const [input, setInput] = useState('')
   const [validationError, setValidationError] = useState<string | undefined>(undefined)
-  const confirmHeadingId = useId()
 
   const submitContent = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -106,31 +105,33 @@ export const NfcScreen = ({ writeNfc }: NfcScreenProps) => {
             </form>
           ) : undefined}
 
+          {/* 元に戻せない操作なので、確認の窓は帯で注意を示す（tone="warning"） */}
           {state.step === 'confirming' || state.step === 'writing' ? (
-            <section aria-labelledby={confirmHeadingId} className="qrcc-nfc__confirm">
-              <h2 id={confirmHeadingId}>書き込む内容を確認してください</h2>
-              <p className="qrcc-nfc__preview">
-                {state.record === undefined ? '' : contentText(state.record)}
-              </p>
-              <p>
-                タグに近づけて書き込むと、タグに前から入っていた内容は上書きされます。
-                <strong>この操作は元に戻せません。</strong>
-              </p>
-              <Button
-                onClick={() => void write()}
-                busy={state.step === 'writing'}
-                disabled={state.step === 'writing'}
-              >
-                書き込む
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => dispatch({ kind: 'edit_requested' })}
-                disabled={state.step === 'writing'}
-              >
-                内容を変更する
-              </Button>
-            </section>
+            <Window title="書き込む内容を確認してください" tone="warning">
+              <div className="qrcc-nfc__confirm">
+                <p className="qrcc-nfc__preview">
+                  {state.record === undefined ? '' : contentText(state.record)}
+                </p>
+                <p>
+                  タグに近づけて書き込むと、タグに前から入っていた内容は上書きされます。
+                  <strong>この操作は元に戻せません。</strong>
+                </p>
+                <Button
+                  onClick={() => void write()}
+                  busy={state.step === 'writing'}
+                  disabled={state.step === 'writing'}
+                >
+                  書き込む
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => dispatch({ kind: 'edit_requested' })}
+                  disabled={state.step === 'writing'}
+                >
+                  内容を変更する
+                </Button>
+              </div>
+            </Window>
           ) : undefined}
 
           {state.step === 'done' ? (

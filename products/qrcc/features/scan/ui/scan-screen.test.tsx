@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Detection, ScanFailure } from '../contract/index.ts'
 import type { ScanSession, StartCamera } from './scan-screen.tsx'
@@ -381,5 +381,49 @@ describe('ScanScreen', () => {
       <ScanScreen startCamera={undefined} decodeImageFile={neverDecodes} copyText={undefined} />,
     )
     expect(screen.getByText(/まだ読み取っていません/)).toBeDefined()
+  })
+})
+
+/**
+ * 区画が窓（Mado）として出ているか。
+ *
+ * 窓は「帯（＝見出し）＋ 本体」の 2 段で、中身は本体の中に入る（riml-ds の `.rd-window`）。
+ * section に見出しと中身を並べただけの板では、区画の直下に中身が出てしまい通らない。
+ */
+const expectWindow = (name: string) => {
+  const region = screen.getByRole('region', { name })
+  const heading = within(region).getByRole('heading', { name })
+  expect(region.firstElementChild).toBe(heading)
+  expect(region.children.length).toBe(2)
+  expect(heading.nextElementSibling?.tagName).toBe('DIV')
+}
+
+describe('ScanScreen の区画', () => {
+  test('題のある区画は窓として出る', () => {
+    const camera = fakeCamera()
+    render(
+      <ScanScreen
+        startCamera={camera.startCamera}
+        decodeImageFile={neverDecodes}
+        copyText={undefined}
+      />,
+    )
+    expectWindow('カメラで読み取る')
+    expectWindow('画像から読み取る')
+    expectWindow('読み取った内容')
+  })
+
+  test('埋め込むと窓の帯は 1 段下がる（AAA 2.4.10）', () => {
+    const camera = fakeCamera()
+    render(
+      <ScanScreen
+        startCamera={camera.startCamera}
+        decodeImageFile={neverDecodes}
+        copyText={undefined}
+        headingLevel={2}
+      />,
+    )
+    expect(screen.getByRole('heading', { level: 3, name: 'カメラで読み取る' })).toBeDefined()
+    expect(screen.getByRole('heading', { level: 3, name: '読み取った内容' })).toBeDefined()
   })
 })

@@ -29,18 +29,12 @@
   }
 }
 
+/*
+ * 窓（Window）の中身。板の装飾も見出しの大きさも riml-ds の `.rd-window` が
+ * 決めるので、ここは読み幅と箇条書きの間隔だけを持つ。
+ */
 .qrcc-auth-guide {
-  margin-block-start: var(--qrcc-space-8);
-  padding: var(--qrcc-space-4);
-  border: 1px solid var(--qrcc-border);
-  border-radius: var(--qrcc-radius);
-  background: var(--qrcc-surface-raised);
   max-inline-size: var(--qrcc-measure);
-}
-
-.qrcc-auth-guide h2 {
-  margin-block-start: 0;
-  font-size: 1.125rem;
 }
 
 .qrcc-auth-guide ul {
@@ -49,7 +43,7 @@
 }
 
 .qrcc-auth-guide li + li {
-  margin-block-start: var(--qrcc-space-2);
+  margin-block-start: var(--rd-space-2);
 }
 
 .qrcc-auth-status {
@@ -65,10 +59,4 @@
   display: inline-flex;
   align-items: center;
   min-block-size: var(--qrcc-target-min);
-}
-
-@media (forced-colors: active) {
-  .qrcc-auth-guide {
-    border-color: CanvasText;
-  }
 }

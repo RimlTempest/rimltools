@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { UserId } from '@qrcc/contract'
 import { parseUserId } from '@qrcc/contract'
@@ -157,5 +157,27 @@ describe('サインイン画面', () => {
 
     expect(screen.queryByRole('button', { name: '登録せずに使う（ゲスト）' })).toBeNull()
     expect(screen.getByRole('button', { name: 'サインアウト' })).toBeDefined()
+  })
+})
+
+/**
+ * 区画が窓（Mado）として出ているか。
+ *
+ * 窓は「帯（＝見出し）＋ 本体」の 2 段で、中身は本体の中に入る（riml-ds の `.rd-window`）。
+ * section に見出しと中身を並べただけの板では、区画の直下に中身が出てしまい通らない。
+ */
+const expectWindow = (name: string) => {
+  const region = screen.getByRole('region', { name })
+  const heading = within(region).getByRole('heading', { name })
+  expect(region.firstElementChild).toBe(heading)
+  expect(region.children.length).toBe(2)
+  expect(heading.nextElementSibling?.tagName).toBe('DIV')
+}
+
+describe('サインイン画面の区画', () => {
+  test('ゲストの注意書きは窓として出る', () => {
+    const { actions } = okActions()
+    render(<SignInScreen actor={{ kind: 'visitor' }} actions={actions} />)
+    expectWindow('ゲストで使うときの注意')
   })
 })

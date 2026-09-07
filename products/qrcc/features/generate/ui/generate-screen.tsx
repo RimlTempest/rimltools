@@ -8,7 +8,7 @@ import { buildSmsPayload } from '../core/payload/sms.ts'
 import { buildTelPayload } from '../core/payload/tel.ts'
 import { buildVCardPayload } from '../core/payload/vcard.ts'
 import { buildWifiPayload } from '../core/payload/wifi.ts'
-import { Button, Field, LiveRegion } from '@qrcc/ui'
+import { Button, Field, LiveRegion, Window } from '@qrcc/ui'
 import type {
   CodePayload,
   ModuleShape,
@@ -321,7 +321,6 @@ export const GenerateScreen = ({
 }: GenerateScreenProps) => {
   // 見出しは常に 1 段ずつ。飛ばすと構造が読めなくなる（AAA 2.4.10）
   const Title = headingLevel === 2 ? 'h2' : 'h1'
-  const Section = headingLevel === 2 ? 'h3' : 'h2'
   const [state, setState] = useState<FormState>(INITIAL)
   const [result, setResult] = useState<RenderResponse | undefined>(undefined)
   const [message, setMessage] = useState<string | undefined>(undefined)
@@ -396,21 +395,22 @@ export const GenerateScreen = ({
        */}
       <div className="qrcc-generate__layout">
         <div className="qrcc-generate__preview">
-          <Section>生成したコード</Section>
-          {result === undefined ? (
-            <p>
-              {mode === 'manual'
-                ? 'まだ生成していません。設定を決めて「生成する」を押してください。'
-                : '設定を入力すると、ここにプレビューが出ます。'}
-            </p>
-          ) : (
-            <CodePreview
-              response={result}
-              showDownloads={mode === 'live'}
-              headingLevel={headingLevel === 2 ? 4 : 3}
-            />
-          )}
-          <LiveRegion message={message} />
+          <Window title="生成したコード" headingLevel={headingLevel === 2 ? 3 : 2}>
+            {result === undefined ? (
+              <p>
+                {mode === 'manual'
+                  ? 'まだ生成していません。設定を決めて「生成する」を押してください。'
+                  : '設定を入力すると、ここにプレビューが出ます。'}
+              </p>
+            ) : (
+              <CodePreview
+                response={result}
+                showDownloads={mode === 'live'}
+                headingLevel={headingLevel === 2 ? 4 : 3}
+              />
+            )}
+            <LiveRegion message={message} />
+          </Window>
         </div>
 
         <form

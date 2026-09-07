@@ -16,6 +16,9 @@ type CodePreviewProps = {
  *
  * **画像だけで提供しない**（WCAG 1.1.1）。SVG 自体に title と aria-label を
  * 持たせたうえで、エンコードした内容をテキストでも併記する。
+ *
+ * これ自体は窓にしない（`Window` で包まない）。窓は「画面の区画」の単位で、
+ * どの区画に置くかは呼び出し側が決める（窓の入れ子を作らないため）。
  */
 export const CodePreview = ({
   response,
