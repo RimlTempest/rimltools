@@ -20,11 +20,13 @@ export default defineConfig({
   workers: 4,
   // 相手は実ネットワーク。1 度の瞬断でデプロイを止めない
   retries: 2,
+  // デコード用 wasm の待ち 45 s を活かすため、テスト全体の上限を既定の 30 s より長くする
+  timeout: 60_000,
   reporter: process.env['CI'] ? [['github'], ['list']] : [['list']],
   use: {
     baseURL,
-    // 落ちた回だけ証跡を残す。毎回録ると遅くなるだけ
-    trace: 'on-first-retry',
+    // 落ちた回の証跡は 1 回目から残す — CI では artifact として回収する
+    trace: 'retain-on-failure',
     video: 'retain-on-failure',
   },
   projects: [{ name: 'production', use: { ...devices['Desktop Chrome'] } }],

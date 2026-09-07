@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { expect, test } from '@playwright/test'
+import { test as base, expect } from '@playwright/test'
 
 /**
  * 本番に対する疎通確認（実ブラウザ）。
@@ -22,12 +22,44 @@ const FIXTURE_TEXT = 'https://qrcc.riml4i.com/scan-fixture'
 /** デコード用 wasm は 780KB gzip あり、本番の初回取得は時間がかかる。 */
 const DECODE_TIMEOUT = 45_000
 
-test('トップがハイドレーションし、生成がブラウザ内で動く', async ({ page }) => {
-  const failed: string[] = []
-  page.on('response', (response) => {
-    if (response.status() >= 400) failed.push(`${response.status()} ${response.url()}`)
-  })
+/**
+ * CI では失敗した回のトレース/動画は artifact をダウンロードしないと見えない。
+ * コンソールの error/warning、ページの未捕捉例外、4xx/5xx 応答、リクエスト失敗を
+ * 集めておき、テストが失敗したときだけ添付ファイルとログの両方に出す。
+ * `auto: true` にして、page を使う各テストで明示的に受け取らなくても動くようにする。
+ */
+const test = base.extend<{ diagnostics: string[] }>({
+  diagnostics: [
+    async ({ page }, use, testInfo) => {
+      const lines: string[] = []
 
+      page.on('console', (msg) => {
+        const type = msg.type()
+        if (type === 'error' || type === 'warning') lines.push(`${type} ${msg.text()}`)
+      })
+      page.on('pageerror', (err) => {
+        lines.push(err.message)
+      })
+      page.on('response', (response) => {
+        if (response.status() >= 400) lines.push(`${response.status()} ${response.url()}`)
+      })
+      page.on('requestfailed', (request) => {
+        lines.push(`${request.failure()?.errorText} ${request.url()}`)
+      })
+
+      await use(lines)
+
+      if (testInfo.status !== testInfo.expectedStatus) {
+        const body = lines.join('\n') || '(nothing recorded)'
+        await testInfo.attach('diagnostics', { body, contentType: 'text/plain' })
+        console.log('[smoke-diagnostics]', body)
+      }
+    },
+    { auto: true },
+  ],
+})
+
+test('トップがハイドレーションし、生成がブラウザ内で動く', async ({ page, diagnostics }) => {
   await page.goto('/')
 
   const generate = page.getByRole('region', { name: 'コードを作る' })
@@ -43,6 +75,8 @@ test('トップがハイドレーションし、生成がブラウザ内で動�
     timeout: 30_000,
   })
 
+  // 4xx/5xx で終わった応答はフィクスチャの diagnostics に `${status} ${url}` の形で入っている
+  const failed = diagnostics.filter((line) => /^\d{3} /.test(line))
   expect(failed, `失敗したリクエスト: ${failed.join(', ')}`).toEqual([])
 })
 
