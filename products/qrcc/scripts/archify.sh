@@ -30,7 +30,7 @@ bun -e "
   spec.meta.repository.revision = '$HEAD_SHA'
   await Bun.write(p, JSON.stringify(spec, null, 2) + '\n')
 "
-bunx oxfmt "$SPEC"
+bunx oxfmt --no-error-on-unmatched-pattern "$SPEC"
 
 node "$ARCHIFY" validate architecture "$SPEC" --quality showcase --repo-root .
 node "$ARCHIFY" deliver architecture "$SPEC" "$HTML" --quality showcase --repo-root .
