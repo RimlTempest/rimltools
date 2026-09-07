@@ -12,7 +12,8 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@qrcc/contract": "workspace:*"
+    "@qrcc/contract": "workspace:*",
+    "@rimltempest/riml-ds-tokens": "file:../../vendor/riml-ds/rimltempest-riml-ds-tokens-0.1.0.tgz"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "20.12.0",
