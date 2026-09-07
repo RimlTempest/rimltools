@@ -24,8 +24,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: bun install --frozen-lockfile
       - run: cargo install worker-build --locked
-      - run: bun run --filter '@qrcc/api' build
-      - run: bun run --filter '@qrcc/web' build
+      - run: cargo install wasm-pack --locked
+      # wasm(ブラウザ) → api(Worker) → web の順に依存している（ci.yml の build-and-a11y と同じ）
+      - run: bun run build
 
       - name: D1 マイグレーションを適用
         run: bunx wrangler d1 migrations apply qrcc --remote --config apps/api/wrangler.jsonc
