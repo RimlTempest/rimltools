@@ -28,7 +28,9 @@ jobs:
       - uses: actions/checkout@v5
       - uses: jdx/mise-action@v3
         with: { cache: true }
+      # 疎通確認だけが落ちた回でも、10 分超かかる Rust ビルドのキャッシュは捨てない
       - uses: Swatinem/rust-cache@v2
+        with: { cache-on-failure: true }
       - run: bun install --frozen-lockfile
       - run: cargo install worker-build --locked
       - run: cargo install wasm-pack --locked
@@ -78,3 +80,12 @@ jobs:
         run: |
           bun run --filter '@qrcc/e2e' install-browsers
           bun run smoke:browser
+
+      - name: 疎通確認の証跡を残す（落ちたときだけ）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-browser-results
+          path: e2e/test-results
+          if-no-files-found: ignore
+          retention-days: 7
