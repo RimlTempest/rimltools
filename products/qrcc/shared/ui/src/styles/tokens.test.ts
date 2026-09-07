@@ -47,7 +47,8 @@ describe('デザイントークンは riml-ds の別名', () => {
   })
 
   test('生の値で残す --qrcc-* は KEPT_LOCAL の 6 つだけ', () => {
-    const raw = [...tokensCss.matchAll(/(--qrcc-[a-z0-9-]+)\s*:\s*(?!var\(--rd-)/g)].map(
+    // \s* は先読みの中に入れる（外に置くと 0 文字にバックトラックして先読みをすり抜ける）
+    const raw = [...tokensCss.matchAll(/(--qrcc-[a-z0-9-]+)\s*:(?!\s*var\(--rd-)/g)].map(
       (m) => m[1] ?? '',
     )
     expect(raw.toSorted()).toEqual([...KEPT_LOCAL].toSorted())
