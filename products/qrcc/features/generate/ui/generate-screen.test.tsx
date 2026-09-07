@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {
   parseEmailAddress,
@@ -456,5 +456,34 @@ describe('GenerateScreen（ライブモード）', () => {
     await waitFor(() => expect(requests.length).toBeGreaterThan(0))
     // 初回 + 入力が落ち着いてからの 1 回。文字数ぶん走らない
     expect(requests.length).toBeLessThanOrEqual(3)
+  })
+})
+
+/**
+ * 区画が窓（Mado）として出ているか。
+ *
+ * 窓は「帯（＝見出し）＋ 本体」の 2 段で、中身は本体の中に入る（riml-ds の `.rd-window`）。
+ * 題のない figure の板では region 自体が無いので通らない。
+ */
+const expectWindow = (name: string) => {
+  const region = screen.getByRole('region', { name })
+  const heading = within(region).getByRole('heading', { name })
+  expect(region.firstElementChild).toBe(heading)
+  expect(region.children.length).toBe(2)
+  expect(heading.nextElementSibling?.tagName).toBe('DIV')
+}
+
+describe('GenerateScreen の区画', () => {
+  test('できあがりは窓として出る', async () => {
+    const { fn } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} mode="live" debounceMs={0} />)
+    await screen.findByRole('region', { name: 'できあがり' })
+    expectWindow('できあがり')
+  })
+
+  test('埋め込むと窓の帯は 1 段下がる（AAA 2.4.10）', async () => {
+    const { fn } = recording({ ok: true, value: response() })
+    render(<GenerateScreen render={fn} mode="live" debounceMs={0} headingLevel={2} />)
+    expect(await screen.findByRole('heading', { level: 4, name: 'できあがり' })).toBeDefined()
   })
 })

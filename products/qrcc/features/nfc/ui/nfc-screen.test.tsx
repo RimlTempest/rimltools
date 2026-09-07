@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Result } from '@qrcc/contract'
 import type { NfcWriteError } from '../contract/index.ts'
@@ -81,5 +81,31 @@ describe('NfcScreen（対応している環境）', () => {
     // 内容は保持され、もう一度「書き込む」を押せる
     expect(screen.getByRole('button', { name: '書き込む' })).toBeDefined()
     expect(screen.getByText(/こんにちは/)).toBeDefined()
+  })
+})
+
+/**
+ * 区画が窓（Mado）として出ているか。
+ *
+ * 窓は「帯（＝見出し）＋ 本体」の 2 段で、中身は本体の中に入る（riml-ds の `.rd-window`）。
+ * section に見出しと中身を並べただけの板では、区画の直下に中身が出てしまい通らない。
+ */
+const expectWindow = (name: string) => {
+  const region = screen.getByRole('region', { name })
+  const heading = within(region).getByRole('heading', { name })
+  expect(region.firstElementChild).toBe(heading)
+  expect(region.children.length).toBe(2)
+  expect(heading.nextElementSibling?.tagName).toBe('DIV')
+}
+
+describe('NfcScreen の区画', () => {
+  test('確認の区画は窓として出る', async () => {
+    const { write } = countingWriter({ ok: true, value: undefined })
+    render(<NfcScreen writeNfc={write} />)
+
+    await userEvent.type(screen.getByLabelText('書き込む内容'), 'こんにちは')
+    await userEvent.click(screen.getByRole('button', { name: '内容を確認する' }))
+
+    expectWindow('書き込む内容を確認してください')
   })
 })
