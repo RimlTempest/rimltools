@@ -13,3 +13,4 @@
 | [0006](0006-typescript-7-and-oxc.md)   | TypeScript 7 + oxlint/oxfmt を採用し ESLint/Prettier を使わない  | Accepted |
 | [0010](0010-webmcp.md)                 | 生成と読み取りを WebMCP のツールとして公開する                   | Accepted |
 | [0011](0011-riml-ds-tokens.md)         | デザイントークンを riml-ds から取る（--qrcc-* は --rd-* の別名） | Accepted |
+| [0012](0012-mado-look.md)              | 窓（Mado）の見た目を riml-ds から取る（色相は qrcc のまま）      | Accepted |

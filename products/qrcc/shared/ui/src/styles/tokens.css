@@ -1,7 +1,7 @@
 /*
  * デザイントークン。riml-ds（@rimltempest/riml-ds-tokens）の別名を張るだけの層。
  * 新しく書く CSS は --rd-* を直接使う。ここに qrcc 固有の変数を足さない。
- * 対応表と、段階 1 であえて riml-ds に寄せなかったものは docs/adr/0011-riml-ds-tokens.md。
+ * 対応表と、段階 2 でもあえて riml-ds に寄せていないものは docs/adr/0011-riml-ds-tokens.md。
  *
  * コントラストは WCAG 2.2 AAA（本文 7:1 / 大きい文字 4.5:1 / UI 境界 3:1）を
  * ライト・ダーク両方で満たす。値の正は riml-ds 側にある。
@@ -45,11 +45,12 @@
   --qrcc-radius: var(--rd-radius-md);
   --qrcc-radius-sm: var(--rd-radius-sm);
   /*
-   * 入れ子の角丸は「外側 = 内側 + padding」でないと目に留まる。
-   * カードは padding 1rem に半径 0.5rem の中身を入れるので 1.5rem になる
-   * （riml-ds の lg は 0.75rem。ここは qrcc 固有として残す）。
+   * 窓（Mado）の角丸。riml-ds の lg（1rem）に揃える。
+   * 「外側 = 内側 + padding」で 1.5rem にしていたのは、面の中に面を入れる箱の話。
+   * 窓では上の角をタイトル帯が、下の角を本文の padding が占めるので同心にならない
+   * （docs/adr/0012-mado-look.md）。
    */
-  --qrcc-radius-lg: 1.5rem;
+  --qrcc-radius-lg: var(--rd-radius-lg);
 
   /* AAA 2.5.5: クリック対象は 44x44 CSS px 以上 */
   --qrcc-target-min: var(--rd-sizing-target-min);
