@@ -2,10 +2,15 @@
  * @qrcc/ui のスタイル。1 枚にまとめてあるので、アプリは link を 1 本張るだけでよい
  * （コンポーネントごとの CSS import は SSR/RSC で読み込み順が不安定になるため使わない）。
  *
+ * トークンは riml-ds（@rimltempest/riml-ds-tokens）。rd.tokens 層に --rd-* が入り、
+ * tokens 層の --qrcc-* はその別名（docs/adr/0011-riml-ds-tokens.md）。
+ *
  * 方針: .claude/skills/qrcc-html-a11y/references/css-modern.md
  */
-@layer reset, tokens, base, components, utilities;
+@layer rd.tokens, reset, tokens, base, components, utilities;
 
+@import '@rimltempest/riml-ds-tokens/tokens.css';
+@import '@rimltempest/riml-ds-tokens/themes/qrcc.css';
 @import './tokens.css' layer(tokens);
 @import './reset.css' layer(reset);
 @import './base.css' layer(base);
