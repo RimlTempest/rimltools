@@ -152,6 +152,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@qrcc/contract": "workspace:*",
+        "@rimltempest/riml-ds-tokens": "file:../../vendor/riml-ds/rimltempest-riml-ds-tokens-0.1.0.tgz",
       },
       "devDependencies": {
         "@happy-dom/global-registrator": "20.12.0",
@@ -517,6 +518,8 @@
     "@qrcc/web": ["@qrcc/web@workspace:apps/web"],
 
     "@qrcc/webmcp": ["@qrcc/webmcp@workspace:shared/webmcp"],
+
+    "@rimltempest/riml-ds-tokens": ["@rimltempest/riml-ds-tokens@../../vendor/riml-ds/rimltempest-riml-ds-tokens-0.1.0.tgz", {}, "sha512-JvNmdbosOsPUVwvoxfVteJWeH+lq2FGvqiNASxGG0pyJyrPFqT1QzjTzMbg0v7KtmCgrpDuOIvMZRPYnyp8JAw=="],
 
     "@rolldown/binding-android-arm-eabi": ["@rolldown/binding-android-arm-eabi@1.2.6", "", { "os": "android", "cpu": "arm" }, "sha512-b+jTcARdTiFLI6jB4a5XjTm0RWd6KcRfQj/I2356fxUZemiho9zQLxo0RtCuMDAyKcLo6cEltkgbQp6d1+sjjQ=="],
 
