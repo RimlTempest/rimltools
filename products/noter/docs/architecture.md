@@ -6,6 +6,12 @@ noter は「Markdown（Mermaid）/ YAML / TOML / JSON を複数人で同時に�
 
 ## 1. 全体像
 
+図版は [architecture/noter-architecture.html](architecture/noter-architecture.html)
+（[archify](https://github.com/tt-a1i/archify) で
+[architecture/noter.architecture.json](architecture/noter.architecture.json) から生成。
+`bun run archify` で作り直す）。各部品は根拠になるソースファイルへのリンクを持つ。
+README には同じ図の PNG を貼っている。下は同じ構成をテキストで示したもの。
+
 ```
 ブラウザ (SPA/SSR)                        Cloudflare (Workers Free)
 ┌───────────────────────────┐            ┌───────────────────────────────────────────┐

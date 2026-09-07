@@ -18,6 +18,19 @@ markdown（mermaid 対応）・yaml・toml・json を**複数人でリアルタ�
 TanStack Start（React 19）+ Cloudflare Workers + Durable Objects（TypeScript）+ D1。
 同期は Yjs（CRDT）。詳細は [`docs/architecture.md`](docs/architecture.md)。
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture/noter-architecture.dark.png">
+  <img src="docs/architecture/noter-architecture.light.png" alt="noter の構成図。端末（ブラウザ）の中で TanStack Start と CodeMirror 6 / Yjs / Mermaid が動き、解析・整形・描画をすべて端末内で行う。ブラウザは Google OAuth でサインインし、HTTPS と WSS（/ws/:documentId）で Worker noter-web に接続する。noter-web は SSR・Better Auth・認可を担い、D1（user・session・document・share）に SQL を発行し、認可済みの WebSocket を Durable Object binding 経由で DocumentRoom に渡す。DocumentRoom は noter-web の binding からのみ到達でき、Yjs state を alarm で DO SQLite に 1 行で保存する。AI エージェントは WebMCP でブラウザ内のツールに接続する。" width="1048">
+</picture>
+
+- **計算は端末内**: 構文解析・整形・Markdown → HTML・Mermaid → SVG はすべてブラウザの JS。
+  Worker は「誰が・どの文書に・どの権限で」だけを見る
+- **到達経路は 1 本**: `noter-sync`（Durable Object）は公開ルートを持たず、
+  認可を通った `noter-web` の binding からしか届かない
+- 図の元データは [`docs/architecture/noter.architecture.json`](docs/architecture/noter.architecture.json)、
+  操作できる版は [`docs/architecture/noter-architecture.html`](docs/architecture/noter-architecture.html)
+  （[archify](https://github.com/tt-a1i/archify) で生成。`bun run archify` で作り直す）
+
 ## 開発
 
 ```bash
@@ -26,6 +39,7 @@ bun run dev          # web + sync の両 Worker が Miniflare で起動
 bun run check        # fmt + lint + typecheck + markuplint
 bun run test         # Small/Medium テスト
 bun run a11y         # Playwright + axe-core（AAA タグ込み）
+bun run archify      # 構成図（docs/architecture/）を作り直す
 ```
 
 AI エージェント向けの入口は [`CLAUDE.md`](CLAUDE.md)。設計の背景は

@@ -14,6 +14,7 @@
     "**/*.gen.ts",
     ".agents/skills/**",
     ".claude/skills/**",
-    "skills-lock.json"
+    "skills-lock.json",
+    "docs/architecture/*.html"
   ]
 }

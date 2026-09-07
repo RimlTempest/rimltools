@@ -21,6 +21,7 @@
     "a11y": "bun run --filter '@noter/e2e' a11y",
     "check": "bun run fmt:check && bun run lint && bun run typecheck && bun run lint:html",
     "wt": "./scripts/wt.sh",
+    "archify": "./scripts/archify.sh",
     "prepare": "lefthook install",
     "postinstall": "bun install --cwd tools/markuplint --frozen-lockfile || bun install --cwd tools/markuplint",
     "e2e": "bun run --filter '@noter/e2e' test",

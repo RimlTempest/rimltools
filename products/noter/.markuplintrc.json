@@ -70,7 +70,13 @@
       }
     }
   ],
-  "excludeFiles": ["**/node_modules/**", "**/dist/**", "**/.output/**", "**/routeTree.gen.ts"],
+  "excludeFiles": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.output/**",
+    "**/routeTree.gen.ts",
+    "docs/architecture/*.html"
+  ],
   "overrides": {
     "./{shared/ui/src,features/*/ui}/**/*.tsx": {
       "$comment": "コンポーネントは中身を props で受け取るため、静的解析からは常に空に見える。実際に空になっていないかは、描画後の DOM を見る e2e の axe チェックが担保する。",
