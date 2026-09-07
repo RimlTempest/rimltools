@@ -18,13 +18,18 @@ QR コード・バーコードの **生成 / 読み取り / 管理 / 印刷** �
 
 ## 技術構成
 
-```
-qrcc.riml4i.com
- ├─ Worker (TypeScript): TanStack Start SSR + Better Auth + 認可
- │    └─ service binding（追加のリクエスト課金なし）
- └─ Worker (Rust→WASM):  生成 / デコード / D1 CRUD ※非公開
-       └─ D1 (メタデータ)  ※KV / R2 は使わない（ADR-0009）
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture/qrcc2-architecture.dark.png">
+  <img src="docs/architecture/qrcc2-architecture.light.png" alt="qrcc2 の構成図。端末（ブラウザ / PWA と @qrcc/wasm）から Worker qrcc-web へ HTTPS、qrcc-web から非公開の Worker qrcc-api へ Service Binding RPC、qrcc-api から D1 へ SQL。Rust crates は Worker 向けとブラウザ向けの 2 つの wasm にビルドされる。Google OAuth はブラウザから任意で利用する。" width="1048">
+</picture>
+
+- ブラウザ / PWA → **Worker `qrcc-web`**（TanStack Start SSR / RSC + Better Auth + 認可）
+  → Service Binding（追加のリクエスト課金なし）→ **Worker `qrcc-api`**（Rust → wasm。
+  `routes` を持たず非公開）→ **D1**。KV / R2 は使わない（[ADR-0009](docs/adr/0009-stay-on-workers-free.md)）
+- 図は [archify](https://github.com/tt-a1i/archify) で
+  [`docs/architecture/qrcc2.architecture.json`](docs/architecture/qrcc2.architecture.json) から生成している。
+  クリックで辿れる対話版は [`docs/architecture/qrcc2-architecture.html`](docs/architecture/qrcc2-architecture.html)
+  （clone してブラウザで開く）。構成を変えたら仕様 JSON を直して `bun run archify` で作り直す
 
 - **TypeScript 7.0**（Go 実装のネイティブコンパイラ）
 - **oxlint / oxfmt**（ESLint / Prettier は使わない）+ プロジェクト固有の lint プラグイン
@@ -58,6 +63,7 @@ bun run e2e           # Large テスト (Playwright)
 bun run a11y          # アクセシビリティ自動チェック (axe, WCAG AAA タグ)
 bun run build         # 本番ビルド
 bun run wt list       # 並行作業レーン一覧
+bun run archify       # 構成図（docs/architecture/）を作り直す（archify スキルが必要）
 ```
 
 ## 困ったとき
