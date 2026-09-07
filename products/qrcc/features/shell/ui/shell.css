@@ -1,15 +1,27 @@
+/*
+ * 窓（riml-ds の `.rd-window`）は margin を持たない。画面の中で窓が続くときの
+ * 間隔はページの側で決める（板にあった --rd-space-6 を窓の外側で保つ）。
+ * `.rd-window*` の見た目そのものは上書きしない（ADR-0012）。
+ */
+main .rd-window {
+  margin-block-end: var(--rd-space-6);
+}
+
+/* 「まど」は線ではなく面の切り替えで区切る。区切り線は点線にする */
 .qrcc-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--qrcc-space-4);
   padding-block-end: var(--qrcc-space-4);
-  border-block-end: 1px solid var(--qrcc-border);
+  border-block-end: 0.125rem dotted var(--rd-color-border-default);
   margin-block-end: var(--qrcc-space-6);
 }
 
+/* 書体だけ丸ゴシックにする。大きさは見出しの段と競らない 1.25rem のまま */
 .qrcc-header__brand {
-  font-weight: 700;
+  font-family: var(--rd-font-family-display);
+  font-weight: var(--rd-font-weight-bold);
   font-size: 1.25rem;
   margin: 0;
 }
@@ -35,21 +47,23 @@
   /* AAA 2.5.5 */
   min-block-size: var(--qrcc-target-min);
   min-inline-size: var(--qrcc-target-min);
-  padding-inline: var(--qrcc-space-3);
-  border-radius: var(--qrcc-radius);
+  padding-inline: var(--rd-space-3);
+  /* ナビの項目はピル（riml-ds docs/brand.md §4） */
+  border-radius: var(--rd-radius-full);
+  font-weight: var(--rd-font-weight-bold);
   text-decoration: none;
 }
 
+/* hover は浮かせ、現在地は窪ませる。同じ面にせず取り違えないようにする */
 .qrcc-global-nav a:hover {
   background: var(--qrcc-surface-raised);
   text-decoration: underline;
 }
 
-/* 現在地は色だけで示さない。下線と背景でも区別できるようにする（1.4.1） */
+/* 現在地は色だけで示さない。下線と窪みでも区別できるようにする（1.4.1） */
 .qrcc-global-nav a[aria-current='page'] {
-  background: var(--qrcc-surface-raised);
+  background: var(--qrcc-surface-sunken);
   color: var(--qrcc-text);
-  font-weight: 700;
   box-shadow: inset 0 -3px 0 var(--qrcc-accent);
 }
 
@@ -84,8 +98,8 @@
   min-block-size: var(--qrcc-target-min);
   min-inline-size: var(--qrcc-target-min);
   justify-content: center;
-  padding-inline: var(--qrcc-space-2);
-  border-radius: var(--qrcc-radius-sm);
+  padding-inline: var(--rd-space-2);
+  border-radius: var(--rd-radius-full);
 }
 
 .qrcc-breadcrumbs [aria-current='page'] {
@@ -102,7 +116,7 @@
 .qrcc-footer {
   margin-block-start: var(--qrcc-space-8);
   padding-block-start: var(--qrcc-space-4);
-  border-block-start: 1px solid var(--qrcc-border);
+  border-block-start: 0.125rem dotted var(--rd-color-border-default);
   color: var(--qrcc-text-muted);
 }
 
