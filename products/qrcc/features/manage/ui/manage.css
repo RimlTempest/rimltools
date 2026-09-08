@@ -171,25 +171,19 @@
 }
 
 /*
- * 段階 3 で riml-ds の `rd-dialog` に置き換えるまでの暫定。
- * 窓と同じ形（角丸 lg・硬い影）に寄せるが、見出しはまだ帯にしない。
+ * 確認ダイアログは窓（.rd-window）を着る。面・角丸・帯の色は riml-ds が持つので、
+ * ここはダイアログにしか無いもの（幅・浮いている影）だけを書く。
+ * 本文の余白は .rd-window-body の仕事なので padding は 0 にする。
  */
 .qrcc-confirm-dialog {
   max-inline-size: min(32rem, 90vi);
-  padding: var(--rd-space-6);
+  padding: 0;
   border: 0;
-  border-radius: var(--rd-radius-lg);
   box-shadow: var(--rd-shadow-overlay);
-  background: var(--rd-color-surface-raised);
-  color: var(--rd-color-text-default);
 }
 
 .qrcc-confirm-dialog::backdrop {
   background: var(--rd-color-overlay-default);
-}
-
-.qrcc-confirm-dialog h2 {
-  margin-block-start: 0;
 }
 
 .qrcc-confirm-dialog__actions {

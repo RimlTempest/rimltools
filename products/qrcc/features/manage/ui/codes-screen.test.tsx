@@ -209,6 +209,22 @@ describe('削除', () => {
     expect(screen.getByRole('rowheader', { name: '在庫ラベル' })).toBeDefined()
   })
 
+  test('確認は窓の姿で出て、帯の × でも取り消せる', async () => {
+    const { fake } = setup()
+    await screen.findByRole('table')
+    await userEvent.click(screen.getByRole('button', { name: '「在庫ラベル」を削除' }))
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.classList.contains('rd-window')).toBe(true)
+    expect(dialog.querySelector('header.rd-window-bar[data-tone="danger"]')).not.toBeNull()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: '閉じる' }))
+
+    expect(methods(fake)).not.toContain('codes.delete')
+    expect(screen.getByRole('rowheader', { name: '在庫ラベル' })).toBeDefined()
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   test('削除すると一覧から消え、取り消せる（AAA 3.3.6）', async () => {
     const { fake } = setup()
     await screen.findByRole('table')
