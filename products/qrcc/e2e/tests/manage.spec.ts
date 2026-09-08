@@ -263,6 +263,12 @@ test('削除は確認を挟み、あとから取り消せる', async ({ page }) 
   await page.getByRole('button', { name: 'やめる' }).click()
   await expect(page.getByRole('rowheader', { name })).toBeVisible()
 
+  // 帯の × も「やめる」と同じ（riml-ds brand.md §7.7）
+  await page.getByRole('button', { name: `「${name}」を削除` }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '閉じる' }).click()
+  await expect(page.getByRole('dialog')).toBeHidden()
+  await expect(page.getByRole('rowheader', { name })).toBeVisible()
+
   // 削除すると一覧から消える
   await page.getByRole('button', { name: `「${name}」を削除` }).click()
   await page.getByRole('button', { name: '削除する' }).click()

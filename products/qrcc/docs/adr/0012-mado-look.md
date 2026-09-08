@@ -42,20 +42,21 @@ ADR-0011 の段階 1 で `--qrcc-*` を `--rd-*` の別名にした。その後 
 
 ## 受け入れた視覚差分
 
-| 対象               | 旧                                      | 新                                                     |
-| ------------------ | --------------------------------------- | ------------------------------------------------------ |
-| ボタンの角丸       | `--qrcc-radius`（0.75rem）              | `--rd-radius-full`（ピル）                             |
-| ボタンの枠線       | `1px solid transparent`                 | 無し（強制配色でだけ `ButtonText` の枠を戻す）         |
-| ボタンの字         | 継承                                    | `--rd-font-weight-bold`                                |
-| ボタンの押下       | `scale: 0.96`                           | `translate: 0 0.0625rem`（影の方向に 1px 沈む）        |
-| secondary の塗り   | `surface-raised` + `border-strong` の枠 | `surface-sunken` の塗り（枠なし）                      |
-| 無効なボタン       | `grayscale(1)` + 破線の枠               | `grayscale(1)` + 内側の破線 outline                    |
-| 入力欄の面         | `--qrcc-surface`（地と同じ）            | `--qrcc-surface-raised`（浮いた面）                    |
-| 入力欄の枠 / 角丸  | `border-strong` / `--qrcc-radius`       | `--qrcc-border` / `--rd-radius-md`                     |
-| テーマ切替の囲い   | 枠 + 角丸 1.5rem + padding              | 枠なし（囲いは窓が持つ）。選択中の段だけ sunken のピル |
-| h1 / h2 の書体     | 本文書体                                | `--rd-font-family-display`（丸ゴシック）               |
-| `hr`               | ブラウザ既定                            | 0.125rem dotted `--rd-color-border-default`            |
-| `--qrcc-radius-lg` | 1.5rem（生値）                          | `var(--rd-radius-lg)`（1rem）                          |
+| 対象               | 旧                                      | 新                                                                   |
+| ------------------ | --------------------------------------- | -------------------------------------------------------------------- |
+| ボタンの角丸       | `--qrcc-radius`（0.75rem）              | `--rd-radius-full`（ピル）                                           |
+| ボタンの枠線       | `1px solid transparent`                 | 無し（強制配色でだけ `ButtonText` の枠を戻す）                       |
+| ボタンの字         | 継承                                    | `--rd-font-weight-bold`                                              |
+| ボタンの押下       | `scale: 0.96`                           | `translate: 0 0.0625rem`（影の方向に 1px 沈む）                      |
+| secondary の塗り   | `surface-raised` + `border-strong` の枠 | `surface-sunken` の塗り（枠なし）                                    |
+| 無効なボタン       | `grayscale(1)` + 破線の枠               | `grayscale(1)` + 内側の破線 outline                                  |
+| 入力欄の面         | `--qrcc-surface`（地と同じ）            | `--qrcc-surface-raised`（浮いた面）                                  |
+| 入力欄の枠 / 角丸  | `border-strong` / `--qrcc-radius`       | `--qrcc-border` / `--rd-radius-md`                                   |
+| テーマ切替の囲い   | 枠 + 角丸 1.5rem + padding              | 枠なし（囲いは窓が持つ）。選択中の段だけ sunken のピル               |
+| h1 / h2 の書体     | 本文書体                                | `--rd-font-family-display`（丸ゴシック）                             |
+| `hr`               | ブラウザ既定                            | 0.125rem dotted `--rd-color-border-default`                          |
+| `--qrcc-radius-lg` | 1.5rem（生値）                          | `var(--rd-radius-lg)`（1rem）                                        |
+| 窓の帯             | 見出しが帯を兼ね、`data-tone` は見出し  | 帯 ⊃ 見出し。`data-tone` は帯。丸はボタン（ADR-0014 追随、plan 013） |
 
 AAA は崩していない。色だけで状態を表さない決まりは残していて、無効なボタンは内側の破線、
 入力欄の誤りは 2px の枠と `⚠` の接頭辞、テーマ切替の選択中はラジオの丸そのものが状態を持つ。

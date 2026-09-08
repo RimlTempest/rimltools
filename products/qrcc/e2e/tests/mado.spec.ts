@@ -1,4 +1,7 @@
+import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
+
+const SLOW = { timeout: 20_000 }
 
 /**
  * 窓（Mado）の CSS は riml-ds の patterns.css が持っていて、qrcc の base より後の
@@ -18,4 +21,42 @@ test('riml-ds の窓の CSS が qrcc の base より強い', async ({ page }) =>
     return title ? getComputedStyle(title).marginBlockStart : null
   })
   expect(margin).toBe('0px') // base.css の見出し margin（--qrcc-space-8）が勝っていたら 32px になる
+})
+
+/** ゲストとしてサインインし、一覧を開く。窓の操作は保存できる状態でしか出ない。 */
+const openCodesAsGuest = async (page: Page) => {
+  await page.goto('/sign-in')
+  await page.getByRole('button', { name: '登録せずに使う（ゲスト）' }).click()
+  await expect(page.getByRole('button', { name: 'サインアウト' })).toBeVisible(SLOW)
+
+  const listed = page.waitForResponse(
+    (response) => response.url().includes('/_serverFn/') && response.request().method() === 'POST',
+    { timeout: 20_000 },
+  )
+  await page.goto('/codes')
+  await listed
+}
+
+/**
+ * 窓の左端の丸は装飾ではなくボタン（riml-ds ADR-0014）。
+ * たたむ（−）は本文を隠すだけで、窓そのものは残る。
+ */
+test('窓の たたむ で本文が隠れ、もう一度押すと戻る', async ({ page }) => {
+  await openCodesAsGuest(page)
+
+  const folders = page.getByRole('region', { name: 'フォルダ' })
+  const collapse = folders.getByRole('button', { name: 'たたむ' })
+  const body = folders.locator('.rd-window-body')
+
+  await expect(collapse).toHaveAttribute('aria-expanded', 'true', SLOW)
+  await expect(body).toBeVisible()
+
+  await collapse.click()
+  await expect(collapse).toHaveAttribute('aria-expanded', 'false')
+  await expect(body).toBeHidden()
+
+  // ラベルは「たたむ」のまま。状態は aria-expanded が伝える
+  await collapse.click()
+  await expect(collapse).toHaveAttribute('aria-expanded', 'true')
+  await expect(body).toBeVisible()
 })
