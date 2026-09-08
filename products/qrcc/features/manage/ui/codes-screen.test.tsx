@@ -242,9 +242,37 @@ describe('削除', () => {
     expect(restored?.payload).toMatchObject({ draft: { id: first.id } })
     await waitFor(() => expect(screen.getByRole('rowheader', { name: '在庫ラベル' })).toBeDefined())
   })
+
+  test('取り消しの案内は窓で出て、帯の × で片付けられる', async () => {
+    setup()
+    await screen.findByRole('table')
+    await userEvent.click(screen.getByRole('button', { name: '「在庫ラベル」を削除' }))
+    await userEvent.click(screen.getByRole('button', { name: '削除する' }))
+
+    const notice = await screen.findByRole('region', { name: '削除しました' })
+    expect(within(notice).getByRole('button', { name: '削除を取り消す' })).toBeDefined()
+
+    // 時間では消さない（AAA 2.2.6）。片付けるのは利用者の操作
+    await userEvent.click(within(notice).getByRole('button', { name: '閉じる' }))
+    expect(screen.queryByRole('region', { name: '削除しました' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '削除を取り消す' })).toBeNull()
+  })
 })
 
 describe('フォルダ', () => {
+  test('一覧が長いときのために、窓をたためる', async () => {
+    setup({ folders: [folder('仕事')] })
+    await screen.findByRole('table')
+
+    const region = screen.getByRole('region', { name: 'フォルダ' })
+    const collapse = within(region).getByRole('button', { name: 'たたむ' })
+    expect(collapse.getAttribute('aria-expanded')).toBe('true')
+
+    await userEvent.click(collapse)
+    expect(collapse.getAttribute('aria-expanded')).toBe('false')
+    expect(region.querySelector('.rd-window-body')?.hasAttribute('hidden')).toBe(true)
+  })
+
   test('フォルダで絞り込める', async () => {
     const work = folder('仕事')
     const { fake } = setup({ folders: [work] })

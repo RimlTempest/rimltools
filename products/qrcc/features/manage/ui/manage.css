@@ -83,18 +83,6 @@
   font-size: 0.8em;
 }
 
-.qrcc-manage-undo {
-  display: flex;
-  gap: var(--qrcc-space-4);
-  align-items: center;
-  /* 取り消しは時間で消さない（AAA 2.2.6）。次の操作まで置いておく */
-  padding: var(--qrcc-space-3);
-  border: 1px solid var(--qrcc-border);
-  border-radius: var(--qrcc-radius);
-  background: var(--qrcc-surface-raised);
-  max-inline-size: var(--qrcc-measure);
-}
-
 /*
  * フォルダの改名と削除。1 件 = 1 フォーム で、操作はその場に置く。
  * 幅が取れるときだけ入力とボタンを横に並べる（ページ幅ではなく自分の幅で決める）。

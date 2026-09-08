@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import type { Result, ShareToken } from '@qrcc/contract'
 import { err, ok } from '@qrcc/contract'
 import type { Actor } from '@qrcc/auth/contract'
@@ -93,6 +93,22 @@ describe('共有リンクを開く', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: '在庫ラベル' })).toBeDefined()
     expect(screen.getByText(/wasm を読み込めませんでした/)).toBeDefined()
+  })
+})
+
+describe('共有画面の区画', () => {
+  test('題のある区画は窓として出る', async () => {
+    setup()
+
+    await screen.findByRole('heading', { level: 1, name: '在庫ラベル' })
+    for (const name of ['共有されたコード', 'このリンクでできること']) {
+      const region = screen.getByRole('region', { name })
+      const bar = region.firstElementChild
+      expect(bar?.tagName).toBe('HEADER')
+      expect(bar?.className).toBe('rd-window-bar')
+      expect(within(region).getByRole('heading', { name }).className).toBe('rd-window-title')
+      expect(bar?.nextElementSibling?.className).toBe('rd-window-body')
+    }
   })
 })
 

@@ -318,11 +318,12 @@ const SignedInCodes = ({
 
       <LiveRegion message={message} />
       {undoable === undefined ? undefined : (
-        <p className="qrcc-manage-undo">
+        // 時間では消さない（AAA 2.2.6）。帯の × は「取り消せる状態を手で片付ける」操作
+        <Window title="削除しました" tone="accent" onClose={() => setUndoable(undefined)}>
           <Button variant="secondary" busy={busy} onClick={() => void undoDelete()}>
             削除を取り消す
           </Button>
-        </p>
+        </Window>
       )}
 
       <Window title="新しいコードを保存する">
@@ -426,7 +427,7 @@ const SignedInCodes = ({
         </form>
       </Window>
 
-      <Window title="フォルダ">
+      <Window title="フォルダ" collapsible>
         <form
           onSubmit={(event) => {
             event.preventDefault()
