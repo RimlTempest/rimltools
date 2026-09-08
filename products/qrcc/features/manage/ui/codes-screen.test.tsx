@@ -209,6 +209,22 @@ describe('削除', () => {
     expect(screen.getByRole('rowheader', { name: '在庫ラベル' })).toBeDefined()
   })
 
+  test('確認は窓の姿で出て、帯の × でも取り消せる', async () => {
+    const { fake } = setup()
+    await screen.findByRole('table')
+    await userEvent.click(screen.getByRole('button', { name: '「在庫ラベル」を削除' }))
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.classList.contains('rd-window')).toBe(true)
+    expect(dialog.querySelector('header.rd-window-bar[data-tone="danger"]')).not.toBeNull()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: '閉じる' }))
+
+    expect(methods(fake)).not.toContain('codes.delete')
+    expect(screen.getByRole('rowheader', { name: '在庫ラベル' })).toBeDefined()
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   test('削除すると一覧から消え、取り消せる（AAA 3.3.6）', async () => {
     const { fake } = setup()
     await screen.findByRole('table')
@@ -226,9 +242,37 @@ describe('削除', () => {
     expect(restored?.payload).toMatchObject({ draft: { id: first.id } })
     await waitFor(() => expect(screen.getByRole('rowheader', { name: '在庫ラベル' })).toBeDefined())
   })
+
+  test('取り消しの案内は窓で出て、帯の × で片付けられる', async () => {
+    setup()
+    await screen.findByRole('table')
+    await userEvent.click(screen.getByRole('button', { name: '「在庫ラベル」を削除' }))
+    await userEvent.click(screen.getByRole('button', { name: '削除する' }))
+
+    const notice = await screen.findByRole('region', { name: '削除しました' })
+    expect(within(notice).getByRole('button', { name: '削除を取り消す' })).toBeDefined()
+
+    // 時間では消さない（AAA 2.2.6）。片付けるのは利用者の操作
+    await userEvent.click(within(notice).getByRole('button', { name: '閉じる' }))
+    expect(screen.queryByRole('region', { name: '削除しました' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '削除を取り消す' })).toBeNull()
+  })
 })
 
 describe('フォルダ', () => {
+  test('一覧が長いときのために、窓をたためる', async () => {
+    setup({ folders: [folder('仕事')] })
+    await screen.findByRole('table')
+
+    const region = screen.getByRole('region', { name: 'フォルダ' })
+    const collapse = within(region).getByRole('button', { name: 'たたむ' })
+    expect(collapse.getAttribute('aria-expanded')).toBe('true')
+
+    await userEvent.click(collapse)
+    expect(collapse.getAttribute('aria-expanded')).toBe('false')
+    expect(region.querySelector('.rd-window-body')?.hasAttribute('hidden')).toBe(true)
+  })
+
   test('フォルダで絞り込める', async () => {
     const work = folder('仕事')
     const { fake } = setup({ folders: [work] })
@@ -336,15 +380,18 @@ describe('失敗したとき', () => {
 /**
  * 区画が窓（Mado）として出ているか。
  *
- * 窓は「帯（＝見出し）＋ 本体」の 2 段で、中身は本体の中に入る（riml-ds の `.rd-window`）。
+ * 窓は「帯（header）＋ 本体」の 2 段で、見出しは帯の中に入る（riml-ds ADR-0014）。
  * section に見出しと中身を並べただけの板では、区画の直下に中身が出てしまい通らない。
  */
 const expectWindow = (name: string) => {
   const region = screen.getByRole('region', { name })
   const heading = within(region).getByRole('heading', { name })
-  expect(region.firstElementChild).toBe(heading)
+  const bar = region.firstElementChild
+  expect(bar?.tagName).toBe('HEADER')
+  expect(bar?.className).toBe('rd-window-bar')
+  expect(bar?.contains(heading)).toBe(true)
   expect(region.children.length).toBe(2)
-  expect(heading.nextElementSibling?.tagName).toBe('DIV')
+  expect(bar?.nextElementSibling?.className).toBe('rd-window-body')
 }
 
 describe('一覧画面の区画', () => {

@@ -520,9 +520,9 @@
 
     "@qrcc/webmcp": ["@qrcc/webmcp@workspace:shared/webmcp"],
 
-    "@rimltempest/riml-ds-css": ["@rimltempest/riml-ds-css@../../vendor/riml-ds/rimltempest-riml-ds-css-0.2.0.tgz", { "peerDependencies": { "@rimltempest/riml-ds-tokens": "0.2.0" }, "optionalPeers": ["@rimltempest/riml-ds-tokens"] }, "sha512-QHd9nWabLJPBCGnq675yDoQwSFvuXWsghqr+Soa1VOjD3dH9JMV+TwIiCV6InYUshl500e6M/K9lCbPb71e5iQ=="],
+    "@rimltempest/riml-ds-css": ["@rimltempest/riml-ds-css@../../vendor/riml-ds/rimltempest-riml-ds-css-0.2.0.tgz", { "peerDependencies": { "@rimltempest/riml-ds-tokens": "0.2.0" }, "optionalPeers": ["@rimltempest/riml-ds-tokens"] }, "sha512-9S7Sw+ovdxiNMCsAycG/Y3rCsLl8+zJqJrY1V/89txV6Iwz3+c7YeHyUsZ62oErcam4JWcGt94tHIf9b9B5pIw=="],
 
-    "@rimltempest/riml-ds-tokens": ["@rimltempest/riml-ds-tokens@../../vendor/riml-ds/rimltempest-riml-ds-tokens-0.2.0.tgz", {}, "sha512-/uY0lTNg/39x9S3cWp/eHZA5Qw4TVrOlBa1Y5rDhke6I/bnFCyKHcfP6pkYRZvtT1ypudaqbtLIcAiU5KgYNgA=="],
+    "@rimltempest/riml-ds-tokens": ["@rimltempest/riml-ds-tokens@../../vendor/riml-ds/rimltempest-riml-ds-tokens-0.2.0.tgz", {}, "sha512-pSc63Zj7wyU7khu+XvvoPRyPqj/cZ24qnruO1Vl9wja8GS3Xiot/mscNbo5n1S1sB3TRsU/87abPIE1mhlvj0A=="],
 
     "@rolldown/binding-android-arm-eabi": ["@rolldown/binding-android-arm-eabi@1.2.7", "", { "os": "android", "cpu": "arm" }, "sha512-EypzgnYCwyVY4NDHKzGmNJT5b+XaQEBniHxsMdeIQLB/tcCzZnhqrzHpZFbX9iaxx+5RiB8caATBtfvZP7zVxQ=="],
 

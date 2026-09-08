@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from 'react'
-import { Button } from '@qrcc/ui'
+import { Button, WindowBar } from '@qrcc/ui'
 
 type ConfirmDialogProps = {
   /** 開いているときだけ内容が入る。閉じているときは `undefined`。 */
@@ -20,6 +20,9 @@ type ConfirmDialogProps = {
  * `role="dialog"` を手書きしてフォーカス管理を自作しない（ARIA 第一法則）。
  *
  * 閉じたあとのフォーカスは、開いたトリガーに呼び出し側が戻す。
+ *
+ * 見た目は窓（Mado）。ダイアログ = 窓 + overlay の影で、帯の左端の × が閉じる
+ * （riml-ds docs/brand.md §7.7）。× は「やめる」と同じ扱いにする。
  */
 export const ConfirmDialog = ({
   open,
@@ -43,7 +46,7 @@ export const ConfirmDialog = ({
   return (
     <dialog
       ref={dialogRef}
-      className="qrcc-confirm-dialog"
+      className="qrcc-confirm-dialog rd-window"
       aria-labelledby={titleId}
       // Esc で閉じたときも「やめる」と同じ扱いにする
       onCancel={(event) => {
@@ -54,15 +57,17 @@ export const ConfirmDialog = ({
         if (open) onCancel()
       }}
     >
-      <h2 id={titleId}>{title}</h2>
-      <p>{description}</p>
-      <div className="qrcc-confirm-dialog__actions">
-        <Button variant="secondary" onClick={onCancel}>
-          {cancelLabel}
-        </Button>
-        <Button variant="danger" onClick={onConfirm}>
-          {confirmLabel}
-        </Button>
+      <WindowBar tone="danger" title={title} titleId={titleId} onClose={onCancel} />
+      <div className="rd-window-body">
+        <p>{description}</p>
+        <div className="qrcc-confirm-dialog__actions">
+          <Button variant="secondary" onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+          <Button variant="danger" onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
+        </div>
       </div>
     </dialog>
   )

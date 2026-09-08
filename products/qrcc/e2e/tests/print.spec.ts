@@ -92,7 +92,8 @@ test('印刷では台紙だけが残り、アプリの外枠は消える', async
   await waitForPreview(page)
 
   await page.emulateMedia({ media: 'print' })
-  await expect(page.locator('header')).toBeHidden()
+  // 窓の帯も <header> なので、ページの外枠はランドマーク（banner）で取る
+  await expect(page.getByRole('banner')).toBeHidden()
   await expect(page.getByRole('button', { name: '印刷する' })).toBeHidden()
   await expect(sheet(page).first()).toBeVisible()
   // 紙の上でも内容が文字で読める（WCAG 1.1.1）

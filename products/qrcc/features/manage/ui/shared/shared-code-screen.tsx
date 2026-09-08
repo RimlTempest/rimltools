@@ -11,7 +11,7 @@
  * 権限が `edit` でも**この画面では編集させない**。編集は所有者の認証を通る
  * `/codes/<id>` の役目で、ここでその判定をやり直すと認可が二重になる。
  */
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Result, ShareToken } from '@qrcc/contract'
 import type { Actor } from '@qrcc/auth/contract'
 import { isSignedIn } from '@qrcc/auth/contract'
@@ -19,6 +19,7 @@ import type { RenderResponse } from '@qrcc/generate/contract'
 import { describeRenderError } from '@qrcc/generate/contract'
 import type { RenderFailure, RenderFn } from '@qrcc/generate/ui'
 import { CodePreview } from '@qrcc/generate/ui'
+import { Window } from '@qrcc/ui'
 import type { SharePreview } from '@qrcc/manage/contract'
 import type { ManageFailure } from '@qrcc/manage/server'
 import { codePath } from '../format.ts'
@@ -72,8 +73,6 @@ export const SharedCodeScreen = ({
   renderLink = defaultRenderLink,
 }: SharedCodeScreenProps) => {
   const [state, setState] = useState<ScreenState>({ kind: 'loading' })
-  const codeHeadingId = useId()
-  const permissionHeadingId = useId()
 
   useEffect(() => {
     let cancelled = false
@@ -140,17 +139,15 @@ export const SharedCodeScreen = ({
       <h1>{code.name}</h1>
       <p>共有リンクから開いています。サインインしなくても、このコードは見られます。</p>
 
-      <section aria-labelledby={codeHeadingId}>
-        <h2 id={codeHeadingId}>共有されたコード</h2>
+      <Window title="共有されたコード">
         {state.drawn.kind === 'drawn' ? (
           <CodePreview response={state.drawn.response} />
         ) : (
           <p>{state.drawn.reason}</p>
         )}
-      </section>
+      </Window>
 
-      <section aria-labelledby={permissionHeadingId}>
-        <h2 id={permissionHeadingId}>このリンクでできること</h2>
+      <Window title="このリンクでできること">
         <p>{describeSharePermission(state.preview.permission)}</p>
         {state.preview.permission === 'edit' && isSignedIn(actor) ? (
           <p>{renderLink({ to: codePath(code.id), label: `「${code.name}」の編集画面を開く` })}</p>
@@ -161,7 +158,7 @@ export const SharedCodeScreen = ({
             <p>{renderLink({ to: '/sign-in', label: 'サインインの方法を見る' })}</p>
           </>
         ) : undefined}
-      </section>
+      </Window>
 
       {makeYourOwn}
     </>

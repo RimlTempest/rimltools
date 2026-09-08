@@ -5,11 +5,13 @@
  * トークンは riml-ds（@rimltempest/riml-ds-tokens）。rd.tokens 層に --rd-* が入り、
  * tokens 層の --qrcc-* はその別名（docs/adr/0011-riml-ds-tokens.md）。
  * 窓（Mado）などの型は riml-ds の patterns.css（rd.components 層）から借りる
- * （docs/adr/0012-mado-look.md）。
+ * （docs/adr/0012-mado-look.md）。文字の型と小さなパターンも同じ層に入る。
+ * どれも自分で `@layer rd.components { … }` に包まれているので、
+ * import の順は層の順を変えない。
  *
  * 層の順序: patterns.css は自分で `@layer rd.components { … }` に包まれている。
  * `rd.*` は rd 層の中の副層なので、rd 層が最初に現れた位置で並ぶ。qrcc の reset
- * （`* { margin: 0 }` など）と base（`h2 { font-size }`、見出しの margin-block）が
+ * （`* { margin: 0 }` など）と base（`h2 { font }`、見出しの margin-block）が
  * `.rd-window-title` に勝ってしまわないよう、rd は reset と base の**後**に置く。
  * qrcc の components と utilities は `.rd-window` の上に重ねたいので rd の**後**。
  * 変数だけの rd.tokens / tokens は順序に意味が無い。
@@ -21,6 +23,8 @@
 @import '@rimltempest/riml-ds-tokens/tokens.css';
 @import '@rimltempest/riml-ds-tokens/themes/qrcc.css';
 @import '@rimltempest/riml-ds-css/patterns.css';
+@import '@rimltempest/riml-ds-css/typography.css';
+@import '@rimltempest/riml-ds-css/atoms.css';
 @import './tokens.css' layer(tokens);
 @import './reset.css' layer(reset);
 @import './base.css' layer(base);

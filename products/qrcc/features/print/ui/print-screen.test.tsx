@@ -198,15 +198,18 @@ describe('PrintScreen', () => {
 /**
  * 区画が窓（Mado）として出ているか。
  *
- * 窓は「帯（＝見出し）＋ 本体」の 2 段で、中身は本体の中に入る（riml-ds の `.rd-window`）。
+ * 窓は「帯（header）＋ 本体」の 2 段で、見出しは帯の中に入る（riml-ds ADR-0014）。
  * section に見出しと中身を並べただけの板では、区画の直下に中身が出てしまい通らない。
  */
 const expectWindow = (name: string) => {
   const region = screen.getByRole('region', { name })
   const heading = within(region).getByRole('heading', { name })
-  expect(region.firstElementChild).toBe(heading)
+  const bar = region.firstElementChild
+  expect(bar?.tagName).toBe('HEADER')
+  expect(bar?.className).toBe('rd-window-bar')
+  expect(bar?.contains(heading)).toBe(true)
   expect(region.children.length).toBe(2)
-  expect(heading.nextElementSibling?.tagName).toBe('DIV')
+  expect(bar?.nextElementSibling?.className).toBe('rd-window-body')
 }
 
 describe('PrintScreen の区画', () => {
