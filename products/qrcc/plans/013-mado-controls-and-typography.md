@@ -1,7 +1,7 @@
 # 013: 窓の丸をボタンに・ダイアログを窓に・文字を riml-ds の typography に揃える
 
 **優先度**: P1　**規模**: M　**依存**: 012（マージ済み）、riml-ds 017 / 018（両方 main にマージ済みであること）
-**レーン**: `feat/mado-controls`　**計画時の main**: qrcc2 `6c84985`、riml-ds `<<RIML_DS_SHA>>`
+**レーン**: `feat/mado-controls`　**計画時の main**: qrcc2 `6c84985`、riml-ds `da4200a`
 
 > **Drift check（最初に実行）**:
 >
