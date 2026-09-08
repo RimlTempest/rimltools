@@ -6,21 +6,21 @@ improve スキルが作成（001 は 2026-09-03、002〜006 は 2026-09-06、011
 
 ## Execution order & status
 
-| Plan | Title                                                                                               | Priority | Effort | Depends on           | Status |
-| ---- | --------------------------------------------------------------------------------------------------- | -------- | ------ | -------------------- | ------ |
-| 002  | 内容と符号の互換性を、総当たり switch から符号側のメタデータに移す                                  | P1       | S      | —                    | DONE   |
-| 007  | 種類を増やしたときに壊れる 4 つの switch を、増やしても壊れない形にする                             | P1       | S      | 002                  | DONE   |
-| 003  | 設計済みで未実装の内容の種類（名刺・メール・電話・SMS・地図・予定）を実装する                       | P1       | M      | 002, 007             | DONE   |
-| 004  | 読めるのに作れない 1D バーコード（Code 39 / Code 93 / EAN-8 / ITF / Codabar）を生成できるようにする | P1       | M      | 002, 007             | DONE   |
-| 005  | 読み取った内容を解釈して見せる（GS1 の識別子・名刺・Wi-Fi・連絡先）                                 | P2       | M      | —                    | DONE   |
-| 006  | NFC タグに書き込めるようにする（QR・バーコード以外の運び方）                                        | P3       | M      | —                    | DONE   |
-| 001  | トップページの生成と読み取りを WebMCP のツールとしてエージェントに公開する                          | P2       | M      | —                    | DONE   |
-| 008  | 生成ツールから 9 種類すべての内容を作れるようにする                                                 | P2       | M      | 001, 003             | DONE   |
-| 009  | PWA にする（ホーム画面に追加・オフラインで生成と読み取り）                                          | P2       | M      | —                    | DONE   |
-| 010  | デザイントークンを riml-ds から取る（段階 1: `--qrcc-*` を `--rd-*` の別名にする）                  | P2       | M      | riml-ds 013          | DONE   |
-| 011  | 窓（Mado）の見た目を qrcc に入れる — 基盤（shared/ui: patterns.css・ピルボタン・`<Window>`）        | P1       | M      | 010, riml-ds 015     | DONE   |
-| 012  | 窓（Mado）の見た目を qrcc に入れる — 画面（features/*/ui の板を `<Window>` に、シェルを窓の言語に） | P1       | M      | 011                  | DONE   |
-| 013  | 窓の丸をボタンに・ダイアログを窓に・見出しを riml-ds の typography に                               | P1       | M      | 012, riml-ds 017/018 | TODO   |
+| Plan | Title                                                                                               | Priority | Effort | Depends on           | Status            |
+| ---- | --------------------------------------------------------------------------------------------------- | -------- | ------ | -------------------- | ----------------- |
+| 002  | 内容と符号の互換性を、総当たり switch から符号側のメタデータに移す                                  | P1       | S      | —                    | DONE              |
+| 007  | 種類を増やしたときに壊れる 4 つの switch を、増やしても壊れない形にする                             | P1       | S      | 002                  | DONE              |
+| 003  | 設計済みで未実装の内容の種類（名刺・メール・電話・SMS・地図・予定）を実装する                       | P1       | M      | 002, 007             | DONE              |
+| 004  | 読めるのに作れない 1D バーコード（Code 39 / Code 93 / EAN-8 / ITF / Codabar）を生成できるようにする | P1       | M      | 002, 007             | DONE              |
+| 005  | 読み取った内容を解釈して見せる（GS1 の識別子・名刺・Wi-Fi・連絡先）                                 | P2       | M      | —                    | DONE              |
+| 006  | NFC タグに書き込めるようにする（QR・バーコード以外の運び方）                                        | P3       | M      | —                    | DONE              |
+| 001  | トップページの生成と読み取りを WebMCP のツールとしてエージェントに公開する                          | P2       | M      | —                    | DONE              |
+| 008  | 生成ツールから 9 種類すべての内容を作れるようにする                                                 | P2       | M      | 001, 003             | DONE              |
+| 009  | PWA にする（ホーム画面に追加・オフラインで生成と読み取り）                                          | P2       | M      | —                    | DONE              |
+| 010  | デザイントークンを riml-ds から取る（段階 1: `--qrcc-*` を `--rd-*` の別名にする）                  | P2       | M      | riml-ds 013          | DONE              |
+| 011  | 窓（Mado）の見た目を qrcc に入れる — 基盤（shared/ui: patterns.css・ピルボタン・`<Window>`）        | P1       | M      | 010, riml-ds 015     | DONE              |
+| 012  | 窓（Mado）の見た目を qrcc に入れる — 画面（features/*/ui の板を `<Window>` に、シェルを窓の言語に） | P1       | M      | 011                  | DONE              |
+| 013  | 窓の丸をボタンに・ダイアログを窓に・見出しを riml-ds の typography に                               | P1       | M      | 012, riml-ds 017/018 | DONE（`fde54ce`） |
 
 Status の値: TODO / IN PROGRESS / DONE / BLOCKED（理由を 1 行）/ REJECTED（理由を 1 行）
 
@@ -173,3 +173,17 @@ Status の値: TODO / IN PROGRESS / DONE / BLOCKED（理由を 1 行）/ REJECTE
 - e2e で `e2e/tests/auth.spec.ts:153`（mobile）が 1 回だけ 15s タイムアウトで flake。再実行は 428 passed。窓とは無関係の
   URL 入力 → プレビュー更新待ちで、負荷時のタイミング依存。安定化は別途
 - check exit 0 / test 913 pass / a11y 180 passed / e2e 428 passed
+
+### 013 の実行メモ（2026-09-08）
+
+- マージ `fde54ce`。`@qrcc/ui` に `WindowBar`（帯 ⊃ 操作 + 見出し、`data-tone` は帯側）を足し、`Window` は `onClose` / `collapsible` を持つ。
+  確認ダイアログは `<dialog class="qrcc-confirm-dialog rd-window">` + danger の帯 + ×（= やめる）。削除の取り消しは `.qrcc-manage-undo` を捨てて accent の窓に。
+  共有ページの 2 つの section は窓に。見出し h1..h4 は `font: var(--rd-type-heading-N)`、`--qrcc-text-*` は削除（`KEPT_LOCAL` は `--qrcc-measure` だけ）。
+  `index.css` に `typography.css` / `atoms.css` を追加（riml-ds `da4200a` を vendoring）
+- 計画から変えたもの: **bun 1.4.0 は `file:` の tgz が変わっても `bun.lock` の sha512 を更新しない**（キャッシュから古い中身を復元し続ける。`--force` でも同じ）。
+  `openssl dgst -sha512` で算出した値を lock に手で入れてから `bun install`。→ `scripts/vendor-riml-ds.sh` にハッシュの書き換えを組み込む（advisor 宿題。npm 公開後は不要になる）。
+  `mado.test.ts` の「h1/h2 は display 書体」は「h1..h4 は型トークンを使い font-size / font-family を書き足さない」に置き換え。
+  `e2e/tests/print.spec.ts` は帯が `<header>` になって `locator('header')` が複数一致するので `getByRole('banner')` に
+- 残り: ADR-0012 の本文（決定 2「トーンは見出し側」、決定 3「`KEPT_LOCAL` は 5 つ」）が古い。表に 1 行足しただけなので本文の追随は別コミット。
+  riml-ds 018 の `peerDependenciesMeta.optional` で `vendor-riml-ds.sh` の詰め直しブロックは冪等に通るだけになった（掃除は npm 公開時にスクリプトごと消す）
+- check exit 0 / test 922 pass / a11y 180 passed / e2e 432 passed。`auth.spec.ts:153` の flake は 2 回のフルランで再現せず
