@@ -18,29 +18,29 @@ body {
 }
 
 :where(h1, h2, h3, h4) {
-  line-height: 1.3;
   text-wrap: balance;
   margin-block: var(--qrcc-space-8) var(--qrcc-space-4);
 }
 
-/* h1/h2 は丸ゴシック系（riml-ds の display 書体）。h3 以下は本文書体のまま */
+/*
+ * 大きさ・書体・行間は riml-ds の型トークン（--rd-type-heading-N）が持つ。
+ * font の短縮形なので line-height も一緒に来る。qrcc で font-size を書き足すと
+ * riml-ds と二重管理になるので、大きさを変えたくなったら riml-ds のトークンで議論する。
+ */
 h1 {
-  font-family: var(--rd-font-family-display);
-  font-size: clamp(1.6rem, 1.4rem + 1vi, 2.2rem);
+  font: var(--rd-type-heading-1);
 }
 
-/* 段が下がるほど小さくする。ブラウザ既定に任せると h4 が本文と同じ大きさになる */
 h2 {
-  font-family: var(--rd-font-family-display);
-  font-size: var(--qrcc-text-2xl);
+  font: var(--rd-type-heading-2);
 }
 
 h3 {
-  font-size: var(--qrcc-text-xl);
+  font: var(--rd-type-heading-3);
 }
 
 h4 {
-  font-size: var(--qrcc-text-lg);
+  font: var(--rd-type-heading-4);
 }
 
 :where(p, li) {

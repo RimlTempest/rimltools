@@ -20,13 +20,7 @@ const used = (css: string, prefix: string): ReadonlySet<string> =>
 const COMPONENT_LOCAL = /^--qrcc-(sheet|cell)-/
 
 // 段階 2 でもなお riml-ds に寄せない qrcc 固有のトークン（値の理由は docs/adr/0011-riml-ds-tokens.md）
-const KEPT_LOCAL: readonly string[] = [
-  '--qrcc-measure',
-  '--qrcc-text-base',
-  '--qrcc-text-lg',
-  '--qrcc-text-xl',
-  '--qrcc-text-2xl',
-]
+const KEPT_LOCAL: readonly string[] = ['--qrcc-measure']
 
 const appCssFiles = (): readonly string[] =>
   [
@@ -45,7 +39,7 @@ describe('デザイントークンは riml-ds の別名', () => {
     expect(missing).toEqual([])
   })
 
-  test('生の値で残す --qrcc-* は KEPT_LOCAL の 5 つだけ', () => {
+  test('生の値で残す --qrcc-* は KEPT_LOCAL だけ', () => {
     // \s* は先読みの中に入れる（外に置くと 0 文字にバックトラックして先読みをすり抜ける）
     const raw = [...tokensCss.matchAll(/(--qrcc-[a-z0-9-]+)\s*:(?!\s*var\(--rd-)/g)].map(
       (m) => m[1] ?? '',

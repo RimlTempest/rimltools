@@ -31,14 +31,30 @@ describe('窓（Mado）の見た目', () => {
     expect(order.indexOf('rd.components')).toBeLessThan(order.indexOf('components'))
   })
 
+  test('index.css は riml-ds の typography.css と atoms.css も読み込む', () => {
+    expect(indexCss).toContain("@import '@rimltempest/riml-ds-css/typography.css';")
+    expect(indexCss).toContain("@import '@rimltempest/riml-ds-css/atoms.css';")
+  })
+
   test('riml-ds の patterns.css は .rd-window を提供する', () => {
     expect(patternsCss).toContain('.rd-window')
     expect(patternsCss).toContain('.rd-window-title')
   })
 
-  test('h1/h2 は丸ゴシック系の display 書体、hr は点線', () => {
-    expect(block(baseCss, 'h1')).toContain('font-family: var(--rd-font-family-display)')
-    expect(block(baseCss, 'h2')).toContain('font-family: var(--rd-font-family-display)')
+  // 見出しの大きさ・書体は riml-ds の --rd-type-heading-N が持つ（display 書体もその中）。
+  // qrcc 側で font-size / font-family を書き足さない（plan 013）
+  test('h1..h4 は riml-ds の型トークン、hr は点線', () => {
+    for (const [selector, token] of [
+      ['h1', '--rd-type-heading-1'],
+      ['h2', '--rd-type-heading-2'],
+      ['h3', '--rd-type-heading-3'],
+      ['h4', '--rd-type-heading-4'],
+    ]) {
+      const rule = block(baseCss, selector ?? '')
+      expect(rule).toContain(`font: var(${token})`)
+      expect(rule).not.toContain('font-size:')
+      expect(rule).not.toContain('font-family:')
+    }
     expect(block(baseCss, 'hr')).toMatch(/dotted/)
   })
 

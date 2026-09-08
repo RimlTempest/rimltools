@@ -62,15 +62,10 @@
   --qrcc-measure: 70ch;
 
   /*
-   * 型スケール。役割で名前を付けて、ここ以外に文字サイズを書かない。
-   * 見出しは段が下がるほど小さくなる（h1 だけは画面幅に追従させる）。
-   * sm 以外は段階 3（部品の置き換え）で riml-ds に寄せる。
+   * 文字の大きさは riml-ds の型トークン（--rd-type-*）が正。見出しは base.css が
+   * --rd-type-heading-1..4 を font の短縮形で受け取る。ここに残るのは補助文の 1 つだけ。
    */
   --qrcc-text-sm: var(--rd-type-small-font-size);
-  --qrcc-text-base: 1rem;
-  --qrcc-text-lg: 1.125rem;
-  --qrcc-text-xl: 1.375rem;
-  --qrcc-text-2xl: 1.75rem;
 
   --qrcc-font-sans: var(--rd-font-family-sans);
   --qrcc-font-mono: var(--rd-font-family-mono);
