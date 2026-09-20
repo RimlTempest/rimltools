@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@qrcc/contract": "workspace:*",
-    "@rimltempest/riml-ds-css": "file:../../vendor/riml-ds/rimltempest-riml-ds-css-0.2.0.tgz",
-    "@rimltempest/riml-ds-tokens": "file:../../vendor/riml-ds/rimltempest-riml-ds-tokens-0.2.0.tgz"
+    "@rimltempest/riml-ds-css": "^0.2.0",
+    "@rimltempest/riml-ds-tokens": "^0.2.0"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "20.12.0",
