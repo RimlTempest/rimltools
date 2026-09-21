@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: jdx/mise-action@v3
         with: { cache: true }
       # 疎通確認だけが落ちた回でも、10 分超かかる Rust ビルドのキャッシュは捨てない

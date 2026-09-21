@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: jdx/mise-action@v3
         with: { cache: true }
       - run: bun install --frozen-lockfile
