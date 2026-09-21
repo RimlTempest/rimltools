@@ -93,7 +93,7 @@ jobs:
 
       - name: 疎通確認の証跡を残す（落ちたときだけ）
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-browser-results
           path: products/qrcc/e2e/test-results
