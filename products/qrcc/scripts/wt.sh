@@ -2,9 +2,13 @@
 # worktree lane helper. See docs/parallel-lanes.md
 set -euo pipefail
 
-ROOT="$(git rev-parse --show-toplevel)"
+# rimltools モノレポ: ROOT はこのプロダクト（products/qrcc）、GIT_ROOT はリポジトリ全体。
+# worktree はリポジトリ全体を切り出すので、中のプロダクトは "$path/$REL" にある。
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+GIT_ROOT="$(git -C "$ROOT" rev-parse --show-toplevel)"
+REL="${ROOT#"$GIT_ROOT"/}"
 LANES="$ROOT/scripts/lanes.tsv"
-WT_DIR="$ROOT/.claude/worktrees"
+WT_DIR="$GIT_ROOT/.claude/worktrees/qrcc"
 BASE="${QRCC_BASE_REF:-origin/main}"
 
 die() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -29,7 +33,7 @@ cmd_list() {
 write_lane_md() { # $1=branch $2=worktree path
   local b="$1" p="$2" deps owned summary
   deps="$(lane_field "$b" 2)"; owned="$(lane_field "$b" 3)"; summary="$(lane_field "$b" 4)"
-  cat > "$p/LANE.md" <<EOF
+  cat > "$p/$REL/LANE.md" <<EOF
 # レーン: $b
 
 $summary
@@ -81,17 +85,17 @@ cmd_new() {
   info "installing toolchain and dependencies"
   ( cd "$path" && mise install >/dev/null 2>&1 || true )
   ( cd "$path" && mise exec -- bun install )
-  [ -f "$ROOT/Cargo.toml" ] && ( cd "$path" && mise exec -- cargo fetch >/dev/null 2>&1 || true )
+  [ -f "$ROOT/Cargo.toml" ] && ( cd "$path/$REL" && mise exec -- cargo fetch >/dev/null 2>&1 || true )
   ( cd "$path" && mise exec -- bunx lefthook install >/dev/null )
 
   for f in .dev.vars .env.local; do
-    [ -f "$ROOT/$f" ] && cp "$ROOT/$f" "$path/$f" && info "copied $f"
+    [ -f "$ROOT/$f" ] && cp "$ROOT/$f" "$path/$REL/$f" && info "copied $f"
   done
 
   write_lane_md "$b" "$path"
-  info "ready: cd $path"
+  info "ready: cd $path/$REL"
   echo
-  sed -n '1,12p' "$path/LANE.md"
+  sed -n '1,12p' "$path/$REL/LANE.md"
 }
 
 cmd_sync() {
