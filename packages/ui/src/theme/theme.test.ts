@@ -91,3 +91,20 @@ describe('createThemeKit', () => {
     expect(createThemeKit('noter-theme').themeInitScript).toContain('"noter-theme"')
   })
 })
+
+describe('themeInitScript の埋め込み', () => {
+  test('保存キーに script を閉じる文字列や改行があっても、そのまま埋め込まない', () => {
+    const { themeInitScript: script } = createThemeKit('x</script><script>alert(1)</script>\u2028y')
+    expect(script).not.toContain('</script>')
+    expect(script).not.toContain('<')
+    expect(script).not.toContain('\u2028')
+  })
+
+  test('エスケープしても、埋め込んだリテラルは渡した保存キーと同じ文字列を表す', () => {
+    const key = 'weird</script>"\'\\key\u2028'
+    const { themeInitScript: script } = createThemeKit(key)
+    const literal = /localStorage\.getItem\((".*?")\);/.exec(script)?.[1]
+    expect(literal).toBeDefined()
+    expect(JSON.parse(literal ?? 'null')).toBe(key)
+  })
+})

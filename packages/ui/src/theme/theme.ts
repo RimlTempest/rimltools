@@ -73,8 +73,24 @@ const makeThemeStoreFor =
  * 最初の描画より前に `data-theme` を当てないと、OS 設定と選択が食い違う瞬間に
  * 色がちらつく。定義がずれないよう、保存キーはここから組み立てる。
  */
+/**
+ * JSON.stringify の結果を `<script>` の中に安全に置けるようにする。
+ * JSON.stringify は `<`（`</script>` でスクリプトを抜けられる）と、JS では改行になる
+ * U+2028 / U+2029 をエスケープしないので、それらを `\uXXXX` に置き換える。
+ */
+const SCRIPT_UNSAFE: Readonly<Record<string, string>> = {
+  '<': '\\u003C',
+  '>': '\\u003E',
+  '/': '\\u002F',
+  '\u2028': '\\u2028',
+  '\u2029': '\\u2029',
+}
+
+const toScriptLiteral = (value: string): string =>
+  JSON.stringify(value).replace(/[<>/\u2028\u2029]/g, (char) => SCRIPT_UNSAFE[char] ?? char)
+
 const themeInitScriptFor = (storageKey: string): string =>
-  `(()=>{try{const t=localStorage.getItem(${JSON.stringify(
+  `(()=>{try{const t=localStorage.getItem(${toScriptLiteral(
     storageKey,
   )});if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}})()`
 
