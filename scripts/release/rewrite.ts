@@ -25,6 +25,47 @@ const isRecord = (value: unknown): value is Json =>
 const records = (value: unknown): Json[] =>
   Array.isArray(value) ? value.filter((item): item is Json => isRecord(item)) : []
 
+/**
+ * wrangler.jsonc（コメントと末尾カンマを含む）を読む。文字列の中の `//` は残す。
+ * ビルド出力の wrangler.json はそのまま JSON なので、どちらもこれで読める。
+ */
+export const parseJsonc = (text: string): Result<unknown, string> => {
+  let out = ''
+  let i = 0
+  let inString = false
+  while (i < text.length) {
+    const ch = text[i] ?? ''
+    const next = text[i + 1] ?? ''
+    if (inString) {
+      out += ch
+      if (ch === '\\') {
+        out += next
+        i += 2
+        continue
+      }
+      if (ch === '"') inString = false
+      i += 1
+    } else if (ch === '"') {
+      inString = true
+      out += ch
+      i += 1
+    } else if (ch === '/' && next === '/') {
+      while (i < text.length && text[i] !== '\n') i += 1
+    } else if (ch === '/' && next === '*') {
+      const end = text.indexOf('*/', i + 2)
+      i = end < 0 ? text.length : end + 2
+    } else {
+      out += ch
+      i += 1
+    }
+  }
+  try {
+    return { ok: true, value: JSON.parse(out.replaceAll(/,(\s*[}\]])/g, '$1')) }
+  } catch (error) {
+    return { ok: false, error: `invalid JSON(C): ${String(error)}` }
+  }
+}
+
 /** 元のオブジェクトを変えずに一部のフィールドだけ差し替えた複製を返す */
 const withFields = (base: Json, fields: Json): Json => ({ ...base, ...fields })
 
@@ -101,7 +142,8 @@ export const rewriteConfig = (config: unknown, ctx: RewriteContext): Result<Json
     ...rest,
     name: `${name}${env.suffix}`,
     workers_dev: false,
-    preview_urls: isPublic && env.name !== 'production',
+    // staging / preview の public Worker だけ開く。設定で明示的に閉じているもの（portal）は閉じたまま
+    preview_urls: isPublic && env.name !== 'production' && config['preview_urls'] !== false,
   }
   if ('d1_databases' in config) out['d1_databases'] = d1
   if ('services' in config) out['services'] = services

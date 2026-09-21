@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import { planRollout } from './plan.ts'
-import { noter, qrcc } from './fixtures.ts'
+import { noter, portal, qrcc } from './fixtures.ts'
 
 describe('planRollout', () => {
   test('production canaries every worker, downstream (internal) first', () => {
@@ -26,5 +26,11 @@ describe('planRollout', () => {
     const tool = { ...qrcc, release: { ...qrcc.release, mode: 'big-bang' as const } }
     const plan = planRollout(tool, 'production')
     expect(plan[1]?.strategy).toEqual({ kind: 'canary', steps: [100], bakeMinutes: 0 })
+  })
+
+  test('the portal (big-bang, one public worker) goes straight to 100% after the 0% check', () => {
+    const plan = planRollout(portal, 'production')
+    expect(plan.map((p) => p.worker.name)).toEqual(['rimltools-portal'])
+    expect(plan[0]?.strategy).toEqual({ kind: 'canary', steps: [100], bakeMinutes: 0 })
   })
 })

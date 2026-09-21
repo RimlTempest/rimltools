@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
-import { rewriteConfig } from './rewrite.ts'
-import { noter, qrcc } from './fixtures.ts'
+import { parseJsonc, rewriteConfig } from './rewrite.ts'
+import { noter, portal, qrcc } from './fixtures.ts'
 
 const webConfig = {
   name: 'qrcc-web',
@@ -110,5 +110,50 @@ describe('rewriteConfig', () => {
       { tool: qrcc, env: staging, host: 'h' },
     )
     expect(enabled.ok).toBe(true)
+  })
+
+  test('handles an assets-only worker without D1, services or vars (portal)', () => {
+    const config = {
+      name: 'rimltools-portal',
+      compatibility_date: '2026-09-22',
+      workers_dev: false,
+      preview_urls: false,
+      assets: { directory: './dist', not_found_handling: '404-page' },
+    }
+    const result = rewriteConfig(config, { tool: portal, env: staging, host: 'staging.t' })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value['name']).toBe('rimltools-portal-staging')
+    expect(result.value['assets']).toEqual(config.assets)
+    expect(result.value['d1_databases']).toBeUndefined()
+    expect(result.value['services']).toBeUndefined()
+    expect(result.value['vars']).toBeUndefined()
+    // 設定で明示的に閉じている preview URL は開かない
+    expect(result.value['preview_urls']).toBe(false)
+  })
+})
+
+describe('parseJsonc', () => {
+  test('reads wrangler.jsonc with comments and trailing commas', () => {
+    const text = `{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // line comment with "quotes" and a // inside
+  "name": "rimltools-portal", /* block */
+  "url": "https://example.com/a//b",
+  "assets": { "directory": "./dist", },
+}`
+    expect(parseJsonc(text)).toEqual({
+      ok: true,
+      value: {
+        $schema: '../../node_modules/wrangler/config-schema.json',
+        name: 'rimltools-portal',
+        url: 'https://example.com/a//b',
+        assets: { directory: './dist' },
+      },
+    })
+  })
+
+  test('reports broken input', () => {
+    expect(parseJsonc('{ "a": ').ok).toBe(false)
   })
 })

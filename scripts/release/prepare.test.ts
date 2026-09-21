@@ -8,6 +8,10 @@ describe('preparedPath', () => {
     expect(preparedPath('products/qrcc', 'apps/web/dist/server/wrangler.json', 'staging')).toBe(
       'products/qrcc/apps/web/dist/server/wrangler.staging.json',
     )
+    // portal は wrangler.jsonc をそのまま使う（assets の相対パスが同じ場所から解決される）
+    expect(preparedPath('products/portal', 'wrangler.jsonc', 'production')).toBe(
+      'products/portal/wrangler.production.json',
+    )
   })
 })
 

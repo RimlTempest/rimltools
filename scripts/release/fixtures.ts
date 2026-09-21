@@ -6,6 +6,8 @@ export const qrcc: Tool = {
   description: 'd',
   path: 'products/qrcc',
   subdomain: 'qrcc',
+  apex: false,
+  listed: true,
   host: 'qrcc.tools.example.com',
   stagingHost: 'qrcc-staging.tools.example.com',
   legacyHosts: ['qrcc.example.com'],
@@ -53,4 +55,29 @@ export const noter: Tool = {
     },
   ],
   d1: [{ name: 'noter', binding: 'DB', migrationsConfig: 'apps/web/wrangler.jsonc' }],
+}
+
+export const portal: Tool = {
+  ...qrcc,
+  name: 'portal',
+  title: 'RimlTools',
+  path: 'products/portal',
+  subdomain: 'portal',
+  apex: true,
+  listed: false,
+  host: 'tools.example.com',
+  stagingHost: 'staging.tools.example.com',
+  legacyHosts: [],
+  rust: false,
+  workers: [
+    {
+      name: 'rimltools-portal',
+      role: 'public',
+      buildConfig: 'wrangler.jsonc',
+      durableObjects: false,
+    },
+  ],
+  d1: [],
+  release: { mode: 'big-bang', steps: [100], bakeMinutes: 0 },
+  smoke: { cli: 'bun run smoke', browser: 'bun run smoke', e2ePackage: '@rimltools/portal' },
 }
