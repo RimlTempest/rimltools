@@ -1,0 +1,139 @@
+.noter-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-4);
+  padding-block-end: var(--noter-space-4);
+  border-block-end: 1px solid var(--noter-border);
+  margin-block-end: var(--noter-space-6);
+}
+
+.noter-header__brand {
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.noter-header__status {
+  /* ナビの右に寄せる。狭い画面では折り返して下の行に落ちる */
+  margin-inline-start: auto;
+}
+
+.noter-global-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--noter-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.noter-global-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* AAA 2.5.5 */
+  min-block-size: var(--noter-target-min);
+  min-inline-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-3);
+  border-radius: var(--noter-radius);
+  text-decoration: none;
+}
+
+.noter-global-nav a:hover {
+  background: var(--noter-surface-raised);
+  text-decoration: underline;
+}
+
+/* 現在地は色だけで示さない。下線と背景でも区別できるようにする（1.4.1） */
+.noter-global-nav a[aria-current='page'] {
+  background: var(--noter-surface-raised);
+  color: var(--noter-text);
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 var(--noter-accent);
+}
+
+@media (forced-colors: active) {
+  .noter-global-nav a[aria-current='page'] {
+    box-shadow: inset 0 -3px 0 Highlight;
+  }
+}
+
+.noter-breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--noter-space-2);
+  margin: 0 0 var(--noter-space-4);
+  padding: 0;
+  list-style: none;
+  font-size: 0.925rem;
+}
+
+.noter-breadcrumbs li {
+  display: flex;
+  align-items: center;
+  gap: var(--noter-space-2);
+}
+
+.noter-breadcrumbs a {
+  display: inline-flex;
+  align-items: center;
+  /* AAA 2.5.5。ナビゲーション内の対象は本文中のリンクと違い例外にならない。
+     短い文言でも 44x44 を満たすよう、幅にも下限を置く */
+  min-block-size: var(--noter-target-min);
+  min-inline-size: var(--noter-target-min);
+  justify-content: center;
+  padding-inline: var(--noter-space-2);
+  border-radius: var(--noter-radius-sm);
+}
+
+.noter-breadcrumbs [aria-current='page'] {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--noter-target-min);
+  font-weight: 700;
+}
+
+.noter-breadcrumbs [data-separator] {
+  color: var(--noter-text-muted);
+}
+
+.noter-footer {
+  margin-block-start: var(--noter-space-8);
+  padding-block-start: var(--noter-space-4);
+  border-block-start: 1px solid var(--noter-border);
+  color: var(--noter-text-muted);
+}
+
+/* 画面が広いときは本文を中央に寄せる。読み幅は base.css が担保する */
+body > :is(header, main, footer) {
+  max-inline-size: 60rem;
+  margin-inline: auto;
+}
+
+/*
+ * ホームの主導線（新しい文書を作る）。文章の続きに見えないよう、
+ * 段落の間隔より広く空ける。
+ */
+.noter-home__action {
+  margin-block-start: var(--noter-space-6);
+}
+
+.noter-home__action a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* AAA 2.5.5。単独のクリック対象なので 44x44 を満たす */
+  min-block-size: var(--noter-target-min);
+  min-inline-size: var(--noter-target-min);
+  padding-inline: var(--noter-space-4);
+  border-radius: var(--noter-radius);
+  background: var(--noter-accent);
+  color: var(--noter-on-accent);
+  font-weight: 700;
+}
+
+.noter-home__action a:hover {
+  background: var(--noter-accent-hover);
+}

@@ -1,0 +1,12 @@
+# branch	depends_on	owned_paths	summary
+feat/contracts	-	shared/contract	Result・Brand・共通ID・DocumentKind・ロール・上限値。全レーンの先行条件
+feat/design-system	feat/contracts	shared/ui	デザイントークン・基本コンポーネント (WCAG AAA / ダークモード / presence 色)
+feat/web-shell	feat/design-system	features/shell,apps/web	ルートドキュメント・レイアウト・ナビ・テーマ切替、apps/web の配線と server.ts (WS 中継)
+feat/sync	feat/contracts	features/sync,apps/sync	DocumentRoom Durable Object・y-websocket 互換プロトコル・永続化・クライアント provider
+feat/formats	feat/contracts	features/formats	markdown(mermaid)/yaml/toml/json の解析・診断・整形・プレビュー・相互変換
+feat/auth	feat/web-shell	features/auth,apps/web/migrations/0001_auth.sql,e2e/tests/auth.spec.ts	Better Auth によるゲスト/Google ログインとアカウント昇格
+feat/documents	feat/auth,feat/sync	features/documents,apps/web/migrations/0002_documents.sql,e2e/tests/documents.spec.ts	文書 CRUD・メンバー・共有リンク・/s/:token・/d/:id/raw
+feat/editor	feat/sync,feat/formats,feat/design-system	features/editor,e2e/tests/editor.spec.ts	CodeMirror + Yjs 共同編集・プレゼンス・接続状態・分割ペイン
+feat/webmcp	feat/documents,feat/editor	shared/webmcp	WebMCP ツール (read/diagnose) と提案 UI
+feat/e2e	feat/documents,feat/editor	e2e	Playwright: a11y AAA・共同編集・本番 smoke
+chore/devops	-	.github,scripts,docs,tools	CI/CD・デプロイ・運用ドキュメント・lint プラグイン・markuplint 隔離

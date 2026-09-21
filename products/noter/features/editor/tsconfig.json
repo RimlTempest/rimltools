@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "jsx": "react-jsx",
+    "lib": ["es2024", "dom", "dom.iterable"]
+  },
+  "include": ["contract/**/*", "core/**/*", "ui/**/*"],
+  "references": [
+    {
+      "path": "../../shared/contract"
+    },
+    {
+      "path": "../../shared/ui"
+    },
+    {
+      "path": "../auth"
+    },
+    {
+      "path": "../documents"
+    },
+    {
+      "path": "../formats"
+    },
+    {
+      "path": "../shell"
+    },
+    {
+      "path": "../sync"
+    }
+  ],
+  "exclude": ["**/*.route.*", "dist"]
+}

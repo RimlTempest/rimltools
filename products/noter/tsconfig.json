@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./shared/contract" },
+    { "path": "./shared/ui" },
+    { "path": "./shared/webmcp" },
+    { "path": "./features/auth" },
+    { "path": "./features/documents" },
+    { "path": "./features/editor" },
+    { "path": "./features/shell" },
+    { "path": "./features/sync" },
+    { "path": "./features/formats" }
+  ]
+}

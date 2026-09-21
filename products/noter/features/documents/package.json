@@ -1,0 +1,37 @@
+{
+  "name": "@noter/documents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./contract": "./contract/index.ts",
+    "./core": "./core/index.ts",
+    "./server": "./server/index.ts",
+    "./ui": "./ui/index.ts",
+    "./ui/documents.css": "./ui/documents.css",
+    "./ui/wiring": "./ui/documents-wiring.route.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@noter/auth": "workspace:*",
+    "@noter/contract": "workspace:*",
+    "@noter/shell": "workspace:*",
+    "@noter/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@tanstack/react-router": "1.170.32",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.6",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "peerDependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  }
+}
