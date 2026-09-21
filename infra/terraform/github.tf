@@ -234,3 +234,17 @@ resource "github_actions_environment_variable" "this" {
   variable_name = each.value.name
   value         = each.value.value
 }
+
+# デプロイと flags 同期のワークフローは、ここに載っている environment にだけ出す。
+# environment の secret / variable（上）が揃ってから載るよう、それらに依存させる。
+resource "github_actions_variable" "release_environments" {
+  repository    = github_repository.this.name
+  variable_name = "RELEASE_ENVIRONMENTS"
+  value         = jsonencode(var.release_environments)
+
+  depends_on = [
+    github_actions_environment_secret.cloudflare_api_token,
+    github_actions_environment_secret.cloudflare_account_id,
+    github_actions_environment_variable.this,
+  ]
+}
