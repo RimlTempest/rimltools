@@ -26,9 +26,13 @@ export type Tool = {
   description: string
   path: string
   subdomain: string
-  /** 本番のホスト名（`<subdomain>.<domain>`） */
+  /** true なら `<domain>` そのもので公開する（ポータル） */
+  apex: boolean
+  /** ポータルのツール一覧に出すか（既定 true） */
+  listed: boolean
+  /** 本番のホスト名（`<subdomain>.<domain>`、apex なら `<domain>`） */
   host: string
-  /** staging のホスト名（`<subdomain>-staging.<domain>`） */
+  /** staging のホスト名（`<subdomain>-staging.<domain>`、apex なら `staging.<domain>`） */
   stagingHost: string
   legacyHosts: string[]
   rust: boolean
@@ -60,9 +64,9 @@ const num = (r: Reader, obj: Record<string, unknown>, key: string): number => {
   return 0
 }
 
-const bool = (r: Reader, obj: Record<string, unknown>, key: string): boolean => {
+const bool = (r: Reader, obj: Record<string, unknown>, key: string, fallback = false): boolean => {
   const value = obj[key]
-  if (value === undefined) return false
+  if (value === undefined) return fallback
   if (typeof value === 'boolean') return value
   r.errors.push(`${r.path}.${key}: expected a boolean`)
   return false
@@ -116,6 +120,7 @@ const parseTool = (
   const r: Reader = { path: `tools[${index}]`, errors }
   const name = str(r, raw, 'name')
   const subdomain = str(r, raw, 'subdomain')
+  const apex = bool(r, raw, 'apex')
 
   const workers = records(r, raw, 'workers').map((w) => ({
     name: str(r, w, 'name'),
@@ -143,8 +148,10 @@ const parseTool = (
     description: str(r, raw, 'description'),
     path: str(r, raw, 'path'),
     subdomain,
-    host: `${subdomain}.${domain}`,
-    stagingHost: `${subdomain}-staging.${domain}`,
+    apex,
+    listed: bool(r, raw, 'listed', true),
+    host: apex ? domain : `${subdomain}.${domain}`,
+    stagingHost: apex ? `staging.${domain}` : `${subdomain}-staging.${domain}`,
     legacyHosts: list(r, raw, 'legacyHosts').filter((h): h is string => typeof h === 'string'),
     rust: bool(r, raw, 'rust'),
     workers,

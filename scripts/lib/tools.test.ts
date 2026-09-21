@@ -68,6 +68,32 @@ describe('parseTools', () => {
     expect(result.error).toContain('duplicate tool name: qrcc')
   })
 
+  test('lists tools by default and derives apex hosts from the domain', () => {
+    const withPortal = structuredClone(valid)
+    const [tool] = withPortal.tools
+    if (tool === undefined) return
+    withPortal.tools.push({ ...structuredClone(tool), name: 'portal', subdomain: 'portal' })
+    const portal = withPortal.tools[1]
+    if (portal === undefined) return
+    Object.assign(portal, { apex: true, listed: false })
+    const result = parseTools(withPortal)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    const [qrcc, parsedPortal] = result.value.tools
+    expect(qrcc?.listed).toBe(true)
+    expect(parsedPortal?.listed).toBe(false)
+    expect(parsedPortal?.host).toBe('tools.example.com')
+    expect(parsedPortal?.stagingHost).toBe('staging.tools.example.com')
+  })
+
+  test('accepts a tool without D1 databases', () => {
+    const noDb = structuredClone(valid)
+    const [tool] = noDb.tools
+    if (tool === undefined) return
+    tool.d1 = []
+    expect(parseTools(noDb).ok).toBe(true)
+  })
+
   test('rejects non-objects', () => {
     expect(parseTools(null).ok).toBe(false)
     expect(parseTools({ tools: 'x' }).ok).toBe(false)

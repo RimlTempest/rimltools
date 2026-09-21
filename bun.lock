@@ -271,6 +271,9 @@
         "@noter/contract": "workspace:*",
       },
     },
+    "products/portal": {
+      "name": "@rimltools/portal",
+    },
     "products/qrcc": {
       "name": "@rimltools/qrcc",
     },
@@ -878,6 +881,8 @@
     "@rimltools/flags": ["@rimltools/flags@workspace:packages/flags"],
 
     "@rimltools/noter": ["@rimltools/noter@workspace:products/noter"],
+
+    "@rimltools/portal": ["@rimltools/portal@workspace:products/portal"],
 
     "@rimltools/qrcc": ["@rimltools/qrcc@workspace:products/qrcc"],
 

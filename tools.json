@@ -23,9 +23,22 @@
           "buildConfig": "apps/web/dist/server/wrangler.json"
         }
       ],
-      "d1": [{ "name": "qrcc", "binding": "DB", "migrationsConfig": "apps/api/wrangler.jsonc" }],
-      "release": { "mode": "canary", "steps": [10, 50, 100], "bakeMinutes": 10 },
-      "slo": { "availability": 99.5, "windowDays": 28 },
+      "d1": [
+        {
+          "name": "qrcc",
+          "binding": "DB",
+          "migrationsConfig": "apps/api/wrangler.jsonc"
+        }
+      ],
+      "release": {
+        "mode": "canary",
+        "steps": [10, 50, 100],
+        "bakeMinutes": 10
+      },
+      "slo": {
+        "availability": 99.5,
+        "windowDays": 28
+      },
       "smoke": {
         "cli": "bun run smoke",
         "browser": "bun run smoke:browser",
@@ -53,13 +66,59 @@
           "buildConfig": "apps/web/dist/server/wrangler.json"
         }
       ],
-      "d1": [{ "name": "noter", "binding": "DB", "migrationsConfig": "apps/web/wrangler.jsonc" }],
-      "release": { "mode": "canary", "steps": [10, 50, 100], "bakeMinutes": 10 },
-      "slo": { "availability": 99.5, "windowDays": 28 },
+      "d1": [
+        {
+          "name": "noter",
+          "binding": "DB",
+          "migrationsConfig": "apps/web/wrangler.jsonc"
+        }
+      ],
+      "release": {
+        "mode": "canary",
+        "steps": [10, 50, 100],
+        "bakeMinutes": 10
+      },
+      "slo": {
+        "availability": 99.5,
+        "windowDays": 28
+      },
       "smoke": {
         "cli": "bun run smoke",
         "browser": "bun run smoke:browser",
         "e2ePackage": "@noter/e2e"
+      }
+    },
+    {
+      "name": "portal",
+      "title": "RimlTools",
+      "description": "ツール一覧（tools.riml4i.com）",
+      "path": "products/portal",
+      "subdomain": "portal",
+      "apex": true,
+      "listed": false,
+      "legacyHosts": [],
+      "rust": false,
+      "workers": [
+        {
+          "name": "rimltools-portal",
+          "role": "public",
+          "buildConfig": "wrangler.jsonc"
+        }
+      ],
+      "d1": [],
+      "release": {
+        "mode": "big-bang",
+        "steps": [100],
+        "bakeMinutes": 0
+      },
+      "slo": {
+        "availability": 99.5,
+        "windowDays": 28
+      },
+      "smoke": {
+        "cli": "bun run smoke",
+        "browser": "bun run smoke",
+        "e2ePackage": "@rimltools/portal"
       }
     }
   ]
