@@ -107,10 +107,10 @@ feature の実体はディレクトリ内に閉じるが、アプリに組み込
 
 ```bash
 # レーンを開始
-bun run wt new feat/editor         # .claude/worktrees/feat-editor を作り、依存も入れる
-cd .claude/worktrees/feat-editor
+bun run wt new feat/editor         # .claude/worktrees/noter/feat-editor を作り、依存も入れる（リポジトリ直下からは bun run wt noter new …）
+cd <リポジトリ直下>/.claude/worktrees/noter/feat-editor/products/noter
 
-# 作業中: main の更新を取り込む（毎日 / 依存レーンがマージされたら必ず）
+# 作業中: develop の更新を取り込む（毎日 / 依存レーンがマージされたら必ず）
 bun run wt sync
 
 # 完了
@@ -120,7 +120,7 @@ bun run wt done feat/editor        # マージ後に worktree を破棄
 
 `wt new` は次を自動でやる:
 
-- `origin/main` から新ブランチを切って worktree を作成
+- `origin/develop` から新ブランチを切って worktree を作成（リポジトリ全体。ブランチ運用はルートの ADR-0002）
 - `mise install` / `bun install`
 - `lefthook install`
 - `.dev.vars` をルートからコピー（gitignore 済み）

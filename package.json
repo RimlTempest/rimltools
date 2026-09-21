@@ -27,7 +27,9 @@
     "check:root": "oxfmt --check . && oxlint --type-aware && tsc -p tsconfig.json",
     "test:root": "bun test ./scripts ./packages",
     "fmt": "oxfmt .",
-    "audit": "bun audit --audit-level=high"
+    "audit": "bun audit --audit-level=high",
+    "wt": "./scripts/wt.sh",
+    "archify": "./scripts/archify.sh"
   },
   "devDependencies": {
     "@socketsecurity/bun-security-scanner": "1.1.2",

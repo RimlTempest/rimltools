@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# 構成図（docs/architecture/）を archify で作り直す。
+# プロダクトの構成図（products/<tool>/docs/architecture/）を archify で作り直す。
 #
-#   bun run archify
+#   bun run archify <tool>          （リポジトリ直下から）
+#   bun run archify                 （products/<tool> の中から）
 #
 # 前提: archify スキルが入っていること（`bunx skills add tt-a1i/archify -g`）。
 # 手順は「仕様 JSON を showcase 品質で検証 → ビューア HTML を deliver →
@@ -9,12 +10,31 @@
 # 生成物（HTML / PNG）は手で編集しない。
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+GIT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TOOL="${1:-}"
+if [ -z "$TOOL" ]; then
+  case "${PWD#"$GIT_ROOT"/}" in
+    products/*) TOOL="${PWD#"$GIT_ROOT"/products/}"; TOOL="${TOOL%%/*}" ;;
+  esac
+fi
+if [ -z "$TOOL" ] || [ ! -d "$GIT_ROOT/products/$TOOL" ]; then
+  echo "usage: archify <tool>" >&2
+  exit 1
+fi
+cd "$GIT_ROOT/products/$TOOL"
 
 ARCHIFY="${ARCHIFY:-$HOME/.claude/skills/archify/bin/archify.mjs}"
-SPEC=docs/architecture/noter.architecture.json
-HTML=docs/architecture/noter-architecture.html
-PNG_BASE=docs/architecture/noter-architecture
+# 仕様はプロダクトごとに 1 つ（例: qrcc2.architecture.json / noter.architecture.json）
+shopt -s nullglob
+specs=(docs/architecture/*.architecture.json)
+if [ "${#specs[@]}" -ne 1 ]; then
+  echo "docs/architecture/*.architecture.json が 1 つではありません（${#specs[@]} 個）" >&2
+  exit 1
+fi
+SPEC="${specs[0]}"
+NAME="$(basename "$SPEC" .architecture.json)"
+HTML="docs/architecture/$NAME-architecture.html"
+PNG_BASE="docs/architecture/$NAME-architecture"
 
 if [ ! -f "$ARCHIFY" ]; then
   echo "archify が見つかりません: $ARCHIFY" >&2

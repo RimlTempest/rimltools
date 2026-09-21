@@ -1,18 +1,32 @@
 #!/usr/bin/env bash
-# worktree lane helper. See docs/parallel-lanes.md
+# worktree lane helper（全プロダクト共通）。See .claude/skills/rimltools-worktree
+#
+#   scripts/wt.sh <tool> <command> [args]   例: scripts/wt.sh qrcc new feat/scan-ui
+#   （products/<tool> の中で実行したときは <tool> を省略できる）
 set -euo pipefail
-
-# rimltools モノレポ: ROOT はこのプロダクト（products/noter）、GIT_ROOT はリポジトリ全体。
-# worktree はリポジトリ全体を切り出すので、中のプロダクトは "$path/$REL" にある。
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-GIT_ROOT="$(git -C "$ROOT" rev-parse --show-toplevel)"
-REL="${ROOT#"$GIT_ROOT"/}"
-LANES="$ROOT/scripts/lanes.tsv"
-WT_DIR="$GIT_ROOT/.claude/worktrees/noter"
-BASE="${NOTER_BASE_REF:-origin/main}"
 
 die() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 info() { printf '\033[36m==>\033[0m %s\n' "$*"; }
+
+# GIT_ROOT はリポジトリ全体（worktree の中ならその worktree）、ROOT は対象プロダクト。
+# worktree はリポジトリ全体を切り出すので、中のプロダクトは "$path/$REL" にある。
+GIT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TOOL="${1:-}"
+if [ -n "$TOOL" ] && [ -d "$GIT_ROOT/products/$TOOL" ]; then
+  shift
+else
+  case "${PWD#"$GIT_ROOT"/}" in
+    products/*) TOOL="${PWD#"$GIT_ROOT"/products/}"; TOOL="${TOOL%%/*}" ;;
+    *) die "usage: wt <tool> <command>  (tools: $(cd "$GIT_ROOT/products" && ls -d */ | tr -d / | tr '\n' ' '))" ;;
+  esac
+fi
+REL="products/$TOOL"
+ROOT="$GIT_ROOT/$REL"
+LANES="$ROOT/scripts/lanes.tsv"
+[ -f "$LANES" ] || die "no lanes defined for $TOOL ($LANES)"
+WT_DIR="$GIT_ROOT/.claude/worktrees/$TOOL"
+# 作業の基本ブランチは develop（ADR-0002）
+BASE="${RIMLTOOLS_BASE_REF:-origin/develop}"
 
 lane_field() { # $1=branch $2=column(2..4)
   awk -F'\t' -v b="$1" -v c="$2" '$1==b { print $c }' "$LANES"
@@ -42,22 +56,22 @@ $summary
 
 $(printf '%s' "$owned" | tr ',' '\n' | sed 's/^/- `/; s/$/`/')
 
-## 依存レーン（main にマージ済みであること）
+## 依存レーン（develop にマージ済みであること）
 
 $(if [ "$deps" = "-" ]; then echo "- なし"; else printf '%s' "$deps" | tr ',' '\n' | sed 's/^/- /'; fi)
 
 ## 開始前チェック
 
-- [ ] 依存レーンが main に入っているか確認した（\`git log --oneline origin/main\`）
+- [ ] 依存レーンが develop に入っているか確認した（\`git log --oneline origin/develop\`）
 - [ ] \`docs/parallel-lanes.md\` の共有ファイル規約を読んだ
-- [ ] \`.claude/skills/noter-typescript\` / \`noter-tdd\` を読んだ（TS を書く場合）
-- [ ] \`.claude/skills/noter-html-a11y\` を読んだ（UI を書く場合）
+- [ ] \`.claude/skills/rimltools-typescript\` / \`rimltools-tdd\` と \`$TOOL-conventions\` を読んだ（TS を書く場合）
+- [ ] \`.claude/skills/rimltools-html-a11y\` と \`$TOOL-conventions\` を読んだ（UI を書く場合）
 - [ ] 失敗するテストから始める（red → green → refactor）
 
 ## 進め方
 
 \`\`\`bash
-bun run wt sync    # main の更新を取り込む（毎日 / 依存レーンがマージされたら必ず）
+bun run wt sync    # develop の更新を取り込む（毎日 / 依存レーンがマージされたら必ず）
 bun run check      # コミット前の全チェック
 bun run wt pr      # PR を作成
 \`\`\`
@@ -85,6 +99,7 @@ cmd_new() {
   info "installing toolchain and dependencies"
   ( cd "$path" && mise install >/dev/null 2>&1 || true )
   ( cd "$path" && mise exec -- bun install )
+  [ -f "$ROOT/Cargo.toml" ] && ( cd "$path/$REL" && mise exec -- cargo fetch >/dev/null 2>&1 || true )
   ( cd "$path" && mise exec -- bunx lefthook install >/dev/null )
 
   for f in .dev.vars .env.local; do
@@ -99,15 +114,16 @@ cmd_new() {
 
 cmd_sync() {
   local b; b="$(git rev-parse --abbrev-ref HEAD)"
-  [ "$b" = "main" ] && die "already on main"
+  { [ "$b" = "main" ] || [ "$b" = "develop" ]; } && die "already on $b"
   info "rebasing $b onto $BASE"
   git fetch origin
   if ! git rebase "$BASE"; then
     cat >&2 <<'EOF'
 
-rebase が止まりました。docs/parallel-lanes.md の「6. 競合したときのプロトコル」に従ってください:
+rebase が止まりました。products/<tool>/docs/parallel-lanes.md の「6. 競合したときのプロトコル」に従ってください:
   1. 所有ディレクトリ外を触っていないか確認する
   2. bun.lock      -> git checkout --ours bun.lock && bun install && git add bun.lock
+     Cargo.lock    -> cargo update -w && git add Cargo.lock（Rust を持つプロダクトのみ）
   3. それ以外が競合するならレーンの切り方が間違っています。相談してから再開してください。
 EOF
     exit 1
@@ -118,13 +134,13 @@ EOF
 
 cmd_pr() {
   local b; b="$(git rev-parse --abbrev-ref HEAD)"
-  [ "$b" = "main" ] && die "refusing to open a PR from main"
+  { [ "$b" = "main" ] || [ "$b" = "develop" ]; } && die "refusing to open a PR from $b"
   info "running full check"
   mise exec -- bun run check
   git push -u origin "$b"
   local summary; summary="$(lane_field "$b" 4)"
   command -v gh >/dev/null || { info "gh not found; pushed only"; return; }
-  gh pr create --base main --head "$b" --title "$b: ${summary:-work}" --body "$(cat <<EOF
+  gh pr create --base develop --head "$b" --title "$b: ${summary:-work}" --body "$(cat <<EOF
 ## レーン
 \`$b\` — ${summary:-}
 
@@ -137,11 +153,10 @@ cmd_pr() {
 - [ ] \`bun run check\` が通る
 - [ ] 失敗するテストから書いた（red → green）
 - [ ] 所有ディレクトリ外を編集していない
-- [ ] a11y 手動確認（UI 変更がある場合）: \`.claude/skills/noter-html-a11y/references/manual-checks.md\`
+- [ ] a11y 手動確認（UI 変更がある場合）: \`.claude/skills/rimltools-html-a11y/references/manual-checks.md\` と \`$TOOL-conventions\`
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-https://claude.ai/code/session_01RYEvPgnfsU7bBcF5a55K6Y
 EOF
 )"
 }
@@ -175,16 +190,16 @@ case "${1:-}" in
   list)   shift; cmd_list "$@" ;;
   status) shift; cmd_status "$@" ;;
   *) cat <<'EOF'
-usage: bun run wt <command>
+usage: bun run wt [<tool>] <command>
 
   list            レーン一覧と現在の worktree を表示
   new <branch>    レーンの worktree を作成し、依存とフックまで用意する
-  sync            main の更新を rebase で取り込む（worktree 内で実行）
+  sync            develop の更新を rebase で取り込む（worktree 内で実行）
   pr              bun run check を通してから PR を作成（worktree 内で実行）
   done <branch>   マージ済みレーンの worktree とブランチを片付ける
-  status          全 worktree の状態（未コミット / main との差分）
+  status          全 worktree の状態（未コミット / develop との差分）
 
-詳細: docs/parallel-lanes.md
+詳細: .claude/skills/rimltools-worktree と products/<tool>/docs/parallel-lanes.md
 EOF
     exit 1 ;;
 esac
