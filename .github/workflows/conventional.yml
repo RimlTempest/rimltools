@@ -1,0 +1,63 @@
+name: Conventional
+
+# Conventional Commits と Conventional Comments の検査（docs/conventions.md）。
+# - conventional: PR タイトル（= squash / merge で作られるコミットの件名）と PR 内の各コミット。
+#   ruleset の required check。
+# - conventional-comments: レビューコメント。required にはしない（返信や bot は対象外）。
+on:
+  pull_request:
+    branches: [develop, main]
+    types: [opened, edited, synchronize, reopened]
+  pull_request_review:
+    types: [submitted, edited]
+  pull_request_review_comment:
+    types: [created, edited]
+
+concurrency:
+  group: conventional-${{ github.workflow }}-${{ github.event.pull_request.number }}-${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  conventional:
+    if: github.event_name == 'pull_request'
+    name: conventional
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
+        with:
+          install_args: bun
+          cache: true
+      - name: PR タイトルとコミットが Conventional Commits であること
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bun scripts/conventional.ts pr
+
+  conventional-comments:
+    name: conventional-comments
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
+        with:
+          install_args: bun
+          cache: true
+      - name: レビューコメントが Conventional Comments であること
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bun scripts/conventional.ts comments
