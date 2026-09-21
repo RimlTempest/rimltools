@@ -24,7 +24,12 @@
     "erasableSyntaxOnly": true,
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
-    "types": ["bun"],
-    "noEmit": true
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "incremental": true,
+    "types": ["bun"]
   }
 }
