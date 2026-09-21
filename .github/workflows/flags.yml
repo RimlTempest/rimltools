@@ -1,0 +1,161 @@
+name: Flags
+
+# feature flag の正本（flags/<tool>.json）を各環境の D1 へ同期する（ADR-0004 / docs/flags.md）。
+#   PR                 → 検証だけ
+#   develop への push  → staging の D1 へ同期
+#   main への push     → production の D1 へ同期
+#   手動（kill）       → 1 つの flag を即座に無効化（あとで正本 JSON にも反映すること）
+#
+# secrets / vars は environment（staging / production）に Terraform が書く:
+#   secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+#   vars:    WORKER_SUFFIX（"" | "-staging"）, D1_<TOOL>_ID（例: D1_QRCC_ID）
+on:
+  pull_request:
+    branches: [develop, main]
+    paths: &paths
+      - 'flags/**'
+      - 'packages/flags/**'
+      - 'scripts/flags/**'
+      - 'scripts/lib/tools.ts'
+      - 'tools.json'
+      - '.github/workflows/flags.yml'
+  push:
+    branches: [develop, main]
+    paths: *paths
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'sync = 正本を同期 / kill = 1 つの flag を無効化'
+        type: choice
+        options: [kill, sync]
+        default: kill
+      environment:
+        description: 'production は main から実行したときだけ通る（environment の保護）'
+        type: choice
+        options: [staging, production]
+        default: production
+      tool:
+        description: 'tools.json のツール名（kill のとき必須）'
+        type: string
+        required: false
+      flag:
+        description: '無効化する flag の key（kill のとき必須）'
+        type: string
+        required: false
+
+permissions: {}
+
+jobs:
+  validate:
+    name: validate flags
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tools: ${{ steps.tools.outputs.tools }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - run: bun scripts/flags/cli.ts validate
+      - run: bun test ./packages/flags ./scripts/flags
+      - name: 同期対象のツール（flags/<tool>.json があるもの）
+        id: tools
+        run: |
+          tools=$(find flags -maxdepth 1 -name '*.json' ! -name schema.json -exec basename {} .json \; | sort | jq -R . | jq -cs .)
+          echo "tools=$tools" >> "$GITHUB_OUTPUT"
+
+  sync:
+    name: sync ${{ matrix.tool }} → ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'production' || 'staging') }}
+    needs: validate
+    if: >-
+      github.event_name == 'push'
+      || (github.event_name == 'workflow_dispatch' && inputs.action == 'sync')
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'production' || 'staging') }}
+    concurrency:
+      group: flags-${{ github.event_name == 'workflow_dispatch' && inputs.environment || github.ref_name }}-${{ matrix.tool }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJSON(needs.validate.outputs.tools) }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - name: 同期先 D1 の wrangler 設定と SQL を作る
+        env:
+          TOOL: ${{ matrix.tool }}
+          VARS_JSON: ${{ toJSON(vars) }}
+        run: |
+          id_var="D1_$(echo "$TOOL" | tr '[:lower:]-' '[:upper:]_')_ID"
+          WORKER_SUFFIX=$(echo "$VARS_JSON" | jq -r '.WORKER_SUFFIX // ""')
+          d1_id=$(echo "$VARS_JSON" | jq -r --arg k "$id_var" '.[$k] // ""')
+          export WORKER_SUFFIX "$id_var=$d1_id"
+          bun scripts/flags/cli.ts wrangler-config "$TOOL" "$RUNNER_TEMP/flags-wrangler.json"
+          bun scripts/flags/cli.ts sync-sql "$TOOL" "$RUNNER_TEMP/flags.sql"
+      - name: D1 へ反映
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: >-
+          bunx wrangler d1 execute DB --remote
+          --config "$RUNNER_TEMP/flags-wrangler.json"
+          --file "$RUNNER_TEMP/flags.sql"
+
+  kill:
+    name: kill ${{ inputs.tool }}/${{ inputs.flag }} (${{ inputs.environment }})
+    # 緊急停止は、正本 JSON の検証が落ちていても止めない
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'kill'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: flags-${{ inputs.environment }}-${{ inputs.tool }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - name: 無効化する SQL を作る
+        env:
+          TOOL: ${{ inputs.tool }}
+          FLAG: ${{ inputs.flag }}
+          VARS_JSON: ${{ toJSON(vars) }}
+        run: |
+          id_var="D1_$(echo "$TOOL" | tr '[:lower:]-' '[:upper:]_')_ID"
+          WORKER_SUFFIX=$(echo "$VARS_JSON" | jq -r '.WORKER_SUFFIX // ""')
+          d1_id=$(echo "$VARS_JSON" | jq -r --arg k "$id_var" '.[$k] // ""')
+          export WORKER_SUFFIX "$id_var=$d1_id"
+          # tool / flag の形式は CLI が検証する（kebab-case 以外は拒否）
+          bun scripts/flags/cli.ts wrangler-config "$TOOL" "$RUNNER_TEMP/flags-wrangler.json"
+          bun scripts/flags/cli.ts kill-sql "$FLAG" "$RUNNER_TEMP/kill.sql"
+      - name: D1 へ反映
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: >-
+          bunx wrangler d1 execute DB --remote
+          --config "$RUNNER_TEMP/flags-wrangler.json"
+          --file "$RUNNER_TEMP/kill.sql"
+      - name: 正本への反映を促す
+        env:
+          TOOL: ${{ inputs.tool }}
+          FLAG: ${{ inputs.flag }}
+        run: |
+          {
+            echo "### kill switch: \`$FLAG\`（$TOOL）を無効化した"
+            echo
+            echo "Cache API の TTL（既定 60 秒）以内に全エッジで無効になる。"
+            echo "次の同期で元に戻らないよう、\`flags/$TOOL.json\` の \`enabled\` を false にする PR を出すこと。"
+          } >> "$GITHUB_STEP_SUMMARY"
