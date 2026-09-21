@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { parseJsonc, rewriteConfig } from './rewrite.ts'
+import { needsOtlpSecret, parseJsonc, rewriteConfig } from './rewrite.ts'
 import { noter, portal, qrcc } from './fixtures.ts'
 
 const webConfig = {
@@ -8,7 +8,14 @@ const webConfig = {
   main: 'index.js',
   routes: [{ pattern: 'qrcc.riml4i.com', custom_domain: true }],
   workers_dev: false,
-  vars: { APP_ORIGIN: 'https://qrcc.riml4i.com', OTHER: 'x' },
+  vars: {
+    APP_ORIGIN: 'https://qrcc.riml4i.com',
+    OTHER: 'x',
+    OTEL_SERVICE_NAME: 'qrcc-web',
+    OTEL_EXPORTER_OTLP_ENDPOINT: '',
+    FARO_URL: '',
+  },
+  version_metadata: { binding: 'CF_VERSION_METADATA' },
   d1_databases: [{ binding: 'DB', database_name: 'qrcc', database_id: 'prod-id' }],
   services: [
     { binding: 'API', service: 'qrcc-api' },
@@ -39,7 +46,13 @@ describe('rewriteConfig', () => {
       APP_ORIGIN: 'https://qrcc-staging.t',
       APP_LEGACY_ORIGINS: '',
       OTHER: 'x',
+      OTEL_SERVICE_NAME: 'qrcc-web',
+      OTEL_EXPORTER_OTLP_ENDPOINT: '',
+      FARO_URL: '',
+      DEPLOYMENT_ENV: 'staging',
+      GIT_SHA: 'local',
     })
+    expect(out['version_metadata']).toEqual({ binding: 'CF_VERSION_METADATA' })
     expect(out['workers_dev']).toBe(false)
     // staging の public Worker だけ preview URL を開く（PR プレビュー用）
     expect(out['preview_urls']).toBe(true)
@@ -58,6 +71,11 @@ describe('rewriteConfig', () => {
       APP_ORIGIN: 'https://qrcc.t',
       APP_LEGACY_ORIGINS: 'https://qrcc.example.com',
       OTHER: 'x',
+      OTEL_SERVICE_NAME: 'qrcc-web',
+      OTEL_EXPORTER_OTLP_ENDPOINT: '',
+      FARO_URL: '',
+      DEPLOYMENT_ENV: 'production',
+      GIT_SHA: 'local',
     })
   })
 
@@ -155,5 +173,47 @@ describe('parseJsonc', () => {
 
   test('reports broken input', () => {
     expect(parseJsonc('{ "a": ').ok).toBe(false)
+  })
+
+  test('fills telemetry vars for workers that declare them (docs/observability.md)', () => {
+    const result = rewriteConfig(webConfig, {
+      tool: qrcc,
+      env: staging,
+      host: 'h',
+      telemetry: {
+        otlpEndpoint: 'https://otlp.example/otlp',
+        faroUrl: 'https://faro.example/collect',
+        gitSha: 'abc123',
+      },
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value['vars']).toMatchObject({
+      OTEL_SERVICE_NAME: 'qrcc-web',
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'https://otlp.example/otlp',
+      FARO_URL: 'https://faro.example/collect',
+      DEPLOYMENT_ENV: 'staging',
+      GIT_SHA: 'abc123',
+    })
+  })
+
+  test('does not add telemetry vars to workers that do not use telemetry', () => {
+    const api = { name: 'qrcc-api', vars: {} }
+    const result = rewriteConfig(api, {
+      tool: qrcc,
+      env: staging,
+      host: 'h',
+      telemetry: { otlpEndpoint: 'https://otlp.example/otlp', faroUrl: undefined, gitSha: 'abc' },
+    })
+    expect(result.ok && result.value['vars']).toEqual({})
+  })
+})
+
+describe('needsOtlpSecret', () => {
+  test('only when the prepared config exports to an OTLP endpoint', () => {
+    expect(needsOtlpSecret({ vars: { OTEL_EXPORTER_OTLP_ENDPOINT: 'https://o' } })).toBe(true)
+    expect(needsOtlpSecret({ vars: { OTEL_EXPORTER_OTLP_ENDPOINT: '' } })).toBe(false)
+    expect(needsOtlpSecret({ vars: {} })).toBe(false)
+    expect(needsOtlpSecret({})).toBe(false)
   })
 })

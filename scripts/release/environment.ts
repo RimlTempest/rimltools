@@ -19,6 +19,9 @@ export type DeployEnv = {
 const isEnvName = (value: string): value is EnvName =>
   value === 'staging' || value === 'production' || value === 'preview'
 
+export const faroUrlVariable = (tool: string): string =>
+  `FARO_URL_${tool.toUpperCase().replaceAll('-', '_')}`
+
 export const d1IdVariable = (tool: string): string =>
   `D1_${tool.toUpperCase().replaceAll('-', '_')}_ID`
 
@@ -44,14 +47,18 @@ export const releaseConfigKeys = [
   'GUARD_BASE',
   'GUARD_HEAD',
   'GUARD_LABELS',
+  // テレメトリの送り先（公開値）。ヘッダ（GRAFANA_OTLP_HEADERS）は secret なので入れない
+  'GRAFANA_OTLP_ENDPOINT',
 ] as const
 
 export type ReleaseConfig = Record<string, string | undefined>
 
 const allowed = new Set<string>(releaseConfigKeys)
 const d1IdPattern = /^D1_[A-Z0-9_]+_ID$/
+const faroUrlPattern = /^FARO_URL_[A-Z0-9_]+$/
 
-const isAllowedKey = (key: string): boolean => allowed.has(key) || d1IdPattern.test(key)
+const isAllowedKey = (key: string): boolean =>
+  allowed.has(key) || d1IdPattern.test(key) || faroUrlPattern.test(key)
 
 /**
  * GitHub environment の vars（`toJSON(vars)` を RELEASE_VARS で渡す）と、許可リストの環境変数を

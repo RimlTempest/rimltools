@@ -136,6 +136,17 @@ Terraform が発行するトークン（`CLOUDFLARE_API_TOKEN`）に必要な pe
 `Account Analytics Read` と `Workers Observability Write` の両方が無いと、canary は毎回 `needs-human` で止まる（ロールバックはしない）。
 invocation log は `observability.enabled: true` で既定有効。`invocation_logs: false` の設定は prepare が拒否する。
 
+### テレメトリ（任意、docs/observability.md）
+
+| 種類     | 名前                    | 入る先                                                                                                 |
+| -------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| variable | `GRAFANA_OTLP_ENDPOINT` | `OTEL_EXPORTER_OTLP_ENDPOINT`（`OTEL_SERVICE_NAME` を宣言している Worker だけ）                        |
+| variable | `FARO_URL_<TOOL>`       | そのツールの `FARO_URL`                                                                                |
+| secret   | `GRAFANA_OTLP_HEADERS`  | `OTEL_EXPORTER_OTLP_HEADERS`。送り先が入った版にだけ `versions upload --secrets-file` で同じ版に載せる |
+
+`DEPLOYMENT_ENV`（環境名）と `GIT_SHA`（コミット）は prepare が常に入れる。未設定の値は空のまま（テレメトリ無効）。
+`wrangler versions secret put` は使わない（最新版から別の版を作るので、upload した版と食い違う）。
+
 リポジトリ secret（任意）: `RELEASE_BOT_TOKEN` — Release PR / back-merge PR を作るトークン。
 `GITHUB_TOKEN` で作った PR には `pull_request` のワークフロー（`release-guard`）が走らないため。
 無い場合は、Release PR を一度 close → reopen すると検査が走る。
