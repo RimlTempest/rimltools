@@ -6,14 +6,15 @@
     "products/*/apps/*",
     "products/*/features/*",
     "products/*/shared/*",
-    "products/*/e2e"
+    "products/*/e2e",
+    "packages/*"
   ],
   "type": "module",
   "scripts": {
-    "check": "bun run check:qrcc && bun run check:noter",
+    "check": "bun run check:root && bun run check:qrcc && bun run check:noter",
     "check:qrcc": "bun run --cwd products/qrcc check",
     "check:noter": "bun run --cwd products/noter check",
-    "test": "bun run test:qrcc && bun run test:noter",
+    "test": "bun run test:root && bun run test:qrcc && bun run test:noter",
     "test:qrcc": "bun run --cwd products/qrcc test",
     "test:noter": "bun run --cwd products/noter test",
     "typecheck": "bun run --cwd products/qrcc typecheck && bun run --cwd products/noter typecheck",
@@ -22,7 +23,10 @@
     "dev:noter": "bun run --cwd products/noter dev",
     "prepare": "lefthook install",
     "postinstall": "bun run --cwd products/qrcc postinstall:markuplint && bun run --cwd products/noter postinstall:markuplint",
-    "clean": "find . -maxdepth 5 -name node_modules -type d -prune -exec rm -rf {} + && bun install"
+    "clean": "find . -maxdepth 5 -name node_modules -type d -prune -exec rm -rf {} + && bun install",
+    "check:root": "oxfmt --check . && oxlint --type-aware && tsc -p tsconfig.json",
+    "test:root": "bun test ./scripts ./packages",
+    "fmt": "oxfmt ."
   },
   "devDependencies": {
     "@types/bun": "1.4.0",

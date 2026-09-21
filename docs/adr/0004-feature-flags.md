@@ -19,9 +19,9 @@
 
 ## 使い分け
 
-| 目的 | 設定 |
-| --- | --- |
-| ダークローンチ | `enabled: true`、`rules` で自分の user id だけ ON |
-| 機能のカナリア | `rollout: 1 → 10 → 50 → 100`（percentage） |
-| A/B テスト | `variants: { control: 50, treatment: 50 }`、`experiment: <id>` |
-| kill switch | `enabled: false` |
+| 目的           | 設定                                                           |
+| -------------- | -------------------------------------------------------------- |
+| ダークローンチ | `enabled: true`、`rules` で自分の user id だけ ON              |
+| 機能のカナリア | `rollout: 1 → 10 → 50 → 100`（percentage）                     |
+| A/B テスト     | `variants: { control: 50, treatment: 50 }`、`experiment: <id>` |
+| kill switch    | `enabled: false`                                               |

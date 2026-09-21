@@ -4,12 +4,12 @@
 
 ## 決定
 
-| ブランチ | 役割 | 入れ方 | デプロイ先 |
-| --- | --- | --- | --- |
-| `feature/*` `fix/*` | 作業 | develop から切る | PR ごとに preview（staging Worker の preview alias） |
-| `develop`（既定ブランチ） | 統合 | PR（squash）。CI の `gate` が green 必須 | staging |
-| `main` | 本番 | **develop からの Release PR（merge commit）** か `hotfix/*` だけ | production（段階リリース） |
-| `hotfix/*` | 緊急修正 | main から切って main へ PR。マージ後に main → develop を自動で PR | production |
+| ブランチ                  | 役割     | 入れ方                                                            | デプロイ先                                           |
+| ------------------------- | -------- | ----------------------------------------------------------------- | ---------------------------------------------------- |
+| `feature/*` `fix/*`       | 作業     | develop から切る                                                  | PR ごとに preview（staging Worker の preview alias） |
+| `develop`（既定ブランチ） | 統合     | PR（squash）。CI の `gate` が green 必須                          | staging                                              |
+| `main`                    | 本番     | **develop からの Release PR（merge commit）** か `hotfix/*` だけ  | production（段階リリース）                           |
+| `hotfix/*`                | 緊急修正 | main から切って main へ PR。マージ後に main → develop を自動で PR | production                                           |
 
 - main と develop は ruleset で保護する: PR 必須、required checks、force push・削除禁止、linear history は develop のみ。
 - main へ入れられる head ブランチを `develop` と `hotfix/*` に限る（`release-guard` チェック）。

@@ -51,6 +51,21 @@ jobs:
               - 'products/noter/**'
               - '.github/workflows/noter-ci.yml'
 
+  # scripts/・packages/・tools.json などプロダクト外のコード。軽いので毎回走らせる
+  root:
+    name: root (fmt / lint / typecheck / test)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@v3
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - run: bun run check:root
+      - run: bun run test:root
+
   qrcc:
     needs: changes
     if: needs.changes.outputs.qrcc == 'true' || github.event_name == 'workflow_dispatch'
@@ -70,7 +85,7 @@ jobs:
   # required check はこれ 1 本。スキップ（変更なし）は合格、失敗・取消は不合格。
   gate:
     if: always()
-    needs: [changes, qrcc, noter]
+    needs: [changes, root, qrcc, noter]
     runs-on: ubuntu-latest
     permissions: {}
     steps:
