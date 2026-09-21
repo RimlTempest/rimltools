@@ -16,7 +16,7 @@
  * 環境の値は GitHub environment（Terraform が設定）から環境変数で受け取る。
  * 終了コード: 0 = 成功 / 1 = 失敗（ロールバック済みを含む）/ 3 = 人の判断待ち
  */
-import { mkdir } from 'node:fs/promises'
+import { chmod, mkdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -31,14 +31,19 @@ import { parseArgs } from './args.ts'
 import { changedTools } from './changes.ts'
 import { currentStable, parseDeployments, parseWranglerOutput } from './deployments.ts'
 import type { DeployEnv } from './environment.ts'
-import { accessHeaders, readEnvironment, readReleaseConfig } from './environment.ts'
+import {
+  accessHeaders,
+  faroUrlVariable,
+  readEnvironment,
+  readReleaseConfig,
+} from './environment.ts'
 import { checkReleaseGuard } from './guard.ts'
 import { checkMigrations } from './migrations.ts'
 import type { WorkerPlan } from './plan.ts'
 import { planRollout } from './plan.ts'
 import type { PreparedConfig } from './prepare.ts'
 import { migrationConfigFor, preparedPath } from './prepare.ts'
-import { parseJsonc, rewriteConfig } from './rewrite.ts'
+import { needsOtlpSecret, parseJsonc, rewriteConfig } from './rewrite.ts'
 import type { RolloutDeps, RolloutOutcome } from './rollout.ts'
 import { rolloutWorker } from './rollout.ts'
 import { runSmoke } from './smoke.ts'
@@ -88,6 +93,34 @@ const env = readReleaseConfig({
 // ── 資格情報（使う箇所でだけ読む。戻り値をログやエラー文字列に入れない）──────────
 
 const cloudflareToken = (): string => process.env['CLOUDFLARE_API_TOKEN'] ?? ''
+
+/**
+ * OTLP のヘッダ（secret）を、この版に載せるための一時ファイル。送り先が入っている Worker で、
+ * secret が設定されているときだけ作る。wrangler に渡したらすぐ消す。
+ */
+const withTelemetrySecret = async <T>(
+  configPath: string,
+  run: (extraArgs: string[]) => Promise<T>,
+): Promise<T> => {
+  const headers = process.env['GRAFANA_OTLP_HEADERS'] ?? ''
+  const parsed = parseJsonc(await Bun.file(configPath).text())
+  const wanted =
+    headers !== ''
+    && parsed.ok
+    && typeof parsed.value === 'object'
+    && parsed.value !== null
+    && !Array.isArray(parsed.value)
+    && needsOtlpSecret(Object.fromEntries(Object.entries(parsed.value)))
+  if (!wanted) return run([])
+  const file = join(tmpdir(), `otlp-${crypto.randomUUID()}.json`)
+  await Bun.write(file, JSON.stringify({ OTEL_EXPORTER_OTLP_HEADERS: headers }))
+  await chmod(file, 0o600)
+  try {
+    return await run(['--secrets-file', file])
+  } finally {
+    await rm(file, { force: true })
+  }
+}
 
 const accessCredentials = (): Record<string, string> =>
   accessHeaders(process.env['CF_ACCESS_CLIENT_ID'], process.env['CF_ACCESS_CLIENT_SECRET'])
@@ -302,9 +335,21 @@ const makeDeps = (deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDe
   return {
     log: say,
     upload: async (configPath, meta) => {
-      const run = await wrangler(
-        ['versions', 'upload', '-c', configPath, '--message', meta.message, '--tag', meta.tag],
-        deployEnv,
+      const run = await withTelemetrySecret(configPath, (extra) =>
+        wrangler(
+          [
+            'versions',
+            'upload',
+            '-c',
+            configPath,
+            '--message',
+            meta.message,
+            '--tag',
+            meta.tag,
+            ...extra,
+          ],
+          deployEnv,
+        ),
       )
       const ok = wranglerResult(run, 'versions upload')
       if (!ok.ok) return ok
@@ -328,7 +373,9 @@ const makeDeps = (deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDe
         `versions deploy ${specs.join(' ')}`,
       ),
     deployDirect: async (configPath, message) => {
-      const run = await wrangler(['deploy', '-c', configPath, '--message', message], deployEnv)
+      const run = await withTelemetrySecret(configPath, (extra) =>
+        wrangler(['deploy', '-c', configPath, '--message', message, ...extra], deployEnv),
+      )
       const ok = wranglerResult(run, 'deploy')
       if (!ok.ok) return ok
       const entry = parseWranglerOutput(run.output, 'deploy')
@@ -451,6 +498,11 @@ const stepPrepare = async (tool: Tool, deployEnv: DeployEnv): Promise<number> =>
     const parsed = parseJsonc(await file.text())
     if (!parsed.ok) return fail(`${source}: ${parsed.error}`)
     const rewritten = rewriteConfig(parsed.value, {
+      telemetry: {
+        otlpEndpoint: env['GRAFANA_OTLP_ENDPOINT'],
+        faroUrl: env[faroUrlVariable(tool.name)],
+        gitSha: env['GITHUB_SHA'] ?? 'local',
+      },
       tool,
       env: deployEnv,
       host: hostFor(tool, deployEnv),
@@ -638,22 +690,26 @@ const stepRollback = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promi
 }
 
 const stepPreview = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promise<number> => {
-  if (args.alias === undefined) return fail('preview needs --alias')
+  const alias = args.alias
+  if (alias === undefined) return fail('preview needs --alias')
   const worker = tool.workers.find((w) => w.role === 'public')
   if (worker === undefined) return fail(`${tool.name} has no public worker`)
   const config = preparedPath(tool.path, worker.buildConfig, deployEnv.name)
-  const run = await wrangler(
-    [
-      'versions',
-      'upload',
-      '-c',
-      config,
-      '--preview-alias',
-      args.alias,
-      '--message',
-      `preview ${args.alias}`,
-    ],
-    deployEnv,
+  const run = await withTelemetrySecret(config, (extra) =>
+    wrangler(
+      [
+        'versions',
+        'upload',
+        '-c',
+        config,
+        '--preview-alias',
+        alias,
+        '--message',
+        `preview ${alias}`,
+        ...extra,
+      ],
+      deployEnv,
+    ),
   )
   const ok = wranglerResult(run, 'preview upload')
   if (!ok.ok) return fail(ok.error)
