@@ -34,7 +34,8 @@ hotfix/* ──PR──▶ main ──自動──▶ production、その後 mai
 `deploy-production.yml` → `release.yml` → `scripts/release/release.ts`。Worker は **下流（internal）から順に** 出す。
 
 1. **build** — プロダクトの `bun run build`
-2. **prepare** — ビルド出力の `wrangler.json` を環境向けに書き換える（Worker 名・D1・service / DO 参照・`APP_ORIGIN`、`routes` 削除）
+2. **prepare** — ビルド出力の `wrangler.json` を環境向けに書き換える（Worker 名・D1・service / DO 参照・`APP_ORIGIN`、`routes` 削除）。
+   本番では `APP_LEGACY_ORIGINS` に `tools.json` の `legacyHosts` を入れる。ドメイン移行中（Terraform の `legacy_hosts_mode`）に旧ホストで開かれてもログインが成立する
 3. **migrate** — `wrangler d1 migrations apply <db> --remote`（expand だけのはず。§4）
 4. **upload** — `wrangler versions upload`。この時点では誰にも配信されない
 5. **blue/green 検証** — 新版を **0%** で deployment に加え、`Cloudflare-Workers-Version-Overrides: <worker>="<version>"` を付けて本番ドメインで smoke（HTML と参照アセット全数が 200）

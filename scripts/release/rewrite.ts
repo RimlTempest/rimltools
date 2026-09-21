@@ -7,7 +7,7 @@ import type { DeployEnv } from './environment.ts'
  * - Worker 名・同じツール内の service / DO の参照に suffix を付ける
  * - D1 を環境の DB に差し替える
  * - routes を消す（Custom Domain は Terraform の持ち物。ADR-0005）
- * - APP_ORIGIN を環境のホストにする
+ * - APP_ORIGIN を環境のホストにし、本番では旧ホストを APP_LEGACY_ORIGINS に入れる
  * - preview URL は staging / preview の public Worker だけ開く（internal は ADR-0002 で非公開）
  */
 export type RewriteContext = {
@@ -75,7 +75,12 @@ export const rewriteConfig = (config: unknown, ctx: RewriteContext): Result<Json
         }
 
   const vars = isRecord(config['vars']) ? { ...config['vars'] } : undefined
-  if (vars !== undefined && 'APP_ORIGIN' in vars) vars['APP_ORIGIN'] = `https://${host}`
+  if (vars !== undefined && 'APP_ORIGIN' in vars) {
+    vars['APP_ORIGIN'] = `https://${host}`
+    // ドメイン移行中は旧ホストでも動かす（Terraform の legacy_hosts_mode）。本番だけ
+    vars['APP_LEGACY_ORIGINS'] =
+      env.name === 'production' ? tool.legacyHosts.map((h) => `https://${h}`).join(',') : ''
+  }
 
   if (errors.length > 0) return { ok: false, error: errors.join('\n') }
 

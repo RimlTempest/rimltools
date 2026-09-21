@@ -68,3 +68,11 @@ describe('accessHeaders', () => {
     expect(accessHeaders({ CF_ACCESS_CLIENT_ID: 'id' })).toEqual({})
   })
 })
+
+describe('production without WORKER_SUFFIX', () => {
+  test('treats an undefined suffix as empty (GitHub variables cannot be empty)', () => {
+    const { WORKER_SUFFIX: _dropped, ...rest } = base
+    const result = readEnvironment({ ...rest, RIMLTOOLS_ENV: 'production' })
+    expect(result.ok && result.value.suffix).toBe('')
+  })
+})

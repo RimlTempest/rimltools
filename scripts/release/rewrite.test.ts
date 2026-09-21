@@ -34,7 +34,12 @@ describe('rewriteConfig', () => {
       { binding: 'API', service: 'qrcc-api-staging' },
       { binding: 'EXT', service: 'someone-else' },
     ])
-    expect(out['vars']).toEqual({ APP_ORIGIN: 'https://qrcc-staging.t', OTHER: 'x' })
+    // staging には旧ホストが無い
+    expect(out['vars']).toEqual({
+      APP_ORIGIN: 'https://qrcc-staging.t',
+      APP_LEGACY_ORIGINS: '',
+      OTHER: 'x',
+    })
     expect(out['workers_dev']).toBe(false)
     // staging の public Worker だけ preview URL を開く（PR プレビュー用）
     expect(out['preview_urls']).toBe(true)
@@ -48,6 +53,12 @@ describe('rewriteConfig', () => {
     expect(result.value['name']).toBe('qrcc-web')
     expect(result.value['routes']).toBeUndefined()
     expect(result.value['preview_urls']).toBe(false)
+    // ドメイン移行中は旧ホストでもログインできるよう、アプリに旧オリジンを渡す
+    expect(result.value['vars']).toEqual({
+      APP_ORIGIN: 'https://qrcc.t',
+      APP_LEGACY_ORIGINS: 'https://qrcc.example.com',
+      OTHER: 'x',
+    })
   })
 
   test('never opens preview URLs on an internal worker (ADR-0002)', () => {
