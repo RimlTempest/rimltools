@@ -46,8 +46,27 @@ const isLoopback = (origin: string): boolean => {
  * 本番オリジンではなく、実際に開いているオリジンを使う。そうしないと
  * `trustedOrigins` に localhost が入らず、手元のブラウザからログインできない。
  */
-export const resolveBaseURL = (appOrigin: string, requestOrigin: string): string =>
-  appOrigin === '' || isLoopback(requestOrigin) ? requestOrigin : appOrigin
+export const resolveBaseURL = (
+  appOrigin: string,
+  requestOrigin: string,
+  legacyOrigins: readonly string[] = [],
+): string =>
+  appOrigin === '' || isLoopback(requestOrigin) || legacyOrigins.includes(requestOrigin)
+    ? requestOrigin
+    : appOrigin
+
+/**
+ * ドメイン移行中（旧 `noter.riml4i.com` → 新 `noter.tools.riml4i.com`）に、旧ホストで
+ * 開かれてもログインが成立するよう、明示的に許可した旧オリジンだけを受け付ける。
+ * `APP_LEGACY_ORIGINS` はカンマ区切り。値はリリーススクリプトが tools.json の
+ * legacyHosts から入れる（ルートの docs/release.md）。https 以外と不正な値は捨てる。
+ */
+export const readLegacyOrigins = (env: unknown): string[] =>
+  readEnvString(env, 'APP_LEGACY_ORIGINS')
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => URL.canParse(value) && new URL(value).protocol === 'https:')
+    .map((value) => new URL(value).origin)
 
 export type AuthFromEnvDeps = {
   /** `() => drizzle(env.DB)`。 */
@@ -75,7 +94,11 @@ export const makeAuthFromEnv = (env: unknown, deps: AuthFromEnvDeps): Auth =>
   makeAuth({
     db: deps.makeDb(),
     sql: deps.sql,
-    baseURL: resolveBaseURL(readEnvString(env, 'APP_ORIGIN'), deps.requestOrigin),
+    baseURL: resolveBaseURL(
+      readEnvString(env, 'APP_ORIGIN'),
+      deps.requestOrigin,
+      readLegacyOrigins(env),
+    ),
     secret: readEnvString(env, 'BETTER_AUTH_SECRET'),
     google: isGoogleConfigured(env)
       ? {
