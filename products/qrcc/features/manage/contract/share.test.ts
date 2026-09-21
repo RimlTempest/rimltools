@@ -119,4 +119,18 @@ describe('shareUrl', () => {
       'https://qrcc.riml4i.com/shared/abcdefghjkmnpqrstvwxyz0123456789',
     )
   })
+
+  test('末尾のスラッシュが何個あってもまとめて落とす', () => {
+    expect(shareUrl('https://qrcc.riml4i.com///', token)).toBe(
+      'https://qrcc.riml4i.com/shared/abcdefghjkmnpqrstvwxyz0123456789',
+    )
+  })
+
+  /** 途中にスラッシュが大量に並ぶ入力でも線形時間で終わる（ReDoS にならない）。 */
+  test('スラッシュが大量に並ぶオリジンでもすぐ返る', () => {
+    const origin = `https://x${'/'.repeat(50_000)}a`
+    const started = performance.now()
+    expect(shareUrl(origin, token)).toBe(`${origin}/shared/abcdefghjkmnpqrstvwxyz0123456789`)
+    expect(performance.now() - started).toBeLessThan(50)
+  })
 })

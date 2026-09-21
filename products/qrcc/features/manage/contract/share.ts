@@ -75,6 +75,16 @@ export const toShareDraftWire = (draft: ShareDraft) => ({
   expires_at: draft.expiresAt === undefined ? null : toUnixSeconds(draft.expiresAt),
 })
 
+/**
+ * 末尾のスラッシュを落とす。`/\/+$/` は途中にスラッシュが大量に並ぶ入力で
+ * 2 乗時間になる（ReDoS）ので、端から走査する。
+ */
+const trimTrailingSlashes = (value: string): string => {
+  let end = value.length
+  while (end > 0 && value[end - 1] === '/') end -= 1
+  return value.slice(0, end)
+}
+
 /** 共有された人がそのまま開けるリンク。 */
 export const shareUrl = (origin: string, token: ShareToken): string =>
-  `${origin.replace(/\/+$/, '')}${SHARE_PATH_PREFIX}${token}`
+  `${trimTrailingSlashes(origin)}${SHARE_PATH_PREFIX}${token}`
