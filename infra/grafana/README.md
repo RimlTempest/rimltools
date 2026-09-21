@@ -58,13 +58,13 @@ state は HCP Terraform の workspace `rimltools-observability`（execution mode
 
 ## 2. 契約（他のレーンとの受け渡し）
 
-| 置き場所                                       | 名前                                            | 中身                                                  | 使う側                                                                               |
-| ---------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| environment `production` / `staging` の secret | `GRAFANA_OTLP_HEADERS`                          | `Authorization=Basic <base64(stack id:token)>`        | リリース時に Worker secret `OTEL_EXPORTER_OTLP_HEADERS` として注入（リリースレーン） |
-| 同 variable                                    | `GRAFANA_OTLP_ENDPOINT`                         | スタックの OTLP gateway（`…/otlp`）                   | 同上。Worker 側は `/v1/traces` `/v1/logs` を足す                                     |
-| environment `ops` の secret                    | `GRAFANA_METRICS_PUSH_URL` / `_USER` / `_TOKEN` | OTLP gateway、スタック ID、`metrics:write` のトークン | `.github/workflows/observability.yml`                                                |
-| repository variable                            | `FARO_URL_<TOOL>`                               | Faro の collector URL                                 | 各プロダクトのビルド（Faro SDK の `url`）                                            |
-| repository variable                            | `GRAFANA_METRICS_PUSH_ENABLED`                  | `true` / `false`                                      | `observability.yml` の実行可否                                                       |
+| 置き場所                                       | 名前                                            | 中身                                                                   | 使う側                                                                                                              |
+| ---------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| environment `production` / `staging` の secret | `GRAFANA_OTLP_HEADERS`                          | `Authorization=Basic%20<base64(stack id:token)>`（URL エンコード済み） | Worker secret `OTEL_EXPORTER_OTLP_HEADERS` にそのまま注入（リリースレーン、docs/observability-grafana.md の対応表） |
+| 同 variable                                    | `GRAFANA_OTLP_ENDPOINT`                         | スタックの OTLP gateway（`…/otlp`）                                    | 同上。Worker 側は `/v1/traces` `/v1/logs` を足す                                                                    |
+| environment `ops` の secret                    | `GRAFANA_METRICS_PUSH_URL` / `_USER` / `_TOKEN` | OTLP gateway、スタック ID、`metrics:write` のトークン                  | `.github/workflows/observability.yml`                                                                               |
+| repository variable                            | `FARO_URL_<TOOL>`                               | Faro の collector URL                                                  | 各プロダクトのビルド（Faro SDK の `url`）                                                                           |
+| repository variable                            | `GRAFANA_METRICS_PUSH_ENABLED`                  | `true` / `false`                                                       | `observability.yml` の実行可否                                                                                      |
 
 テレメトリの属性（F1 `@rimltools/telemetry` と共有、変えない）:
 

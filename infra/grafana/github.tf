@@ -3,7 +3,8 @@
 #
 # 契約（docs/observability-grafana.md §契約）:
 #   environment production / staging:
-#     secret   GRAFANA_OTLP_HEADERS   "Authorization=Basic <base64(stack id:token)>"（OTEL_EXPORTER_OTLP_HEADERS の形）
+#     secret   GRAFANA_OTLP_HEADERS   "Authorization=Basic%20<base64(stack id:token)>"
+#              （OTEL_EXPORTER_OTLP_HEADERS の形。OTel の仕様どおり値は URL エンコード済み = 空白は %20）
 #     variable GRAFANA_OTLP_ENDPOINT  スタックの OTLP gateway（…/otlp。/v1/traces などはクライアントが足す）
 #   environment ops:
 #     secret   GRAFANA_METRICS_PUSH_URL / GRAFANA_METRICS_PUSH_USER / GRAFANA_METRICS_PUSH_TOKEN
@@ -16,7 +17,9 @@ resource "github_actions_environment_secret" "otlp_headers" {
   repository  = var.github_repository
   environment = each.key
   secret_name = "GRAFANA_OTLP_HEADERS"
-  value = "Authorization=Basic ${base64encode(
+  # Worker（@rimltools/telemetry）はこの値を OTEL_EXPORTER_OTLP_HEADERS としてそのまま受け取り、
+  # URL デコードしてからヘッダにする。空白は %20 で書く（docs/observability-grafana.md §Worker への受け渡し）。
+  value = "Authorization=Basic%20${base64encode(
     "${local.stack.id}:${grafana_cloud_access_policy_token.this["otlp-write-${each.key}"].token}"
   )}"
 }

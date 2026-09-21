@@ -78,6 +78,23 @@ series の内訳:
 **span 名は低カーディナリティにすること**（`GET /api/codes/:id` のようにルートのテンプレートにする。
 実際の ID や URL をそのまま span 名にすると series が爆発する）。これは `@rimltools/telemetry` の約束。
 
+## Worker への受け渡し（契約）
+
+`infra/grafana` が GitHub に入れる値と、Worker（PR #9 `@rimltools/telemetry`）が読む var / secret の対応。
+Worker への注入はリリース（`scripts/release/`）の後続作業。値の変換は不要にしてある。
+
+| Worker 側                     | 種類                              | 値の出どころ                                                           | 変換                                                                             |
+| ----------------------------- | --------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | var                               | environment（production / staging）の variable `GRAFANA_OTLP_ENDPOINT` | そのまま（`…/otlp`。`/v1/traces` などは Worker が足す）                          |
+| `OTEL_EXPORTER_OTLP_HEADERS`  | secret                            | environment の secret `GRAFANA_OTLP_HEADERS`                           | そのまま（`Authorization=Basic%20<base64(stack id:token)>`、URL エンコード済み） |
+| `DEPLOYMENT_ENV`              | var                               | environment の variable `RIMLTOOLS_ENV`（infra/terraform）             | そのまま（`production` / `staging`。PR の preview は `preview`）                 |
+| `GIT_SHA`                     | var                               | `github.sha`                                                           | そのまま（`service.version` になる）                                             |
+| `FARO_URL`                    | var（ブラウザ向けビルドにも渡す） | repository variable `FARO_URL_<TOOL 大文字>`                           | ツール名で選ぶ（例: qrcc → `FARO_URL_QRCC`）                                     |
+
+- secret は `wrangler versions upload` に載らないので、版を上げる前に `wrangler versions secret put` などで入れる
+  （段階リリースで新旧の版が同じ secret を共有する点に注意。トークンを入れ替えるときは両方の版で有効な期間を作る）。
+- 環境ごとにトークンが別（`otlp-write-production` / `otlp-write-staging`）なので、片方だけ失効できる。
+
 ## 統合時の TODO
 
 - レイテンシの目標（`infra/grafana` の `latency_p99_ms`）を `tools.json` の `slo.latencyP99Ms` に移す
