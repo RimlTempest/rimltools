@@ -3,16 +3,16 @@
 Cloudflare と GitHub のリソースを Terraform で管理する（ADR-0005）。
 state は HCP Terraform Free に置き、plan / apply は GitHub Actions（`.github/workflows/terraform.yml`）の runner で行う。
 
-| ファイル                     | 中身                                                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `tools.tf` + `modules/tool/` | ツールごとの D1（本番 / staging）、Worker の枠、Custom Domain、staging の Access                       |
-| `zone.tf`                    | version affinity の Transform Rule、WAF（Free Managed Ruleset + custom rule）、rate limiting、TLS 設定 |
-| `redirects.tf`               | 旧ホスト（`qrcc.riml4i.com` など）の 301                                                               |
-| `portal.tf`                  | ポータル Worker（`tools.riml4i.com`）                                                                  |
-| `tokens.tf`                  | CI 用 Cloudflare API トークン（production / staging）                                                  |
-| `github.tf`                  | リポジトリ設定、rulesets、environments、Actions の secret / variable                                   |
-| `imports.tf`                 | 既存リソースの取り込み（名前 → ID を data source で引く）                                              |
-| `terraform.tfvars`           | 秘密でない切り替え（staging ドメイン、ポータル、旧ホストの扱い）                                       |
+| ファイル                     | 中身                                                                                                                       |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `tools.tf` + `modules/tool/` | ツールごとの D1（本番 / staging）、Worker の枠、Custom Domain、staging の Access。ポータル（`apex: true`）も同じモジュール |
+| `zone.tf`                    | version affinity の Transform Rule、WAF（Free Managed Ruleset + custom rule）、rate limiting、TLS 設定                     |
+| `redirects.tf`               | 旧ホスト（`qrcc.riml4i.com` など）の 301                                                                                   |
+| `ops.tf`                     | ops（SLO・synthetic・無料枠の監視）用の environment、Analytics 専用トークン、repo variable                                 |
+| `tokens.tf`                  | CI 用 Cloudflare API トークン（production / staging）                                                                      |
+| `github.tf`                  | リポジトリ設定、rulesets、environments、Actions の secret / variable                                                       |
+| `imports.tf`                 | 既存リソースの取り込み（名前 → ID を data source で引く）                                                                  |
+| `terraform.tfvars`           | 秘密でない切り替え（staging ドメイン、ポータル、旧ホストの扱い）                                                           |
 
 コードの版（`wrangler versions upload`）と配信割合（`wrangler versions deploy`）は wrangler が持つ。
 Terraform は Worker の「枠」だけを作り、observability・workers.dev・preview URL の差分は無視する（wrangler.jsonc が正本）。
@@ -136,7 +136,9 @@ gh secret delete TF_VAR_github_token -R RimlTempest/rimltools
 - [ ] 取り込んだリソースに **`must be replaced` / `destroy` が無い**（本番の D1 と Worker には `prevent_destroy` がある）
 - [ ] 取り込んだ zone ruleset（ダッシュボードで作ったルールがあれば）で、消えるルールが無いか
 - [ ] 新規作成が期待どおり: staging の D1・Worker、`<tool>.tools.riml4i.com` の Custom Domain、CI トークン 2 本、
-      environments（staging / preview）と secret / variable
+      environments（staging / preview）と secret / variable、ポータルの Worker 枠（`rimltools-portal` / `-staging`）
+- [ ] ops: environment `ops`（develop のみ）、Analytics Read だけのトークン → secret `CLOUDFLARE_ANALYTICS_TOKEN` /
+      `CLOUDFLARE_ACCOUNT_ID`、repo variable `OPS_HOST_OVERRIDES` / `OPS_ISSUES`。**これらは手で登録しない**（Terraform が作る）
 - [ ] ruleset の required checks: develop = `gate`, `security-gate`, `conventional` / main = 左記 + `release-guard`
       （**これらのチェックを出すワークフローがまだ無いと、PR がマージできなくなる**。先にワークフローが develop に入っていること）
 - [ ] plan が権限不足（403）で落ちていない。落ちたら plan 用トークンに足りない Read 権限を足す（Edit は足さない）
@@ -169,12 +171,13 @@ terraform init && terraform plan -lock=false
 
 ## 切り替えの一覧（`terraform.tfvars`）
 
-| 変数                            | 既定       | いつ変えるか                                                                       |
-| ------------------------------- | ---------- | ---------------------------------------------------------------------------------- |
-| `staging_domains_enabled`       | `false`    | staging への初回デプロイの後（Custom Domain はコードのある Worker にしか付かない） |
-| `portal_domain_enabled`         | `false`    | ポータルの初回デプロイの後                                                         |
-| `legacy_hosts_mode`             | `attached` | ドメイン移行の 4・5                                                                |
-| `manage_zone_security_settings` | `true`     | ゾーン内に HTTP しか話せないホストがある場合だけ `false`                           |
+| 変数                            | 既定         | いつ変えるか                                                                           |
+| ------------------------------- | ------------ | -------------------------------------------------------------------------------------- |
+| `staging_domains_enabled`       | `false`      | staging への初回デプロイの後（Custom Domain はコードのある Worker にしか付かない）     |
+| `pending_tools`                 | `["portal"]` | 初回の本番デプロイの後にそのツール名を消す（本番ドメインが付き、ops の監視対象になる） |
+| `legacy_hosts_mode`             | `attached`   | ドメイン移行の 4・5                                                                    |
+| `ops_issues_enabled`            | `false`      | ops ワークフローに Issue の起票を許すとき（repo variable `OPS_ISSUES`）                |
+| `manage_zone_security_settings` | `true`       | ゾーン内に HTTP しか話せないホストがある場合だけ `false`                               |
 
 ## 制約・既知の限界
 
@@ -184,6 +187,9 @@ terraform init && terraform plan -lock=false
 - Free プランの rate limiting は 1 本・式は path のみ・IP 単位・10 秒。host で絞れないため、ゾーン全体の `/api/auth/` に効く
 - zone の entry point ruleset は phase ごとに 1 つ。既存のものは取り込まれ、ルールはこの定義で置き換わる
 - GitHub の variable は空値を持てないため、production の `WORKER_SUFFIX` は作らない（workflow では空文字として展開される）
+- `OPS_HOST_OVERRIDES` は `legacy_hosts_mode` と `pending_tools` から作る。移行中（`attached`）は旧ホストを監視し、
+  未デプロイのツールは `""`（監視しない）。移行後は空で、tools.json の既定ホストが使われる
+- ツールごとの D1 は 0 か 1 個（`D1_<TOOL>_ID`）。D1 を持たないツール（ポータル）は変数を作らない
 
 ## 読み取り専用トークンでの plan の既知の制約
 
