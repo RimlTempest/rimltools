@@ -17,3 +17,15 @@
 ## 手で行う作業（1 回だけ）
 
 `infra/terraform/README.md` の「ブートストラップ」。
+
+## 実装メモ（2026-09-22）
+
+- 既存リソースの import は `imports.tf` で、名前 → ID を data source（`cloudflare_workers` / `cloudflare_d1_databases` /
+  `cloudflare_workers_custom_domains` / `cloudflare_rulesets`）から引く。存在しないもの（新しいツール）は作成される。
+- workspace は HCP の **Local execution mode**。runner で plan / apply し、state だけを HCP に置く。
+- Worker の枠は observability・workers.dev・preview URL の差分を無視する（wrangler.jsonc が正本で、versions upload のたびに上書きされるため）。
+- 旧ホストの移行は `legacy_hosts_mode = attached → detached → redirect` の 3 段階。Custom Domain が作った DNS レコードと
+  リダイレクト用のレコードが同名で衝突するため、1 回の apply では切り替えられない。
+- GitHub の environment variable は空値を持てないので、production の `WORKER_SUFFIX` は作らない。
+- plan（PR、レビュー前のコード）と apply（main）で資格情報を分ける。plan は読み取り専用トークンを repository secret から、
+  apply は書き込みトークンを `production` environment の secret から読む。`TF_APPLY_*` は Terraform の管理外（手で登録）。

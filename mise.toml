@@ -3,6 +3,9 @@
 [tools]
 node = "26.8.1"
 bun = "1.4.0"
+# terraform / tflint は infra/terraform 用（ADR-0005）
+terraform = "1.16.3"
+tflint = "0.64.0"
 rust = { version = "1.98.0", components = "rustfmt,clippy", targets = "wasm32-unknown-unknown" }
 
 [env]

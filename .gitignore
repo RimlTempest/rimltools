@@ -8,3 +8,13 @@ products/*/wrangler.staging.json
 products/*/wrangler.production.json
 products/*/wrangler.preview.json
 .release/
+
+# terraform（infra/terraform）
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+*.auto.tfvars
+infra/terraform/tfplan
+infra/terraform/plan.txt
