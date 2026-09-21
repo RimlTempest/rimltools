@@ -38,7 +38,7 @@ import type { WorkerPlan } from './plan.ts'
 import { planRollout } from './plan.ts'
 import type { PreparedConfig } from './prepare.ts'
 import { migrationConfigFor, preparedPath } from './prepare.ts'
-import { rewriteConfig } from './rewrite.ts'
+import { parseJsonc, rewriteConfig } from './rewrite.ts'
 import type { RolloutDeps, RolloutOutcome } from './rollout.ts'
 import { rolloutWorker } from './rollout.ts'
 import { runSmoke } from './smoke.ts'
@@ -448,7 +448,9 @@ const stepPrepare = async (tool: Tool, deployEnv: DeployEnv): Promise<number> =>
     const source = join(tool.path, worker.buildConfig)
     const file = Bun.file(source)
     if (!(await file.exists())) return fail(`${source} not found. Build ${tool.name} first.`)
-    const rewritten = rewriteConfig(await file.json(), {
+    const parsed = parseJsonc(await file.text())
+    if (!parsed.ok) return fail(`${source}: ${parsed.error}`)
+    const rewritten = rewriteConfig(parsed.value, {
       tool,
       env: deployEnv,
       host: hostFor(tool, deployEnv),
@@ -674,6 +676,14 @@ const main = async (): Promise<number> => {
   if (step === 'changed') return stepChanged(registry.value)
   if (step === 'check-migrations') return stepCheckMigrations()
   if (step === 'guard') return stepGuard()
+  if (step === 'host') {
+    // workflow が smoke 先を知るため（apex のポータルなどの規則を tools.ts に一本化する）
+    const found = findTool(registry.value, args.value.tool ?? '')
+    if (!found.ok) return fail(found.error)
+    const production = env['RIMLTOOLS_ENV'] === 'production'
+    await setOutput('host', production ? found.value.host : found.value.stagingHost)
+    return 0
+  }
 
   const tool = findTool(registry.value, args.value.tool ?? '')
   if (!tool.ok) return fail(tool.error)

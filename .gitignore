@@ -2,3 +2,9 @@ node_modules/
 .DS_Store
 .claude/worktrees/
 *.tsbuildinfo
+
+# scripts/release が環境ごとに書き出す wrangler 設定（docs/release.md）
+products/*/wrangler.staging.json
+products/*/wrangler.production.json
+products/*/wrangler.preview.json
+.release/

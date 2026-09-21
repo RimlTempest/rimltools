@@ -9,7 +9,7 @@ export const toolSteps = [
   'rollback',
   'resume',
 ] as const
-export const globalSteps = ['changed', 'check-migrations', 'guard'] as const
+export const globalSteps = ['changed', 'check-migrations', 'guard', 'host'] as const
 
 export type ToolStep = (typeof toolSteps)[number]
 export type GlobalStep = (typeof globalSteps)[number]
