@@ -6,7 +6,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "workers_dev": false,
-  "routes": [{ "pattern": "noter.riml4i.com", "custom_domain": true }],
+  // Custom Domain（noter.tools.riml4i.com）は Terraform の持ち物（ルート ADR-0005）。
+  // wrangler の routes に書くと versions deploy とは別経路で更新され、Terraform と取り合いになる。
+  // 環境ごとのホスト名と APP_ORIGIN は scripts/release が書き換えて出す（docs/release.md）。
   // DocumentRoom は noter-sync（auxiliary Worker）が持つ。
   // noter-sync は routes を持たないので、DO へは noter-web からしか届かない（ADR-0002）。
   "durable_objects": {
