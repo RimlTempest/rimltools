@@ -16,3 +16,5 @@ products/*/wrangler.preview.json
 *.tfplan
 crash.log
 *.auto.tfvars
+infra/terraform/tfplan
+infra/terraform/plan.txt
