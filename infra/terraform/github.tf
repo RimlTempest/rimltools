@@ -248,3 +248,12 @@ resource "github_actions_variable" "release_environments" {
     github_actions_environment_variable.this,
   ]
 }
+
+# GITHUB_TOKEN の既定は読み取りのみ。Release PR（release-pr.yml）が develop → main の PR を
+# 作れるよう、Actions による PR の作成を許可する。この設定は承認も許すが、ruleset の
+# 必須レビュー数は 0 なので、承認によってマージ条件が緩むことはない（ADR-0002）。
+resource "github_workflow_repository_permissions" "this" {
+  repository                       = github_repository.this.name
+  default_workflow_permissions     = "read"
+  can_approve_pull_request_reviews = true
+}
