@@ -35,7 +35,13 @@ bunx wrangler versions deploy <version-id>@100% --name qrcc-web --yes
 
 ## 3. canary が `needs-human` で止まった
 
-新版へのトラフィックが少なすぎて判定できず、割合（例: 10%）のまま止まっている。エラーは出ていない。
+次のどれかで判定できず、割合（例: 10%）のまま止まっている。Summary の理由を見る。
+
+- 新版へのトラフィックが少なすぎる（`only N/200 requests …`）
+- 版ごとに数える手段が無い（`no analytics source …`）: トークンに `Account Analytics Read` / `Workers Observability Write` があるか確認（docs/release.md §6）
+- 集計 API が失敗した（`analytics query failed: …`）
+
+どれも「新版が悪い」根拠ではないので自動では戻していない。Metrics / Workers Logs を目で見て決める。
 
 - 新版を信用できる → Deploy production を `resume`（tool / worker / version は Summary の値）
 - 急がない・迷う → `rollback`（安全側）
