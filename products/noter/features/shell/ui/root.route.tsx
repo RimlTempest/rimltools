@@ -40,6 +40,22 @@ const currentActorFn = createServerFn({ method: 'GET' }).handler(async (): Promi
 
 const statusLink: AuthLinkRenderer = ({ to, label }) => <Link to={to}>{label}</Link>
 
+/**
+ * テレメトリ（Grafana Faro）の起動。設定は Worker が <head> に埋め込む（docs/observability.md）。
+ * 初期表示が落ち着いてから、サンプリングに当たったセッションだけ SDK を読み込む。
+ */
+const startTelemetry = () => {
+  import('@rimltools/telemetry/browser')
+    .then(({ startFromDocument }) => startFromDocument(document))
+    // 計測が読めなくても画面には影響させない
+    .catch(() => undefined)
+}
+
+const scheduleTelemetry = () => {
+  if ('requestIdleCallback' in window) window.requestIdleCallback(startTelemetry, { timeout: 5000 })
+  else setTimeout(startTelemetry, 2000)
+}
+
 const Layout = () => {
   const currentPath = useRouterState({ select: (state) => state.location.pathname })
   const { actor } = Route.useRouteContext()
@@ -52,6 +68,11 @@ const Layout = () => {
   useEffect(() => {
     if (!import.meta.env.PROD) return
     registerServiceWorker(typeof navigator === 'undefined' ? undefined : navigator.serviceWorker)
+  }, [])
+
+  // SSR のバンドルに Faro を入れない（Worker のサイズ上限を守る）。meta が無ければ何もしない
+  useEffect(() => {
+    if (!import.meta.env.SSR) scheduleTelemetry()
   }, [])
 
   return (

@@ -66,6 +66,7 @@
         "@noter/sync": "workspace:*",
         "@noter/ui": "workspace:*",
         "@noter/webmcp": "workspace:*",
+        "@rimltools/telemetry": "workspace:*",
         "@tanstack/react-router": "1.170.32",
         "@tanstack/react-start": "1.168.49",
         "better-auth": "1.7.3",
@@ -220,6 +221,7 @@
       "dependencies": {
         "@noter/contract": "workspace:*",
         "@noter/ui": "workspace:*",
+        "@rimltools/telemetry": "workspace:*",
       },
       "devDependencies": {
         "@tanstack/react-router": "1.170.32",
