@@ -134,6 +134,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          # テレメトリの OTLP ヘッダ。送り先がある版にだけ --secrets-file で載せる（docs/observability.md）
+          GRAFANA_OTLP_HEADERS: ${{ secrets.GRAFANA_OTLP_HEADERS }}
 
       # 100% になったあと、プロダクト自身の smoke で「配信」と「実ブラウザで動くこと」を見る。
       # staging は Cloudflare Access の内側なので、ここは本番だけ（staging は release.ts の smoke が

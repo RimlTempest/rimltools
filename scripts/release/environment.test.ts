@@ -33,6 +33,18 @@ describe('readReleaseConfig', () => {
     expect(Object.values(config)).not.toContain('leak')
   })
 
+  test('reads the telemetry settings from the environment vars', () => {
+    const config = readReleaseConfig({
+      varsJson:
+        '{"GRAFANA_OTLP_ENDPOINT":"https://o","FARO_URL_QRCC":"https://f","GRAFANA_OTLP_HEADERS":"leak"}',
+      values: {},
+    })
+    expect(config['GRAFANA_OTLP_ENDPOINT']).toBe('https://o')
+    expect(config['FARO_URL_QRCC']).toBe('https://f')
+    // ヘッダは secret なので設定には入れない
+    expect(config['GRAFANA_OTLP_HEADERS']).toBeUndefined()
+  })
+
   test('ignores a missing or malformed vars JSON', () => {
     expect(readReleaseConfig({ varsJson: undefined, values: { GITHUB_SHA: 'a' } })).toEqual({
       GITHUB_SHA: 'a',

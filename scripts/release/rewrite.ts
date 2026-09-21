@@ -15,6 +15,8 @@ export type RewriteContext = {
   env: Pick<DeployEnv, 'name' | 'suffix' | 'd1Id'>
   /** この環境で public Worker が受けるホスト名 */
   host: string
+  /** テレメトリの値（docs/observability.md）。未設定のものは空のまま（= 無効） */
+  telemetry?: { otlpEndpoint: string | undefined; faroUrl: string | undefined; gitSha: string }
 }
 
 type Json = Record<string, unknown>
@@ -128,6 +130,15 @@ export const rewriteConfig = (config: unknown, ctx: RewriteContext): Result<Json
         }
 
   const vars = isRecord(config['vars']) ? { ...config['vars'] } : undefined
+  // テレメトリ: wrangler.jsonc で空の値を宣言している Worker にだけ入れる（宣言が契約）
+  if (vars !== undefined && 'OTEL_SERVICE_NAME' in vars) {
+    const telemetry = ctx.telemetry
+    if (telemetry?.otlpEndpoint !== undefined)
+      vars['OTEL_EXPORTER_OTLP_ENDPOINT'] = telemetry.otlpEndpoint
+    if (telemetry?.faroUrl !== undefined && 'FARO_URL' in vars) vars['FARO_URL'] = telemetry.faroUrl
+    vars['DEPLOYMENT_ENV'] = env.name
+    vars['GIT_SHA'] = telemetry?.gitSha ?? 'local'
+  }
   if (vars !== undefined && 'APP_ORIGIN' in vars) {
     vars['APP_ORIGIN'] = `https://${host}`
     // ドメイン移行中は旧ホストでも動かす（Terraform の legacy_hosts_mode）。本番だけ
@@ -150,4 +161,16 @@ export const rewriteConfig = (config: unknown, ctx: RewriteContext): Result<Json
   if (durableObjects !== undefined) out['durable_objects'] = durableObjects
   if (vars !== undefined) out['vars'] = vars
   return { ok: true, value: out }
+}
+
+/**
+ * この版に OTLP のヘッダ（secret）を載せる必要があるか。送り先が入っている Worker だけ。
+ * secret は `versions upload --secrets-file` で同じ版に入れる（`versions secret put` は
+ * 最新版から別の版を作るので、upload した版と食い違う）。
+ */
+export const needsOtlpSecret = (config: Json): boolean => {
+  const vars = config['vars']
+  if (!isRecord(vars)) return false
+  const endpoint = vars['OTEL_EXPORTER_OTLP_ENDPOINT']
+  return typeof endpoint === 'string' && endpoint !== ''
 }
