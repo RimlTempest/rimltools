@@ -1,0 +1,19 @@
+{
+  "name": "@rimltools/telemetry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lightweight OTLP/JSON tracing and logging for Workers (Free plan) and a Grafana Faro wrapper for browsers.",
+  "type": "module",
+  "exports": {
+    "./core": "./src/core/index.ts",
+    "./worker": "./src/worker/index.ts",
+    "./browser": "./src/browser/index.ts"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@grafana/faro-web-sdk": "2.11.0",
+    "@grafana/faro-web-tracing": "2.11.0"
+  }
+}
