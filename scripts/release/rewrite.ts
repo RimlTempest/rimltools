@@ -45,6 +45,18 @@ export const rewriteConfig = (config: unknown, ctx: RewriteContext): Result<Json
   const isPublic = worker?.role === 'public'
 
   const errors: string[] = []
+  // canary の判定は Workers Logs の invocation log を数えることがある（sources.ts）。
+  // 既定では有効なので、明示的に切っている設定だけを止める
+  const observability = config['observability']
+  if (isRecord(observability)) {
+    const logs = observability['logs']
+    if (
+      observability['enabled'] === false
+      || (isRecord(logs) && logs['invocation_logs'] === false)
+    ) {
+      errors.push(`${name}: observability / invocation_logs must stay enabled (docs/release.md)`)
+    }
+  }
   const d1 = records(config['d1_databases']).map((db) => {
     const dbName = db['database_name']
     const spec = tool.d1.find((d) => d.name === dbName)

@@ -152,6 +152,42 @@ describe('rolloutWorker', () => {
     expect(w.calls.at(-1)).toBe('deploy new@10% old@90%')
   })
 
+  test('holds the split instead of rolling back when no source can split by version', async () => {
+    const w = world()
+    const outcome = await rolloutWorker(
+      { ...deps(w), stats: undefined },
+      { ...base, strategy: canary },
+    )
+    expect(outcome).toEqual({
+      kind: 'needs-human',
+      reason: expect.stringContaining('no analytics source'),
+      versionId: 'new',
+      stable: 'old',
+      percentage: 10,
+    })
+    expect(w.calls).not.toContain('deploy old@100%')
+    expect(w.calls.at(-1)).toBe('deploy new@10% old@90%')
+  })
+
+  test('holds the split when the analytics query itself fails', async () => {
+    const w = world()
+    const outcome = await rolloutWorker(
+      { ...deps(w), stats: async () => ({ ok: false, error: 'HTTP 500' }) },
+      { ...base, strategy: canary },
+    )
+    expect(outcome.kind).toBe('needs-human')
+    expect(w.calls).not.toContain('deploy old@100%')
+  })
+
+  test('staging-style single step (100%) needs no analytics source', async () => {
+    const w = world()
+    const outcome = await rolloutWorker(
+      { ...deps(w), stats: undefined },
+      { ...base, strategy: { kind: 'canary', steps: [100], bakeMinutes: 0 } },
+    )
+    expect(outcome.kind).toBe('released')
+  })
+
   test('first deployment of a worker goes straight to 100%', async () => {
     const w = world({ deployments: [] })
     const outcome = await rolloutWorker(deps(w), { ...base, strategy: canary })
