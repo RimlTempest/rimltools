@@ -150,3 +150,10 @@ invocation log は `observability.enabled: true` で既定有効。`invocation_l
 リポジトリ secret（任意）: `RELEASE_BOT_TOKEN` — Release PR / back-merge PR を作るトークン。
 `GITHUB_TOKEN` で作った PR には `pull_request` のワークフロー（`release-guard`）が走らないため。
 無い場合は、Release PR を一度 close → reopen すると検査が走る。
+
+## デプロイ先が未設定の間の動き
+
+Deploy staging / Deploy production / Flags は、リポジトリ変数 `RELEASE_ENVIRONMENTS`（JSON の配列）に
+含まれる environment にだけ出す。含まれていなければ、ビルドの前にジョブごとスキップする。
+この変数は Terraform（`infra/terraform` の `release_environments`）が、その environment の secret と
+variable を書き込んだあとに作る。Terraform を適用する前の push でワークフローが赤くならないのはこのため。
