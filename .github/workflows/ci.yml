@@ -1,0 +1,85 @@
+name: CI
+
+# プロダクトごとの CI（<tool>-ci.yml）を、変更があったものだけ呼び出す入口。
+# ruleset の required check は最後の `gate` だけにする。paths で絞ったワークフローを
+# 直接 required にすると、走らなかった PR がマージできなくなるため（ADR-0002）。
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  # 手動実行では全プロダクトを走らせる
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      qrcc: ${{ steps.filter.outputs.qrcc }}
+      noter: ${{ steps.filter.outputs.noter }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { persist-credentials: false }
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          # ルートの共通設定が変わったら全プロダクトを走らせる
+          filters: |
+            root: &root
+              - 'package.json'
+              - 'bun.lock'
+              - 'bunfig.toml'
+              - 'mise.toml'
+              - 'tools.json'
+              - 'packages/**'
+              - '.github/workflows/ci.yml'
+            qrcc:
+              - *root
+              - 'products/qrcc/**'
+              - '.github/workflows/qrcc-ci.yml'
+            noter:
+              - *root
+              - 'products/noter/**'
+              - '.github/workflows/noter-ci.yml'
+
+  qrcc:
+    needs: changes
+    if: needs.changes.outputs.qrcc == 'true' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: ./.github/workflows/qrcc-ci.yml
+
+  noter:
+    needs: changes
+    if: needs.changes.outputs.noter == 'true' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: ./.github/workflows/noter-ci.yml
+
+  # required check はこれ 1 本。スキップ（変更なし）は合格、失敗・取消は不合格。
+  gate:
+    if: always()
+    needs: [changes, qrcc, noter]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: すべてのプロダクトの CI が通ったこと
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if echo "$RESULTS" | jq -e 'to_entries | map(.value.result) | any(. == "failure" or . == "cancelled")' >/dev/null; then
+            echo "::error::A product CI failed or was cancelled."
+            exit 1
+          fi

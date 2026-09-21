@@ -1,29 +1,7 @@
 name: qrcc CI
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'products/qrcc/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'bunfig.toml'
-      - 'mise.toml'
-      - '.github/workflows/qrcc-ci.yml'
-  pull_request:
-    paths:
-      - 'products/qrcc/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'bunfig.toml'
-      - 'mise.toml'
-      - '.github/workflows/qrcc-ci.yml'
-  # 手動実行では paths-filter を無視して全ジョブを走らせる
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
 
 # paths-filter は pull_request で GitHub API の listFiles を呼ぶため、
 # 既定の制限された GITHUB_TOKEN では "Resource not accessible by integration" になる。
@@ -148,7 +126,7 @@ jobs:
   typecheck:
     name: typecheck (TypeScript 7)
     needs: changes
-    if: needs.changes.outputs.ts == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.changes.outputs.ts == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -164,7 +142,7 @@ jobs:
   test-ts:
     name: test (bun)
     needs: changes
-    if: needs.changes.outputs.ts == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.changes.outputs.ts == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -176,7 +154,7 @@ jobs:
   markuplint:
     name: markuplint (a11y)
     needs: changes
-    if: needs.changes.outputs.markup == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.changes.outputs.markup == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -188,7 +166,7 @@ jobs:
   rust:
     name: rust (fmt / clippy / test)
     needs: changes
-    if: needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -209,7 +187,7 @@ jobs:
   build-and-a11y:
     name: build + axe (WCAG AAA)
     needs: changes
-    if: needs.changes.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.changes.outputs.web == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
