@@ -3,7 +3,7 @@
  *
  * ここは純粋関数だけで、I/O も描画も持たない。
  * **座標は計算しない** — セルを左上から順に（空きも含めて）並べるだけで、
- * 実際の配置は CSS Grid の自動配置が行う（ADR-0005 / qrcc-html-a11y）。
+ * 実際の配置は CSS Grid の自動配置が行う（ADR-0005 / rimltools-html-a11y）。
  */
 import type { Result } from '@qrcc/contract'
 import { err, ok } from '@qrcc/contract'

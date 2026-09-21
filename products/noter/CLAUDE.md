@@ -8,16 +8,20 @@ Rust は使わない。Bun workspaces の monorepo。
 
 ## 作業を始める前に読むもの
 
-| 状況                             | 読むスキル                      |
-| -------------------------------- | ------------------------------- |
-| TS/TSX を書く・直す              | `noter-typescript`              |
-| 画面・マークアップ・CSS を書く   | `noter-html-a11y`               |
-| 機能追加・バグ修正               | `noter-tdd`（必ず red → green） |
-| どこに置くか迷う・機能を拡張する | `noter-architecture`            |
-| 並行作業・worktree・コンフリクト | `noter-worktree`                |
-| UI・UX を見直す                  | `better-interface`              |
-| HTML/CSS/クライアント JS を書く  | `modern-web-guidance`           |
-| Workers / DO / D1 に触る         | `workers-best-practices`        |
+`rimltools-*` と外部の skill（`better-interface` など）はリポジトリ直下の `.claude/skills/` に、
+noter 固有の skill（`noter-architecture` / `noter-conventions`）は `products/noter/.claude/skills/` にある。
+共通の規約とプロダクト固有の差分は必ず両方読む。ルートの `CLAUDE.md` も参照。
+
+| 状況                             | 読むスキル                                                |
+| -------------------------------- | --------------------------------------------------------- |
+| TS/TSX を書く・直す              | `rimltools-typescript` + `noter-conventions`              |
+| 画面・マークアップ・CSS を書く   | `rimltools-html-a11y` + `noter-conventions`               |
+| 機能追加・バグ修正               | `rimltools-tdd` + `noter-conventions`（必ず red → green） |
+| どこに置くか迷う・機能を拡張する | `noter-architecture`                                      |
+| 並行作業・worktree・コンフリクト | `rimltools-worktree` + `noter-conventions`                |
+| UI・UX を見直す                  | `better-interface`                                        |
+| HTML/CSS/クライアント JS を書く  | `modern-web-guidance`                                     |
+| Workers / DO / D1 に触る         | `workers-best-practices`                                  |
 
 設計の背景は `docs/architecture.md`、`docs/realtime-protocol.md`、`docs/adr/`。
 UX は `docs/design/ux.md`、デザインシステムは `DESIGN.md`。

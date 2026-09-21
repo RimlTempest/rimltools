@@ -1,5 +1,5 @@
 /**
- * core が要求する依存の型。**利用側が定義する**（ISP / noter-typescript §4）。
+ * core が要求する依存の型。**利用側が定義する**（ISP / rimltools-typescript §4）。
  *
  * Durable Object / Workers の実型は import しない。必要なメンバーだけを
  * 構造的に宣言することで、core は `cloudflare:workers` にも DOM にも依存しない。

@@ -3,7 +3,7 @@
  *
  * A copy of products/qrcc/tools/oxlint-plugin-qrcc under the `rimltools/`
  * prefix, so root code follows the same rules as the products. See
- * `products/qrcc/.claude/skills/qrcc-typescript/SKILL.md` for the rationale.
+ * `.claude/skills/rimltools-typescript/SKILL.md` for the rationale.
  */
 
 /** @param {import('estree').Node} node */

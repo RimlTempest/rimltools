@@ -3,7 +3,7 @@
  *
  * 実体（server function・`crypto`・クリップボード）は `*.route.tsx` が組み立てて
  * 渡す。画面はこの型しか知らないので、テストでは素のオブジェクトで差し替えられる
- * （.claude/skills/qrcc-typescript の関数DI）。
+ * （.claude/skills/rimltools-typescript の関数DI）。
  */
 import type { CodeId, FolderId, IdParseError, Result } from '@qrcc/contract'
 import type { CreateShareDraft } from '@qrcc/manage/core'

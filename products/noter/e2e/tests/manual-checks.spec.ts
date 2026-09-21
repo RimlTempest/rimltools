@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
 
 /**
- * `.claude/skills/noter-html-a11y/references/manual-checks.md` のうち、
+ * `.claude/skills/rimltools-html-a11y/references/manual-checks.md` のうち、
  * **機械で確かめられるもの**をここに落とす（plan 008 Step 3）。
  *
  * 読み上げ（VoiceOver / NVDA）だけは人が行う。ここに無いからといって

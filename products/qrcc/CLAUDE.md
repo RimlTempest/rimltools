@@ -8,15 +8,19 @@ Bun workspaces の monorepo。
 
 ## 作業を始める前に読むもの
 
-| 状況                             | 読むスキル                     |
-| -------------------------------- | ------------------------------ |
-| TS/TSX を書く・直す              | `qrcc-typescript`              |
-| 画面・マークアップ・CSS を書く   | `qrcc-html-a11y`               |
-| 機能追加・バグ修正               | `qrcc-tdd`（必ず red → green） |
-| どこに置くか迷う・機能を拡張する | `qrcc-architecture`            |
-| 並行作業・worktree・コンフリクト | `qrcc-worktree`                |
-| UI・UX を見直す                  | `better-interface`             |
-| HTML/CSS/クライアント JS を書く  | `modern-web-guidance`          |
+`rimltools-*` と外部の skill（`better-interface` など）はリポジトリ直下の `.claude/skills/` に、
+qrcc 固有の skill（`qrcc-architecture` / `qrcc-conventions`）は `products/qrcc/.claude/skills/` にある。
+共通の規約とプロダクト固有の差分は必ず両方読む。ルートの `CLAUDE.md` も参照。
+
+| 状況                             | 読むスキル                                               |
+| -------------------------------- | -------------------------------------------------------- |
+| TS/TSX を書く・直す              | `rimltools-typescript` + `qrcc-conventions`              |
+| 画面・マークアップ・CSS を書く   | `rimltools-html-a11y` + `qrcc-conventions`               |
+| 機能追加・バグ修正               | `rimltools-tdd` + `qrcc-conventions`（必ず red → green） |
+| どこに置くか迷う・機能を拡張する | `qrcc-architecture`                                      |
+| 並行作業・worktree・コンフリクト | `rimltools-worktree` + `qrcc-conventions`                |
+| UI・UX を見直す                  | `better-interface`                                       |
+| HTML/CSS/クライアント JS を書く  | `modern-web-guidance`                                    |
 
 設計の背景は `docs/architecture.md` と `docs/adr/`。
 

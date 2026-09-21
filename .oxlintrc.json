@@ -132,6 +132,8 @@
     "**/routeTree.gen.ts",
     "**/target/**",
     "**/worker-configuration.d.ts",
+    ".agents/**",
+    ".claude/**",
     "infra/**",
     "products/**"
   ]

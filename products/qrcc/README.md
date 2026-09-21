@@ -105,13 +105,14 @@ bun run wt pr                  # check を通してから PR
 `.claude/skills/` にプロジェクト固有のスキルを置いている
 （`.agents/skills/` の実体への symlink）。
 
-| スキル              | 内容                                                 |
-| ------------------- | ---------------------------------------------------- |
-| `qrcc-typescript`   | any/as/class/enum 禁止、Result・Branded 型・関数DI   |
-| `qrcc-html-a11y`    | WCAG AAA、セマンティクス優先、最新 CSS、ダークモード |
-| `qrcc-tdd`          | red→green→refactor、テストサイズ                     |
-| `qrcc-architecture` | 置き場所の判断・境界・拡張レシピ                     |
-| `qrcc-worktree`     | レーン所有境界・依存順・競合回避                     |
+| スキル                 | 内容                                                                              |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| `rimltools-typescript` | any/as/class/enum 禁止、Result・Branded 型・関数DI                                |
+| `rimltools-html-a11y`  | WCAG AAA、セマンティクス優先、最新 CSS、ダークモード                              |
+| `rimltools-tdd`        | red→green→refactor、テストサイズ                                                  |
+| `qrcc-architecture`    | 置き場所の判断・境界・拡張レシピ                                                  |
+| `qrcc-conventions`     | 上の共通規約に対する qrcc 固有の差分（Rust 境界・ラベル印刷・ゴールデンテスト等） |
+| `rimltools-worktree`   | レーン所有境界・依存順・競合回避                                                  |
 
 規約の多くは `.oxlintrc.json` の `qrcc/*` ルールと CI の `guard` ジョブで
 機械的に強制される。ドキュメントを読まなくても違反すればビルドが落ちる。

@@ -1,6 +1,6 @@
 /**
  * 失敗を値として扱うための型。ドメイン層では throw せずこれを返す。
- * 詳細: .claude/skills/qrcc-typescript/references/result.md
+ * 詳細: .claude/skills/rimltools-typescript/references/result.md
  */
 export type Ok<T> = { readonly ok: true; readonly value: T }
 export type Err<E> = { readonly ok: false; readonly error: E }

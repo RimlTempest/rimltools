@@ -6,7 +6,7 @@ import { expect, test } from '@playwright/test'
  *
  * オフライン・削除・閲覧のみの 3 つを、実ブラウザ 2 つと本物の Durable Object で
  * 固定する。**`waitForTimeout` は使わない。** 状態が変わるのを待つ
- * （`.claude/skills/noter-tdd` §5）。
+ * （`.claude/skills/rimltools-tdd` §5）。
  */
 
 /** ホームから種別ボタンを押して 1 本作る。`/d/:id` の URL を返す。 */

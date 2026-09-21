@@ -171,6 +171,6 @@ PR ごとに **変更されたレーンの範囲だけ**を実行して時間を
 
 - [ ] `LANE.md` を読み、所有ディレクトリを把握した
 - [ ] 依存レーンが main にマージ済みか確認した
-- [ ] `.claude/skills/qrcc-typescript` と `qrcc-tdd` を読んだ（TS を書く場合）
-- [ ] `.claude/skills/qrcc-html-a11y` を読んだ（UI を書く場合）
+- [ ] `.claude/skills/rimltools-typescript` と `rimltools-tdd` を読んだ（TS を書く場合）
+- [ ] `.claude/skills/rimltools-html-a11y` を読んだ（UI を書く場合）
 - [ ] 失敗するテストから始める
