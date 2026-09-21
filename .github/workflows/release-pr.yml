@@ -1,0 +1,72 @@
+name: Release PR
+
+# develop に push されるたびに、develop → main の Release PR を作成・更新する（ADR-0002）。
+# マージ（merge commit）した瞬間に deploy-production.yml が本番へ段階リリースする。
+#
+# GITHUB_TOKEN で作った PR には pull_request のワークフロー（release-guard など）が走らない。
+# secret RELEASE_BOT_TOKEN（GitHub App か fine-grained PAT: contents/pull-requests の read/write）
+# があればそれで作る。無ければ GITHUB_TOKEN で作り、Summary に手順を出す（docs/release.md）。
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: release-pr
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  release-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
+        with:
+          cache: true
+          install_args: bun
+      - name: Release PR を作る / 更新する
+        run: |
+          git fetch -q origin main develop
+          ahead=$(git rev-list --count origin/main..origin/develop)
+          if [ "$ahead" = 0 ]; then
+            echo "develop has nothing that main lacks"
+            exit 0
+          fi
+          tools=$(RELEASE_BASE=origin/main RELEASE_HEAD=origin/develop GITHUB_OUTPUT=/dev/null \
+            bun scripts/release/release.ts changed | sed -n 's/^tools to release: //p')
+          {
+            echo "develop → main。**マージした瞬間に本番へ段階リリースされる**（docs/release.md）。"
+            echo
+            echo "### リリースされるツール"
+            echo
+            echo "${tools:-(none)}"
+            echo
+            echo "### 含まれる変更"
+            echo
+            git log --no-merges --format='- %s (%h)' origin/main..origin/develop
+            echo
+            echo "マージ方法は **merge commit**（squash しない。develop との履歴を保つ）。"
+          } > body.md
+          number=$(gh pr list --repo "$REPO" --base main --head develop --state open --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh pr edit "$number" --repo "$REPO" --body-file body.md
+            echo "updated #$number"
+          else
+            gh pr create --repo "$REPO" --base main --head develop \
+              --title "release: $(date -u +%Y-%m-%d) (${tools:-no deployable changes})" --body-file body.md
+          fi
+          if [ -z "$USING_BOT" ]; then
+            echo "::warning::RELEASE_BOT_TOKEN is not set. Checks that run on pull_request (release-guard) do not start for PRs opened by GITHUB_TOKEN. Close and reopen the Release PR once to trigger them (docs/release.md)."
+          fi
+        env:
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.RELEASE_BOT_TOKEN || github.token }}
+          USING_BOT: ${{ secrets.RELEASE_BOT_TOKEN != '' && 'yes' || '' }}

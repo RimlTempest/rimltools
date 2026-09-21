@@ -9,7 +9,9 @@
   // 入口はカスタムドメインだけにする。workers.dev を開けると APP_ORIGIN と
   // 違うオリジンが増え、Cookie も OAuth のリダイレクト先も噛み合わなくなる。
   "workers_dev": false,
-  "routes": [{ "pattern": "qrcc.riml4i.com", "custom_domain": true }],
+  // Custom Domain（qrcc.tools.riml4i.com）は Terraform の持ち物（ルート ADR-0005）。
+  // wrangler の routes に書くと versions deploy とは別経路で更新され、Terraform と取り合いになる。
+  // 環境ごとのホスト名と APP_ORIGIN は scripts/release が書き換えて出す（docs/release.md）。
 
   // qrcc-api は routes を持たない auxiliary Worker。ここからのみ到達できる。
   "services": [{ "binding": "API", "service": "qrcc-api" }],
