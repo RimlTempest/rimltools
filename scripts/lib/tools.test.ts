@@ -1,0 +1,75 @@
+import { describe, expect, test } from 'bun:test'
+
+import { parseTools } from './tools.ts'
+
+const valid = {
+  domain: 'tools.example.com',
+  zone: 'example.com',
+  tools: [
+    {
+      name: 'qrcc',
+      title: 'QR',
+      description: 'd',
+      path: 'products/qrcc',
+      subdomain: 'qrcc',
+      legacyHosts: ['qrcc.example.com'],
+      rust: true,
+      workers: [
+        { name: 'qrcc-api', role: 'internal', buildConfig: 'a.json' },
+        { name: 'qrcc-web', role: 'public', buildConfig: 'b.json' },
+      ],
+      d1: [{ name: 'qrcc', binding: 'DB', migrationsConfig: 'apps/api/wrangler.jsonc' }],
+      release: { mode: 'canary', steps: [10, 50, 100], bakeMinutes: 10 },
+      slo: { availability: 99.5, windowDays: 28 },
+      smoke: { cli: 'bun run smoke', browser: 'bun run smoke:browser', e2ePackage: '@qrcc/e2e' },
+    },
+  ],
+}
+
+describe('parseTools', () => {
+  test('accepts the registry and derives hosts', () => {
+    const result = parseTools(valid)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    const [tool] = result.value.tools
+    expect(tool?.name).toBe('qrcc')
+    expect(tool?.host).toBe('qrcc.tools.example.com')
+    expect(tool?.stagingHost).toBe('qrcc-staging.tools.example.com')
+  })
+
+  test('rejects a tool without exactly one public worker', () => {
+    const broken = structuredClone(valid)
+    const [tool] = broken.tools
+    if (tool === undefined) return
+    for (const worker of tool.workers) worker.role = 'internal'
+    const result = parseTools(broken)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error).toContain('qrcc: exactly one public worker')
+  })
+
+  test('rejects canary steps that do not end at 100', () => {
+    const broken = structuredClone(valid)
+    const [tool] = broken.tools
+    if (tool === undefined) return
+    tool.release.steps = [10, 50]
+    const result = parseTools(broken)
+    expect(result.ok).toBe(false)
+  })
+
+  test('rejects duplicate tool names', () => {
+    const broken = structuredClone(valid)
+    const [tool] = broken.tools
+    if (tool === undefined) return
+    broken.tools.push(structuredClone(tool))
+    const result = parseTools(broken)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error).toContain('duplicate tool name: qrcc')
+  })
+
+  test('rejects non-objects', () => {
+    expect(parseTools(null).ok).toBe(false)
+    expect(parseTools({ tools: 'x' }).ok).toBe(false)
+  })
+})

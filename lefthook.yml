@@ -53,6 +53,21 @@ pre-commit:
             # cwd にしたまま起動する（ADR-0006 / tools/markuplint）
             run: node tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json {staged_files}
 
+    - name: root
+      glob: '*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,css,md,yaml,yml}'
+      exclude:
+        - 'products/**'
+      group:
+        parallel: true
+        jobs:
+          - name: root-oxfmt
+            run: bunx oxfmt {staged_files}
+            stage_fixed: true
+
+          - name: root-oxlint
+            glob: '*.{js,jsx,ts,tsx,mjs,cjs}'
+            run: bunx oxlint --type-aware --deny-warnings {staged_files}
+
     - name: secrets
       run: |
         # *.example は値が空なので対象外。値が空文字/空のものは検出しない。
