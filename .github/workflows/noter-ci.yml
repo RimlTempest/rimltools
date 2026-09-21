@@ -1,9 +1,23 @@
-name: CI
+name: noter CI
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'products/noter/**'
+      - 'package.json'
+      - 'bun.lock'
+      - 'bunfig.toml'
+      - 'mise.toml'
+      - '.github/workflows/noter-ci.yml'
   pull_request:
+    paths:
+      - 'products/noter/**'
+      - 'package.json'
+      - 'bun.lock'
+      - 'bunfig.toml'
+      - 'mise.toml'
+      - '.github/workflows/noter-ci.yml'
   # 手動実行では paths-filter を無視して全ジョブを走らせる
   workflow_dispatch:
 
@@ -16,6 +30,10 @@ concurrency:
 permissions:
   contents: read
   pull-requests: read
+
+defaults:
+  run:
+    working-directory: products/noter
 
 jobs:
   changes:
@@ -31,23 +49,23 @@ jobs:
         with:
           filters: |
             ts:
-              - 'apps/**'
-              - 'features/**'
-              - 'shared/**'
-              - 'e2e/**'
-              - 'scripts/**'
-              - 'tsconfig*.json'
-              - '.oxlintrc.json'
-              - 'package.json'
+              - 'products/noter/apps/**'
+              - 'products/noter/features/**'
+              - 'products/noter/shared/**'
+              - 'products/noter/e2e/**'
+              - 'products/noter/scripts/**'
+              - 'products/noter/tsconfig*.json'
+              - 'products/noter/.oxlintrc.json'
+              - 'products/noter/package.json'
               - 'bun.lock'
             markup:
-              - '**/*.tsx'
-              - '.markuplintrc.json'
+              - 'products/noter/**/*.tsx'
+              - 'products/noter/.markuplintrc.json'
             web:
-              - 'apps/**'
-              - 'features/**'
-              - 'shared/ui/**'
-              - 'e2e/**'
+              - 'products/noter/apps/**'
+              - 'products/noter/features/**'
+              - 'products/noter/shared/ui/**'
+              - 'products/noter/e2e/**'
 
   guard:
     name: 不変条件の検査
@@ -189,5 +207,5 @@ jobs:
         if: failure()
         with:
           name: playwright-report
-          path: e2e/playwright-report/
+          path: products/noter/e2e/playwright-report/
           retention-days: 7

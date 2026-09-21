@@ -1,4 +1,4 @@
-name: Deploy
+name: noter Deploy
 
 # GitHub の Secrets（CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID）は
 # 2026-09-07 に登録済み。main への push で本番に出る（docs/deployment.md §2）。
@@ -7,10 +7,21 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths:
+      - 'products/noter/**'
+      - 'package.json'
+      - 'bun.lock'
+      - 'bunfig.toml'
+      - 'mise.toml'
+      - '.github/workflows/noter-deploy.yml'
 
 concurrency:
-  group: deploy-production
+  group: deploy-production-noter
   cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: products/noter
 
 jobs:
   deploy:
