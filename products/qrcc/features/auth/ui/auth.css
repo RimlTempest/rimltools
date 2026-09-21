@@ -1,0 +1,62 @@
+/*
+ * サインインまわりの見た目。
+ *
+ * レイアウトは Grid と Container Queries だけで組み、JS で幅を測らない。
+ * 色はセマンティックトークン経由なので、ダークモードは自動で付いてくる。
+ */
+
+.qrcc-auth-choices {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--qrcc-space-3);
+  margin-block: var(--qrcc-space-6);
+  /* 選択肢は縦に積む。押し間違いを減らすため横並びにしない */
+  justify-items: stretch;
+  max-inline-size: 28rem;
+}
+
+/* ボタンは狭い画面でも 44x44 を割らない（AAA 2.5.5） */
+.qrcc-auth-choices .qrcc-button {
+  min-block-size: var(--qrcc-target-min);
+  inline-size: 100%;
+}
+
+@container (min-width: 30rem) {
+  .qrcc-auth-choices .qrcc-button {
+    inline-size: auto;
+    justify-self: start;
+    padding-inline: var(--qrcc-space-8);
+  }
+}
+
+/*
+ * 窓（Window）の中身。板の装飾も見出しの大きさも riml-ds の `.rd-window` が
+ * 決めるので、ここは読み幅と箇条書きの間隔だけを持つ。
+ */
+.qrcc-auth-guide {
+  max-inline-size: var(--qrcc-measure);
+}
+
+.qrcc-auth-guide ul {
+  margin-block-end: 0;
+  padding-inline-start: var(--qrcc-space-6);
+}
+
+.qrcc-auth-guide li + li {
+  margin-block-start: var(--rd-space-2);
+}
+
+.qrcc-auth-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--qrcc-space-2);
+  margin: 0;
+  color: var(--qrcc-text-muted);
+}
+
+.qrcc-auth-status a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--qrcc-target-min);
+}

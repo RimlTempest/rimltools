@@ -1,0 +1,53 @@
+# Hooks are intentionally staged-file scoped so they stay fast enough to run on
+# every commit. The full sweep lives in CI (`bun run check`).
+pre-commit:
+  parallel: true
+  jobs:
+    - name: oxfmt
+      glob: '*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,css,md,yaml,yml}'
+      run: bunx oxfmt {staged_files}
+      stage_fixed: true
+
+    - name: oxlint
+      glob: '*.{js,jsx,ts,tsx,mjs,cjs}'
+      run: bunx oxlint --type-aware --deny-warnings {staged_files}
+
+    - name: markuplint
+      glob: '*.{tsx,html}'
+      # TypeScript 6 に固定した隔離インストールのバイナリを、リポジトリルートを
+      # cwd にしたまま起動する（ADR-0006 / tools/markuplint）
+      run: node tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json {staged_files}
+
+    - name: cargo-fmt
+      glob: '*.rs'
+      run: cargo fmt --all -- --check
+
+    - name: cargo-clippy
+      glob: '*.rs'
+      run: cargo clippy --workspace --all-targets -- -D warnings
+
+    - name: secrets
+      run: |
+        # *.example は値が空なので対象外。値が空文字/空のものは検出しない。
+        if git diff --cached -U0 -- ':!*.example' | grep -nE '^\+.*(BEGIN [A-Z ]*PRIVATE KEY|(GOOGLE_CLIENT_SECRET|BETTER_AUTH_SECRET|GOOGLE_CLIENT_ID)\s*[=:]\s*"?[A-Za-z0-9_.~/+-]{8,}|gho_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,})'; then
+          echo "Refusing to commit what looks like a secret. Put it in .dev.vars (gitignored) or a Wrangler secret." >&2
+          exit 1
+        fi
+
+pre-push:
+  parallel: false
+  jobs:
+    - name: typecheck
+      run: bun run typecheck
+
+    - name: test
+      run: bun run test
+
+commit-msg:
+  jobs:
+    - name: conventional-commit
+      run: |
+        head -1 "{1}" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9/-]+\))?!?: .{1,}' || {
+          echo "Commit message must be Conventional Commits, e.g. 'feat(render): add DataMatrix support'" >&2
+          exit 1
+        }

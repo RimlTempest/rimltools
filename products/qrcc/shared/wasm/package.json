@@ -1,0 +1,19 @@
+{
+  "name": "@qrcc/wasm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "bun run build:render && bun run build:decode",
+    "test": "bun test",
+    "build:types": "test -f pkg/qrcc_wasm.d.ts || wasm-pack build engine --target web --out-dir ../pkg --out-name qrcc_wasm --dev; test -f pkg/qrcc_scan_wasm.d.ts || wasm-pack build engine --target web --out-dir ../pkg --out-name qrcc_scan_wasm --dev --no-default-features --features decode",
+    "build:render": "wasm-pack build engine --target web --out-dir ../pkg --out-name qrcc_wasm --release",
+    "build:decode": "wasm-pack build engine --target web --out-dir ../pkg --out-name qrcc_scan_wasm --release --no-default-features --features decode"
+  },
+  "dependencies": {
+    "@qrcc/contract": "workspace:*"
+  }
+}

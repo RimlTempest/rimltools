@@ -1,0 +1,142 @@
+/*
+ * 窓（riml-ds の `.rd-window`）は margin を持たない。画面の中で窓が続くときの
+ * 間隔はページの側で決める（板にあった --rd-space-6 を窓の外側で保つ）。
+ * `.rd-window*` の見た目そのものは上書きしない（ADR-0012）。
+ */
+main .rd-window {
+  margin-block-end: var(--rd-space-6);
+}
+
+/* 「まど」は線ではなく面の切り替えで区切る。区切り線は点線にする */
+.qrcc-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--qrcc-space-4);
+  padding-block-end: var(--qrcc-space-4);
+  border-block-end: 0.125rem dotted var(--rd-color-border-default);
+  margin-block-end: var(--qrcc-space-6);
+}
+
+/* 書体だけ丸ゴシックにする。大きさは見出しの段と競らない 1.25rem のまま */
+.qrcc-header__brand {
+  font-family: var(--rd-font-family-display);
+  font-weight: var(--rd-font-weight-bold);
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.qrcc-header__status {
+  /* ナビの右に寄せる。狭い画面では折り返して下の行に落ちる */
+  margin-inline-start: auto;
+}
+
+.qrcc-global-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qrcc-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qrcc-global-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* AAA 2.5.5 */
+  min-block-size: var(--qrcc-target-min);
+  min-inline-size: var(--qrcc-target-min);
+  padding-inline: var(--rd-space-3);
+  /* ナビの項目はピル（riml-ds docs/brand.md §4） */
+  border-radius: var(--rd-radius-full);
+  font-weight: var(--rd-font-weight-bold);
+  text-decoration: none;
+}
+
+/* hover は浮かせ、現在地は窪ませる。同じ面にせず取り違えないようにする */
+.qrcc-global-nav a:hover {
+  background: var(--qrcc-surface-raised);
+  text-decoration: underline;
+}
+
+/* 現在地は色だけで示さない。下線と窪みでも区別できるようにする（1.4.1） */
+.qrcc-global-nav a[aria-current='page'] {
+  background: var(--qrcc-surface-sunken);
+  color: var(--qrcc-text);
+  box-shadow: inset 0 -3px 0 var(--qrcc-accent);
+}
+
+@media (forced-colors: active) {
+  .qrcc-global-nav a[aria-current='page'] {
+    box-shadow: inset 0 -3px 0 Highlight;
+  }
+}
+
+.qrcc-breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--qrcc-space-2);
+  margin: 0 0 var(--qrcc-space-4);
+  padding: 0;
+  list-style: none;
+  font-size: 0.925rem;
+}
+
+.qrcc-breadcrumbs li {
+  display: flex;
+  align-items: center;
+  gap: var(--qrcc-space-2);
+}
+
+.qrcc-breadcrumbs a {
+  display: inline-flex;
+  align-items: center;
+  /* AAA 2.5.5。ナビゲーション内の対象は本文中のリンクと違い例外にならない。
+     短い文言でも 44x44 を満たすよう、幅にも下限を置く */
+  min-block-size: var(--qrcc-target-min);
+  min-inline-size: var(--qrcc-target-min);
+  justify-content: center;
+  padding-inline: var(--rd-space-2);
+  border-radius: var(--rd-radius-full);
+}
+
+.qrcc-breadcrumbs [aria-current='page'] {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--qrcc-target-min);
+  font-weight: 700;
+}
+
+.qrcc-breadcrumbs [data-separator] {
+  color: var(--qrcc-text-muted);
+}
+
+.qrcc-footer {
+  margin-block-start: var(--qrcc-space-8);
+  padding-block-start: var(--qrcc-space-4);
+  border-block-start: 0.125rem dotted var(--rd-color-border-default);
+  color: var(--qrcc-text-muted);
+}
+
+/* 画面が広いときは本文を中央に寄せる。読み幅は base.css が担保する */
+body > :is(header, main, footer) {
+  max-inline-size: 60rem;
+  margin-inline: auto;
+}
+
+/*
+ * トップの「作る」と「読み取る」は別々の群。群間の余白が群内と同じだと、
+ * ひと続きの長いページに見えて切れ目が読めない。群内（見出しの 2rem）の
+ * 2 倍を空ける。線ではなく空白で分ける。
+ */
+.qrcc-home__section + .qrcc-home__section {
+  margin-block-start: var(--qrcc-space-8);
+  /* padding があると子の margin が外に抜けない。合計 4rem を確実に取る */
+  padding-block-start: var(--qrcc-space-8);
+}
+
+.qrcc-home__section + .qrcc-home__section > :first-child {
+  margin-block-start: 0;
+}

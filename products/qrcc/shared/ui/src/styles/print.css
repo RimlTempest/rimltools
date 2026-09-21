@@ -1,0 +1,27 @@
+@media print {
+  /* ダークモードのまま印刷しても白背景・黒文字になるようにする */
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+    padding: 0;
+  }
+
+  .qrcc-no-print {
+    display: none !important;
+  }
+
+  /* リンク先が紙面から辿れるようにする */
+  a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.75em;
+    word-break: break-all;
+  }
+
+  :where(h1, h2, h3) {
+    break-after: avoid;
+  }
+}

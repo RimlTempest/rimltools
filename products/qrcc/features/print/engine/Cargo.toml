@@ -1,0 +1,17 @@
+[package]
+name = "qrcc-print"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+qrcc-kernel.workspace = true
+qrcc-generate.workspace = true
+thiserror.workspace = true
+krilla.workspace = true
+usvg.workspace = true
+
+[lints]
+workspace = true

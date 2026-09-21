@@ -1,0 +1,21 @@
+{
+  "$comment": "RPC 共通エラーのワイヤ表現。TS の CommonRpcError と Rust の CommonRpcError が同じ JSON を読む。",
+  "cases": [
+    { "json": { "kind": "unauthorized" }, "valid": true },
+    { "json": { "kind": "forbidden" }, "valid": true },
+    { "json": { "kind": "internal" }, "valid": true },
+    { "json": { "kind": "not_found", "resource": "code" }, "valid": true },
+    {
+      "json": { "kind": "limit_exceeded", "limit": "page_size", "max": 50, "actual": 120 },
+      "valid": true
+    },
+    { "json": { "kind": "not_found" }, "valid": false, "note": "resource が必須" },
+    {
+      "json": { "kind": "limit_exceeded", "limit": "page_size" },
+      "valid": false,
+      "note": "max/actual が必須"
+    },
+    { "json": { "kind": "wat" }, "valid": false, "note": "未知の kind は握りつぶさない" },
+    { "json": {}, "valid": false, "note": "kind がない" }
+  ]
+}

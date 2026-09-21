@@ -1,0 +1,80 @@
+/*
+ * デザイントークン。riml-ds（@rimltempest/riml-ds-tokens）の別名を張るだけの層。
+ * 新しく書く CSS は --rd-* を直接使う。ここに qrcc 固有の変数を足さない。
+ * 対応表と、段階 2 でもあえて riml-ds に寄せていないものは docs/adr/0011-riml-ds-tokens.md。
+ *
+ * コントラストは WCAG 2.2 AAA（本文 7:1 / 大きい文字 4.5:1 / UI 境界 3:1）を
+ * ライト・ダーク両方で満たす。値の正は riml-ds 側にある。
+ */
+:root {
+  /* --- セマンティックカラー ------------------------------------------- */
+  --qrcc-surface: var(--rd-color-surface-default);
+  --qrcc-surface-raised: var(--rd-color-surface-raised);
+  --qrcc-surface-sunken: var(--rd-color-surface-sunken);
+  /*
+   * ポインタを載せたときの面。sunken を流用しない — ダークでは地の面より
+   * 暗くなり「押し込まれた」ように見えてしまう。
+   */
+  --qrcc-surface-hover: var(--rd-color-surface-hover);
+
+  --qrcc-text: var(--rd-color-text-default);
+  /* 補助テキストも 7:1 を割らない明度。「薄いグレー」で妥協しない */
+  --qrcc-text-muted: var(--rd-color-text-muted);
+
+  --qrcc-accent: var(--rd-color-accent-default);
+  /* ホバーは明度だけを動かす。色相を変えると別の意味の色に見える */
+  --qrcc-accent-hover: var(--rd-color-accent-hover);
+  --qrcc-on-accent: var(--rd-color-text-on-accent);
+  --qrcc-danger: var(--rd-color-status-danger-default);
+  --qrcc-danger-hover: var(--rd-color-status-danger-hover);
+  --qrcc-on-danger: var(--rd-color-text-on-status);
+  --qrcc-success: var(--rd-color-status-success-default);
+
+  --qrcc-border: var(--rd-color-border-default);
+  --qrcc-border-strong: var(--rd-color-border-strong);
+  --qrcc-focus-ring: var(--rd-color-focus-ring);
+
+  /* --- 寸法 ------------------------------------------------------------ */
+  --qrcc-space-1: var(--rd-space-1);
+  --qrcc-space-2: var(--rd-space-2);
+  --qrcc-space-3: var(--rd-space-3);
+  --qrcc-space-4: var(--rd-space-4);
+  --qrcc-space-6: var(--rd-space-6);
+  --qrcc-space-8: var(--rd-space-8);
+
+  --qrcc-radius: var(--rd-radius-md);
+  --qrcc-radius-sm: var(--rd-radius-sm);
+  /*
+   * 窓（Mado）の角丸。riml-ds の lg（1rem）に揃える。
+   * 「外側 = 内側 + padding」で 1.5rem にしていたのは、面の中に面を入れる箱の話。
+   * 窓では上の角をタイトル帯が、下の角を本文の padding が占めるので同心にならない
+   * （docs/adr/0012-mado-look.md）。
+   */
+  --qrcc-radius-lg: var(--rd-radius-lg);
+
+  /* AAA 2.5.5: クリック対象は 44x44 CSS px 以上 */
+  --qrcc-target-min: var(--rd-sizing-target-min);
+  /* AAA 2.4.13: フォーカスインジケータは 2px 以上 */
+  --qrcc-focus-width: var(--rd-focus-ring-width);
+  --qrcc-focus-offset: var(--rd-focus-ring-offset);
+
+  /* AAA 1.4.8: 本文は 80 文字以内。日本語の読みやすさで 70ch を選んでいる */
+  --qrcc-measure: 70ch;
+
+  /*
+   * 文字の大きさは riml-ds の型トークン（--rd-type-*）が正。見出しは base.css が
+   * --rd-type-heading-1..4 を font の短縮形で受け取る。ここに残るのは補助文の 1 つだけ。
+   */
+  --qrcc-text-sm: var(--rd-type-small-font-size);
+
+  --qrcc-font-sans: var(--rd-font-family-sans);
+  --qrcc-font-mono: var(--rd-font-family-mono);
+}
+
+/* ユーザーの明示選択は OS 設定を上書きする */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}

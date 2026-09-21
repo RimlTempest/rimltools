@@ -1,0 +1,23 @@
+{
+  "name": "@qrcc/shell",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./ui": "./ui/index.ts",
+    "./ui/shell.css": "./ui/shell.css"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@qrcc/auth": "workspace:*",
+    "@qrcc/contract": "workspace:*",
+    "@qrcc/generate": "workspace:*",
+    "@qrcc/scan": "workspace:*",
+    "@qrcc/ui": "workspace:*",
+    "@qrcc/wasm": "workspace:*",
+    "@qrcc/webmcp": "workspace:*"
+  }
+}

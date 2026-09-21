@@ -1,0 +1,156 @@
+/*
+ * ラベル面付けの印刷スタイル。
+ *
+ * **寸法の数値をここに書かない。** 台紙の定義元は
+ * features/print/core/sheets/ の 1 台紙 1 ファイルで、
+ * sheetCustomProperties() が渡すカスタムプロパティだけを読む（ADR-0005）。
+ *
+ * 面付けの規則は @media print の外に置いてある。画面のプレビューと紙で
+ * 同じ規則が効くので、「画面で見たものが刷られる」ことが保証される。
+ * 印刷時に変わるのは、画面用の飾り（枠線・影）を消すことだけ。
+ */
+
+/*
+ * 用紙サイズだけは CSS 側に持つ（@page の size に var() は使えない）。
+ * A4 以外の台紙を足したときに追従を忘れないよう、
+ * features/print/core/sheets/index.test.ts が「全台紙が A4」を検査している。
+ */
+@page qrcc-label {
+  size: A4 portrait;
+  margin: 0;
+}
+
+/*
+ * <select> は最も長い選択肢の幅まで広がり、fieldset の既定
+ * （min-inline-size: min-content）がそれを押し返せない。狭い画面で
+ * ページごと横に伸びないよう、幅の下限を外す（1.4.10 / 320px 幅）。
+ */
+.qrcc-print-form fieldset {
+  min-inline-size: 0;
+}
+
+.qrcc-print-form .qrcc-field {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.qrcc-print-form select.qrcc-field__control {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.qrcc-print-preview {
+  /* 台紙は物理寸法（210mm ≒ 794px）なので狭い画面でははみ出す。
+     ページ全体を横スクロールさせず、この中だけでスクロールする（1.4.10） */
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
+
+.qrcc-print-sheet {
+  /* 名前付きページ。この要素だけが A4 余白なしで刷られる */
+  page: qrcc-label;
+  box-sizing: border-box;
+  display: grid;
+  /* 面付けはここだけで決まる。JS では座標を計算しない */
+  grid-template-columns: repeat(var(--qrcc-sheet-columns), var(--qrcc-cell-inline));
+  grid-auto-rows: var(--qrcc-cell-block);
+  column-gap: var(--qrcc-cell-gap-inline);
+  row-gap: var(--qrcc-cell-gap-block);
+  inline-size: var(--qrcc-sheet-page-inline);
+  block-size: var(--qrcc-sheet-page-block);
+  padding-block: var(--qrcc-sheet-margin-block-start) var(--qrcc-sheet-margin-block-end);
+  padding-inline: var(--qrcc-sheet-margin-inline-start) var(--qrcc-sheet-margin-inline-end);
+  margin: 0;
+  list-style: none;
+  /* 台紙は紙。ダークモードのままでも白地に黒で見せ、印刷結果と一致させる */
+  background: #fff;
+  color: #000;
+  break-after: page;
+}
+
+/* 最後の台紙のあとに白紙を出さない */
+.qrcc-print-preview > *:last-child .qrcc-print-sheet {
+  break-after: auto;
+}
+
+.qrcc-print-cell {
+  display: grid;
+  /*
+   * 読み上げ用の位置説明（.qrcc-visually-hidden）は絶対配置。基準になる
+   * 要素がないと初期包含ブロックに逃げ、プレビューの横スクロール領域から
+   * はみ出してページ全体が横に伸びる（1.4.10）。
+   */
+  position: relative;
+  /* コードは伸縮し、キャプションは必要なぶんだけ */
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  align-items: center;
+  gap: 1mm;
+  padding: 1.5mm;
+  box-sizing: border-box;
+  /* 本文の読み幅（base.css の :where(li)）を打ち消す */
+  max-inline-size: none;
+  /* セルからはみ出すと隣のラベルに重なる */
+  overflow: hidden;
+  break-inside: avoid;
+}
+
+.qrcc-print-label__symbol {
+  display: grid;
+  /* grid 内で縮められるようにする（既定の auto だと縮まない） */
+  min-block-size: 0;
+  block-size: 100%;
+}
+
+.qrcc-print-label__symbol svg {
+  block-size: 100%;
+  inline-size: auto;
+  max-inline-size: 100%;
+  justify-self: center;
+}
+
+.qrcc-print-label__caption {
+  font-size: 2.6mm;
+  line-height: 1.3;
+  text-align: center;
+  /* 長い URL でもセルの外に出さない */
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+}
+
+.qrcc-print-label__pending {
+  font-size: 2.6mm;
+  color: #444;
+}
+
+@media screen {
+  /* 台紙とセルの境目は画面だけの目印。紙には出さない */
+  .qrcc-print-sheet {
+    box-shadow: 0 0 0 1px var(--qrcc-border);
+    margin-block-end: var(--qrcc-space-6);
+  }
+
+  .qrcc-print-cell {
+    outline: 1px dashed #999;
+    outline-offset: -1px;
+  }
+}
+
+@media print {
+  /*
+   * 紙に出すのは台紙だけ。ヘッダやフッタが刷られると 1 ページ余計に増え、
+   * 使いかけの台紙が 1 枚無駄になる。印刷画面を開いているときだけ効かせる。
+   */
+  body:has(.qrcc-print-preview) > :is(header, footer) {
+    display: none;
+  }
+
+  body:has(.qrcc-print-preview) > main {
+    max-inline-size: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .qrcc-print-preview {
+    overflow: visible;
+  }
+}

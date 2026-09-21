@@ -1,0 +1,111 @@
+/*
+ * 窓（Window）の中身。板の装飾は riml-ds の `.rd-window` が持つので、
+ * ここはレイアウトだけ。
+ */
+.qrcc-code-preview {
+  display: grid;
+  gap: var(--rd-space-4);
+  margin: 0;
+  /* 内容に応じて 1 段組と 2 段組を切り替える。ページ幅ではなく自分の幅で決める */
+  container-type: inline-size;
+}
+
+@container (inline-size >= 32rem) {
+  .qrcc-code-preview {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+  }
+}
+
+.qrcc-code-preview__image svg {
+  /* 生成物は等倍で見せる。小さすぎる場合でも拡大でぼやけない（SVG） */
+  block-size: auto;
+  max-inline-size: min(100%, 20rem);
+}
+
+.qrcc-code-preview figcaption p {
+  margin-block-end: var(--qrcc-space-2);
+}
+
+/* 大きさは設定を変えるたびに書き換わる。等幅の数字にして行が揺れないようにする */
+.qrcc-code-preview figcaption {
+  font-variant-numeric: tabular-nums;
+}
+
+form fieldset {
+  margin-block-end: var(--qrcc-space-6);
+  border: 1px solid var(--qrcc-border);
+  border-radius: var(--qrcc-radius);
+  padding: var(--qrcc-space-4);
+}
+
+form legend {
+  font-weight: 700;
+  padding-inline: var(--qrcc-space-2);
+}
+
+form fieldset label:has(input[type='radio'], input[type='checkbox']) {
+  display: flex;
+  align-items: center;
+  gap: var(--qrcc-space-2);
+  /* AAA 2.5.5: ラベル全体を当たり判定にする */
+  min-block-size: var(--qrcc-target-min);
+  cursor: pointer;
+}
+
+form input[type='color'] {
+  /* 色見本は小さくなりがちなので、対象サイズを明示的に確保する */
+  inline-size: 100%;
+  max-inline-size: 8rem;
+  min-block-size: var(--qrcc-target-min);
+  padding: var(--qrcc-space-1);
+}
+
+/*
+ * プレビューとフォームの並べ方。
+ *
+ * DOM 上はプレビューが先。設定は下に長く続くので、後ろに置くと変えるたびに
+ * フォームを越えてスクロールすることになる。
+ *
+ * 広い画面では横に並べ、プレビューを貼り付かせる。設定をどれだけ下まで
+ * 触っても結果が視界から外れない。狭い画面ではそのまま縦に積む
+ * （横に並べるとどちらも読めない幅になる）。
+ */
+.qrcc-generate__layout {
+  display: grid;
+  gap: var(--qrcc-space-6);
+}
+
+/*
+ * ここだけはコンテナクエリではなくビューポート幅で切り替える。
+ * 貼り付く高さの基準がビューポートであり、「横に並べる」判断も
+ * 同じ基準で決めないとズレるため。
+ */
+@media (min-width: 64rem) {
+  .qrcc-generate__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+    align-items: start;
+  }
+
+  /* 見た目は右、読み上げ順は先頭のまま */
+  .qrcc-generate__preview {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .qrcc-generate__layout > form {
+    grid-column: 1;
+    grid-row: 1;
+  }
+}
+
+/*
+ * 貼り付けるのは画面が十分に高いときだけ。低い画面で貼り付くと
+ * フォームの可視領域を食い潰す。切り取らないので保存ボタンも隠れない。
+ */
+@media (min-width: 64rem) and (min-height: 44rem) {
+  .qrcc-generate__preview {
+    position: sticky;
+    inset-block-start: var(--qrcc-space-4);
+  }
+}

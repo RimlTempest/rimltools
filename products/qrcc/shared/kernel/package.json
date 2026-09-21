@@ -1,0 +1,17 @@
+{
+  "name": "@qrcc/kernel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rust の qrcc-kernel と TS の @qrcc/contract が同じ判定をすることを保証する、言語をまたぐ適合フィクスチャと両側のテスト。",
+  "type": "module",
+  "exports": {
+    "./fixtures/*": "./fixtures/*"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@qrcc/contract": "workspace:*"
+  }
+}

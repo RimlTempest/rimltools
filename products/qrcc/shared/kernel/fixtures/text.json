@@ -1,0 +1,60 @@
+{
+  "$comment": "検証済み文字列の適合ケース。kind は non_empty_text|http_url|email|phone|hex_color。",
+  "cases": [
+    { "kind": "non_empty_text", "value": "在庫ラベル", "valid": true },
+    {
+      "kind": "non_empty_text",
+      "value": "  名前  ",
+      "valid": true,
+      "note": "前後の空白は許容。中身があればよい"
+    },
+    { "kind": "non_empty_text", "value": "", "valid": false },
+    { "kind": "non_empty_text", "value": "   ", "valid": false },
+    { "kind": "non_empty_text", "value": "\t\n", "valid": false },
+    { "kind": "non_empty_text", "value": "　", "valid": false, "note": "全角スペースのみ" },
+
+    { "kind": "http_url", "value": "https://example.com", "valid": true },
+    { "kind": "http_url", "value": "http://example.com/a?b=1#c", "valid": true },
+    { "kind": "http_url", "value": "https://example.com:8443/path", "valid": true },
+    {
+      "kind": "http_url",
+      "value": "javascript:alert(1)",
+      "valid": false,
+      "note": "スキームが http 以外"
+    },
+    { "kind": "http_url", "value": "data:text/html,x", "valid": false },
+    { "kind": "http_url", "value": "file:///etc/passwd", "valid": false },
+    { "kind": "http_url", "value": "mailto:a@example.com", "valid": false },
+    { "kind": "http_url", "value": "https://", "valid": false, "note": "ホストがない" },
+    { "kind": "http_url", "value": "not a url", "valid": false },
+    { "kind": "http_url", "value": "", "valid": false },
+
+    { "kind": "email", "value": "riml.slime@example.com", "valid": true },
+    { "kind": "email", "value": "a+b@sub.example.co.jp", "valid": true },
+    { "kind": "email", "value": "nope", "valid": false },
+    { "kind": "email", "value": "a b@example.com", "valid": false },
+    { "kind": "email", "value": "a@", "valid": false },
+    { "kind": "email", "value": "@example.com", "valid": false },
+    {
+      "kind": "email",
+      "value": "a@example",
+      "valid": false,
+      "note": "ドットを含むドメインを要求する"
+    },
+
+    { "kind": "phone", "value": "+819012345678", "valid": true },
+    { "kind": "phone", "value": "+12025550123", "valid": true },
+    { "kind": "phone", "value": "090-1234-5678", "valid": false, "note": "E.164 のみ受け付ける" },
+    { "kind": "phone", "value": "+0123", "valid": false, "note": "先頭 0 と桁数不足" },
+    { "kind": "phone", "value": "+", "valid": false },
+    { "kind": "phone", "value": "abc", "valid": false },
+
+    { "kind": "hex_color", "value": "#fff", "valid": true },
+    { "kind": "hex_color", "value": "#00ff88", "valid": true },
+    { "kind": "hex_color", "value": "#00ff8880", "valid": true },
+    { "kind": "hex_color", "value": "fff", "valid": false, "note": "# がない" },
+    { "kind": "hex_color", "value": "#FFF", "valid": false, "note": "大文字は使わない" },
+    { "kind": "hex_color", "value": "#ffff", "valid": false, "note": "桁数が 3/6/8 でない" },
+    { "kind": "hex_color", "value": "#gggggg", "valid": false }
+  ]
+}

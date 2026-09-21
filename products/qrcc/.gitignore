@@ -1,0 +1,54 @@
+# deps
+node_modules/
+.pnp.*
+
+# build output
+dist/
+build/
+.output/
+.tanstack/
+.nitro/
+target/
+*.wasm
+
+# cloudflare
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+worker-configuration.d.ts
+
+# test / coverage
+coverage/
+.vitest/
+test-results/
+playwright-report/
+
+# caches
+.turbo/
+.cache/
+*.tsbuildinfo
+
+# editor / os
+.DS_Store
+.idea/
+*.swp
+
+# claude worktrees
+.claude/worktrees/
+
+# local env
+.env
+.env.local
+.env.*.local
+LANE.md
+routeTree.gen.ts
+
+# tanstack / wrangler generated
+apps/web/src/routeTree.gen.ts
+apps/web/src/worker-configuration.d.ts
+apps/*/build/
+shared/wasm/pkg/
+
+# archify visual-check の副産物
+docs/architecture/*.visual-check.*

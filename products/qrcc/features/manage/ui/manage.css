@@ -1,0 +1,195 @@
+/*
+ * 一覧・編集・共有の見た目。
+ *
+ * レイアウトは Grid と Container Queries で組み、JS で寸法を計算しない。
+ * 色はセマンティックトークンだけを参照するので、ダークモードは自動で付いてくる。
+ */
+
+.qrcc-manage-filters {
+  display: grid;
+  gap: var(--qrcc-space-4);
+  align-items: end;
+  margin-block-end: var(--qrcc-space-6);
+  container-type: inline-size;
+}
+
+@container (inline-size >= 40rem) {
+  .qrcc-manage-filters {
+    grid-template-columns: 2fr 1fr auto;
+  }
+}
+
+/* 広い表は画面ごとではなく、表だけを横スクロールさせる（1.4.10） */
+.qrcc-code-table__scroll {
+  overflow-x: auto;
+}
+
+.qrcc-code-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  /* 日本語の見出しが折り返して読みにくくならない程度に確保する */
+  min-inline-size: 40rem;
+}
+
+.qrcc-code-table caption {
+  text-align: start;
+  padding-block-end: var(--qrcc-space-2);
+  color: var(--qrcc-text-muted);
+}
+
+.qrcc-code-table :where(th, td) {
+  text-align: start;
+  padding: var(--qrcc-space-3);
+  border-block-end: 1px solid var(--qrcc-border);
+  vertical-align: top;
+}
+
+.qrcc-code-table thead th {
+  border-block-end: 2px solid var(--qrcc-border-strong);
+  white-space: nowrap;
+}
+
+.qrcc-code-table__sort,
+.qrcc-code-table__delete {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--qrcc-space-2);
+  /* AAA 2.5.5: クリック対象は 44x44 以上 */
+  min-block-size: var(--qrcc-target-min);
+  min-inline-size: var(--qrcc-target-min);
+  padding-inline: var(--qrcc-space-2);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--qrcc-radius-sm);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* 窓の本体は surface-raised。同じ色だと反応が見えないので、hover は窪ませる */
+.qrcc-code-table__sort:hover,
+.qrcc-code-table__delete:hover {
+  background: var(--rd-color-surface-sunken);
+  border-color: var(--rd-color-border-default);
+  text-decoration: underline;
+}
+
+.qrcc-code-table__delete {
+  color: var(--qrcc-danger);
+}
+
+/* 並べ替えの向きは記号でも示す（色だけに頼らない / 1.4.1） */
+.qrcc-code-table__mark {
+  font-size: 0.8em;
+}
+
+/*
+ * フォルダの改名と削除。1 件 = 1 フォーム で、操作はその場に置く。
+ * 幅が取れるときだけ入力とボタンを横に並べる（ページ幅ではなく自分の幅で決める）。
+ */
+.qrcc-folder-list {
+  display: grid;
+  gap: var(--qrcc-space-4);
+  margin-block-start: var(--qrcc-space-6);
+  padding: 0;
+  list-style: none;
+  container-type: inline-size;
+}
+
+/*
+ * 窓の中に板を入れ子にしない（riml-ds docs/brand.md §4）。行は面の切り替え
+ * ＝窪みで区切る。リスト行の角丸は radius.md。
+ */
+.qrcc-folder-list > li {
+  padding: var(--rd-space-4);
+  border-radius: var(--rd-radius-md);
+  background: var(--rd-color-surface-sunken);
+}
+
+.qrcc-folder-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qrcc-space-2);
+}
+
+@container (inline-size >= 40rem) {
+  .qrcc-folder-list > li > form {
+    display: grid;
+    /*
+     * ボタンのラベルにフォルダ名が入るので、操作列の幅は名前の長さ次第で
+     * いくらでも伸びる。`auto` に任せると操作列が幅を総取りし、入力欄が
+     * 数十 px まで潰れて改名できなくなる（実測 42px。名前によっては 16px
+     * まで落ち、axe の target-size にも引っかかった）。
+     *
+     * 入力欄に下限を与え、操作列は 0 まで縮められるようにする。
+     * ボタンのラベルは折り返せるので、縮んでも読めなくならない。
+     */
+    grid-template-columns: minmax(14rem, 1fr) minmax(0, auto);
+    gap: var(--qrcc-space-4);
+    align-items: end;
+  }
+}
+
+.qrcc-share-list {
+  display: grid;
+  gap: var(--qrcc-space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.qrcc-share-list > li {
+  display: grid;
+  gap: var(--qrcc-space-2);
+  padding: var(--rd-space-4);
+  border-radius: var(--rd-radius-md);
+  background: var(--rd-color-surface-sunken);
+}
+
+.qrcc-share-list__url {
+  font-family: var(--qrcc-font-mono);
+  /* URL は途中で折り返してよい。横スクロールを出さない */
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.qrcc-share-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qrcc-space-2);
+}
+
+/*
+ * 確認ダイアログは窓（.rd-window）を着る。面・角丸・帯の色は riml-ds が持つので、
+ * ここはダイアログにしか無いもの（幅・浮いている影）だけを書く。
+ * 本文の余白は .rd-window-body の仕事なので padding は 0 にする。
+ */
+.qrcc-confirm-dialog {
+  max-inline-size: min(32rem, 90vi);
+  padding: 0;
+  border: 0;
+  box-shadow: var(--rd-shadow-overlay);
+}
+
+.qrcc-confirm-dialog::backdrop {
+  background: var(--rd-color-overlay-default);
+}
+
+.qrcc-confirm-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qrcc-space-4);
+}
+
+/* Windows ハイコントラストでも境界が消えないようにする */
+@media (forced-colors: active) {
+  .qrcc-code-table :where(th, td) {
+    border-color: CanvasText;
+  }
+
+  /* 強制配色では影も面の色も消える。境界線で置き換える */
+  .qrcc-folder-list > li,
+  .qrcc-share-list > li,
+  .qrcc-confirm-dialog {
+    border: var(--rd-border-width-default) solid CanvasText;
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./shared/contract"
+    },
+    {
+      "path": "./shared/kernel"
+    },
+    {
+      "path": "./shared/ui"
+    },
+    {
+      "path": "./shared/wasm"
+    },
+    {
+      "path": "./shared/webmcp"
+    },
+    {
+      "path": "./features/shell"
+    },
+    {
+      "path": "./features/generate"
+    },
+    {
+      "path": "./features/scan"
+    },
+    {
+      "path": "./features/print"
+    },
+    {
+      "path": "./features/manage"
+    },
+    {
+      "path": "./features/auth"
+    },
+    {
+      "path": "./features/nfc"
+    }
+  ]
+}

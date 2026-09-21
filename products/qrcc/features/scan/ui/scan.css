@@ -1,0 +1,133 @@
+/*
+ * 読み取り画面。
+ *
+ * レイアウトは Grid と Container Queries だけで決める。JS では計算しない。
+ * 見た目の状態（カメラが動いているか）も data 属性 + CSS で表す。
+ */
+/*
+ * 窓（Window）の中身。板の装飾（背景・枠・角丸・余白）は riml-ds の
+ * `.rd-window` / `.rd-window-body` が持つので、ここはレイアウトだけ。
+ */
+.qrcc-scan__panel {
+  display: grid;
+  /* minmax(0, 1fr) が無いと、ファイル選択欄の max-content 幅で列が広がり、
+     320px 幅で横スクロールが出る（AAA 1.4.10） */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--rd-space-3);
+  justify-items: start;
+  /* ページ幅ではなく自分の幅で中身を組み替える */
+  container-type: inline-size;
+}
+
+.qrcc-scan__panel > p {
+  max-inline-size: var(--qrcc-measure);
+  margin: 0;
+}
+
+.qrcc-scan__panel .qrcc-field {
+  inline-size: 100%;
+  /* 暗黙の列は max-content。ファイル選択欄の内在幅（ボタン + ファイル名）が
+     そのまま列幅になり、320px の画面で横スクロールが出る（AAA 1.4.10） */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ファイル選択欄はボタンとファイル名の分だけ内在幅を持つ。狭い画面では縮める */
+.qrcc-scan__panel input[type='file'] {
+  max-inline-size: 100%;
+}
+
+/*
+ * 映像は aria-hidden の装飾。止まっているときは場所も取らない。
+ * 表示・非表示を JS の style 操作ではなく属性で切り替えるので、
+ * 状態が DOM を見るだけで分かる。
+ */
+.qrcc-scan__video {
+  display: none;
+  inline-size: 100%;
+  max-inline-size: 32rem;
+  aspect-ratio: 4 / 3;
+  background: var(--qrcc-surface-sunken);
+  border: 1px solid var(--qrcc-border-strong);
+  border-radius: var(--qrcc-radius-sm);
+  object-fit: cover;
+}
+
+.qrcc-scan__video[data-live='true'] {
+  display: block;
+}
+
+.qrcc-scan__results {
+  display: grid;
+  gap: var(--qrcc-space-3);
+  inline-size: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qrcc-scan__result {
+  display: grid;
+  gap: var(--qrcc-space-2);
+  justify-items: start;
+  padding: var(--qrcc-space-3);
+  background: var(--qrcc-surface);
+  border: 1px solid var(--qrcc-border);
+  border-radius: var(--qrcc-radius-sm);
+}
+
+/* 内容が 1 行に収まる幅があるときは、種類を横に並べる */
+@container (inline-size >= 30rem) {
+  .qrcc-scan__result {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .qrcc-scan__result-text {
+    grid-column: 1 / -1;
+  }
+}
+
+.qrcc-scan__result-text {
+  /* 読み取った内容は改行の入らない長い文字列になりやすい */
+  margin: 0;
+  font-family: var(--qrcc-font-mono);
+  overflow-wrap: anywhere;
+}
+
+.qrcc-scan__result-kind {
+  margin: 0;
+  color: var(--qrcc-text-muted);
+}
+
+/*
+ * 解釈結果（GS1 の要素・Wi-Fi・名刺など）。項目名と値の対応を <dl> で表す。
+ * 色や記号だけで意味を伝えないよう、項目名は必ずテキストで出す。
+ */
+.qrcc-scan__interpretation {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--qrcc-space-3);
+  row-gap: var(--qrcc-space-1);
+  inline-size: 100%;
+  margin: 0;
+  padding-block-start: var(--qrcc-space-2);
+  border-block-start: 1px solid var(--qrcc-border);
+}
+
+.qrcc-scan__interpretation dt {
+  color: var(--qrcc-text-muted);
+  font-weight: normal;
+}
+
+.qrcc-scan__interpretation dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media print {
+  /* 印刷では操作系を落とし、読み取った内容だけを残す */
+  .qrcc-scan__video,
+  .qrcc-scan__result .qrcc-button {
+    display: none;
+  }
+}
