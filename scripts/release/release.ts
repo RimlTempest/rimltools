@@ -31,7 +31,7 @@ import { parseArgs } from './args.ts'
 import { changedTools } from './changes.ts'
 import { currentStable, parseDeployments, parseWranglerOutput } from './deployments.ts'
 import type { DeployEnv } from './environment.ts'
-import { accessHeaders, mergeVariables, readEnvironment } from './environment.ts'
+import { accessHeaders, readEnvironment, readReleaseConfig } from './environment.ts'
 import { checkReleaseGuard } from './guard.ts'
 import { checkMigrations } from './migrations.ts'
 import type { WorkerPlan } from './plan.ts'
@@ -59,8 +59,38 @@ import {
 const EXIT_FAILED = 1
 const EXIT_NEEDS_HUMAN = 3
 
-const env = mergeVariables(process.env['RELEASE_VARS'], process.env)
-const access = accessHeaders(env)
+/**
+ * ログに出てもよい設定だけ（許可リスト）。資格情報は入れない（environment.ts）。
+ * 固定のキーはここで 1 つずつ読み、D1_<TOOL>_ID は RELEASE_VARS（GitHub の vars）から入る。
+ */
+const env = readReleaseConfig({
+  varsJson: process.env['RELEASE_VARS'],
+  values: {
+    RIMLTOOLS_ENV: process.env['RIMLTOOLS_ENV'],
+    BASE_DOMAIN: process.env['BASE_DOMAIN'],
+    CF_ZONE_ID: process.env['CF_ZONE_ID'],
+    WORKER_SUFFIX: process.env['WORKER_SUFFIX'],
+    CLOUDFLARE_ACCOUNT_ID: process.env['CLOUDFLARE_ACCOUNT_ID'],
+    GITHUB_OUTPUT: process.env['GITHUB_OUTPUT'],
+    GITHUB_STEP_SUMMARY: process.env['GITHUB_STEP_SUMMARY'],
+    GITHUB_SHA: process.env['GITHUB_SHA'],
+    GITHUB_RUN_ID: process.env['GITHUB_RUN_ID'],
+    RELEASE_BASE: process.env['RELEASE_BASE'],
+    RELEASE_HEAD: process.env['RELEASE_HEAD'],
+    RELEASE_MIN_SAMPLES: process.env['RELEASE_MIN_SAMPLES'],
+    RELEASE_MAX_EXTENSIONS: process.env['RELEASE_MAX_EXTENSIONS'],
+    GUARD_BASE: process.env['GUARD_BASE'],
+    GUARD_HEAD: process.env['GUARD_HEAD'],
+    GUARD_LABELS: process.env['GUARD_LABELS'],
+  },
+})
+
+// ── 資格情報（使う箇所でだけ読む。戻り値をログやエラー文字列に入れない）──────────
+
+const cloudflareToken = (): string => process.env['CLOUDFLARE_API_TOKEN'] ?? ''
+
+const accessCredentials = (): Record<string, string> =>
+  accessHeaders(process.env['CF_ACCESS_CLIENT_ID'], process.env['CF_ACCESS_CLIENT_SECRET'])
 
 const say = (message: string) => console.log(message)
 
@@ -101,8 +131,7 @@ const wrangler = async (args: string[], deployEnv: DeployEnv): Promise<WranglerR
     stdout: 'inherit',
     stderr: 'pipe',
     env: {
-      ...env,
-      CLOUDFLARE_API_TOKEN: deployEnv.apiToken,
+      ...process.env,
       CLOUDFLARE_ACCOUNT_ID: deployEnv.accountId,
       WRANGLER_OUTPUT_FILE_PATH: outFile,
       WRANGLER_SEND_METRICS: 'false',
@@ -252,7 +281,7 @@ const resolveStats = async (
   | undefined
 > => {
   const cf = createCloudflare({
-    apiToken: deployEnv.apiToken,
+    apiToken: cloudflareToken(),
     fetch: (input, init) => fetch(input, init),
   })
   const source = await selectSource([
@@ -267,7 +296,7 @@ const resolveStats = async (
 
 const makeDeps = (deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDeps => {
   const cf = createCloudflare({
-    apiToken: deployEnv.apiToken,
+    apiToken: cloudflareToken(),
     fetch: (input, init) => fetch(input, init),
   })
   return {
@@ -325,7 +354,7 @@ const makeDeps = (deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDe
       for (let attempt = 1; attempt <= 6; attempt += 1) {
         last = await runSmoke(url, headers, async (u, init) => {
           const res = await fetch(u, {
-            headers: { 'user-agent': 'rimltools-release', ...access, ...init.headers },
+            headers: { 'user-agent': 'rimltools-release', ...accessCredentials(), ...init.headers },
           })
           return { status: res.status, text: () => res.text() }
         })
@@ -340,7 +369,11 @@ const makeDeps = (deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDe
       const one = async () => {
         try {
           const res = await fetch(url, {
-            headers: { 'user-agent': 'rimltools-release-synthetic', ...access, ...headers },
+            headers: {
+              'user-agent': 'rimltools-release-synthetic',
+              ...accessCredentials(),
+              ...headers,
+            },
           })
           await res.arrayBuffer()
         } catch {
@@ -644,7 +677,7 @@ const main = async (): Promise<number> => {
 
   const tool = findTool(registry.value, args.value.tool ?? '')
   if (!tool.ok) return fail(tool.error)
-  const deployEnv = readEnvironment(env)
+  const deployEnv = readEnvironment(env, { hasApiToken: cloudflareToken() !== '' })
   if (!deployEnv.ok) return fail(deployEnv.error)
 
   switch (step) {

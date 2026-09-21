@@ -12,7 +12,6 @@ export type DeployEnv = {
   baseDomain: string
   zoneId: string
   accountId: string
-  apiToken: string
   /** ツールの D1 の id（`D1_<TOOL>_ID`）。環境ごとに別の DB を指す */
   d1Id: (tool: string) => string | undefined
 }
@@ -23,12 +22,71 @@ const isEnvName = (value: string): value is EnvName =>
 export const d1IdVariable = (tool: string): string =>
   `D1_${tool.toUpperCase().replaceAll('-', '_')}_ID`
 
+/**
+ * リリーススクリプトが読んでよい設定の許可リスト。資格情報（API トークンや Access の
+ * secret）は入れない。資格情報は使う箇所（fetch のヘッダ・wrangler の子プロセス）でだけ
+ * process.env から直接読み、ログやエラー文字列に混ざる経路を作らない。
+ */
+export const releaseConfigKeys = [
+  'RIMLTOOLS_ENV',
+  'BASE_DOMAIN',
+  'CF_ZONE_ID',
+  'WORKER_SUFFIX',
+  'CLOUDFLARE_ACCOUNT_ID',
+  'GITHUB_OUTPUT',
+  'GITHUB_STEP_SUMMARY',
+  'GITHUB_SHA',
+  'GITHUB_RUN_ID',
+  'RELEASE_BASE',
+  'RELEASE_HEAD',
+  'RELEASE_MIN_SAMPLES',
+  'RELEASE_MAX_EXTENSIONS',
+  'GUARD_BASE',
+  'GUARD_HEAD',
+  'GUARD_LABELS',
+] as const
+
+export type ReleaseConfig = Record<string, string | undefined>
+
+const allowed = new Set<string>(releaseConfigKeys)
+const d1IdPattern = /^D1_[A-Z0-9_]+_ID$/
+
+const isAllowedKey = (key: string): boolean => allowed.has(key) || d1IdPattern.test(key)
+
+/**
+ * GitHub environment の vars（`toJSON(vars)` を RELEASE_VARS で渡す）と、許可リストの環境変数を
+ * 重ねた設定を作る。環境変数が優先。許可リストに無いキーは捨てる（ツールが増えても
+ * `D1_<TOOL>_ID` は vars から自動で入る）。
+ */
+export const readReleaseConfig = (input: {
+  varsJson: string | undefined
+  values: Record<string, string | undefined>
+}): ReleaseConfig => {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(input.varsJson ?? '{}')
+  } catch {
+    parsed = {}
+  }
+  const config: ReleaseConfig = {}
+  if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+    for (const [key, value] of Object.entries(parsed)) {
+      if (isAllowedKey(key) && typeof value === 'string') config[key] = value
+    }
+  }
+  for (const [key, value] of Object.entries(input.values)) {
+    if (isAllowedKey(key) && value !== undefined) config[key] = value
+  }
+  return config
+}
+
 export const readEnvironment = (
-  vars: Record<string, string | undefined>,
+  config: ReleaseConfig,
+  credentials: { hasApiToken: boolean },
 ): Result<DeployEnv, string> => {
   const errors: string[] = []
   const need = (key: string): string => {
-    const value = vars[key]
+    const value = config[key]
     if (value === undefined || value === '') errors.push(`${key} is not set`)
     return value ?? ''
   }
@@ -40,9 +98,9 @@ export const readEnvironment = (
   const baseDomain = need('BASE_DOMAIN')
   const zoneId = need('CF_ZONE_ID')
   const accountId = need('CLOUDFLARE_ACCOUNT_ID')
-  const apiToken = need('CLOUDFLARE_API_TOKEN')
-  // suffix は production では空文字が正しいので need() を通さない
-  const suffix = vars['WORKER_SUFFIX'] ?? ''
+  if (!credentials.hasApiToken) errors.push('CLOUDFLARE_API_TOKEN is not set')
+  // suffix は production では置かれない（GitHub の variable は空にできない）ので need() を通さない
+  const suffix = config['WORKER_SUFFIX'] ?? ''
 
   if (rawName === 'production' && suffix !== '') {
     errors.push('WORKER_SUFFIX must be empty in production')
@@ -60,45 +118,26 @@ export const readEnvironment = (
       baseDomain,
       zoneId,
       accountId,
-      apiToken,
       d1Id: (tool) => {
-        const value = vars[d1IdVariable(tool)]
+        const value = config[d1IdVariable(tool)]
         return value === undefined || value === '' ? undefined : value
       },
     },
   }
 }
 
-/**
- * workflow から `toJSON(vars)` を RELEASE_VARS で受け取り、環境変数に重ねる。
- * ツールが増えても `D1_<TOOL>_ID` を workflow に書き足さなくて済む。
- * 実際の環境変数（secrets を含む）が優先。
- */
-export const mergeVariables = (
-  varsJson: string | undefined,
-  environment: Record<string, string | undefined>,
-): Record<string, string | undefined> => {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(varsJson ?? '{}')
-  } catch {
-    parsed = {}
-  }
-  const fromVars: Record<string, string> = {}
-  if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-    for (const [key, value] of Object.entries(parsed)) {
-      if (typeof value === 'string') fromVars[key] = value
-    }
-  }
-  return { ...fromVars, ...environment }
-}
-
-/** staging を Cloudflare Access で閉じている場合の service token（smoke / synthetic 用） */
+/** staging を Cloudflare Access で閉じている場合の service token のヘッダ（smoke / synthetic 用） */
 export const accessHeaders = (
-  environment: Record<string, string | undefined>,
+  clientId: string | undefined,
+  clientSecret: string | undefined,
 ): Record<string, string> => {
-  const id = environment['CF_ACCESS_CLIENT_ID']
-  const secret = environment['CF_ACCESS_CLIENT_SECRET']
-  if (id === undefined || id === '' || secret === undefined || secret === '') return {}
-  return { 'CF-Access-Client-Id': id, 'CF-Access-Client-Secret': secret }
+  if (
+    clientId === undefined
+    || clientId === ''
+    || clientSecret === undefined
+    || clientSecret === ''
+  ) {
+    return {}
+  }
+  return { 'CF-Access-Client-Id': clientId, 'CF-Access-Client-Secret': clientSecret }
 }
