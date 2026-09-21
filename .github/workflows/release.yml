@@ -51,7 +51,7 @@ jobs:
       ENVIRONMENT: ${{ inputs.environment }}
       RELEASE_VARS: ${{ toJSON(vars) }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -61,16 +61,18 @@ jobs:
           jq -e --arg t "$TOOL" '.tools[] | select(.name == $t)' tools.json >/dev/null \
             || { echo "::error::unknown tool: $TOOL"; exit 1; }
           q() { jq -r --arg t "$TOOL" ".tools[] | select(.name == \$t) | $1" tools.json; }
-          sub=$(q .subdomain)
-          domain=$(jq -r '.domain' tools.json)
-          if [ "$ENVIRONMENT" = production ]; then host="${sub}.${domain}"; else host="${sub}-staging.${domain}"; fi
           building=false
           case "$ACTION" in rollout|resume) building=true ;; esac
+          cli=$(q .smoke.cli)
+          browser=$(q .smoke.browser)
+          # ブラウザ smoke がツールの CLI smoke と同じなら（portal）二度は走らせない
+          [ "$browser" = "$cli" ] && browser=''
           {
             echo "rust=$(q '.rust // false')"
             echo "path=$(q .path)"
             echo "e2e=$(q .smoke.e2ePackage)"
-            echo "host=$host"
+            echo "smoke_cli=$cli"
+            echo "smoke_browser=$browser"
             echo "build=$building"
           } >> "$GITHUB_OUTPUT"
 
@@ -94,6 +96,10 @@ jobs:
           cargo install wasm-pack --locked
 
       - run: bun install --frozen-lockfile
+
+      - name: 公開ホストを決める（tools.ts の規則。apex のポータルを含む）
+        id: host
+        run: RIMLTOOLS_ENV="$ENVIRONMENT" bun scripts/release/release.ts host --tool "$TOOL"
 
       # wasm(ブラウザ) → 下流 Worker → web の順はプロダクトの build スクリプトが持つ
       - if: steps.tool.outputs.build == 'true'
@@ -134,22 +140,25 @@ jobs:
       # service token 付きで見ている）。
       - if: inputs.environment == 'production' && (inputs.action == 'rollout' || inputs.action == 'resume' || inputs.action == 'promote')
         name: 疎通確認 1/2（プロダクトの smoke）
-        run: bun run --cwd "$TOOL_PATH" smoke "https://$HOST/"
+        # コマンドはリポジトリ内の tools.json の値（smoke.cli）。プロダクト直下で URL を付けて実行する
+        run: cd "$TOOL_PATH" && $SMOKE_CLI "https://$HOST/"
         env:
           TOOL_PATH: ${{ steps.tool.outputs.path }}
-          HOST: ${{ steps.tool.outputs.host }}
+          HOST: ${{ steps.host.outputs.host }}
+          SMOKE_CLI: ${{ steps.tool.outputs.smoke_cli }}
 
-      - if: inputs.environment == 'production' && (inputs.action == 'rollout' || inputs.action == 'resume' || inputs.action == 'promote')
+      - if: inputs.environment == 'production' && steps.tool.outputs.smoke_browser != '' && (inputs.action == 'rollout' || inputs.action == 'resume' || inputs.action == 'promote')
         name: 疎通確認 2/2（実ブラウザ）
         run: |
           # playwright.prod.config.ts は <TOOL>_SMOKE_URL を読む
           export "$(echo "$TOOL" | tr '[:lower:]-' '[:upper:]_')_SMOKE_URL=https://$HOST"
           bun run --filter "$E2E" install-browsers
-          bun run --cwd "$TOOL_PATH" smoke:browser
+          cd "$TOOL_PATH" && $SMOKE_BROWSER
         env:
           TOOL_PATH: ${{ steps.tool.outputs.path }}
-          HOST: ${{ steps.tool.outputs.host }}
+          HOST: ${{ steps.host.outputs.host }}
           E2E: ${{ steps.tool.outputs.e2e }}
+          SMOKE_BROWSER: ${{ steps.tool.outputs.smoke_browser }}
 
       # 100% の後で smoke だけが落ちた場合も、直前の版に戻す
       - if: failure() && steps.release.outcome == 'success' && inputs.action != 'rollback'
@@ -161,7 +170,7 @@ jobs:
 
       - if: failure()
         name: 疎通確認の証跡を残す（落ちたときだけ）
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-${{ inputs.tool }}-${{ inputs.environment }}-${{ github.run_attempt }}
           path: |
