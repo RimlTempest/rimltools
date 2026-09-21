@@ -42,12 +42,21 @@ bun run --cwd products/qrcc <script>   # 個別のスクリプト
 そのプロダクト（とルートの共通設定）が変わったときだけ走る。
 main への push = そのプロダクトの本番デプロイ。
 
-## コミット規約
+## コミット・PR・レビューの規約（CI が検査する）
 
-Conventional Commits。scope にプロダクト名を入れる。
+詳細は `docs/conventions.md`。
+
+- **コミットメッセージと PR タイトルは Conventional Commits。** scope はプロダクト名から始める。
+  PR タイトルがそのままマージコミットの件名になる。
+- **レビューコメントは Conventional Comments**（`<label> [(decorations)]: <subject>`）。
+  AI のコードレビューも同じ形で書く。`blocking` の指摘が残っている PR はマージしない。
 
 ```
 feat(qrcc/render): add DataMatrix rectangular sizes
 fix(noter/sync): reconnect after offline
 ci: split deploy workflows per product
+
+issue (blocking): this throws in the domain layer
+suggestion (non-blocking): extract the retry loop into scripts/lib
+praise: the red → green commits make this easy to review
 ```
