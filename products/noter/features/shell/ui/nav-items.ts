@@ -6,10 +6,9 @@
  *
  * 文言は**単体で行き先が分かる**ものにする（AAA 2.4.9）。
  */
-export type NavItem = {
-  readonly to: string
-  readonly label: string
-}
+import type { NavItem } from '@rimltools/shell'
+
+export type { NavItem } from '@rimltools/shell'
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { to: '/', label: '文書一覧' },

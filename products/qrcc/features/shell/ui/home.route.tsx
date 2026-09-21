@@ -14,7 +14,7 @@ import { decodeScanError, decodeScanResponse } from '@qrcc/scan/contract'
 import { loadBrowserDecoder, loadBrowserWasm, makeWasmDecoder, makeWasmRenderer } from '@qrcc/wasm'
 import { browserModelContext, registerTools } from '@qrcc/webmcp'
 import { HomeScreen } from './home-screen.tsx'
-import { routerLink } from './router-link.tsx'
+import { routerLink } from '@rimltools/shell'
 
 /**
  * ツールに渡す生成器・読み取り機は、ここで**端末内の wasm だけ**から組み立てる。

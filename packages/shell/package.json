@@ -1,28 +1,26 @@
 {
-  "name": "@noter/shell",
+  "name": "@rimltools/shell",
   "version": "0.1.0",
   "private": true,
+  "description": "RimlTools 共通のページ骨格（AppShell・GlobalNav・Breadcrumbs・RootDocument・SW 登録・テレメトリ起動）。プロダクト固有の値は createShell に渡す。",
   "type": "module",
   "exports": {
-    "./ui": "./ui/index.ts",
-    "./ui/shell.css": "./ui/shell.css"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "build": "tsc --build",
     "test": "bun test"
   },
   "dependencies": {
-    "@noter/contract": "workspace:*",
-    "@noter/ui": "workspace:*",
-    "@rimltools/shell": "workspace:*",
     "@rimltools/telemetry": "workspace:*"
   },
   "devDependencies": {
+    "@happy-dom/global-registrator": "20.12.0",
     "@tanstack/react-router": "1.170.32",
+    "@testing-library/dom": "10.4.1",
     "@testing-library/react": "16.3.3",
-    "@testing-library/user-event": "14.6.6",
-    "@types/react": "19.2.7",
-    "@types/react-dom": "19.2.4",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

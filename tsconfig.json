@@ -11,5 +11,5 @@
     "composite": false,
     "incremental": false
   },
-  "exclude": ["packages/ui/**"]
+  "exclude": ["packages/ui/**", "packages/shell/**"]
 }

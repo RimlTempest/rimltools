@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { documentHead, RootDocument } from './root-document.tsx'
+import { documentHead, RootDocument } from './shell-kit.tsx'
 
 describe('documentHead', () => {
   const head = documentHead('/app.css')()

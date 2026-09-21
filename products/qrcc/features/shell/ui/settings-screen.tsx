@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from 'react'
 import { ThemeToggle, makeThemeStore } from '@qrcc/ui'
 import type { ThemeStore } from '@qrcc/ui'
-import { Breadcrumbs } from './breadcrumbs.tsx'
+import { Breadcrumbs } from './shell-kit.tsx'
 import type { NavItem } from './nav-items.ts'
-import type { NavLinkRenderer } from './link-renderer.ts'
+import type { NavLinkRenderer } from '@rimltools/shell'
 
 type SettingsScreenProps = {
   /** 既定はブラウザの localStorage と documentElement。テストでは偽物を渡す。 */

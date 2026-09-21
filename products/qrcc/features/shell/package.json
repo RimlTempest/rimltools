@@ -19,6 +19,7 @@
     "@qrcc/ui": "workspace:*",
     "@qrcc/wasm": "workspace:*",
     "@qrcc/webmcp": "workspace:*",
+    "@rimltools/shell": "workspace:*",
     "@rimltools/telemetry": "workspace:*"
   }
 }

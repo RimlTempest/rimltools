@@ -35,6 +35,28 @@
         "@openfeature/server-sdk",
       ],
     },
+    "packages/shell": {
+      "name": "@rimltools/shell",
+      "version": "0.1.0",
+      "dependencies": {
+        "@rimltools/telemetry": "workspace:*",
+      },
+      "devDependencies": {
+        "@happy-dom/global-registrator": "20.12.0",
+        "@tanstack/react-router": "1.170.32",
+        "@testing-library/dom": "10.4.1",
+        "@testing-library/react": "16.3.3",
+        "@types/react": "19.2.18",
+        "@types/react-dom": "19.2.5",
+        "react": "19.2.8",
+        "react-dom": "19.2.8",
+      },
+      "peerDependencies": {
+        "@tanstack/react-router": "^1.170.0",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+      },
+    },
     "packages/telemetry": {
       "name": "@rimltools/telemetry",
       "version": "0.1.0",
@@ -243,6 +265,7 @@
       "dependencies": {
         "@noter/contract": "workspace:*",
         "@noter/ui": "workspace:*",
+        "@rimltools/shell": "workspace:*",
         "@rimltools/telemetry": "workspace:*",
       },
       "devDependencies": {
@@ -436,6 +459,7 @@
         "@qrcc/ui": "workspace:*",
         "@qrcc/wasm": "workspace:*",
         "@qrcc/webmcp": "workspace:*",
+        "@rimltools/shell": "workspace:*",
         "@rimltools/telemetry": "workspace:*",
       },
     },
@@ -967,6 +991,8 @@
     "@rimltools/portal": ["@rimltools/portal@workspace:products/portal"],
 
     "@rimltools/qrcc": ["@rimltools/qrcc@workspace:products/qrcc"],
+
+    "@rimltools/shell": ["@rimltools/shell@workspace:packages/shell"],
 
     "@rimltools/telemetry": ["@rimltools/telemetry@workspace:packages/telemetry"],
 
@@ -1713,6 +1739,10 @@
     "@qrcc/ui/@types/react-dom": ["@types/react-dom@19.2.5", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-fMPwH9v7r/pp43yUd2/Mbiex5KouJwwR3dzHkhLREUC6764VyDsqxhAxv6OFEYR1RhjOyD1naqba8ECDBe7ZQg=="],
 
     "@qrcc/web/@cloudflare/vite-plugin": ["@cloudflare/vite-plugin@1.54.2", "", { "dependencies": { "@cloudflare/unenv-preset": "2.16.1", "miniflare": "5.20260828.0-alpha", "unenv": "2.0.0-rc.24", "workerd": "1.20260828.1", "wrangler": "4.127.1", "ws": "8.21.0" }, "peerDependencies": { "vite": "^6.1.0 || ^7.0.0 || ^8.0.0" }, "bin": { "cf-vite": "bin/cf-vite" } }, "sha512-15mH5ARHTkNZAqa5GhedjLAt/MCiGBEo09Hgf82EiWuIm/5yOaMVL6ABSun/W8C3Vbw1clzW/2i9IfH5zT/Kvg=="],
+
+    "@rimltools/shell/@types/react": ["@types/react@19.2.18", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w=="],
+
+    "@rimltools/shell/@types/react-dom": ["@types/react-dom@19.2.5", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-fMPwH9v7r/pp43yUd2/Mbiex5KouJwwR3dzHkhLREUC6764VyDsqxhAxv6OFEYR1RhjOyD1naqba8ECDBe7ZQg=="],
 
     "@rimltools/ui/@types/react": ["@types/react@19.2.18", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w=="],
 
