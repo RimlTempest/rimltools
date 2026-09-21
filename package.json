@@ -26,9 +26,11 @@
     "clean": "find . -maxdepth 5 -name node_modules -type d -prune -exec rm -rf {} + && bun install",
     "check:root": "oxfmt --check . && oxlint --type-aware && tsc -p tsconfig.json",
     "test:root": "bun test ./scripts ./packages",
-    "fmt": "oxfmt ."
+    "fmt": "oxfmt .",
+    "audit": "bun audit --audit-level=high"
   },
   "devDependencies": {
+    "@socketsecurity/bun-security-scanner": "1.1.2",
     "@types/bun": "1.4.0",
     "lefthook": "2.1.12",
     "oxfmt": "0.65.0",
@@ -36,6 +38,9 @@
     "oxlint-tsgolint": "7.0.2001",
     "typescript": "7.0.2",
     "wrangler": "4.127.1"
+  },
+  "overrides": {
+    "sharp": "0.35.4"
   },
   "engines": {
     "bun": ">=1.4.0",
