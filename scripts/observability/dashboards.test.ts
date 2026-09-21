@@ -5,26 +5,24 @@ import { checkDashboard } from './dashboards.ts'
 
 const DIR = new URL('../../observability/dashboards/', import.meta.url)
 
-describe('checkDashboard', () => {
-  const panel = (id: number, uid: string) => ({
-    id,
-    type: 'timeseries',
-    title: `p${id}`,
-    datasource: { type: 'prometheus', uid },
-    targets: [{ refId: 'A', datasource: { type: 'prometheus', uid }, expr: 'up' }],
-  })
-  const dashboard = (panels: unknown[]) => ({
-    uid: 'rimltools-x',
-    title: 'x',
-    schemaVersion: 39,
-    panels,
-    annotations: {
-      list: [
-        { datasource: { type: 'grafana', uid: '-- Grafana --' }, target: { tags: ['deploy'] } },
-      ],
-    },
-  })
+const panel = (id: number, uid: string) => ({
+  id,
+  type: 'timeseries',
+  title: `p${id}`,
+  datasource: { type: 'prometheus', uid },
+  targets: [{ refId: 'A', datasource: { type: 'prometheus', uid }, expr: 'up' }],
+})
+const dashboard = (panels: unknown[]) => ({
+  uid: 'rimltools-x',
+  title: 'x',
+  schemaVersion: 39,
+  panels,
+  annotations: {
+    list: [{ datasource: { type: 'grafana', uid: '-- Grafana --' }, target: { tags: ['deploy'] } }],
+  },
+})
 
+describe('checkDashboard', () => {
   test('accepts a dashboard that only uses the managed data sources', () => {
     expect(checkDashboard(dashboard([panel(1, 'rt-mimir')]))).toEqual([])
   })
@@ -56,9 +54,11 @@ describe('observability/dashboards/*.json', () => {
   test('every committed dashboard passes the checks and has a unique uid', async () => {
     const files = (await readdir(DIR)).filter((f) => f.endsWith('.json'))
     expect(files.length).toBeGreaterThan(0)
+    const dashboards = await Promise.all(
+      files.map(async (file) => ({ file, raw: await Bun.file(new URL(file, DIR)).json() })),
+    )
     const uids = new Set<string>()
-    for (const file of files) {
-      const raw: unknown = await Bun.file(new URL(file, DIR)).json()
+    for (const { file, raw } of dashboards) {
       const errors = checkDashboard(raw)
       if (errors.length > 0) console.error(file, errors)
       expect(errors).toEqual([])
