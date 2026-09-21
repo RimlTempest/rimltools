@@ -158,7 +158,9 @@ describe('共有リンク', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '共有リンクを作る' }))
     await waitFor(() => expect(methods(fake)).toContain('shares.create'))
-    expect(await screen.findByText(/https:\/\/qrcc\.riml4i\.com\/shared\//)).toBeDefined()
+    expect(
+      await screen.findByText(/^https:\/\/qrcc\.riml4i\.com\/shared\/[a-z0-9]+$/),
+    ).toBeDefined()
 
     const created = fake.calls.find((call) => call.method === 'shares.create')
     expect(created?.payload).toMatchObject({ idempotencyKey: 'key-1' })

@@ -31,14 +31,26 @@ export type CanvasDeps = {
   readonly revokeObjectUrl: (url: string) => void
 }
 
+/**
+ * 前後のハイフンを落とす。`/^-+|-+$/` は途中にハイフンが大量に並ぶ入力で
+ * 2 乗時間になる（ReDoS）ので、端から走査する。
+ */
+const trimHyphens = (value: string): string => {
+  let start = 0
+  let end = value.length
+  while (start < end && value[start] === '-') start += 1
+  while (end > start && value[end - 1] === '-') end -= 1
+  return value.slice(start, end)
+}
+
 /** 保存するときのファイル名。内容から作るので、複数保存しても見分けが付く。 */
 export const buildFileName = (description: string, extension: string): string => {
-  const base = description
-    // ファイル名に使えない文字と、パス区切りに見える文字を落とす
-    .replaceAll(/[\\/:*?"<>|]/g, '')
-    .replaceAll(/\s+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60)
+  const base = trimHyphens(
+    description
+      // ファイル名に使えない文字と、パス区切りに見える文字を落とす
+      .replaceAll(/[\\/:*?"<>|]/g, '')
+      .replaceAll(/\s+/g, '-'),
+  ).slice(0, 60)
   return `${base.length === 0 ? 'qrcc-code' : base}.${extension}`
 }
 

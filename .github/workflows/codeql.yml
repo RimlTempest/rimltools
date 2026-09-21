@@ -38,6 +38,8 @@ jobs:
           languages: ${{ matrix.language }}
           build-mode: none
           queries: security-extended
+          # 生成物（archify の HTML など）を解析対象から外す
+          config-file: ./.github/codeql/codeql-config.yml
       - uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           category: /language:${{ matrix.language }}

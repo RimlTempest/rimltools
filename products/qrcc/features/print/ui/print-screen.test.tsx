@@ -140,7 +140,7 @@ describe('PrintScreen', () => {
       expect(
         screen
           .getAllByRole('listitem')
-          .some((item) => item.textContent?.includes('https://example.com/a')),
+          .some((item) => within(item).queryByText('https://example.com/a') !== null),
       ).toBe(true),
     )
     expect(screen.getAllByText(/会議室 A/).length).toBeGreaterThan(0)

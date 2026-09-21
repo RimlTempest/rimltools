@@ -1,0 +1,11 @@
+# CodeQL の解析設定（.github/workflows/codeql.yml から参照）。
+# 人が書いていない生成物・取り込み物だけを外す。人が書くコードは外さない（docs/security.md）。
+name: rimltools CodeQL config
+
+paths-ignore:
+  # archify が生成する単一ファイルの図（ライブラリを丸ごと埋め込んだ HTML）。
+  # 実行されるアプリのコードではなく、`bun run archify` で作り直すもの。
+  - 'products/*/docs/architecture/*.html'
+  # 取り込んだ外部 skill（skills-lock.json で版を固定。リポジトリのコードではない）
+  - '.agents/skills/**'
+  - 'products/*/.agents/skills/**'

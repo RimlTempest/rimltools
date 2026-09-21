@@ -44,6 +44,19 @@ describe('ファイル名', () => {
     expect(buildFileName('///', 'png')).toBe('qrcc-code.png')
   })
 
+  test('前後のハイフンは何個あっても落とす', () => {
+    expect(buildFileName('---a b---', 'png')).toBe('a-b.png')
+  })
+
+  /** ハイフン（空白）が大量に並ぶ入力でも線形時間で終わる（ReDoS にならない）。 */
+  test('空白が大量に並ぶ内容でもすぐ返る', () => {
+    const started = performance.now()
+    expect(buildFileName(`a${' '.repeat(50_000)}b`, 'png')).toBe('a-b.png')
+    expect(buildFileName(`${'-'.repeat(50_000)}x`, 'png')).toBe('x.png')
+    expect(buildFileName(`a${'-'.repeat(50_000)}!`, 'png').startsWith('a')).toBe(true)
+    expect(performance.now() - started).toBeLessThan(50)
+  })
+
   test('長すぎる名前は切り詰める', () => {
     expect(buildFileName('あ'.repeat(200), 'png').length).toBeLessThanOrEqual(64)
   })
