@@ -1,0 +1,41 @@
+{
+  "$comment": "RimlTools の台帳。CI・Terraform・監視・ポータルはこのファイルを読む（ADR-0001）。",
+  "domain": "tools.riml4i.com",
+  "zone": "riml4i.com",
+  "tools": [
+    {
+      "name": "qrcc",
+      "title": "QR・バーコード",
+      "description": "QR・バーコードの生成 / 読み取り / 管理 / 印刷",
+      "path": "products/qrcc",
+      "subdomain": "qrcc",
+      "legacyHosts": ["qrcc.riml4i.com"],
+      "rust": true,
+      "workers": [
+        { "name": "qrcc-api", "role": "internal", "buildConfig": "apps/web/dist/qrcc_api/wrangler.json" },
+        { "name": "qrcc-web", "role": "public", "buildConfig": "apps/web/dist/server/wrangler.json" }
+      ],
+      "d1": [{ "name": "qrcc", "binding": "DB", "migrationsConfig": "apps/api/wrangler.jsonc" }],
+      "release": { "mode": "canary", "steps": [10, 50, 100], "bakeMinutes": 10 },
+      "slo": { "availability": 99.5, "windowDays": 28 },
+      "smoke": { "cli": "bun run smoke", "browser": "bun run smoke:browser", "e2ePackage": "@qrcc/e2e" }
+    },
+    {
+      "name": "noter",
+      "title": "noter",
+      "description": "リアルタイム共同編集エディタ",
+      "path": "products/noter",
+      "subdomain": "noter",
+      "legacyHosts": ["noter.riml4i.com"],
+      "rust": false,
+      "workers": [
+        { "name": "noter-sync", "role": "internal", "durableObjects": true, "buildConfig": "apps/web/dist/noter_sync/wrangler.json" },
+        { "name": "noter-web", "role": "public", "buildConfig": "apps/web/dist/server/wrangler.json" }
+      ],
+      "d1": [{ "name": "noter", "binding": "DB", "migrationsConfig": "apps/web/wrangler.jsonc" }],
+      "release": { "mode": "canary", "steps": [10, 50, 100], "bakeMinutes": 10 },
+      "slo": { "availability": 99.5, "windowDays": 28 },
+      "smoke": { "cli": "bun run smoke", "browser": "bun run smoke:browser", "e2ePackage": "@noter/e2e" }
+    }
+  ]
+}
