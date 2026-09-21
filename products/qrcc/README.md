@@ -114,7 +114,7 @@ bun run wt pr                  # check を通してから PR
 | `qrcc-conventions`     | 上の共通規約に対する qrcc 固有の差分（Rust 境界・ラベル印刷・ゴールデンテスト等） |
 | `rimltools-worktree`   | レーン所有境界・依存順・競合回避                                                  |
 
-規約の多くは `.oxlintrc.json` の `rimltools/*` ルール（`tools/oxlint-plugin-rimltools`）と CI の `guard` ジョブで
+規約の多くはルートの `.oxlintrc.json` の `rimltools/*` ルール（`tools/oxlint-plugin-rimltools`）と CI の `guard` ジョブで
 機械的に強制される。ドキュメントを読まなくても違反すればビルドが落ちる。
 
 ## ライセンス

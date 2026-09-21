@@ -1,7 +1,7 @@
 # Hooks are intentionally staged-file scoped so they stay fast enough to run on
 # every commit. The full sweep lives in CI (`bun run check`).
-# 各プロダクトの設定（.oxlintrc.json など）はプロダクト直下にあるので、
-# ジョブは `root:` でプロダクトのディレクトリを cwd にして走らせる。
+# oxfmt / oxlint はルートの設定で全体を 1 回。markuplint と cargo はプロダクト直下の設定を
+# 使うので、`root:` でプロダクトのディレクトリを cwd にして走らせる。
 pre-commit:
   parallel: true
   jobs:
@@ -10,15 +10,6 @@ pre-commit:
       group:
         parallel: true
         jobs:
-          - name: qrcc-oxfmt
-            glob: '*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,css,md,yaml,yml}'
-            run: bunx oxfmt {staged_files}
-            stage_fixed: true
-
-          - name: qrcc-oxlint
-            glob: '*.{js,jsx,ts,tsx,mjs,cjs}'
-            run: bunx oxlint --type-aware --deny-warnings {staged_files}
-
           - name: qrcc-markuplint
             glob: '*.{tsx,html}'
             # TypeScript 6 に固定した隔離インストール（リポジトリ直下の tools/markuplint）の
@@ -38,38 +29,25 @@ pre-commit:
       group:
         parallel: true
         jobs:
-          - name: noter-oxfmt
-            glob: '*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,css,md,yaml,yml}'
-            run: bunx oxfmt {staged_files}
-            stage_fixed: true
-
-          - name: noter-oxlint
-            glob: '*.{js,jsx,ts,tsx,mjs,cjs}'
-            run: bunx oxlint --type-aware --deny-warnings {staged_files}
-
           - name: noter-markuplint
             glob: '*.{tsx,html}'
             # TypeScript 6 に固定した隔離インストール（リポジトリ直下の tools/markuplint）の
             # バイナリを、プロダクトのルートを cwd にしたまま起動する（ADR-0006）
             run: node ../../tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json {staged_files}
 
-    # プロダクト外（scripts/・packages/・docs/ など）。glob は group ではなく各ジョブに書く
-    # （group の glob は中のジョブの glob を上書きしてしまう）
+    # oxfmt / oxlint はリポジトリ全体で 1 回（設定はルートの .oxfmtrc.json / .oxlintrc.json だけ）。
+    # glob は group ではなく各ジョブに書く（group の glob は中のジョブの glob を上書きしてしまう）
     - name: root
       group:
         parallel: true
         jobs:
           - name: root-oxfmt
             glob: '*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,css,md,yaml,yml}'
-            exclude:
-              - 'products/**'
             run: bunx oxfmt {staged_files}
             stage_fixed: true
 
           - name: root-oxlint
             glob: '*.{js,jsx,ts,tsx,mjs,cjs}'
-            exclude:
-              - 'products/**'
             run: bunx oxlint --type-aware --deny-warnings --no-error-on-unmatched-pattern {staged_files}
 
     - name: secrets

@@ -45,7 +45,7 @@ Stack / Components 節など）は読み替えるか無視すること。
 
 ## 絶対に守ること
 
-- **`any` / `as` / `!` / `class` / `enum` を書かない。** `.oxlintrc.json` の
+- **`any` / `as` / `!` / `class` / `enum` を書かない。** ルートの `.oxlintrc.json` の
   `rimltools/*` ルール（`tools/oxlint-plugin-rimltools`）が落とす。回避せず設計を直す。
 - **ドメイン層（`shared/contract` / `features/*/contract` / `features/*/core` /
   `*/engine`）で `throw` しない。** 失敗は `Result<T, E>` で返す。

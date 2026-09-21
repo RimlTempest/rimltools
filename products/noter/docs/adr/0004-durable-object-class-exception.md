@@ -13,7 +13,7 @@ qrcc から引き継いだ規約は「`class` を書かない」（oxlint `rimlt
 ## 決定
 
 - `class` を許すのは **`features/sync/worker/document-room.ts` の 1 ファイルだけ**。
-  `.oxlintrc.json` の `overrides` でこのパスのみ `rimltools/no-class` を `off` にする
+  `.oxlintrc.json`（2026-09 以降はリポジトリ直下に一本化）の `overrides` でこのパスのみ `rimltools/no-class` を `off` にする
 - そのクラスは **各メソッドが 1〜3 行の委譲**であること。ロジックは
   `features/sync/core` の `makeRoom(deps)` が持ち、クラスは `ctx.storage` /
   `ctx.getWebSockets()` / `Date.now` を注入するだけ

@@ -8,7 +8,7 @@
 | --- | --- |
 | `Cargo.lock` | 競合時は `cargo update -w && git add Cargo.lock` |
 | products/qrcc の `Cargo.toml` | `feat/shared-kernel`（Rust 共有プリミティブのレーン）のみが編集する |
-| `.oxlintrc.json` / `tsconfig.json`（products/qrcc 直下） | `chore/devops` のみ |
+| `.markuplintrc.json` / `tsconfig.json`（products/qrcc 直下） | `chore/devops` のみ（lint / fmt の設定はルートの `.oxlintrc.json` / `.oxfmtrc.json` に一本化済み） |
 
 ## レーンのマージ順（qrcc）
 

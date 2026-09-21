@@ -52,7 +52,8 @@ bun run wt qrcc done feat/scan-ui  # マージ後に片付け
 | `routeTree.gen.ts` / `worker-configuration.d.ts`    | git 管理外。生成し直すだけ                                        |
 | ルート `package.json` / `lefthook.yml` / `.github/` | **プロダクトのレーンからは触らない。** 依存は各ワークスペースに足す |
 
-プロダクト固有の共有ファイル（`Cargo.lock`、`.oxlintrc.json`、wrangler.jsonc、migrations の番号）は
+lint / fmt の設定（ルートの `.oxlintrc.json` / `.oxfmtrc.json`）もプロダクトのレーンからは触らない。
+プロダクト固有の共有ファイル（`Cargo.lock`、`.markuplintrc.json`、wrangler.jsonc、migrations の番号）は
 `<tool>-conventions` の `references/worktree.md`。
 
 これ以外が競合したら、**レーンの切り方が間違っている**。
