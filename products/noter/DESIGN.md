@@ -88,7 +88,7 @@ qrcc のトークン体系（`--qrcc-*`）を `--noter-*` として移植し、�
 }
 ```
 
-`themeInitScript`（`shared/ui/src/theme/theme.ts`）を `<head>` 先頭で同期実行し、
+`themeInitScript`（`packages/ui/src/theme/theme.ts` の `createThemeKit`、保存キーは `noter-theme`）を `<head>` 先頭で同期実行し、
 `localStorage['noter-theme']` を `data-theme` に反映してちらつきを防ぐ。
 `theme-color` meta は light / dark の 2 本を `<head>` に直接書く
 （TanStack Router の head meta は `name` で重複排除されるため — qrcc で踏んだ）。

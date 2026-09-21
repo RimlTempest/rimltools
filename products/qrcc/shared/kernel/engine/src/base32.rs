@@ -3,7 +3,7 @@
 //! 標準の base32 と違い `i` `l` `o` `u` を含まないため、人が読み上げても
 //! 取り違えにくく、大文字小文字の揺れも起きない。
 //!
-//! TS 側の実装は `shared/contract/src/base32.ts`。両者は
+//! TS 側の実装は `packages/contract/src/base32.ts`（`@rimltools/contract`）。両者は
 //! `shared/kernel/fixtures/base32.json` の同じベクタで検証される。
 
 extern crate alloc;

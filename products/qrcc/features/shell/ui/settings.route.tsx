@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { SettingsScreen } from './settings-screen.tsx'
-import { routerLink } from './router-link.tsx'
+import { routerLink } from '@rimltools/shell'
 
 const Settings = () => <SettingsScreen renderLink={routerLink} />
 

@@ -1,0 +1,14 @@
+{
+  "name": "@rimltools/contract",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RimlTools の全プロダクトが依存してよい共有型（Result・Brand・ID の部品・検証済み文字列）。I/O を持たない。",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  }
+}

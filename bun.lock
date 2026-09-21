@@ -15,6 +15,10 @@
         "wrangler": "4.127.1",
       },
     },
+    "packages/contract": {
+      "name": "@rimltools/contract",
+      "version": "0.1.0",
+    },
     "packages/flags": {
       "name": "@rimltools/flags",
       "version": "0.1.0",
@@ -31,12 +35,52 @@
         "@openfeature/server-sdk",
       ],
     },
+    "packages/shell": {
+      "name": "@rimltools/shell",
+      "version": "0.1.0",
+      "dependencies": {
+        "@rimltools/telemetry": "workspace:*",
+      },
+      "devDependencies": {
+        "@happy-dom/global-registrator": "20.12.0",
+        "@tanstack/react-router": "1.170.32",
+        "@testing-library/dom": "10.4.1",
+        "@testing-library/react": "16.3.3",
+        "@types/react": "19.2.18",
+        "@types/react-dom": "19.2.5",
+        "react": "19.2.8",
+        "react-dom": "19.2.8",
+      },
+      "peerDependencies": {
+        "@tanstack/react-router": "^1.170.0",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+      },
+    },
     "packages/telemetry": {
       "name": "@rimltools/telemetry",
       "version": "0.1.0",
       "dependencies": {
         "@grafana/faro-web-sdk": "2.11.0",
         "@grafana/faro-web-tracing": "2.11.0",
+      },
+    },
+    "packages/ui": {
+      "name": "@rimltools/ui",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@happy-dom/global-registrator": "20.12.0",
+        "@testing-library/dom": "10.4.1",
+        "@testing-library/react": "16.3.3",
+        "@testing-library/user-event": "14.6.6",
+        "@types/react": "19.2.18",
+        "@types/react-dom": "19.2.5",
+        "react": "19.2.8",
+        "react-dom": "19.2.8",
+      },
+      "peerDependencies": {
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
       },
     },
     "products/noter": {
@@ -221,6 +265,7 @@
       "dependencies": {
         "@noter/contract": "workspace:*",
         "@noter/ui": "workspace:*",
+        "@rimltools/shell": "workspace:*",
         "@rimltools/telemetry": "workspace:*",
       },
       "devDependencies": {
@@ -252,12 +297,16 @@
     "products/noter/shared/contract": {
       "name": "@noter/contract",
       "version": "0.1.0",
+      "dependencies": {
+        "@rimltools/contract": "workspace:*",
+      },
     },
     "products/noter/shared/ui": {
       "name": "@noter/ui",
       "version": "0.1.0",
       "dependencies": {
         "@noter/contract": "workspace:*",
+        "@rimltools/ui": "workspace:*",
       },
       "devDependencies": {
         "@happy-dom/global-registrator": "20.12.0",
@@ -410,12 +459,16 @@
         "@qrcc/ui": "workspace:*",
         "@qrcc/wasm": "workspace:*",
         "@qrcc/webmcp": "workspace:*",
+        "@rimltools/shell": "workspace:*",
         "@rimltools/telemetry": "workspace:*",
       },
     },
     "products/qrcc/shared/contract": {
       "name": "@qrcc/contract",
       "version": "0.1.0",
+      "dependencies": {
+        "@rimltools/contract": "workspace:*",
+      },
     },
     "products/qrcc/shared/kernel": {
       "name": "@qrcc/kernel",
@@ -431,6 +484,7 @@
         "@qrcc/contract": "workspace:*",
         "@rimltempest/riml-ds-css": "^0.2.0",
         "@rimltempest/riml-ds-tokens": "^0.2.0",
+        "@rimltools/ui": "workspace:*",
       },
       "devDependencies": {
         "@happy-dom/global-registrator": "20.12.0",
@@ -928,6 +982,8 @@
 
     "@rimltempest/riml-ds-tokens": ["@rimltempest/riml-ds-tokens@0.2.0", "", {}, "sha512-pzKoaGPahF8/BDNhwqzPBjw8QYmuaajHJelz4bIP9GtZhis2yG+VHhd8GiAzlOjwUSrC/3odniKCsLFQAX+hOw=="],
 
+    "@rimltools/contract": ["@rimltools/contract@workspace:packages/contract"],
+
     "@rimltools/flags": ["@rimltools/flags@workspace:packages/flags"],
 
     "@rimltools/noter": ["@rimltools/noter@workspace:products/noter"],
@@ -936,7 +992,11 @@
 
     "@rimltools/qrcc": ["@rimltools/qrcc@workspace:products/qrcc"],
 
+    "@rimltools/shell": ["@rimltools/shell@workspace:packages/shell"],
+
     "@rimltools/telemetry": ["@rimltools/telemetry@workspace:packages/telemetry"],
+
+    "@rimltools/ui": ["@rimltools/ui@workspace:packages/ui"],
 
     "@rolldown/binding-android-arm-eabi": ["@rolldown/binding-android-arm-eabi@1.2.9", "", { "os": "android", "cpu": "arm" }, "sha512-tNISae1QEf/vkb3xkRcjV5SEdzPE97We5IVaa2Z8jSszQPZ8U60B/YCYpw4QI7VidYsBtKavczXf+DyDs9WGxw=="],
 
@@ -1679,6 +1739,14 @@
     "@qrcc/ui/@types/react-dom": ["@types/react-dom@19.2.5", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-fMPwH9v7r/pp43yUd2/Mbiex5KouJwwR3dzHkhLREUC6764VyDsqxhAxv6OFEYR1RhjOyD1naqba8ECDBe7ZQg=="],
 
     "@qrcc/web/@cloudflare/vite-plugin": ["@cloudflare/vite-plugin@1.54.2", "", { "dependencies": { "@cloudflare/unenv-preset": "2.16.1", "miniflare": "5.20260828.0-alpha", "unenv": "2.0.0-rc.24", "workerd": "1.20260828.1", "wrangler": "4.127.1", "ws": "8.21.0" }, "peerDependencies": { "vite": "^6.1.0 || ^7.0.0 || ^8.0.0" }, "bin": { "cf-vite": "bin/cf-vite" } }, "sha512-15mH5ARHTkNZAqa5GhedjLAt/MCiGBEo09Hgf82EiWuIm/5yOaMVL6ABSun/W8C3Vbw1clzW/2i9IfH5zT/Kvg=="],
+
+    "@rimltools/shell/@types/react": ["@types/react@19.2.18", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w=="],
+
+    "@rimltools/shell/@types/react-dom": ["@types/react-dom@19.2.5", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-fMPwH9v7r/pp43yUd2/Mbiex5KouJwwR3dzHkhLREUC6764VyDsqxhAxv6OFEYR1RhjOyD1naqba8ECDBe7ZQg=="],
+
+    "@rimltools/ui/@types/react": ["@types/react@19.2.18", "", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w=="],
+
+    "@rimltools/ui/@types/react-dom": ["@types/react-dom@19.2.5", "", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-fMPwH9v7r/pp43yUd2/Mbiex5KouJwwR3dzHkhLREUC6764VyDsqxhAxv6OFEYR1RhjOyD1naqba8ECDBe7ZQg=="],
 
     "@tanstack/start-plugin-core/@babel/code-frame": ["@babel/code-frame@7.27.1", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.27.1", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg=="],
 

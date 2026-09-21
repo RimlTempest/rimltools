@@ -1,7 +1,7 @@
 //! 検証済み文字列。
 //!
 //! 「URL を検証してから使う」ことを型で強制する。
-//! TS 側の実装は `shared/contract/src/text.ts`、適合ケースは
+//! TS 側の実装は `packages/contract/src/text.ts`（`@rimltools/contract`）、適合ケースは
 //! `shared/kernel/fixtures/text.json`。
 
 extern crate alloc;

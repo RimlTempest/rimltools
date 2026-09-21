@@ -44,7 +44,7 @@ bunx modern-web-guidance@latest retrieve "<id>"
 
 ## 絶対に守ること
 
-- **`any` / `as` / `!` / `class` / `enum` を書かない。** `.oxlintrc.json` の
+- **`any` / `as` / `!` / `class` / `enum` を書かない。** ルートの `.oxlintrc.json` の
   `rimltools/*` ルール（`tools/oxlint-plugin-rimltools`）が落とす。回避せず設計を直す。
   唯一の例外は `features/sync/worker/document-room.ts` の Durable Object class（ADR-0004）。
   そこにロジックを書かない（1〜3 行の委譲だけ）。

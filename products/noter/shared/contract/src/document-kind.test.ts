@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { DOCUMENT_KINDS, FILE_EXTENSION, MIME_TYPE, parseDocumentKind } from './document-kind.ts'
-import { isErr } from './result.ts'
+import { isErr } from '@rimltools/contract'
 
 describe('parseDocumentKind', () => {
   test('4 種の文書種別を受け付ける', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { err, ok } from './result.ts'
-import type { Result } from './result.ts'
+import { err, ok } from '@rimltools/contract'
+import type { Result } from '@rimltools/contract'
 import { RPC_HEADER, decodeCommonRpcError, decodeRpcEnvelope } from './rpc.ts'
 
 type Payload = { readonly n: number }

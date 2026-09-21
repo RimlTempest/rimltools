@@ -87,17 +87,17 @@ feature の実体はディレクトリ内に閉じるが、アプリに組み込
 
 ## 3. 共有ファイルの扱い（コンフリクト回避規約）
 
-| ファイル                                                 | 規約                                                                                                                      |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| ルート `package.json`                                    | **触らない。** 依存は各ワークスペースの `package.json` に足す                                                             |
-| `bun.lock`                                               | 競合したら解決せず `git checkout --ours bun.lock && bun install` で再生成                                                 |
-| ルート `Cargo.toml`                                      | `[workspace.dependencies]` の追加は `feat/shared-kernel` のみ。`features/*/worker` の初回追加だけ例外（該当レーンが行う） |
-| `Cargo.lock`                                             | 競合したら `cargo update -w` で再生成                                                                                     |
-| ルート `tsconfig.json`                                   | `feat/shared-contract` が全 references を先に登録しておく                                                                 |
-| `apps/web/src/routes.ts`                                 | `feat/shell` が所有。URL 1 行の追加のみ他レーンから依頼                                                                   |
-| `routeTree.gen.ts` / `worker-configuration.d.ts`         | **git 管理しない**。`bun run --filter @qrcc/web gen` で生成                                                               |
-| `.oxlintrc.json` / `lefthook.yml` / `.markuplintrc.json` | `chore/devops` のみ変更可                                                                                                 |
-| `docs/**`                                                | 各レーンは**自分の章のみ**追記                                                                                            |
+| ファイル                                                                           | 規約                                                                                                                      |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| ルート `package.json`                                                              | **触らない。** 依存は各ワークスペースの `package.json` に足す                                                             |
+| `bun.lock`                                                                         | 競合したら解決せず `git checkout --ours bun.lock && bun install` で再生成                                                 |
+| ルート `Cargo.toml`                                                                | `[workspace.dependencies]` の追加は `feat/shared-kernel` のみ。`features/*/worker` の初回追加だけ例外（該当レーンが行う） |
+| `Cargo.lock`                                                                       | 競合したら `cargo update -w` で再生成                                                                                     |
+| ルート `tsconfig.json`                                                             | `feat/shared-contract` が全 references を先に登録しておく                                                                 |
+| `apps/web/src/routes.ts`                                                           | `feat/shell` が所有。URL 1 行の追加のみ他レーンから依頼                                                                   |
+| `routeTree.gen.ts` / `worker-configuration.d.ts`                                   | **git 管理しない**。`bun run --filter @qrcc/web gen` で生成                                                               |
+| ルートの `.oxlintrc.json` / `.oxfmtrc.json` / `lefthook.yml`、`.markuplintrc.json` | `chore/devops` のみ変更可                                                                                                 |
+| `docs/**`                                                                          | 各レーンは**自分の章のみ**追記                                                                                            |
 
 ## 4. 手順
 

@@ -90,18 +90,18 @@ feature の実体はディレクトリ内に閉じるが、アプリに組み込
 
 ## 3. 共有ファイルの扱い（コンフリクト回避規約）
 
-| ファイル                                                 | 規約                                                                                    |
-| -------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| ルート `package.json`                                    | **触らない。** 依存は各ワークスペースの `package.json` に足す                           |
-| `bun.lock`                                               | 競合したら解決せず `git checkout --ours bun.lock && bun install` で再生成               |
-| ルート `tsconfig.json`                                   | `feat/contracts` が全 references を先に登録しておく                                     |
-| `apps/web/src/routes.ts`                                 | `feat/web-shell` が所有。URL 1 行の追加のみ他レーンから依頼                             |
-| `apps/web/wrangler.jsonc`                                | `feat/web-shell` が所有。binding の追加は依頼（DO binding は `feat/sync` の契約に従う） |
-| `apps/sync/wrangler.jsonc`                               | `feat/sync` が所有。**`routes` / `workers_dev` を書かない**                             |
-| `apps/web/migrations/`                                   | 連番はレーン順（auth = 0001、documents = 0002〜）。番号衝突は rebase 時に後発が振り直す |
-| `routeTree.gen.ts` / `worker-configuration.d.ts`         | **git 管理しない**。`bun run --filter @noter/web gen` で生成                            |
-| `.oxlintrc.json` / `lefthook.yml` / `.markuplintrc.json` | `chore/devops` のみ変更可                                                               |
-| `docs/**`                                                | 各レーンは**自分の章のみ**追記                                                          |
+| ファイル                                                                           | 規約                                                                                    |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| ルート `package.json`                                                              | **触らない。** 依存は各ワークスペースの `package.json` に足す                           |
+| `bun.lock`                                                                         | 競合したら解決せず `git checkout --ours bun.lock && bun install` で再生成               |
+| ルート `tsconfig.json`                                                             | `feat/contracts` が全 references を先に登録しておく                                     |
+| `apps/web/src/routes.ts`                                                           | `feat/web-shell` が所有。URL 1 行の追加のみ他レーンから依頼                             |
+| `apps/web/wrangler.jsonc`                                                          | `feat/web-shell` が所有。binding の追加は依頼（DO binding は `feat/sync` の契約に従う） |
+| `apps/sync/wrangler.jsonc`                                                         | `feat/sync` が所有。**`routes` / `workers_dev` を書かない**                             |
+| `apps/web/migrations/`                                                             | 連番はレーン順（auth = 0001、documents = 0002〜）。番号衝突は rebase 時に後発が振り直す |
+| `routeTree.gen.ts` / `worker-configuration.d.ts`                                   | **git 管理しない**。`bun run --filter @noter/web gen` で生成                            |
+| ルートの `.oxlintrc.json` / `.oxfmtrc.json` / `lefthook.yml`、`.markuplintrc.json` | `chore/devops` のみ変更可                                                               |
+| `docs/**`                                                                          | 各レーンは**自分の章のみ**追記                                                          |
 
 ## 4. 手順
 

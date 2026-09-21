@@ -26,7 +26,7 @@
 @import '@rimltempest/riml-ds-css/typography.css';
 @import '@rimltempest/riml-ds-css/atoms.css';
 @import './tokens.css' layer(tokens);
-@import './reset.css' layer(reset);
+@import '@rimltools/ui/reset.css' layer(reset);
 @import './base.css' layer(base);
 @import './components.css' layer(components);
 @import './utilities.css' layer(utilities);

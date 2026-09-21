@@ -1,12 +1,15 @@
 /**
- * @noter/contract — 全レイヤが依存してよい唯一の共有型。
+ * @noter/contract — noter の全レイヤが依存してよい共有型。
+ *
+ * プロダクト共通の型（Result・Brand・base32・検証済み文字列・ID の部品・UserId）は
+ * `@rimltools/contract` の再 export。noter 固有の型だけをこのパッケージで定義する。
  *
  * ここには実装依存も I/O もない。時計・乱数・ネットワークが要るものは
  * 引数として受け取る形（例: `RandomBytes`）でのみ表現する。
  */
-export { CROCKFORD_BASE32_ALPHABET, encodeCrockfordBase32 } from './base32.ts'
-export type { Brand } from './brand.ts'
-export { makeParser } from './brand.ts'
+export { CROCKFORD_BASE32_ALPHABET, encodeCrockfordBase32 } from '@rimltools/contract'
+export type { Brand } from '@rimltools/contract'
+export { makeParser } from '@rimltools/contract'
 export type { DocumentKind, DocumentKindParseError } from './document-kind.ts'
 export { DOCUMENT_KINDS, FILE_EXTENSION, MIME_TYPE, parseDocumentKind } from './document-kind.ts'
 export type { DocumentId, IdParseError, RandomBytes, ShareToken, UserId } from './id.ts'
@@ -29,8 +32,8 @@ export {
 } from './limits.ts'
 export type { Role, RoleParseError } from './role.ts'
 export { ROLES, higherRole, parseRole } from './role.ts'
-export type { Err, Ok, Result } from './result.ts'
-export { collectResults, err, flatMapResult, isErr, isOk, mapResult, ok } from './result.ts'
+export type { Err, Ok, Result } from '@rimltools/contract'
+export { collectResults, err, flatMapResult, isErr, isOk, mapResult, ok } from '@rimltools/contract'
 export type {
   EmailAddress,
   HexColor,
@@ -38,11 +41,11 @@ export type {
   NonEmptyText,
   PhoneNumber,
   TextParseError,
-} from './text.ts'
+} from '@rimltools/contract'
 export {
   parseEmailAddress,
   parseHexColor,
   parseHttpUrl,
   parseNonEmptyText,
   parsePhoneNumber,
-} from './text.ts'
+} from '@rimltools/contract'

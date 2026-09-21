@@ -7,14 +7,19 @@
   "arrowParens": "always",
   "experimentalOperatorPosition": "start",
   "ignorePatterns": [
-    "products/**",
     "**/dist/**",
     "**/node_modules/**",
-    "**/*.gen.ts",
+    "**/.output/**",
+    "**/target/**",
+    "**/routeTree.gen.ts",
     "**/worker-configuration.d.ts",
+    "**/*.gen.ts",
     "infra/**/.terraform/**",
     ".agents/skills/**",
     ".claude/skills/**",
-    "skills-lock.json"
+    "skills-lock.json",
+    "products/*/.agents/skills/**",
+    "products/*/.claude/skills/**",
+    "products/*/docs/architecture/*.html"
   ]
 }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { ROLES, higherRole, parseRole } from './role.ts'
-import { isErr } from './result.ts'
+import { isErr } from '@rimltools/contract'
 
 describe('parseRole', () => {
   test('3 つの権限を受け付ける', () => {

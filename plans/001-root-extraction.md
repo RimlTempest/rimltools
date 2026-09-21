@@ -1,6 +1,6 @@
 # plan 001: qrcc と noter の共通部分をルートへ抜き出す
 
-- 状態: 段階 1 を実施（PR `refactor/root-extraction-1`）。段階 2・3 は未着手
+- 状態: 段階 1 完了（#10）。段階 2 は contract・ui・lint/fmt 一本化・CI の再利用ワークフロー化を実施（`refactor/root-extraction-2`）、shell は段階 2b、smoke・markuplint 設定・archify は未着手。段階 3 は未着手
 - 目的: 2 つのプロダクトで同じもの・ほぼ同じものを 1 か所にし、3 つ目以降のツールが
   「products/<tool> を足すだけ」で同じ規約・道具に乗れるようにする（ADR-0001）
 - 原則: **挙動を変えないリファクタ**。各段階で `bun run check` と `bun run test`

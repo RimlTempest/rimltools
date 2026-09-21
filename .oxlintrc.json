@@ -19,13 +19,12 @@
     "pedantic": "off",
     "style": "off"
   },
-  "env": {
-    "es2024": true
-  },
+  "env": { "browser": true, "es2024": true },
   "rules": {
     "rimltools/no-class": "error",
     "rimltools/no-type-assertion": "error",
     "rimltools/no-enum": "error",
+
     "typescript/no-explicit-any": "error",
     "typescript/no-non-null-assertion": "error",
     "typescript/no-unnecessary-type-assertion": "error",
@@ -33,15 +32,15 @@
     "typescript/consistent-type-definitions": ["error", "type"],
     "typescript/no-extraneous-class": "error",
     "typescript/switch-exhaustiveness-check": "error",
+    // union を網羅した switch は TS が「全経路が返る」と理解するが、この規則は
+    // 理解しない。default を足すと網羅チェックが効かなくなり、拡張性の担保
+    // （メンバー追加でコンパイルエラー）が壊れる。tsconfig の noImplicitReturns
+    // が本当の返し忘れを検出するので、こちらは無効にする。
     "typescript/consistent-return": "off",
     "typescript/no-floating-promises": "error",
     "typescript/no-misused-promises": "error",
-    "eslint/no-console": [
-      "error",
-      {
-        "allow": ["warn", "error"]
-      }
-    ],
+
+    "eslint/no-console": ["error", { "allow": ["warn", "error"] }],
     "eslint/eqeqeq": ["error", "always"],
     "eslint/no-param-reassign": "error",
     "eslint/prefer-const": "error",
@@ -53,12 +52,22 @@
     "unicorn/no-array-for-each": "off",
     "promise/no-return-wrap": "error",
     "promise/param-names": "error",
+
     "import/no-cycle": "error",
     "import/no-default-export": "error",
+
     "react/react-in-jsx-scope": "off",
+
+    // インラインハンドラやオブジェクトリテラルは React 19 では通常の書き方であり、
+    // この規則を守ると useCallback / useMemo だらけになって読みにくくなる。
+    // dangerouslySetInnerHTML のように毎回オブジェクトが要る API もある。
+    // メモ化は計測してから入れる。
     "react-perf/jsx-no-new-function-as-prop": "off",
     "react-perf/jsx-no-new-object-as-prop": "off",
+    // JSX を prop で渡す「スロット」は React の標準的な合成パターン。
+    // これを避けると、slot ごとにコンポーネントを切り出す羽目になる。
     "react-perf/jsx-no-jsx-as-prop": "off",
+
     "jsx-a11y/alt-text": "error",
     "jsx-a11y/anchor-has-content": "error",
     "jsx-a11y/anchor-is-valid": "error",
@@ -90,10 +99,26 @@
   },
   "overrides": [
     {
-      "files": ["packages/*/src/core/**/*.ts"],
-      "rules": {
-        "rimltools/no-throw-in-domain": "error"
-      }
+      // ドメイン層（shared/contract・features/*/contract・features/*/core・packages の core）は throw しない
+      "files": [
+        "packages/contract/src/**/*.ts",
+        "packages/*/src/core/**/*.ts",
+        "products/*/shared/contract/src/**/*.ts",
+        "products/qrcc/shared/kernel/conformance/**/*.ts",
+        "products/*/features/*/contract/**/*.ts",
+        "products/*/features/*/core/**/*.ts"
+      ],
+      "rules": { "rimltools/no-throw-in-domain": "error" }
+    },
+    {
+      // Durable Object は class でしか書けない。ここだけが例外（noter ADR-0004）。
+      "files": ["products/noter/features/sync/worker/document-room.ts"],
+      "rules": { "rimltools/no-class": "off" }
+    },
+    {
+      // Worker のエントリは default export が必須
+      "files": ["products/noter/apps/sync/src/index.ts"],
+      "rules": { "import/no-default-export": "off" }
     },
     {
       "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/tests/**"],
@@ -107,34 +132,30 @@
     {
       "files": [
         "tools/**/*.js",
+        "products/*/tools/**/*.js",
         "**/*.config.ts",
         "**/*.config.js",
         "**/vite.config.ts",
         "**/*.route.tsx",
         "**/routeTree.gen.ts"
       ],
-      "rules": {
-        "import/no-default-export": "off"
-      }
+      "rules": { "import/no-default-export": "off" }
     },
     {
-      "files": ["scripts/**/*.ts"],
-      "rules": {
-        "eslint/no-console": "off"
-      }
+      "files": ["scripts/**/*.ts", "products/*/scripts/**/*.ts"],
+      "rules": { "eslint/no-console": "off" }
     }
   ],
   "ignorePatterns": [
+    "**/dist/**",
     "**/*.d.ts",
     "**/.output/**",
-    "**/dist/**",
+    "**/target/**",
     "**/node_modules/**",
     "**/routeTree.gen.ts",
-    "**/target/**",
     "**/worker-configuration.d.ts",
     ".agents/**",
     ".claude/**",
-    "infra/**",
-    "products/**"
+    "infra/**"
   ]
 }

@@ -12,7 +12,8 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@noter/contract": "workspace:*"
+    "@noter/contract": "workspace:*",
+    "@rimltools/ui": "workspace:*"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "20.12.0",

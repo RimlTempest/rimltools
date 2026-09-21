@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen } from '@testing-library/react'
-import { AppShell } from './app-shell.tsx'
+import { AppShell } from './shell-kit.tsx'
 
 afterEach(cleanup)
 

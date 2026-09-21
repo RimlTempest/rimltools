@@ -1,0 +1,5 @@
+[test]
+# コンポーネントテスト用の DOM（happy-dom）。bunfig は cwd 基準なので、
+# このパッケージのテストは packages/ui を cwd にして回す（ルートの test:root が呼ぶ）。
+# ルートで DOM を常駐させると scripts/ のテスト（HTML の解析など）が壊れるため分けている。
+preload = ["./src/testing/register-dom.ts"]

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen } from '@testing-library/react'
-import { Breadcrumbs } from './breadcrumbs.tsx'
+import { Breadcrumbs } from './shell-kit.tsx'
 
 afterEach(cleanup)
 

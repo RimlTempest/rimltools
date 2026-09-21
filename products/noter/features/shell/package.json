@@ -14,6 +14,7 @@
   "dependencies": {
     "@noter/contract": "workspace:*",
     "@noter/ui": "workspace:*",
+    "@rimltools/shell": "workspace:*",
     "@rimltools/telemetry": "workspace:*"
   },
   "devDependencies": {

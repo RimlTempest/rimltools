@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen } from '@testing-library/react'
-import { GlobalNav } from './global-nav.tsx'
+import { GlobalNav } from './shell-kit.tsx'
 import { NAV_ITEMS } from './nav-items.ts'
 
 afterEach(cleanup)

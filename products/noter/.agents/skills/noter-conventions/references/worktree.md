@@ -6,7 +6,7 @@
 
 | ファイル | 規約 |
 | --- | --- |
-| `.oxlintrc.json` / `tsconfig.json`（products/noter 直下） | `chore/devops` のみ |
+| `.markuplintrc.json` / `tsconfig.json`（products/noter 直下） | `chore/devops` のみ（lint / fmt の設定はルートの `.oxlintrc.json` / `.oxfmtrc.json` に一本化済み） |
 | `apps/web/wrangler.jsonc`（binding の追加） | `feat/web-shell` のみ。他レーンは plan に「要 binding」と書いて依頼 |
 | `apps/web/migrations/` | 番号は `feat/auth`=0001、`feat/documents`=0002〜。他レーンは追加しない |
 

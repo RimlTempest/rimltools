@@ -9,8 +9,8 @@
  * 業務上の失敗（権限がない・見つからない）を**混同しない**のが要点。
  * 前者は `Result` の外側、後者は内側で表す。
  */
-import type { Result } from './result.ts'
-import { err, ok } from './result.ts'
+import type { Result } from '@rimltools/contract'
+import { err, ok } from '@rimltools/contract'
 
 export type RpcDecodeError = {
   readonly kind: 'malformed_envelope' | 'malformed_value' | 'malformed_error'

@@ -1,6 +1,6 @@
 # Result — 失敗を値として扱う
 
-## 定義（`shared/contract/src/result.ts`）
+## 定義（`packages/contract/src/result.ts` = `@rimltools/contract`）
 
 ```ts
 export type Ok<T> = { readonly ok: true; readonly value: T }
