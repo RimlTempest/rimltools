@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { isGoogleConfigured, readEnvString, resolveBaseURL } from './from-env.ts'
+import { isGoogleConfigured, readEnvString, readLegacyOrigins, resolveBaseURL } from './from-env.ts'
 
 describe('env の読み出し', () => {
   test('文字列でなければ空文字として扱う', () => {
@@ -36,5 +36,33 @@ describe('baseURL の決め方', () => {
 
   test('APP_ORIGIN が無ければリクエストのオリジンに従う', () => {
     expect(resolveBaseURL('', 'https://preview.example')).toBe('https://preview.example')
+  })
+
+  test('ドメイン移行中は、許可した旧オリジンで開かれたらそのオリジンを使う', () => {
+    const legacy = ['https://noter.riml4i.com']
+    expect(
+      resolveBaseURL('https://noter.tools.riml4i.com', 'https://noter.riml4i.com', legacy),
+    ).toBe('https://noter.riml4i.com')
+    expect(
+      resolveBaseURL('https://noter.tools.riml4i.com', 'https://noter.tools.riml4i.com', legacy),
+    ).toBe('https://noter.tools.riml4i.com')
+  })
+
+  test('許可していないオリジンは旧オリジンの一覧があっても信用しない', () => {
+    expect(
+      resolveBaseURL('https://noter.tools.riml4i.com', 'https://evil.example', [
+        'https://noter.riml4i.com',
+      ]),
+    ).toBe('https://noter.tools.riml4i.com')
+  })
+})
+
+describe('旧オリジンの読み出し', () => {
+  test('カンマ区切りの https オリジンだけを受け付ける', () => {
+    expect(
+      readLegacyOrigins({ APP_LEGACY_ORIGINS: 'https://noter.riml4i.com, https://a.example/' }),
+    ).toEqual(['https://noter.riml4i.com', 'https://a.example'])
+    expect(readLegacyOrigins({ APP_LEGACY_ORIGINS: 'http://x.example,not a url,' })).toEqual([])
+    expect(readLegacyOrigins({})).toEqual([])
   })
 })

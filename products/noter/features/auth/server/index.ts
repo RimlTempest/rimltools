@@ -13,7 +13,13 @@ export {
 export type { AuthSessionSnapshot, GetSession } from './current-actor.ts'
 export { makeCurrentActor, toActor } from './current-actor.ts'
 export type { AuthFromEnvDeps } from './from-env.ts'
-export { isGoogleConfigured, makeAuthFromEnv, readEnvString, resolveBaseURL } from './from-env.ts'
+export {
+  isGoogleConfigured,
+  makeAuthFromEnv,
+  readEnvString,
+  readLegacyOrigins,
+  resolveBaseURL,
+} from './from-env.ts'
 export type { HandleLinkAccountDeps } from './link-account.ts'
 export { makeHandleLinkAccount } from './link-account.ts'
 export type { PromotionStore } from './promotion-store.ts'
