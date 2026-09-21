@@ -1,0 +1,240 @@
+name: product CI
+
+# 1 つのプロダクト（products/<tool>）の CI。ci.yml が tools.json のツールごとに呼ぶ。
+# プロダクトごとの違いはワークフローに書かず、次のどちらかで表す（plan 001 段階 2）:
+# - tools.json の宣言（`rust`）
+# - プロダクトが持つスクリプト（scripts/guard.sh・scripts/rust-ci.sh・scripts/check-bundle.sh、
+#   package.json の lint:html / a11y）。無ければその検査は飛ばす
+on:
+  workflow_call:
+    inputs:
+      tool:
+        description: 'products/<tool> の名前（tools.json の name）'
+        required: true
+        type: string
+
+# 既定は何も無し。ジョブごとに必要な権限だけ足す（docs/security.md）。
+permissions: {}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  meta:
+    name: meta
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      rust: ${{ steps.meta.outputs.rust }}
+      guard: ${{ steps.meta.outputs.guard }}
+      markup: ${{ steps.meta.outputs.markup }}
+      a11y: ${{ steps.meta.outputs.a11y }}
+      ts: ${{ steps.filter.outputs.ts }}
+      rust_changed: ${{ steps.filter.outputs.rust }}
+      markup_changed: ${{ steps.filter.outputs.markup }}
+      web: ${{ steps.filter.outputs.web }}
+    defaults:
+      run:
+        working-directory: products/${{ inputs.tool }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: tools.json とプロダクトのスクリプトから、走らせる検査を決める
+        id: meta
+        env:
+          TOOL: ${{ inputs.tool }}
+        run: |
+          rust=$(jq -r --arg t "$TOOL" '.tools[] | select(.name == $t) | .rust // false' ../../tools.json)
+          has_script() { jq -e --arg s "$1" '.scripts[$s] != null' package.json >/dev/null; }
+          {
+            echo "rust=$rust"
+            echo "guard=$([ -x scripts/guard.sh ] && echo true || echo false)"
+            echo "markup=$(has_script lint:html && echo true || echo false)"
+            echo "a11y=$(has_script a11y && echo true || echo false)"
+          } >> "$GITHUB_OUTPUT"
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            root: &root
+              - 'package.json'
+              - 'bun.lock'
+              - 'bunfig.toml'
+              - 'mise.toml'
+              - 'tools.json'
+              - 'tsconfig.base.json'
+              - 'packages/**'
+              - '.github/workflows/product-ci.yml'
+            ts:
+              - *root
+              - 'products/${{ inputs.tool }}/**/*.{ts,tsx,json,jsonc,css}'
+              - 'products/${{ inputs.tool }}/scripts/**'
+            rust:
+              - 'products/${{ inputs.tool }}/**/*.rs'
+              - 'products/${{ inputs.tool }}/**/Cargo.toml'
+              - 'products/${{ inputs.tool }}/Cargo.lock'
+              - 'products/${{ inputs.tool }}/rustfmt.toml'
+              - 'products/${{ inputs.tool }}/apps/api/**'
+              - 'products/${{ inputs.tool }}/scripts/rust-ci.sh'
+            markup:
+              - 'products/${{ inputs.tool }}/**/*.tsx'
+              - 'products/${{ inputs.tool }}/.markuplintrc.json'
+              - 'tools/markuplint/**'
+            web:
+              - *root
+              - 'products/${{ inputs.tool }}/apps/**'
+              - 'products/${{ inputs.tool }}/features/**'
+              - 'products/${{ inputs.tool }}/shared/**'
+              - 'products/${{ inputs.tool }}/e2e/**'
+              - 'products/${{ inputs.tool }}/src/**'
+              - 'products/${{ inputs.tool }}/public/**'
+              - 'products/${{ inputs.tool }}/scripts/**'
+
+  guard:
+    name: 不変条件の検査
+    needs: meta
+    if: needs.meta.outputs.guard == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: products/${{ inputs.tool }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: scripts/guard.sh
+
+  fmt-lint:
+    name: fmt + lint (oxfmt / oxlint)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: products/${{ inputs.tool }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - run: bun run fmt:check
+      - run: bun run lint
+
+  typecheck:
+    name: typecheck (TypeScript 7)
+    needs: meta
+    if: needs.meta.outputs.ts == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: products/${{ inputs.tool }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with: { cache: true }
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        if: needs.meta.outputs.rust == 'true'
+        with: { workspaces: 'products/${{ inputs.tool }}' }
+      # wasm-bindgen が生成する .d.ts は型検査の入力。git 管理外なのでここで作る
+      - if: needs.meta.outputs.rust == 'true'
+        run: cargo install wasm-pack --locked
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+
+  test-ts:
+    name: test (bun)
+    needs: meta
+    if: needs.meta.outputs.ts == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: products/${{ inputs.tool }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+
+  markuplint:
+    name: markuplint (a11y)
+    needs: meta
+    if: needs.meta.outputs.markup == 'true' && (needs.meta.outputs.markup_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: products/${{ inputs.tool }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with: { cache: true }
+      - run: bun install --frozen-lockfile
+      - run: bun run lint:html
+
+  rust:
+    name: rust (fmt / clippy / test)
+    needs: meta
+    if: needs.meta.outputs.rust == 'true' && (needs.meta.outputs.rust_changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: products/${{ inputs.tool }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with: { cache: true }
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with: { workspaces: 'products/${{ inputs.tool }}' }
+      - run: scripts/rust-ci.sh
+
+  build-and-a11y:
+    name: build + axe (WCAG AAA)
+    needs: meta
+    if: needs.meta.outputs.web == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with: { cache: true }
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        if: needs.meta.outputs.rust == 'true'
+        with: { workspaces: 'products/${{ inputs.tool }}' }
+      - run: bun install --frozen-lockfile
+      - if: needs.meta.outputs.rust == 'true'
+        run: |
+          cargo install worker-build --locked
+          cargo install wasm-pack --locked
+      - run: bun run build
+      - name: プロダクト固有のビルド成果物の検査
+        run: if [ -x scripts/check-bundle.sh ]; then scripts/check-bundle.sh; fi
+      - if: needs.meta.outputs.a11y == 'true'
+        env:
+          TOOL: ${{ inputs.tool }}
+        run: bun run --filter "@$TOOL/e2e" install-browsers
+      - if: needs.meta.outputs.a11y == 'true'
+        run: bun run a11y
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure() && needs.meta.outputs.a11y == 'true'
+        with:
+          name: playwright-report-${{ inputs.tool }}
+          path: products/${{ inputs.tool }}/e2e/playwright-report/
+          retention-days: 7
