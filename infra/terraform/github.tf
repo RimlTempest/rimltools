@@ -62,6 +62,11 @@ locals {
     develop = ["gate", "security-gate", "conventional"]
     main    = ["gate", "security-gate", "release-guard", "conventional"]
   }
+
+  # CodeQL の結果が無い・high 以上のセキュリティアラートや error がある PR はマージできない（ADR-0006）
+  required_code_scanning_tools = [
+    { tool = "CodeQL", security_alerts_threshold = "high_or_higher", alerts_threshold = "errors" },
+  ]
 }
 
 resource "github_repository_ruleset" "develop" {
@@ -101,6 +106,17 @@ resource "github_repository_ruleset" "develop" {
         }
       }
     }
+
+    required_code_scanning {
+      dynamic "required_code_scanning_tool" {
+        for_each = local.required_code_scanning_tools
+        content {
+          tool                      = required_code_scanning_tool.value.tool
+          security_alerts_threshold = required_code_scanning_tool.value.security_alerts_threshold
+          alerts_threshold          = required_code_scanning_tool.value.alerts_threshold
+        }
+      }
+    }
   }
 }
 
@@ -137,6 +153,17 @@ resource "github_repository_ruleset" "main" {
         content {
           context        = required_check.value
           integration_id = local.github_actions_app_id
+        }
+      }
+    }
+
+    required_code_scanning {
+      dynamic "required_code_scanning_tool" {
+        for_each = local.required_code_scanning_tools
+        content {
+          tool                      = required_code_scanning_tool.value.tool
+          security_alerts_threshold = required_code_scanning_tool.value.security_alerts_threshold
+          alerts_threshold          = required_code_scanning_tool.value.alerts_threshold
         }
       }
     }
