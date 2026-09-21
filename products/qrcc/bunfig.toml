@@ -1,12 +1,5 @@
-[install]
-exact = true
-# Wrangler resolves dependencies from each app's own package.json, so every app
-# declares what it needs directly instead of relying on root hoisting.
-linkWorkspacePackages = true
-# markuplint など、自分自身の位置から parser を解決するツールが isolated
-# レイアウトだと解決に失敗するため hoisted を明示する。
-linker = "hoisted"
-
+# [install] はリポジトリルートの bunfig.toml に一本化した（bun の lockfile はルートに 1 つ）。
+# [test] は cwd 基準で解決されるので、このプロダクト直下から `bun test` するときに効く。
 [test]
 coverage = true
 # @qrcc/ui のコンポーネントテストは DOM を要る。bunfig は cwd 基準でしか

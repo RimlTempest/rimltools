@@ -1,0 +1,10 @@
+[install]
+exact = true
+# Wrangler resolves dependencies from each app's own package.json, so every app
+# declares what it needs directly instead of relying on root hoisting.
+linkWorkspacePackages = true
+# markuplint など、自分自身の位置から parser を解決するツールが isolated
+# レイアウトだと解決に失敗するため hoisted を明示する。
+linker = "hoisted"
+
+# [test] はプロダクトごとに products/<name>/bunfig.toml に置く（preload が cwd 基準のため）。
