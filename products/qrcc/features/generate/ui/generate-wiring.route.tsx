@@ -3,6 +3,7 @@ import { createServerFn } from '@tanstack/react-start'
 // 動的 import では workerd が解決できないので静的に読む
 // （クライアント側ビルドでは vite.config.ts が外部化している）。
 import { env } from 'cloudflare:workers'
+import { traced } from '@rimltools/telemetry/worker'
 import type { Result } from '@qrcc/contract'
 import { useSyncExternalStore } from 'react'
 import { canUseBrowserWasm, loadBrowserWasm, makeWasmRenderer } from '@qrcc/wasm'
@@ -29,7 +30,7 @@ const renderOnServer = createServerFn({ method: 'POST' })
       return { ok: false, error: { kind: 'unavailable', detail: 'API binding is not configured' } }
     }
     const client = makeApiClient({
-      fetch: (request) => env.API.fetch(request),
+      fetch: traced('qrcc-api', (request) => env.API.fetch(request)),
       newRequestId: () => crypto.randomUUID(),
     })
     const outcome = await client.call('render', data, decodeRenderResponse)

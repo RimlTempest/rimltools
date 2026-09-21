@@ -17,6 +17,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
+import { traced } from '@rimltools/telemetry/worker'
 import type { CommonRpcError, Result } from '@qrcc/contract'
 import { newCodeId, newFolderId } from '@qrcc/contract'
 import { parseActorWire } from '@qrcc/auth/contract'
@@ -84,7 +85,7 @@ export const manageRpcFn = createServerFn({ method: 'POST' })
     // 呼び出し元は必ずサーバで決める。画面から渡させない（ADR-0002）
     const actor = await currentActorWire(env, getRequest())
     const client = makeApiClient({
-      fetch: (request) => env.API.fetch(request),
+      fetch: traced('qrcc-api', (request) => env.API.fetch(request)),
       newRequestId: () => crypto.randomUUID(),
     })
 
