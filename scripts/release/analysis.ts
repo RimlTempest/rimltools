@@ -29,21 +29,6 @@ export const judgeCanary = (
   return newRate > limit ? { kind: 'fail', newRate, limit } : { kind: 'pass', newRate, limit }
 }
 
-/** GraphQL Analytics: scriptVersion 別に requests / errors を集計するクエリ */
-export const invocationsQuery = `query CanaryStats($accountTag: string!, $scriptName: string!, $since: Time!, $until: Time!) {
-  viewer {
-    accounts(filter: { accountTag: $accountTag }) {
-      workersInvocationsAdaptive(
-        limit: 1000
-        filter: { scriptName: $scriptName, datetime_geq: $since, datetime_leq: $until }
-      ) {
-        sum { requests errors }
-        dimensions { scriptVersion }
-      }
-    }
-  }
-}`
-
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 

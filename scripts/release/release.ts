@@ -24,7 +24,8 @@ import { createCloudflare } from '../lib/cloudflare.ts'
 import { changedFiles, commitTitles } from '../lib/git.ts'
 import type { Registry, Result, Tool } from '../lib/tools.ts'
 import { findTool, loadTools } from '../lib/tools.ts'
-import { invocationsQuery, parseInvocations } from './analysis.ts'
+import type { Stats } from './analysis.ts'
+import { parseInvocations } from './analysis.ts'
 import type { Args } from './args.ts'
 import { parseArgs } from './args.ts'
 import { changedTools } from './changes.ts'
@@ -41,6 +42,19 @@ import { rewriteConfig } from './rewrite.ts'
 import type { RolloutDeps, RolloutOutcome } from './rollout.ts'
 import { rolloutWorker } from './rollout.ts'
 import { runSmoke } from './smoke.ts'
+import type { StatsSource } from './sources.ts'
+import {
+  graphqlStatsQuery,
+  graphqlVersionField,
+  introspectionQuery,
+  observabilityQuery,
+  outcomeKeyCandidates,
+  parseObservabilityKeys,
+  parseObservabilityStats,
+  pickKey,
+  selectSource,
+  versionKeyCandidates,
+} from './sources.ts'
 
 const EXIT_FAILED = 1
 const EXIT_NEEDS_HUMAN = 3
@@ -164,7 +178,94 @@ const readState = async (tool: Tool, deployEnv: DeployEnv): Promise<WorkerState[
 
 // ── 依存の組み立て（composition root）──────────────────────────────────
 
-const makeDeps = (deployEnv: DeployEnv): RolloutDeps => {
+type Cf = ReturnType<typeof createCloudflare>
+
+/** 1. GraphQL Analytics（版の次元が実在するときだけ） */
+const graphqlSource = (cf: Cf, deployEnv: DeployEnv): StatsSource => {
+  let field: string | undefined
+  return {
+    name: 'graphql-analytics',
+    probe: async () => {
+      const res = await cf.graphql(introspectionQuery, {})
+      field = res.ok ? graphqlVersionField(res.value) : undefined
+      return field !== undefined
+    },
+    stats: async (worker, since, until) => {
+      if (field === undefined) return { ok: false, error: 'graphql: no version dimension' }
+      const res = await cf.graphql(graphqlStatsQuery(field), {
+        accountTag: deployEnv.accountId,
+        scriptName: worker,
+        since: since.toISOString(),
+        until: until.toISOString(),
+      })
+      return res.ok ? parseInvocations(res.value) : res
+    },
+  }
+}
+
+/** 2. Workers Observability（Workers Logs の invocation log） */
+const workersLogsSource = (cf: Cf, deployEnv: DeployEnv): StatsSource => {
+  const base = `/accounts/${deployEnv.accountId}/workers/observability/telemetry`
+  let keys: { versionKey: string; outcomeKey: string } | undefined
+  return {
+    name: 'workers-logs',
+    probe: async () => {
+      const now = Date.now()
+      const res = await cf.rest('POST', `${base}/keys`, {
+        datasets: ['cloudflare-workers'],
+        from: now - 7 * 24 * 60 * 60 * 1000,
+        to: now,
+        limit: 1000,
+      })
+      if (!res.ok) {
+        say(`workers-logs unavailable: ${res.error}`)
+        return false
+      }
+      const available = parseObservabilityKeys(res.value)
+      if (!available.ok) return false
+      const versionKey = pickKey(versionKeyCandidates, available.value)
+      const outcomeKey = pickKey(outcomeKeyCandidates, available.value)
+      keys =
+        versionKey !== undefined && outcomeKey !== undefined
+          ? { versionKey, outcomeKey }
+          : undefined
+      if (keys === undefined) say('workers-logs: no version/outcome key in the dataset')
+      return keys !== undefined
+    },
+    stats: async (worker, since, until) => {
+      if (keys === undefined) return { ok: false, error: 'workers-logs: keys not resolved' }
+      const res = await cf.rest(
+        'POST',
+        `${base}/query`,
+        observabilityQuery({ worker, ...keys, since, until }),
+      )
+      return res.ok ? parseObservabilityStats(res.value, keys) : res
+    },
+  }
+}
+
+/** canary 判定の数字の出どころを決める。どれも使えなければ undefined（人の判断に回す） */
+const resolveStats = async (
+  deployEnv: DeployEnv,
+): Promise<
+  | ((worker: string, since: Date, until: Date) => Promise<Result<Map<string, Stats>, string>>)
+  | undefined
+> => {
+  const cf = createCloudflare({
+    apiToken: deployEnv.apiToken,
+    fetch: (input, init) => fetch(input, init),
+  })
+  const source = await selectSource([
+    graphqlSource(cf, deployEnv),
+    workersLogsSource(cf, deployEnv),
+  ])
+  say(
+    `canary analytics source: ${source?.name ?? '(none) — canary steps will stop for a human decision'}`,
+  )
+  return source?.stats
+}
+
+const makeDeps = (deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDeps => {
   const cf = createCloudflare({
     apiToken: deployEnv.apiToken,
     fetch: (input, init) => fetch(input, init),
@@ -217,15 +318,7 @@ const makeDeps = (deployEnv: DeployEnv): RolloutDeps => {
       if (!res.ok) return res.error.includes(': 404 ') ? { ok: true, value: [] } : res
       return parseDeployments(res.value)
     },
-    stats: async (workerName, since, until) => {
-      const res = await cf.graphql(invocationsQuery, {
-        accountTag: deployEnv.accountId,
-        scriptName: workerName,
-        since: since.toISOString(),
-        until: until.toISOString(),
-      })
-      return res.ok ? parseInvocations(res.value) : res
-    },
+    stats,
     smoke: async (url, headers) => {
       // デプロイ直後は配信の切替に揺らぎがあるので、20 秒間隔で最大 6 回まで再試行する
       let last: Result<{ assets: number }, string> = { ok: false, error: 'not run' }
@@ -390,7 +483,10 @@ const runPlans = async (
 ): Promise<number> => {
   const prepared = await loadPrepared(tool, deployEnv)
   if (!prepared.ok) return fail(prepared.error)
-  const deps = makeDeps(deployEnv)
+  const needsAnalytics = plans.some(
+    (p) => p.strategy.kind === 'canary' && p.strategy.steps.some((step) => step < 100),
+  )
+  const deps = makeDeps(deployEnv, needsAnalytics ? await resolveStats(deployEnv) : undefined)
   const state = await readState(tool, deployEnv)
   const results: { plan: WorkerPlan; outcome: RolloutOutcome }[] = []
 

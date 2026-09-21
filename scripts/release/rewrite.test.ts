@@ -93,4 +93,22 @@ describe('rewriteConfig', () => {
     const result = rewriteConfig({ name: 'other' }, { tool: qrcc, env: staging, host: 'h' })
     expect(result.ok).toBe(false)
   })
+
+  test('refuses configs that switch off invocation logs (canary analytics depend on them)', () => {
+    for (const observability of [
+      { enabled: false },
+      { enabled: true, logs: { invocation_logs: false } },
+    ]) {
+      const result = rewriteConfig(
+        { ...webConfig, observability },
+        { tool: qrcc, env: staging, host: 'h' },
+      )
+      expect(result.ok).toBe(false)
+    }
+    const enabled = rewriteConfig(
+      { ...webConfig, observability: { enabled: true } },
+      { tool: qrcc, env: staging, host: 'h' },
+    )
+    expect(enabled.ok).toBe(true)
+  })
 })

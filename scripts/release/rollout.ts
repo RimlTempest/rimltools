@@ -14,7 +14,8 @@ import { overrideHeader } from './smoke.ts'
  *   → steps の割合で canary（bake → エラー率を旧版と比較）→ 100% → smoke
  *
  * どこかで落ちたら、直前の安定版を 100% に戻して `rolled-back` を返す。
- * 判定に足るトラフィックが集まらなければ、割合をそのままにして `needs-human` を返す。
+ * 判定に足るトラフィックが集まらないとき、版ごとに数える手段が無いとき、集計が失敗したときは
+ * 割合をそのままにして `needs-human` を返す（新版が悪い根拠が無いのでロールバックしない）。
  */
 export type RolloutDeps = {
   log: (message: string) => void
@@ -32,11 +33,17 @@ export type RolloutDeps = {
     message: string,
   ) => Promise<Result<{ versionId: string }, string>>
   deployments: (workerName: string) => Promise<Result<Deployment[], string>>
-  stats: (
-    workerName: string,
-    since: Date,
-    until: Date,
-  ) => Promise<Result<Map<string, Stats>, string>>
+  /**
+   * 版ごとの集計。undefined = 版で分けて数えられる手段が無い（sources.ts）。
+   * その場合も失敗した場合も、新版が悪い根拠は無いのでロールバックせず人に委ねる。
+   */
+  stats:
+    | ((
+        workerName: string,
+        since: Date,
+        until: Date,
+      ) => Promise<Result<Map<string, Stats>, string>>)
+    | undefined
   smoke: (
     url: string,
     headers: Record<string, string>,
@@ -164,10 +171,22 @@ export const rolloutWorker = async (
 
     let extensions = 0
     let synthesized = false
+    const holdForHuman = (reason: string): RolloutOutcome => ({
+      kind: 'needs-human',
+      reason,
+      versionId,
+      stable,
+      percentage,
+    })
+    if (deps.stats === undefined) {
+      return holdForHuman(
+        'no analytics source can split traffic by version (GraphQL has no version dimension and Workers Logs is unavailable)',
+      )
+    }
     await deps.sleep(bakeMinutes * minute)
     for (;;) {
       const stats = await deps.stats(workerName, since, deps.now())
-      if (!stats.ok) return rollback(versionId, stable, `analytics unavailable: ${stats.error}`)
+      if (!stats.ok) return holdForHuman(`analytics query failed: ${stats.error}`)
       const verdict = judgeCanary(
         stats.value.get(versionId) ?? empty,
         stats.value.get(stable) ?? empty,
@@ -193,13 +212,9 @@ export const rolloutWorker = async (
         continue
       }
       if (extensions >= params.maxExtensions) {
-        return {
-          kind: 'needs-human',
-          reason: `only ${verdict.requests}/${verdict.needed} requests reached ${versionId} at ${percentage}%`,
-          versionId,
-          stable,
-          percentage,
-        }
+        return holdForHuman(
+          `only ${verdict.requests}/${verdict.needed} requests reached ${versionId} at ${percentage}%`,
+        )
       }
       extensions += 1
       deps.log(
