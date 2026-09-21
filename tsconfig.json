@@ -10,5 +10,6 @@
     "sourceMap": false,
     "composite": false,
     "incremental": false
-  }
+  },
+  "exclude": ["packages/ui/**"]
 }

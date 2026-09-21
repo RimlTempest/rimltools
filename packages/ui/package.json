@@ -1,21 +1,17 @@
 {
-  "name": "@qrcc/ui",
+  "name": "@rimltools/ui",
   "version": "0.1.0",
   "private": true,
+  "description": "RimlTools 共通のアクセシブルな基本コンポーネント（Button・Field・LiveRegion・SkipLink・VisuallyHidden・ThemeToggle）と reset.css。見た目とクラス名の接頭辞はプロダクトが持つ。",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles/index.css"
+    "./reset.css": "./src/styles/reset.css"
   },
   "scripts": {
     "build": "tsc --build",
-    "test": "bun test"
-  },
-  "dependencies": {
-    "@qrcc/contract": "workspace:*",
-    "@rimltempest/riml-ds-css": "^0.2.0",
-    "@rimltempest/riml-ds-tokens": "^0.2.0",
-    "@rimltools/ui": "workspace:*"
+    "test": "bun test",
+    "lint:html": "node ../../tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json 'src/**/*.tsx'"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "20.12.0",
