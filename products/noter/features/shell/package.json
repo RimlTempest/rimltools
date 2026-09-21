@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@noter/contract": "workspace:*",
-    "@noter/ui": "workspace:*"
+    "@noter/ui": "workspace:*",
+    "@rimltools/telemetry": "workspace:*"
   },
   "devDependencies": {
     "@tanstack/react-router": "1.170.32",

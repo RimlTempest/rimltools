@@ -18,6 +18,7 @@
     "@qrcc/scan": "workspace:*",
     "@qrcc/ui": "workspace:*",
     "@qrcc/wasm": "workspace:*",
-    "@qrcc/webmcp": "workspace:*"
+    "@qrcc/webmcp": "workspace:*",
+    "@rimltools/telemetry": "workspace:*"
   }
 }

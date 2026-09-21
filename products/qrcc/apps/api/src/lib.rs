@@ -11,10 +11,11 @@
 
 mod dispatch;
 mod request;
+mod trace;
 
 use qrcc_kernel::RpcDecodeError;
 use qrcc_kernel::rpc::{encode_envelope, header};
-use worker::{Context, Date, Env, Request, Response, Result, event};
+use worker::{Context, Date, Env, Request, Response, Result, console_log, event};
 
 #[event(start)]
 fn start() {
@@ -28,6 +29,14 @@ async fn fetch(mut req: Request, env: Env, _ctx: Context) -> Result<Response> {
     let actor = req.headers().get(header::ACTOR).ok().flatten();
     let request_id = req.headers().get(header::REQUEST_ID).ok().flatten();
     let idempotency_key = req.headers().get(header::IDEMPOTENCY_KEY).ok().flatten();
+    // 上流（qrcc-web）がテレメトリを有効にしているときだけ、trace_id 付きで 1 行残す
+    let traceparent = req.headers().get("traceparent").ok().flatten();
+    if let Some(trace_id) = traceparent.as_deref().and_then(trace::trace_id) {
+        console_log!(
+            "{}",
+            trace::rpc_log_line(trace_id, request_id.as_deref(), &http_method, &path)
+        );
+    }
     let body = req.bytes().await.unwrap_or_default();
 
     let built = request::build(

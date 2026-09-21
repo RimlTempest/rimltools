@@ -7,6 +7,7 @@
  */
 import { parseDocumentId } from '@noter/contract'
 import { encodeIdentity } from '@noter/sync/contract'
+import { traced } from '@rimltools/telemetry/worker'
 import type { WebEnv } from './container.ts'
 import { authorizeWs } from './ws-authorize.ts'
 
@@ -40,5 +41,9 @@ export const handleWebSocketUpgrade = async (
   const headers = new Headers(request.headers)
   for (const [key, value] of encodeIdentity(identity.value)) headers.set(key, value)
 
-  return env.DOCUMENT_ROOM.getByName(documentId.value).fetch(new Request(request, { headers }))
+  // traced() が traceparent を足すので、DO 側のログを同じ trace に紐づけられる
+  const room = env.DOCUMENT_ROOM.getByName(documentId.value)
+  return traced('noter-sync', (forwarded) => room.fetch(forwarded))(
+    new Request(request, { headers }),
+  )
 }

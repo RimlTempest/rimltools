@@ -1,7 +1,7 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "qrcc-web",
-  "main": "@tanstack/react-start/server-entry",
+  "main": "./src/server.ts",
   "compatibility_date": "2026-08-31",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
@@ -23,7 +23,17 @@
     },
   ],
 
-  "vars": { "APP_ORIGIN": "https://qrcc.riml4i.com" },
+  // CF_VERSION_METADATA は span の cloudflare.worker.version_id に使う（段階リリースの版と突き合わせる）
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+
+  "vars": {
+    "APP_ORIGIN": "https://qrcc.riml4i.com",
+    // テレメトリ（docs/observability.md）。空なら無効。本番・staging の値はリリース時に入れる。
+    // OTEL_EXPORTER_OTLP_HEADERS は secret（wrangler secret put）。
+    "OTEL_SERVICE_NAME": "qrcc-web",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "",
+    "FARO_URL": "",
+  },
   // BETTER_AUTH_SECRET / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET は
   // wrangler secret put で設定する。.dev.vars はコミットしない。
 }
