@@ -1,0 +1,5 @@
+export { evaluateFlag } from './evaluate.ts'
+export { bucketOf, fnv1a32 } from './hash.ts'
+export { parseFlagDefinition, parseFlagFile } from './parse.ts'
+export type { FlagFile } from './parse.ts'
+export type * from './types.ts'

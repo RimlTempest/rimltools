@@ -15,6 +15,22 @@
         "wrangler": "4.127.1",
       },
     },
+    "packages/flags": {
+      "name": "@rimltools/flags",
+      "version": "0.1.0",
+      "dependencies": {
+        "@openfeature/core": "1.12.0",
+      },
+      "devDependencies": {
+        "@openfeature/server-sdk": "1.23.0",
+      },
+      "peerDependencies": {
+        "@openfeature/server-sdk": "^1.23.0",
+      },
+      "optionalPeers": [
+        "@openfeature/server-sdk",
+      ],
+    },
     "products/noter": {
       "name": "@rimltools/noter",
     },
@@ -721,6 +737,10 @@
 
     "@oozcitak/util": ["@oozcitak/util@10.0.0", "", {}, "sha512-hAX0pT/73190NLqBPPWSdBVGtbY6VOhWYK3qqHqtXQ1gK7kS2yz4+ivsN07hpJ6I3aeMtKP6J6npsEKOAzuTLA=="],
 
+    "@openfeature/core": ["@openfeature/core@1.12.0", "", {}, "sha512-7PCPzyd1OC19begz30+CRknFB0ChtyaZUhk7YWrk+Bov1fpVw0HYkTXtoxxsvPfDZB9P9WsT7uixN+Z8f9+bcA=="],
+
+    "@openfeature/server-sdk": ["@openfeature/server-sdk@1.23.0", "", { "peerDependencies": { "@openfeature/core": "^1.12.0" } }, "sha512-JWeLvltJIV0AFgOfbw7hK9b9Rw/5wWq+RMhCIU9sJtAqarxr8hSPglG+JAGGhYdElAz3Qwe9W3ApWyPNkQEyqg=="],
+
     "@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
 
     "@oxc-project/types": ["@oxc-project/types@0.150.0", "", {}, "sha512-rDS5/31E9HfPl/CIzGrn0DOlvBbXFseQ5URJ9sYMfstbKLD/c6Gm9vmRzRGDdAXyOIL4zmO37lc9RIwYqVruZw=="],
@@ -854,6 +874,8 @@
     "@rimltempest/riml-ds-css": ["@rimltempest/riml-ds-css@0.2.0", "", { "peerDependencies": { "@rimltempest/riml-ds-tokens": "workspace:*" }, "optionalPeers": ["@rimltempest/riml-ds-tokens"] }, "sha512-eydDKAL1rMPD/upLW38828waiGkRO+Gpe56iQM4mnH9s1I3ziy3OF8A+8lXmm8ghbqxTGGnaBgPZhXqSZtwu0w=="],
 
     "@rimltempest/riml-ds-tokens": ["@rimltempest/riml-ds-tokens@0.2.0", "", {}, "sha512-pzKoaGPahF8/BDNhwqzPBjw8QYmuaajHJelz4bIP9GtZhis2yG+VHhd8GiAzlOjwUSrC/3odniKCsLFQAX+hOw=="],
+
+    "@rimltools/flags": ["@rimltools/flags@workspace:packages/flags"],
 
     "@rimltools/noter": ["@rimltools/noter@workspace:products/noter"],
 
