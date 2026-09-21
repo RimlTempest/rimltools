@@ -6,7 +6,8 @@ locals {
   existing_workers        = { for w in data.cloudflare_workers.all.result : w.name => w.id }
   existing_d1             = { for d in data.cloudflare_d1_databases.all.result : d.name => d.uuid }
   existing_custom_domains = { for d in data.cloudflare_workers_custom_domains.all.result : d.hostname => d.id }
-  existing_zone_rulesets  = { for r in data.cloudflare_rulesets.zone.rulesets : r.phase => r.id if r.kind == "zone" }
+  # 空のゾーンでは null が返ることがある（テストの mock もこれを使う）
+  existing_zone_rulesets = { for r in(data.cloudflare_rulesets.zone.rulesets == null ? [] : data.cloudflare_rulesets.zone.rulesets) : r.phase => r.id if r.kind == "zone" }
 
   import_workers = merge([
     for name, t in local.tools : {
@@ -29,8 +30,8 @@ locals {
   ]...)
 
   import_production_domains = {
-    for name, t in local.tools : name => local.existing_custom_domains["${t.subdomain}.${local.domain}"]
-    if contains(keys(local.existing_custom_domains), "${t.subdomain}.${local.domain}")
+    for name, host in local.production_hosts : name => local.existing_custom_domains[host]
+    if contains(keys(local.existing_custom_domains), host) && !contains(var.pending_tools, name)
   }
 
   import_legacy_domains = var.legacy_hosts_mode != "attached" ? {} : merge([
@@ -67,7 +68,7 @@ import {
 
 import {
   for_each = local.import_production_domains
-  to       = module.tool[each.key].cloudflare_workers_custom_domain.production
+  to       = module.tool[each.key].cloudflare_workers_custom_domain.production[0]
   id       = "${var.cloudflare_account_id}/${each.value}"
 }
 

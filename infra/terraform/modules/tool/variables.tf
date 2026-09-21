@@ -13,6 +13,7 @@ variable "tool" {
   type = object({
     name        = string
     subdomain   = string
+    apex        = optional(bool, false)
     legacyHosts = list(string)
     workers = list(object({
       name = string
@@ -27,6 +28,12 @@ variable "tool" {
 variable "domain" {
   description = "Base domain of RimlTools (tools.json .domain), e.g. tools.riml4i.com."
   type        = string
+}
+
+variable "production_domain_enabled" {
+  description = "Attach the production host to the public Worker. false until the tool's first production deploy (a Custom Domain needs a Worker with code)."
+  type        = bool
+  default     = true
 }
 
 variable "staging_domains_enabled" {

@@ -28,7 +28,11 @@ locals {
     }
   ]...)
 
-  hosts = {
+  # apex（ポータル）は RimlTools のドメインそのものに載る
+  hosts = var.tool.apex ? {
+    production = var.domain
+    staging    = "staging.${var.domain}"
+    } : {
     production = "${var.tool.subdomain}.${var.domain}"
     staging    = "${var.tool.subdomain}-staging.${var.domain}"
   }
@@ -114,6 +118,8 @@ resource "cloudflare_worker" "staging" {
 # --- Custom Domains ------------------------------------------------------------
 
 resource "cloudflare_workers_custom_domain" "production" {
+  count = var.production_domain_enabled ? 1 : 0
+
   account_id = var.account_id
   zone_id    = var.zone_id
   hostname   = local.hosts.production

@@ -33,10 +33,10 @@ variable "staging_domains_enabled" {
   default     = false
 }
 
-variable "portal_domain_enabled" {
-  description = "Attach the portal Worker to the bare RimlTools domain. Turn on after the portal's first deploy."
-  type        = bool
-  default     = false
+variable "pending_tools" {
+  description = "Tools whose production host is not attached yet (no code deployed). Remove a name after its first production deploy."
+  type        = list(string)
+  default     = []
 }
 
 variable "legacy_hosts_mode" {
@@ -92,4 +92,16 @@ variable "auth_rate_limit_per_10s" {
   description = "Requests per 10 s per IP (and colo) allowed to auth endpoints before a 10 s block. Free plan: 1 rule, IP only, 10 s period and timeout."
   type        = number
   default     = 20
+}
+
+variable "ops_issues_enabled" {
+  description = "Let the ops workflows (SLO, synthetic, free-tier budget) open and update Issues (repo variable OPS_ISSUES)."
+  type        = bool
+  default     = false
+}
+
+variable "ops_token_permission_groups" {
+  description = "API permission group names for the ops (analytics) token."
+  type        = list(string)
+  default     = ["Account Analytics Read"]
 }

@@ -174,13 +174,14 @@ locals {
   # preview は staging のトークンを使う
   token_for_environment = { production = "production", staging = "staging", preview = "staging" }
 
+  # D1 を持たないツール（ポータルなど）は変数を作らない
   d1_variables = merge([
     for env, e in local.environments : {
       for name, m in module.tool : "${env}/D1_${upper(name)}_ID" => {
         env   = env
         name  = "D1_${upper(name)}_ID"
         value = one(values(m.d1_ids[e.d1]))
-      }
+      } if length(local.tools[name].d1) > 0
     }
   ]...)
 
@@ -202,8 +203,8 @@ locals {
 
 check "one_d1_per_tool" {
   assert {
-    condition     = alltrue([for t in local.tools : length(t.d1) == 1])
-    error_message = "D1_<TOOL>_ID assumes exactly one D1 database per tool. Extend the variable naming before adding a second one."
+    condition     = alltrue([for t in local.tools : length(t.d1) <= 1])
+    error_message = "D1_<TOOL>_ID assumes at most one D1 database per tool. Extend the variable naming before adding a second one."
   }
 }
 
