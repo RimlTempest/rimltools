@@ -30,7 +30,7 @@ import { parseArgs } from './args.ts'
 import { changedTools } from './changes.ts'
 import { currentStable, parseDeployments, parseWranglerOutput } from './deployments.ts'
 import type { DeployEnv } from './environment.ts'
-import { readEnvironment } from './environment.ts'
+import { accessHeaders, mergeVariables, readEnvironment } from './environment.ts'
 import { checkReleaseGuard } from './guard.ts'
 import { checkMigrations } from './migrations.ts'
 import type { WorkerPlan } from './plan.ts'
@@ -45,7 +45,8 @@ import { runSmoke } from './smoke.ts'
 const EXIT_FAILED = 1
 const EXIT_NEEDS_HUMAN = 3
 
-const env = process.env
+const env = mergeVariables(process.env['RELEASE_VARS'], process.env)
+const access = accessHeaders(env)
 
 const say = (message: string) => console.log(message)
 
@@ -231,7 +232,7 @@ const makeDeps = (deployEnv: DeployEnv): RolloutDeps => {
       for (let attempt = 1; attempt <= 6; attempt += 1) {
         last = await runSmoke(url, headers, async (u, init) => {
           const res = await fetch(u, {
-            headers: { 'user-agent': 'rimltools-release', ...init.headers },
+            headers: { 'user-agent': 'rimltools-release', ...access, ...init.headers },
           })
           return { status: res.status, text: () => res.text() }
         })
@@ -246,7 +247,7 @@ const makeDeps = (deployEnv: DeployEnv): RolloutDeps => {
       const one = async () => {
         try {
           const res = await fetch(url, {
-            headers: { 'user-agent': 'rimltools-release-synthetic', ...headers },
+            headers: { 'user-agent': 'rimltools-release-synthetic', ...access, ...headers },
           })
           await res.arrayBuffer()
         } catch {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { readEnvironment } from './environment.ts'
+import { accessHeaders, mergeVariables, readEnvironment } from './environment.ts'
 
 const base = {
   RIMLTOOLS_ENV: 'staging',
@@ -41,5 +41,30 @@ describe('readEnvironment', () => {
   test('production must not carry a suffix and staging must', () => {
     expect(readEnvironment({ ...base, RIMLTOOLS_ENV: 'production' }).ok).toBe(false)
     expect(readEnvironment({ ...base, WORKER_SUFFIX: '' }).ok).toBe(false)
+  })
+})
+
+describe('mergeVariables', () => {
+  test('lets real environment variables win over the vars JSON', () => {
+    const merged = mergeVariables('{"D1_QRCC_ID":"from-vars","BASE_DOMAIN":"v"}', {
+      BASE_DOMAIN: 'env',
+    })
+    expect(merged['D1_QRCC_ID']).toBe('from-vars')
+    expect(merged['BASE_DOMAIN']).toBe('env')
+  })
+
+  test('ignores a missing or malformed vars JSON', () => {
+    expect(mergeVariables(undefined, { A: '1' })).toEqual({ A: '1' })
+    expect(mergeVariables('not json', { A: '1' })).toEqual({ A: '1' })
+  })
+})
+
+describe('accessHeaders', () => {
+  test('adds the Cloudflare Access service token when both halves are present', () => {
+    expect(accessHeaders({ CF_ACCESS_CLIENT_ID: 'id', CF_ACCESS_CLIENT_SECRET: 's' })).toEqual({
+      'CF-Access-Client-Id': 'id',
+      'CF-Access-Client-Secret': 's',
+    })
+    expect(accessHeaders({ CF_ACCESS_CLIENT_ID: 'id' })).toEqual({})
   })
 })
