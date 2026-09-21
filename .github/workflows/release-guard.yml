@@ -1,0 +1,38 @@
+name: Release guard
+
+# main / develop 宛て PR の出入口の検査（ADR-0002 / ADR-0003 / ADR-0007）。
+# - main に入れてよいのは develop（Release PR）と hotfix/* だけ
+# - release-freeze ラベル中は fix / revert 以外を main に入れない
+# - D1 の破壊的 migration は "-- contract:" 注記が要る（expand → contract）
+# ruleset の required check は job 名の `release-guard`。
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
+
+permissions: {}
+
+jobs:
+  release-guard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
+        with:
+          cache: true
+          install_args: bun
+      - name: ブランチと release-freeze
+        run: bun scripts/release/release.ts guard
+        env:
+          GUARD_BASE: ${{ github.base_ref }}
+          GUARD_HEAD: ${{ github.head_ref }}
+          GUARD_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+      - name: D1 migration（expand / contract）
+        run: bun scripts/release/release.ts check-migrations
+        env:
+          GUARD_BASE: ${{ github.base_ref }}

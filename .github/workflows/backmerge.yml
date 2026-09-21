@@ -1,0 +1,43 @@
+name: Back-merge
+
+# hotfix/* を main に入れたあと、その修正を develop に戻す PR を作る（ADR-0002）。
+# 通常の Release PR（develop → main）の後は、main にしか無いのは merge commit だけなので何もしない。
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  backmerge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: main にしか無い修正があれば develop への PR を作る
+        run: |
+          git fetch -q origin main develop
+          missing=$(git rev-list --no-merges --count origin/develop..origin/main)
+          if [ "$missing" = 0 ]; then
+            echo "develop already has everything on main"
+            exit 0
+          fi
+          if [ -n "$(gh pr list --repo "$REPO" --base develop --head main --state open --json number --jq '.[0].number // empty')" ]; then
+            echo "back-merge PR already open"
+            exit 0
+          fi
+          {
+            echo "main にだけ入った修正（hotfix）を develop に戻す。"
+            echo
+            git log --no-merges --format='- %s (%h)' origin/develop..origin/main
+          } > body.md
+          gh pr create --repo "$REPO" --base develop --head main \
+            --title "chore(release): back-merge main into develop" --body-file body.md
+        env:
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.RELEASE_BOT_TOKEN || github.token }}

@@ -68,3 +68,37 @@ export const readEnvironment = (
     },
   }
 }
+
+/**
+ * workflow から `toJSON(vars)` を RELEASE_VARS で受け取り、環境変数に重ねる。
+ * ツールが増えても `D1_<TOOL>_ID` を workflow に書き足さなくて済む。
+ * 実際の環境変数（secrets を含む）が優先。
+ */
+export const mergeVariables = (
+  varsJson: string | undefined,
+  environment: Record<string, string | undefined>,
+): Record<string, string | undefined> => {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(varsJson ?? '{}')
+  } catch {
+    parsed = {}
+  }
+  const fromVars: Record<string, string> = {}
+  if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === 'string') fromVars[key] = value
+    }
+  }
+  return { ...fromVars, ...environment }
+}
+
+/** staging を Cloudflare Access で閉じている場合の service token（smoke / synthetic 用） */
+export const accessHeaders = (
+  environment: Record<string, string | undefined>,
+): Record<string, string> => {
+  const id = environment['CF_ACCESS_CLIENT_ID']
+  const secret = environment['CF_ACCESS_CLIENT_SECRET']
+  if (id === undefined || id === '' || secret === undefined || secret === '') return {}
+  return { 'CF-Access-Client-Id': id, 'CF-Access-Client-Secret': secret }
+}
