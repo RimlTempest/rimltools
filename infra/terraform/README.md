@@ -181,9 +181,13 @@ terraform init && terraform plan -lock=false
 
 ## 制約・既知の限界
 
-- CI 用トークン（`cloudflare_account_token`）の対象はアカウント単位までしか絞れない。production / staging で分けているのは、漏洩時に片方だけ失効させるため
-- `ci_token_permission_groups` の名前は、権限グループ API が返す名前（ダッシュボードの表示名と異なることがある）。
+- CI 用トークン（`cloudflare_account_token`）の account 権限はアカウント単位までしか絞れない。production / staging で分けているのは、漏洩時に片方だけ失効させるため。
+  zone 権限（`ci_token_zone_permission_groups`、既定は `Workers Routes Read`）は別のポリシーにして、ツールのゾーンだけに絞っている
+- `Workers Observability Write` を CI トークンに付けている。段階リリースの判定が使う Observability API は、読み取りでも Write を要求するため
+- `ci_token_permission_groups` / `ci_token_zone_permission_groups` の名前は、権限グループ API が返す名前（ダッシュボードの表示名と異なることがある）。
   見つからない名前があると `check` が失敗を報告するので、`variables.tf` の既定値を直す
+- ruleset（develop / main）は required checks に加えて、CodeQL の結果を必須にしている（`required_code_scanning`:
+  security alert が high 以上、または alert が error のときマージ不可）。API で先行適用した設定と同じ
 - Free プランの rate limiting は 1 本・式は path のみ・IP 単位・10 秒。host で絞れないため、ゾーン全体の `/api/auth/` に効く
 - zone の entry point ruleset は phase ごとに 1 つ。既存のものは取り込まれ、ルールはこの定義で置き換わる
 - GitHub の variable は空値を持てないため、production の `WORKER_SUFFIX` は作らない（workflow では空文字として展開される）

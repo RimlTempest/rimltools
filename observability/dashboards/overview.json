@@ -1,0 +1,764 @@
+{
+  "uid": "rimltools-overview",
+  "title": "RimlTools / 概要",
+  "description": "全ツールの RED・カナリア・無料枠・外形監視（ADR-0008）",
+  "tags": ["rimltools"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "graphTooltip": 1,
+  "refresh": "5m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        }
+      },
+      {
+        "builtIn": 0,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "iconColor": "#8F3BB8",
+        "name": "Deploys",
+        "target": {
+          "limit": 100,
+          "matchAny": true,
+          "tags": ["deploy"],
+          "type": "tags"
+        }
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "env",
+        "label": "環境",
+        "type": "custom",
+        "query": "production,staging",
+        "current": {
+          "text": "production",
+          "value": "production"
+        },
+        "options": [
+          {
+            "text": "production",
+            "value": "production",
+            "selected": true
+          },
+          {
+            "text": "staging",
+            "value": "staging",
+            "selected": false
+          }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "トラフィックとエラー（RED）",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "リクエスト数 / 分（ツール別）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "sum by (tool) (rimltools_worker_requests{environment=\"$env\"}) / 5",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{tool}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "Cloudflare GraphQL の 5 分窓の件数を 1 分あたりに換算（scripts/observability/push-metrics.ts）",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqpm"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "エラー率（ツール別）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "sum by (tool) (rimltools_worker_requests{environment=\"$env\", status_class=\"error\"}) / sum by (tool) (rimltools_worker_requests{environment=\"$env\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{tool}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "Worker の invocation が success / clientDisconnected 以外で終わった割合",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.005
+              },
+              {
+                "color": "red",
+                "value": 0.02
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "wall time p99（ツール別）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "max by (tool) (rimltools_worker_wall_time_ms{environment=\"$env\", quantile=\"0.99\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{tool}} p99",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        },
+        {
+          "expr": "max by (tool) (rimltools_worker_wall_time_ms{environment=\"$env\", quantile=\"0.9\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{tool}} p90",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        },
+        {
+          "expr": "max by (tool) (rimltools_worker_wall_time_ms{environment=\"$env\", quantile=\"0.5\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{tool}} p50",
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "Worker の wall time（I/O 待ちを含む）。GraphQL が wallTime* を返さないときは空になり、CPU time のパネルだけが出る",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "CPU time p50 / p99（ツール別）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "targets": [
+        {
+          "expr": "max by (tool) (rimltools_worker_cpu_time_ms{environment=\"$env\", quantile=\"0.99\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{tool}} p99",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        },
+        {
+          "expr": "max by (tool) (rimltools_worker_cpu_time_ms{environment=\"$env\", quantile=\"0.5\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{tool}} p50",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "Workers Free の CPU 上限は 10ms / invocation。p99 が近づいたら縮退を検討",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "エンドポイント別 p99（trace 由来）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, service, span_name) (rate(traces_spanmetrics_latency_bucket{service=~\".+\", deployment_environment=\"$env\"}[$__rate_interval])))",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{service}} {{span_name}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "Tempo の metrics-generator（span metrics）から。trace はサンプリングされているので、傾向を見るための値（docs/observability-grafana.md）。点をクリックすると exemplar の trace に飛べる",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "row",
+      "title": "カナリア（版ごとの比較）",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "panels": []
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "版ごとのトラフィック比率",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 18
+      },
+      "targets": [
+        {
+          "expr": "sum by (script, version) (rimltools_worker_requests{environment=\"$env\"}) / ignoring(version) group_left sum by (script) (rimltools_worker_requests{environment=\"$env\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{script}} {{version}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "段階リリース中の配信割合（Workers gradual deployments）。scriptVersion が取れない場合は version が空",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "版ごとのエラー率",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 18
+      },
+      "targets": [
+        {
+          "expr": "sum by (script, version) (rimltools_worker_requests{environment=\"$env\", status_class=\"error\"}) / sum by (script, version) (rimltools_worker_requests{environment=\"$env\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{script}} {{version}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "リリースの判定（ADR-0003）と同じ観点。新版の線が旧版より上なら要注意",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "版ごとの wall time p99",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 18
+      },
+      "targets": [
+        {
+          "expr": "max by (script, version) (rimltools_worker_wall_time_ms{environment=\"$env\", quantile=\"0.99\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{script}} {{version}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "row",
+      "title": "無料枠（Workers Free / D1）",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "panels": []
+    },
+    {
+      "id": 12,
+      "type": "gauge",
+      "title": "Workers リクエスト（今日・UTC）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 27
+      },
+      "targets": [
+        {
+          "expr": "max(rimltools_workers_requests_today)",
+          "range": true,
+          "exemplar": false,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "上限 100,000 / 日（アカウント全体）。枯れると Worker がエラーを返す",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 100000,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "gauge",
+      "title": "D1 行書き込み（今日）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 27
+      },
+      "targets": [
+        {
+          "expr": "sum(rimltools_d1_rows_written_today)",
+          "range": true,
+          "exemplar": false,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "上限 100,000 / 日",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 100000,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "gauge",
+      "title": "D1 行読み取り（今日）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 27
+      },
+      "targets": [
+        {
+          "expr": "sum(rimltools_d1_rows_read_today)",
+          "range": true,
+          "exemplar": false,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "上限 5,000,000 / 日",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 5000000,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "メトリクス転送の遅れ",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 27
+      },
+      "targets": [
+        {
+          "expr": "time() - max(rimltools_metrics_push_last_success_timestamp_seconds)",
+          "range": true,
+          "exemplar": false,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "observability.yml（5 分ごと）の最終成功からの経過。30 分を超えたら GitHub Actions を確認",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 900
+              },
+              {
+                "color": "red",
+                "value": 1800
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 16,
+      "type": "row",
+      "title": "外形監視（Synthetic Monitoring）",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 33
+      },
+      "panels": []
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "成功率（チェック別）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 34
+      },
+      "targets": [
+        {
+          "expr": "avg by (job) (avg_over_time(probe_success{job=~\"rimltools-.*\"}[$__rate_interval]))",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{job}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "応答時間（チェック別）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 34
+      },
+      "targets": [
+        {
+          "expr": "avg by (job) (probe_duration_seconds{job=~\"rimltools-.*\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{job}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "links": [
+    {
+      "title": "RimlTools",
+      "type": "dashboards",
+      "tags": ["rimltools"],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true
+    }
+  ]
+}

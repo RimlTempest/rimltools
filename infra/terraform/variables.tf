@@ -83,7 +83,17 @@ variable "ci_token_permission_groups" {
     "D1 Write",
     "Account Analytics Read",
     "Workers Tail Read",
-    "Workers Observability Read",
+    # 段階リリースの判定（PR #7）が Observability API を使う。読み取りでも Write を要求される
+    "Workers Observability Write",
+  ]
+}
+
+variable "ci_token_zone_permission_groups" {
+  description = "Zone-scoped API permission group names for the CI deploy tokens (limited to the tools zone)."
+  type        = list(string)
+  default = [
+    # 段階リリースが Custom Domain / route の配信先を確認する（PR #7）
+    "Workers Routes Read",
   ]
 }
 

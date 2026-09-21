@@ -18,3 +18,5 @@ crash.log
 *.auto.tfvars
 infra/terraform/tfplan
 infra/terraform/plan.txt
+infra/grafana/tfplan
+infra/grafana/plan.txt
