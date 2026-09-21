@@ -57,7 +57,8 @@ socket.addEventListener('open', () => {
 socket.addEventListener('message', (event: MessageEvent) => {
   const data: unknown = event.data
   if (!(data instanceof ArrayBuffer)) {
-    console.log(`ignored a non-binary frame: ${String(data)}`)
+    // 相手が送ってきた文字列なので、改行を落としてからログに出す（偽の行を差し込ませない）
+    console.log(`ignored a non-binary frame: ${String(data).replaceAll(/\n|\r/g, '')}`)
     return
   }
   const decoder = decoding.createDecoder(new Uint8Array(data))
