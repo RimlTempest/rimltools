@@ -39,7 +39,13 @@ hotfix/* ──PR──▶ main ──自動──▶ production、その後 mai
 3. **migrate** — `wrangler d1 migrations apply <db> --remote`（expand だけのはず。§4）
 4. **upload** — `wrangler versions upload`。この時点では誰にも配信されない
 5. **blue/green 検証** — 新版を **0%** で deployment に加え、`Cloudflare-Workers-Version-Overrides: <worker>="<version>"` を付けて本番ドメインで smoke（HTML と参照アセット全数が 200）
-6. **canary** — `tools.json` の `release.steps`（既定 10% → 50%）。各段で `bakeMinutes` 待ち、GraphQL Analytics の `scriptVersion` 別の集計で判定
+6. **canary** — `tools.json` の `release.steps`（既定 10% → 50%）。各段で `bakeMinutes` 待ち、版ごとのエラー率で判定。
+   版ごとの数字の出どころは実行時に選ぶ（`scripts/release/sources.ts`）:
+   1. GraphQL Analytics — `workersInvocationsAdaptive` の dimensions に版の次元（`scriptVersion` など）があるか introspection で確かめ、あれば使う
+   2. Workers Logs（Workers Observability Query API）— invocation log（`$metadata.type = cf-worker-event`）を版と outcome で group by。
+      キー名は `telemetry/keys` で実在を確かめてから使う（候補: `$workers.scriptVersion.id` など）。outcome が `ok` / `canceled` / `unknown` 以外を失敗に数える
+   3. どちらも使えない、または集計が失敗した — **ロールバックしない**。割合を保ったまま `needs-human` で止まる（§5 の promote / rollback / resume で決める）。
+      ロールバックするのは「新版が悪い」根拠（smoke の失敗、エラー率の超過）があるときだけ
    - 不合格: 新版のエラー率 > max(旧版 + 1pt, 2%)。10 件以上で半数が失敗なら即不合格
    - 判定不能（新版へのリクエストが 200 未満）: public Worker なら override 付き synthetic で補う → 足りなければ bake を延長（最大 3 回）→ それでも足りなければ **割合を保ったまま停止**（`needs-human`、終了コード 3）
 7. **100%** → 汎用 smoke → プロダクトの `smoke`（CLI）と `smoke:browser`（Playwright）
@@ -114,6 +120,21 @@ GitHub environment `staging` / `production` / `preview` ごとに:
 | variable                    | `BASE_DOMAIN`, `CF_ZONE_ID`                      | `tools.riml4i.com`                   |
 | variable                    | `WORKER_SUFFIX`                                  | production は空、ほかは `-staging`   |
 | variable                    | `D1_<TOOL>_ID`                                   | `D1_QRCC_ID`                         |
+
+### CI 用 Cloudflare API トークンの権限
+
+Terraform が発行するトークン（`CLOUDFLARE_API_TOKEN`）に必要な permission group:
+
+| 対象               | permission group              | 使うところ                                                                                                                           |
+| ------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Account            | `Workers Scripts Write`       | `versions upload` / `versions deploy` / `deploy`、deployments の参照                                                                 |
+| Account            | `D1 Write`                    | `d1 migrations apply`                                                                                                                |
+| Account            | `Account Analytics Read`      | GraphQL Analytics（canary 集計の第 1 候補）                                                                                          |
+| Account            | `Workers Observability Write` | Workers Logs の `telemetry/keys` と `telemetry/query`（canary 集計の第 2 候補）。API に Read の権限は無く、query も Write を要求する |
+| Zone（riml4i.com） | `Workers Routes Read`         | wrangler が zone のルートを確認するとき                                                                                              |
+
+`Account Analytics Read` と `Workers Observability Write` の両方が無いと、canary は毎回 `needs-human` で止まる（ロールバックはしない）。
+invocation log は `observability.enabled: true` で既定有効。`invocation_logs: false` の設定は prepare が拒否する。
 
 リポジトリ secret（任意）: `RELEASE_BOT_TOKEN` — Release PR / back-merge PR を作るトークン。
 `GITHUB_TOKEN` で作った PR には `pull_request` のワークフロー（`release-guard`）が走らないため。
