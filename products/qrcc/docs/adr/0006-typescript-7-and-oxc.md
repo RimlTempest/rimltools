@@ -15,7 +15,7 @@ TypeScript 7.0 は Go で書き直されたネイティブコンパイラで 202
 - TypeScript **7.0.2** を使う。
 - Lint は **oxlint**、フォーマットは **oxfmt**。ESLint / Prettier は入れない。
 - 型認識 lint は `oxlint --type-aware`（`oxlint-tsgolint`）を使う。
-- プロジェクト固有の規約は **oxlint の JS プラグイン**（`tools/oxlint-plugin-qrcc`）で
+- プロジェクト固有の規約は **oxlint の JS プラグイン**（`tools/oxlint-plugin-rimltools`（リポジトリ直下。統合前は `tools/oxlint-plugin-qrcc`））で
   機械的に強制する。
 
 ## 理由

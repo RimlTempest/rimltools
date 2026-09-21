@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "jsPlugins": ["./tools/oxlint-plugin-noter/index.js"],
+  "jsPlugins": ["../../tools/oxlint-plugin-rimltools/index.js"],
   "plugins": [
     "typescript",
     "unicorn",
@@ -21,9 +21,9 @@
   },
   "env": { "browser": true, "es2024": true },
   "rules": {
-    "noter/no-class": "error",
-    "noter/no-type-assertion": "error",
-    "noter/no-enum": "error",
+    "rimltools/no-class": "error",
+    "rimltools/no-type-assertion": "error",
+    "rimltools/no-enum": "error",
 
     "typescript/no-explicit-any": "error",
     "typescript/no-non-null-assertion": "error",
@@ -104,12 +104,12 @@
         "features/*/contract/**/*.ts",
         "features/*/core/**/*.ts"
       ],
-      "rules": { "noter/no-throw-in-domain": "error" }
+      "rules": { "rimltools/no-throw-in-domain": "error" }
     },
     {
       // Durable Object は class でしか書けない。ここだけが例外（ADR-0004）。
       "files": ["features/sync/worker/document-room.ts"],
-      "rules": { "noter/no-class": "off" }
+      "rules": { "rimltools/no-class": "off" }
     },
     {
       // Worker のエントリは default export でしか宣言できない。
@@ -122,7 +122,7 @@
         "typescript/no-explicit-any": "off",
         "eslint/no-console": "off",
         "import/no-default-export": "off",
-        "noter/no-throw-in-domain": "off"
+        "rimltools/no-throw-in-domain": "off"
       }
     },
     {

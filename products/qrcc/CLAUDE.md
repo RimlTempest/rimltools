@@ -46,7 +46,7 @@ Stack / Components 節など）は読み替えるか無視すること。
 ## 絶対に守ること
 
 - **`any` / `as` / `!` / `class` / `enum` を書かない。** `.oxlintrc.json` の
-  `qrcc/*` ルールが落とす。回避せず設計を直す。
+  `rimltools/*` ルール（`tools/oxlint-plugin-rimltools`）が落とす。回避せず設計を直す。
 - **ドメイン層（`shared/contract` / `features/*/contract` / `features/*/core` /
   `*/engine`）で `throw` しない。** 失敗は `Result<T, E>` で返す。
 - **依存（時計・乱数・fetch・D1）は関数引数で受け取る。**

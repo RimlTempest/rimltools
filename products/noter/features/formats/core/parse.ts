@@ -4,7 +4,7 @@
  * yaml / smol-toml / jsonc-parser は失敗を throw か配列で返すが、この層から
  * 外へは必ず `Result` で出す。**ライブラリの throw を try/catch で受けて
  * Result に変換するのはこの関数の役目**であり、ドメイン層の throw 禁止
- * （`noter/no-throw-in-domain`）に反しない。
+ * （`rimltools/no-throw-in-domain`）に反しない。
  *
  * 位置は 1 始まりの行・列に揃える（エディタの行番号表示と一致させる）。
  */

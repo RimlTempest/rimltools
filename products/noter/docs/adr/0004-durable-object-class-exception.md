@@ -6,14 +6,14 @@
 
 ## 文脈
 
-qrcc から引き継いだ規約は「`class` を書かない」（oxlint `noter/no-class`）。
+qrcc から引き継いだ規約は「`class` を書かない」（oxlint `rimltools/no-class`）。
 一方 Cloudflare の Durable Object は **`class X extends DurableObject` でしか定義できない**。
 `wrangler` はエクスポートされたクラス名で DO を引くため、関数で代替する手段が無い。
 
 ## 決定
 
 - `class` を許すのは **`features/sync/worker/document-room.ts` の 1 ファイルだけ**。
-  `.oxlintrc.json` の `overrides` でこのパスのみ `noter/no-class` を `off` にする
+  `.oxlintrc.json` の `overrides` でこのパスのみ `rimltools/no-class` を `off` にする
 - そのクラスは **各メソッドが 1〜3 行の委譲**であること。ロジックは
   `features/sync/core` の `makeRoom(deps)` が持ち、クラスは `ctx.storage` /
   `ctx.getWebSockets()` / `Date.now` を注入するだけ
