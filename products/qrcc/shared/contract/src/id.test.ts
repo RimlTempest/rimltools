@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import type { IdParseError, RandomBytes } from './id.ts'
-import type { Result } from './result.ts'
-import { isErr, isOk } from './result.ts'
+import type { Result } from '@rimltools/contract'
+import { isErr, isOk } from '@rimltools/contract'
 import {
   newCodeId,
   newFolderId,

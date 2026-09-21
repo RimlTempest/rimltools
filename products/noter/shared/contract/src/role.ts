@@ -2,8 +2,8 @@
  * 文書に対する権限。何ができるかの表は docs/domain-model.md §権限表
  * （実装は plan 004 の `features/documents/core/permission.ts`）。
  */
-import type { Result } from './result.ts'
-import { err, ok } from './result.ts'
+import type { Result } from '@rimltools/contract'
+import { err, ok } from '@rimltools/contract'
 
 export const ROLES = ['owner', 'editor', 'viewer'] as const
 

@@ -5,8 +5,8 @@
  * （`FILE_EXTENSION` / `MIME_TYPE` は網羅を型で強制するので、足し忘れると
  * コンパイルエラーになる）。
  */
-import type { Result } from './result.ts'
-import { err, ok } from './result.ts'
+import type { Result } from '@rimltools/contract'
+import { err, ok } from '@rimltools/contract'
 
 export const DOCUMENT_KINDS = ['markdown', 'yaml', 'toml', 'json'] as const
 

@@ -2,6 +2,7 @@ node_modules/
 .DS_Store
 .claude/worktrees/
 *.tsbuildinfo
+dist/
 
 # scripts/release が環境ごとに書き出す wrangler 設定（docs/release.md）
 products/*/wrangler.staging.json
