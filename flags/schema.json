@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/RimlTempest/rimltools/flags/schema.json",
+  "title": "RimlTools feature flags (ADR-0004)",
+  "description": "flags/<tool>.json の形。エディタ補完用。正式な検証は `bun scripts/flags/cli.ts validate`（重みの合計・variant の参照・型一致も見る）。",
+  "type": "object",
+  "required": ["tool", "flags"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "tool": { "type": "string", "description": "tools.json のツール名。ファイル名と一致させる" },
+    "flags": { "type": "array", "items": { "$ref": "#/$defs/flag" } },
+    "remove": {
+      "type": "array",
+      "description": "D1 から削除する flag。ここに書かない限り、JSON から消しても D1 には残る",
+      "items": { "$ref": "#/$defs/key" }
+    }
+  },
+  "$defs": {
+    "key": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+    "percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+    "condition": {
+      "type": "object",
+      "required": ["attribute", "op", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "attribute": { "type": "string", "minLength": 1 },
+        "op": { "enum": ["eq", "in", "startsWith"] },
+        "value": {
+          "oneOf": [
+            { "type": ["string", "number", "boolean"] },
+            { "type": "array", "items": { "type": ["string", "number"] } }
+          ]
+        }
+      }
+    },
+    "flag": {
+      "type": "object",
+      "required": ["key", "description", "type", "enabled", "variants", "defaultVariant"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "$ref": "#/$defs/key" },
+        "description": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["boolean", "string", "number", "object"] },
+        "enabled": {
+          "type": "boolean",
+          "description": "false にすると常に defaultVariant（kill switch）"
+        },
+        "variants": { "type": "object", "minProperties": 1 },
+        "defaultVariant": {
+          "type": "string",
+          "description": "無効時・対象外のときに返す。安全側の値にする"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["when", "variant"],
+            "additionalProperties": false,
+            "properties": {
+              "when": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/condition" } },
+              "variant": { "type": "string" }
+            }
+          }
+        },
+        "rollout": {
+          "type": "object",
+          "required": ["percentage"],
+          "additionalProperties": false,
+          "properties": {
+            "percentage": { "$ref": "#/$defs/percentage" },
+            "variant": { "type": "string" }
+          }
+        },
+        "distribution": {
+          "type": "object",
+          "description": "A/B テストの重み（合計 100）",
+          "additionalProperties": { "$ref": "#/$defs/percentage" }
+        },
+        "experiment": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

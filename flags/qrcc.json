@@ -1,0 +1,6 @@
+{
+  "$schema": "./schema.json",
+  "tool": "qrcc",
+  "flags": [],
+  "remove": []
+}
