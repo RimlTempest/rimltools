@@ -62,7 +62,7 @@ describe('共有リンクを開く', () => {
     setup()
 
     expect(await screen.findByRole('heading', { level: 1, name: '在庫ラベル' })).toBeDefined()
-    expect(screen.getByText(/https:\/\/qrcc\.riml4i\.com/)).toBeDefined()
+    expect(screen.getByText(/^https:\/\/qrcc\.riml4i\.com$/)).toBeDefined()
   })
 
   test('サインインしていなくても開ける（サインインを求めない）', async () => {

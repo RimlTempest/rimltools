@@ -37,7 +37,7 @@ describe('NfcScreen（対応している環境）', () => {
 
     expect(state.calls).toBe(0)
     // 確認画面には内容と、元に戻せないことの案内が出る
-    expect(screen.getByText(/https:\/\/qrcc\.riml4i\.com/)).toBeDefined()
+    expect(screen.getByText(/^https:\/\/qrcc\.riml4i\.com$/)).toBeDefined()
     expect(screen.getByText(/元に戻せません/)).toBeDefined()
   })
 
