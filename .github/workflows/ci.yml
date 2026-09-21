@@ -27,9 +27,9 @@ jobs:
       qrcc: ${{ steps.filter.outputs.qrcc }}
       noter: ${{ steps.filter.outputs.noter }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with: { persist-credentials: false }
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.4
         id: filter
         with:
           # ルートの共通設定が変わったら全プロダクトを走らせる
@@ -58,9 +58,9 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with: { persist-credentials: false }
-      - uses: jdx/mise-action@v3
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
         with: { cache: true }
       - run: bun install --frozen-lockfile
       - run: bun run check:root

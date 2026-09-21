@@ -1,0 +1,15 @@
+# 変更の責任者（docs/security.md の「リポジトリ」層）。
+# 1 人運用なので承認の強制はしていないが、ruleset で CODEOWNERS レビューを有効にすれば
+# 下のパスへの変更はオーナーの承認が必須になる（共同作業者が増えたら有効にする）。
+
+*                         @RimlTempest
+
+# 供給網・権限・デプロイに効くファイルは特に注意して見る
+/.github/                 @RimlTempest
+/bunfig.toml              @RimlTempest
+/bun.lock                 @RimlTempest
+/lefthook.yml             @RimlTempest
+/.gitleaks.toml           @RimlTempest
+/infra/                   @RimlTempest
+/scripts/release/         @RimlTempest
+/scripts/security/        @RimlTempest

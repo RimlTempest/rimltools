@@ -1,0 +1,18 @@
+# gitleaks の設定（docs/security.md）。既定ルールを使い、既知の誤検出だけを除外する。
+# 除外を足すときは「なぜ本物の secret ではないか」をコメントに書く。
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "テスト用の固定トークン（本物の secret ではない）"
+condition = "OR"
+regexTarget = "match"
+regexes = [
+  # qrcc の共有トークンのテストで使う 32 文字の固定値（Crockford Base32 のアルファベット順）
+  '''abcdefghjkmnpqrstvwxyz0123456789''',
+]
+
+[[allowlists]]
+description = "外部から取り込んだスキルの説明文（悪い例としての架空の値）"
+paths = ['''(^|/)\.agents/skills/''', '''(^|/)\.claude/skills/''']

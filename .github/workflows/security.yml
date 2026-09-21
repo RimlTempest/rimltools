@@ -1,0 +1,189 @@
+name: Security
+
+# 依存・secret・workflow の検査（docs/security.md の「CI」「依存取得」層）。
+# ruleset の required check は最後の `security-gate` だけにする（ci.yml の gate と同じ流儀）。
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  schedule:
+    # 毎週月曜 03:17 UTC（新しく公開された勧告を拾う）
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+env:
+  # バイナリは公式リリースから取得し、ここに書いた sha256 と一致したものだけを実行する。
+  # 更新するときは各リリースの checksums ファイルと突き合わせた値に書き換える。
+  GITLEAKS_VERSION: 8.30.1
+  GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+  OSV_SCANNER_VERSION: 2.6.0
+  OSV_SCANNER_SHA256: ca69b3d3cd08f889a49dc0a383122f71cc528b83803671df5fd874d97485b108
+  ACTIONLINT_VERSION: 1.7.12
+  ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+  ZIZMOR_VERSION: 1.30.1
+
+jobs:
+  bun-audit:
+    name: bun audit (npm advisories)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
+        with: { cache: true }
+      # install 自体も防御層: minimumReleaseAge と Socket scanner が bunfig.toml で効く
+      - run: bun install --frozen-lockfile
+      - run: bun run audit
+
+  osv-scanner:
+    name: osv-scanner (bun.lock / Cargo.lock)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - name: osv-scanner を取得（sha256 検証）
+        run: |
+          curl -fsSL -o osv-scanner \
+            "https://github.com/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64"
+          echo "${OSV_SCANNER_SHA256}  osv-scanner" | sha256sum -c -
+          chmod +x osv-scanner
+      - name: 既知の脆弱性が無いこと
+        run: |
+          ./osv-scanner scan source --config .github/osv-scanner.toml \
+            --lockfile bun.lock \
+            --lockfile products/qrcc/Cargo.lock
+
+  dependency-review:
+    name: dependency-review (PR)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          # 強いコピーレフトは配布物（Worker バンドル）に混ぜない
+          deny-licenses: AGPL-1.0-only, AGPL-1.0-or-later, AGPL-3.0-only, AGPL-3.0-or-later, SSPL-1.0, GPL-2.0-only, GPL-2.0-or-later, GPL-3.0-only, GPL-3.0-or-later
+          show-openssf-scorecard: true
+          warn-on-openssf-scorecard-level: 3
+
+  gitleaks:
+    name: gitleaks (secret)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: gitleaks を取得（sha256 検証）
+        run: |
+          curl -fsSL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+      - name: 追加されたコミットに secret が無いこと
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+        run: |
+          # PR は差分のコミット、push は増えたコミット、定期実行は全履歴を見る
+          case "$EVENT" in
+            pull_request) range="${PR_BASE}..${PR_HEAD}" ;;
+            push)
+              if [ "$PUSH_BEFORE" = "0000000000000000000000000000000000000000" ]; then range=""; else range="${PUSH_BEFORE}..${PUSH_AFTER}"; fi ;;
+            *) range="" ;;
+          esac
+          if [ -n "$range" ]; then
+            ./gitleaks git . --config .gitleaks.toml --redact --no-banner --log-opts="$range"
+          else
+            ./gitleaks git . --config .gitleaks.toml --redact --no-banner
+          fi
+
+  actionlint:
+    name: actionlint (workflow)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - name: actionlint を取得（sha256 検証）
+        run: |
+          curl -fsSL -o actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum -c -
+          tar -xzf actionlint.tar.gz actionlint
+      - run: ./actionlint -color
+
+  zizmor:
+    name: zizmor (workflow security)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # SARIF をコードスキャンに載せる（public リポジトリは無料）
+      security-events: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - name: 結果をコードスキャンに載せる
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          version: ${{ env.ZIZMOR_VERSION }}
+          config: .github/zizmor.yml
+          advanced-security: true
+      # SARIF のアップロードだけでは失敗にならないので、同じ検査をもう一度ゲートとして走らせる
+      - name: 検出があれば失敗させる
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          version: ${{ env.ZIZMOR_VERSION }}
+          config: .github/zizmor.yml
+          advanced-security: false
+
+  pinned-actions:
+    name: uses は SHA 固定
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
+        with: { cache: true }
+      # 一時除外は .github/zizmor.yml と同じ（段階リリースの workflow に置き換えたら消す）
+      - run: bun scripts/security/pinned-actions.ts --exempt qrcc-deploy.yml --exempt noter-deploy.yml .github
+
+  # required check はこれ 1 本。スキップ（dependency-review の push 時など）は合格、失敗・取消は不合格。
+  security-gate:
+    if: always()
+    needs: [bun-audit, osv-scanner, dependency-review, gitleaks, actionlint, zizmor, pinned-actions]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: すべてのセキュリティ検査が通ったこと
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if echo "$RESULTS" | jq -e 'to_entries | map(.value.result) | any(. == "failure" or . == "cancelled")' >/dev/null; then
+            echo "::error::A security check failed or was cancelled."
+            exit 1
+          fi

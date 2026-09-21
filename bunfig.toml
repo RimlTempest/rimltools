@@ -6,5 +6,17 @@ linkWorkspacePackages = true
 # markuplint など、自分自身の位置から parser を解決するツールが isolated
 # レイアウトだと解決に失敗するため hoisted を明示する。
 linker = "hoisted"
+# サプライチェーン対策（docs/security.md）: 公開から 7 日経っていない版は入れない。
+# 乗っ取られたメンテナのアカウントから出た悪性版は、多くが数日以内に発見・撤回される。
+# 注意: bun.lock に既に載っている版には効かない（oven-sh/bun#30525）。lockfile を
+# 更新する経路（Dependabot）は cooldown で同じ待ち時間を掛けている。
+minimumReleaseAge = 604800
+# 公開直後でも入れる必要があるもの。原則空にしておき、足すときは理由を書く。
+minimumReleaseAgeExcludes = []
+
+[install.security]
+# install / add / update の直前に、Socket の公開 API（API キー不要の free mode）で
+# マルウェア・typosquat・難読化などを検査し、fatal なら install を止める。
+scanner = "@socketsecurity/bun-security-scanner"
 
 # [test] はプロダクトごとに products/<name>/bunfig.toml に置く（preload が cwd 基準のため）。
