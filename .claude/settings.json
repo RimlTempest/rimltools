@@ -26,7 +26,13 @@
       "Bash(git worktree list)",
       "Bash(gh pr view:*)",
       "Bash(gh run list:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(bun run check:root)",
+      "Bash(bun run test:root)",
+      "Bash(bun run check:qrcc)",
+      "Bash(bun run check:noter)",
+      "Bash(bun run test:qrcc)",
+      "Bash(bun run test:noter)"
     ],
     "deny": [
       "Bash(wrangler deploy:*)",
