@@ -1,7 +1,7 @@
 # アクセシビリティ
 
 目標は **WCAG 2.2 AAA**。到達できない項目は「なぜ無理か」と「代替」を
-ここに書き残す。書き方の規約は `.claude/skills/noter-html-a11y` を参照。
+ここに書き残す。書き方の規約は `.claude/skills/rimltools-html-a11y` を参照。
 
 ## 1. 方針
 
@@ -73,7 +73,7 @@ plan 008 の監査で見つかり、この plan では直せなかったもの:
   直すには `features/sync/client` の状態遷移を変える必要があり、plan 008 の範囲外。
   `e2e/tests/resilience.spec.ts` に注記を残した
 - **読み上げソフトでの確認**: VoiceOver / NVDA の読み上げは自動化できない。
-  `.claude/skills/noter-html-a11y/references/manual-checks.md` §3 のとおり人が確認する。
+  `.claude/skills/rimltools-html-a11y/references/manual-checks.md` §3 のとおり人が確認する。
   機械で確かめられるぶん（キーボードのみ・200% 拡大・動きの停止・ハイコントラスト）は
   `e2e/tests/manual-checks.spec.ts` にある
 
@@ -88,7 +88,7 @@ bun run markuplint    # 静的なマークアップ検査
 確認する。エディタ画面は接続前（`connecting`）・接続後（`connected`）・
 拒否（`rejected`）の 3 状態で検査する。
 
-手動チェックの手順は `.claude/skills/noter-html-a11y/references/manual-checks.md`。
+手動チェックの手順は `.claude/skills/rimltools-html-a11y/references/manual-checks.md`。
 
 ## 5. 画面ごとの注意
 

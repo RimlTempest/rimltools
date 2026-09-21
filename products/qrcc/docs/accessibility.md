@@ -1,7 +1,7 @@
 # アクセシビリティ方針と WCAG 2.2 AAA 達成状況
 
 目標は **WCAG 2.2 レベル AAA**。到達できない項目は理由と代替手段をここに記録する。
-実装時の規約は `.claude/skills/qrcc-html-a11y/`。
+実装時の規約は `.claude/skills/rimltools-html-a11y/`。
 
 ## 1. 方針
 
@@ -71,7 +71,7 @@ bun run a11y        # Playwright + axe-core (wcag2a, wcag2aa, wcag2aaa, wcag22aa
 ```
 
 CI は上記 3 つすべてを必須にする。加えて PR には
-`.claude/skills/qrcc-html-a11y/references/manual-checks.md` の
+`.claude/skills/rimltools-html-a11y/references/manual-checks.md` の
 チェック結果を貼る。
 
 ## 4. 画面ごとの状況

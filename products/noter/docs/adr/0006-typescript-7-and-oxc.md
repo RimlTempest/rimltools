@@ -15,7 +15,7 @@ TypeScript 7.0 は **安定した programmatic API がまだない**（7.1 予�
 - TypeScript **7.0.2** を使う
 - Lint は **oxlint**、フォーマットは **oxfmt**。ESLint / Prettier は入れない
 - 型認識 lint は `oxlint --type-aware`（`oxlint-tsgolint`）
-- プロジェクト固有の規約は **oxlint の JS プラグイン**（`tools/oxlint-plugin-noter`）で
+- プロジェクト固有の規約は **oxlint の JS プラグイン**（`tools/oxlint-plugin-rimltools`（リポジトリ直下。統合前は `tools/oxlint-plugin-noter`））で
   機械的に強制する: `no-class`（例外は [ADR-0004](0004-durable-object-class-exception.md)）/
   `no-type-assertion` / `no-enum` / `no-throw-in-domain`
 - `no-throw-in-domain` の対象パスは `shared/contract/src/**`、`features/*/contract/**`、

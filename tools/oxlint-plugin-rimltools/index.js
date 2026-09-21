@@ -1,9 +1,9 @@
 /**
- * rimltools root lint plugin (scripts/ and packages/).
+ * RimlTools lint plugin, shared by every product and by scripts/ and packages/.
  *
- * A copy of products/qrcc/tools/oxlint-plugin-qrcc under the `rimltools/`
- * prefix, so root code follows the same rules as the products. See
- * `products/qrcc/.claude/skills/qrcc-typescript/SKILL.md` for the rationale.
+ * These rules make the team coding rules mechanically enforceable instead of
+ * relying on reviewers (or an agent) remembering them. See
+ * `.claude/skills/rimltools-typescript/SKILL.md` for the rationale.
  */
 
 /** @param {import('estree').Node} node */

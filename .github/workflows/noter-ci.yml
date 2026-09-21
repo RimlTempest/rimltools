@@ -40,6 +40,7 @@ jobs:
             markup:
               - 'products/noter/**/*.tsx'
               - 'products/noter/.markuplintrc.json'
+              - 'tools/markuplint/**'
             web:
               - 'products/noter/apps/**'
               - 'products/noter/features/**'

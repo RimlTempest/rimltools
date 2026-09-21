@@ -21,9 +21,9 @@ pre-commit:
 
           - name: qrcc-markuplint
             glob: '*.{tsx,html}'
-            # TypeScript 6 に固定した隔離インストールのバイナリを、プロダクトのルートを
-            # cwd にしたまま起動する（ADR-0006 / tools/markuplint）
-            run: node tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json {staged_files}
+            # TypeScript 6 に固定した隔離インストール（リポジトリ直下の tools/markuplint）の
+            # バイナリを、プロダクトのルートを cwd にしたまま起動する（ADR-0006）
+            run: node ../../tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json {staged_files}
 
           - name: qrcc-cargo-fmt
             glob: '*.rs'
@@ -49,9 +49,9 @@ pre-commit:
 
           - name: noter-markuplint
             glob: '*.{tsx,html}'
-            # TypeScript 6 に固定した隔離インストールのバイナリを、プロダクトのルートを
-            # cwd にしたまま起動する（ADR-0006 / tools/markuplint）
-            run: node tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json {staged_files}
+            # TypeScript 6 に固定した隔離インストール（リポジトリ直下の tools/markuplint）の
+            # バイナリを、プロダクトのルートを cwd にしたまま起動する（ADR-0006）
+            run: node ../../tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json {staged_files}
 
     # プロダクト外（scripts/・packages/・docs/ など）。glob は group ではなく各ジョブに書く
     # （group の glob は中のジョブの glob を上書きしてしまう）

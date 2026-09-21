@@ -41,6 +41,9 @@ jobs:
               - 'mise.toml'
               - 'tools.json'
               - 'packages/**'
+              - 'tools/**'
+              - 'tsconfig.base.json'
+              - '.agents/skills/**'
               - '.github/workflows/ci.yml'
             qrcc:
               - *root

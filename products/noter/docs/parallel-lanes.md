@@ -107,10 +107,10 @@ feature の実体はディレクトリ内に閉じるが、アプリに組み込
 
 ```bash
 # レーンを開始
-bun run wt new feat/editor         # .claude/worktrees/feat-editor を作り、依存も入れる
-cd .claude/worktrees/feat-editor
+bun run wt new feat/editor         # .claude/worktrees/noter/feat-editor を作り、依存も入れる（リポジトリ直下からは bun run wt noter new …）
+cd <リポジトリ直下>/.claude/worktrees/noter/feat-editor/products/noter
 
-# 作業中: main の更新を取り込む（毎日 / 依存レーンがマージされたら必ず）
+# 作業中: develop の更新を取り込む（毎日 / 依存レーンがマージされたら必ず）
 bun run wt sync
 
 # 完了
@@ -120,7 +120,7 @@ bun run wt done feat/editor        # マージ後に worktree を破棄
 
 `wt new` は次を自動でやる:
 
-- `origin/main` から新ブランチを切って worktree を作成
+- `origin/develop` から新ブランチを切って worktree を作成（リポジトリ全体。ブランチ運用はルートの ADR-0002）
 - `mise install` / `bun install`
 - `lefthook install`
 - `.dev.vars` をルートからコピー（gitignore 済み）
@@ -169,7 +169,7 @@ PR ごとに **変更されたレーンの範囲だけ**を実行する（`.gith
 
 - [ ] `LANE.md` を読み、所有ディレクトリを把握した
 - [ ] 依存レーンが main にマージ済みか確認した
-- [ ] `.claude/skills/noter-typescript` と `noter-tdd` を読んだ（TS を書く場合）
-- [ ] `.claude/skills/noter-html-a11y` を読んだ（UI を書く場合）
+- [ ] `.claude/skills/rimltools-typescript` と `rimltools-tdd` を読んだ（TS を書く場合）
+- [ ] `.claude/skills/rimltools-html-a11y` を読んだ（UI を書く場合）
 - [ ] `docs/realtime-protocol.md` を読んだ（sync / editor / documents を触る場合）
 - [ ] 失敗するテストから始める

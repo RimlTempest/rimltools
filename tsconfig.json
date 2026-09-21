@@ -1,5 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./tsconfig.base.json",
-  "include": ["scripts/**/*.ts", "packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"]
+  "include": ["scripts/**/*.ts", "packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"],
+  "compilerOptions": {
+    "noEmit": true,
+    "emitDeclarationOnly": false,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "composite": false,
+    "incremental": false
+  }
 }

@@ -12,6 +12,9 @@
     "**/node_modules/**",
     "**/*.gen.ts",
     "**/worker-configuration.d.ts",
-    "infra/**/.terraform/**"
+    "infra/**/.terraform/**",
+    ".agents/skills/**",
+    ".claude/skills/**",
+    "skills-lock.json"
   ]
 }

@@ -8,15 +8,19 @@ Bun workspaces の monorepo。
 
 ## 作業を始める前に読むもの
 
-| 状況                             | 読むスキル                     |
-| -------------------------------- | ------------------------------ |
-| TS/TSX を書く・直す              | `qrcc-typescript`              |
-| 画面・マークアップ・CSS を書く   | `qrcc-html-a11y`               |
-| 機能追加・バグ修正               | `qrcc-tdd`（必ず red → green） |
-| どこに置くか迷う・機能を拡張する | `qrcc-architecture`            |
-| 並行作業・worktree・コンフリクト | `qrcc-worktree`                |
-| UI・UX を見直す                  | `better-interface`             |
-| HTML/CSS/クライアント JS を書く  | `modern-web-guidance`          |
+`rimltools-*` と外部の skill（`better-interface` など）はリポジトリ直下の `.claude/skills/` に、
+qrcc 固有の skill（`qrcc-architecture` / `qrcc-conventions`）は `products/qrcc/.claude/skills/` にある。
+共通の規約とプロダクト固有の差分は必ず両方読む。ルートの `CLAUDE.md` も参照。
+
+| 状況                             | 読むスキル                                               |
+| -------------------------------- | -------------------------------------------------------- |
+| TS/TSX を書く・直す              | `rimltools-typescript` + `qrcc-conventions`              |
+| 画面・マークアップ・CSS を書く   | `rimltools-html-a11y` + `qrcc-conventions`               |
+| 機能追加・バグ修正               | `rimltools-tdd` + `qrcc-conventions`（必ず red → green） |
+| どこに置くか迷う・機能を拡張する | `qrcc-architecture`                                      |
+| 並行作業・worktree・コンフリクト | `rimltools-worktree` + `qrcc-conventions`                |
+| UI・UX を見直す                  | `better-interface`                                       |
+| HTML/CSS/クライアント JS を書く  | `modern-web-guidance`                                    |
 
 設計の背景は `docs/architecture.md` と `docs/adr/`。
 
@@ -42,7 +46,7 @@ Stack / Components 節など）は読み替えるか無視すること。
 ## 絶対に守ること
 
 - **`any` / `as` / `!` / `class` / `enum` を書かない。** `.oxlintrc.json` の
-  `qrcc/*` ルールが落とす。回避せず設計を直す。
+  `rimltools/*` ルール（`tools/oxlint-plugin-rimltools`）が落とす。回避せず設計を直す。
 - **ドメイン層（`shared/contract` / `features/*/contract` / `features/*/core` /
   `*/engine`）で `throw` しない。** 失敗は `Result<T, E>` で返す。
 - **依存（時計・乱数・fetch・D1）は関数引数で受け取る。**

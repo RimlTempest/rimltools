@@ -27,7 +27,7 @@ export const makeTouch = (
       await db.prepare(UPDATE_SQL).bind(updatedAt, documentId).run()
     } catch {
       // document テーブルは plan 004 まで存在しない。失敗しても編集を止めない（ADR-0005）。
-      // I/O 境界なので try/catch を使ってよい唯一の層（noter-typescript §3）。
+      // I/O 境界なので try/catch を使ってよい唯一の層（rimltools-typescript §3）。
     }
   }
 }

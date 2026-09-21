@@ -52,6 +52,7 @@ jobs:
             markup:
               - 'products/qrcc/**/*.tsx'
               - 'products/qrcc/.markuplintrc.json'
+              - 'tools/markuplint/**'
             web:
               - 'products/qrcc/apps/web/**'
               - 'products/qrcc/features/**'

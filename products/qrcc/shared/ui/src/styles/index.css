@@ -16,7 +16,7 @@
  * qrcc の components と utilities は `.rd-window` の上に重ねたいので rd の**後**。
  * 変数だけの rd.tokens / tokens は順序に意味が無い。
  *
- * 方針: .claude/skills/qrcc-html-a11y/references/css-modern.md
+ * 方針: .claude/skills/rimltools-html-a11y/references/css-modern.md
  */
 @layer reset, base, rd.tokens, rd.components, tokens, components, utilities;
 

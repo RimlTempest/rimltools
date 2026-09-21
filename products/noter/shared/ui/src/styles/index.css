@@ -2,7 +2,7 @@
  * @noter/ui のスタイル。1 枚にまとめてあるので、アプリは link を 1 本張るだけでよい
  * （コンポーネントごとの CSS import は SSR/RSC で読み込み順が不安定になるため使わない）。
  *
- * 方針: .claude/skills/noter-html-a11y/references/css-modern.md
+ * 方針: .claude/skills/rimltools-html-a11y/references/css-modern.md
  */
 @layer reset, tokens, base, components, utilities;
 

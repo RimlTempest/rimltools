@@ -4,7 +4,7 @@
  * スタイルは 1 枚にまとめてあり、アプリは `@noter/ui/styles.css` を
  * link で 1 本張るだけでよい。
  *
- * 方針は .claude/skills/noter-html-a11y に従う:
+ * 方針は .claude/skills/rimltools-html-a11y に従う:
  * 意味の合う HTML 要素を最優先し、ARIA は補強にだけ使う。
  */
 export { Avatar } from './components/avatar.tsx'

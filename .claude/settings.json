@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(bun run check)",
+      "Bash(bun run test)",
+      "Bash(bun run typecheck)",
+      "Bash(bun run lint)",
+      "Bash(bun run lint:fix)",
+      "Bash(bun run lint:html)",
+      "Bash(bun run fmt)",
+      "Bash(bun run fmt:check)",
+      "Bash(bun run build)",
+      "Bash(bun run a11y)",
+      "Bash(bun run e2e)",
+      "Bash(bun run wt:*)",
+      "Bash(bun test:*)",
+      "Bash(bun install)",
+      "Bash(bunx oxlint:*)",
+      "Bash(bunx oxfmt:*)",
+      "Bash(bunx tsc:*)",
+      "Bash(mise exec:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git worktree list)",
+      "Bash(gh pr view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(bun run check:root)",
+      "Bash(bun run test:root)",
+      "Bash(bun run check:qrcc)",
+      "Bash(bun run check:noter)",
+      "Bash(bun run test:qrcc)",
+      "Bash(bun run test:noter)"
+    ],
+    "deny": [
+      "Bash(wrangler deploy:*)",
+      "Bash(bunx wrangler deploy:*)",
+      "Bash(wrangler secret:*)",
+      "Bash(bunx wrangler secret:*)",
+      "Bash(wrangler d1 execute:*--remote*)",
+      "Read(./apps/web/.dev.vars)",
+      "Read(./.dev.vars)",
+      "Read(./**/.env)"
+    ]
+  }
+}

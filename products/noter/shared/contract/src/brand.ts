@@ -4,7 +4,7 @@
  *
  * `as` は禁止されているため、ブランド付き値の生成点は
  * 「型ガードを通したパース関数」だけになる。
- * 詳細: .claude/skills/noter-typescript/references/type-patterns.md
+ * 詳細: .claude/skills/rimltools-typescript/references/type-patterns.md
  */
 import type { Result } from './result.ts'
 import { err, ok } from './result.ts'

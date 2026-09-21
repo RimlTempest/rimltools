@@ -1,0 +1,14 @@
+{
+  "name": "@rimltools/markuplint-runner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "markuplint を TypeScript 6 に固定して動かすための隔離ワークスペース。markuplint の JSX パーサは @typescript-eslint/typescript-estree に依存しており、TypeScript 7 には programmatic API がないため（ADR-0006）ワークスペース（TS 7） では動かない。",
+  "type": "module",
+  "scripts": {},
+  "dependencies": {
+    "@markuplint/jsx-parser": "4.18.0",
+    "@markuplint/react-spec": "4.18.0",
+    "markuplint": "4.18.3",
+    "typescript": "6.0.3"
+  }
+}

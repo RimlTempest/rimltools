@@ -86,7 +86,7 @@ export type ImpositionRequest = Omit<PrintJob, 'caption'>
  *
  * 空きを省いて詰めてしまうと、CSS 側で開始位置ぶんの座標計算が必要になる。
  * 空きも含めて順に並べれば、Grid の自動配置だけで面付けが決まる
- * （`.claude/skills/qrcc-html-a11y` の「JS で座標計算しない」）。
+ * （`.claude/skills/rimltools-html-a11y` の「JS で座標計算しない」）。
  */
 export type ImposedCell =
   | {

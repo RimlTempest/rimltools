@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test'
 
 /**
  * 自動チェックは WCAG 違反の 3 割程度しか見つけない。
- * 残りは .claude/skills/noter-html-a11y/references/manual-checks.md の手動確認で担保する。
+ * 残りは .claude/skills/rimltools-html-a11y/references/manual-checks.md の手動確認で担保する。
  */
 const WCAG_TAGS = [
   'wcag2a',
