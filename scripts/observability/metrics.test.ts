@@ -30,6 +30,8 @@ const registry: Registry = {
       description: 'd',
       path: 'products/qrcc',
       subdomain: 'qrcc',
+      apex: false,
+      listed: true,
       host: 'qrcc.tools.example.com',
       stagingHost: 'qrcc-staging.tools.example.com',
       legacyHosts: [],
