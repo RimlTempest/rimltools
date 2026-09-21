@@ -27,3 +27,5 @@
 - 旧ホストの移行は `legacy_hosts_mode = attached → detached → redirect` の 3 段階。Custom Domain が作った DNS レコードと
   リダイレクト用のレコードが同名で衝突するため、1 回の apply では切り替えられない。
 - GitHub の environment variable は空値を持てないので、production の `WORKER_SUFFIX` は作らない。
+- plan（PR、レビュー前のコード）と apply（main）で資格情報を分ける。plan は読み取り専用トークンを repository secret から、
+  apply は書き込みトークンを `production` environment の secret から読む。`TF_APPLY_*` は Terraform の管理外（手で登録）。

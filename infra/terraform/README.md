@@ -19,7 +19,20 @@ Terraform は Worker の「枠」だけを作り、observability・workers.dev�
 
 ## ブートストラップ（1 回だけ、人の手で）
 
-人がトークンの値を扱うのはここだけ。以後の CI 用トークンは Terraform が発行して GitHub に書き込む。
+人がトークンの値を扱うのはここだけ。以後の CI 用デプロイトークンは Terraform が発行して GitHub に書き込む。
+
+資格情報は **plan 用（読み取り専用）と apply 用（書き込み）の 2 本立て**にする。
+
+|                | plan（PR）                                  | apply（main への push）                                     |
+| -------------- | ------------------------------------------- | ----------------------------------------------------------- |
+| 実行するコード | レビュー前の PR のコード                    | main にマージ済みのコード                                   |
+| 置き場所       | repository secret                           | `production` environment の secret（main からしか読めない） |
+| HCP            | `TF_PLAN_API_TOKEN`                         | `TF_APPLY_API_TOKEN`                                        |
+| Cloudflare     | `TF_PLAN_CLOUDFLARE_API_TOKEN`（Read のみ） | `TF_APPLY_CLOUDFLARE_API_TOKEN`（Edit）                     |
+| GitHub         | `TF_PLAN_GITHUB_TOKEN`（Read のみ）         | `TF_APPLY_GITHUB_TOKEN`（Read and write）                   |
+
+PR のコードは data source や provider 経由で環境変数を外へ送れる。plan に書き込みトークンを渡すと、
+PR を出せる人がマージ前に本番を書き換えられてしまうため、plan には読み取り専用しか渡さない。
 
 ### 1. HCP Terraform
 
@@ -27,47 +40,91 @@ Terraform は Worker の「枠」だけを作り、observability・workers.dev�
 2. workspace `rimltools-production` を **CLI-driven workflow** で作る
 3. workspace の Settings → General → **Execution Mode を `Local`** にする
    （runner で実行し state だけを HCP に置く。Remote にすると Cloudflare / GitHub のトークンを HCP にも置くことになる）
-4. User Settings → Tokens で **team か user の API トークン**を作る（以下 `TF_API_TOKEN`）
+4. API トークンを 2 本作る
+   - apply 用（`TF_APPLY_API_TOKEN`）: state の読み書きができるトークン
+   - plan 用（`TF_PLAN_API_TOKEN`）: 可能なら **state の読み取りだけ**の team を作り、その team token にする。
+     プランの都合でできない場合は別のトークンを発行し、漏洩時にそれだけ失効できるようにする（下の「既知の制約」）
 
-### 2. Terraform 用 Cloudflare API トークン
+### 2. Cloudflare API トークン（2 本）
 
-Cloudflare ダッシュボード → My Profile → API Tokens → Create Custom Token。対象はこのアカウントと `riml4i.com` ゾーンだけ。
+Cloudflare ダッシュボード → My Profile → API Tokens → Create Custom Token。どちらも対象はこのアカウントと `riml4i.com` ゾーンだけ。
+権限名は provider の docs（各リソースの "Accepted Permissions"）に合わせている。
+
+**apply 用 `TF_APPLY_CLOUDFLARE_API_TOKEN`**
 
 | 範囲               | 権限                                                                                                                                                                    |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Account            | Workers Scripts: Edit / D1: Edit / Account API Tokens: Edit / Access: Apps and Policies: Edit / Account Settings: Read                                                  |
 | Zone（riml4i.com） | Zone: Read / DNS: Edit / Workers Routes: Edit / Transform Rules: Edit / Zone WAF: Edit / Dynamic URL Redirects: Edit / Zone Settings: Edit / SSL and Certificates: Edit |
 
+**plan 用 `TF_PLAN_CLOUDFLARE_API_TOKEN`**（すべて Read）
+
+| 範囲               | 権限                                                                                                                                                                    |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Account            | Workers Scripts: Read / D1: Read / Account API Tokens: Read / Access: Apps and Policies: Read / Account Settings: Read                                                  |
+| Zone（riml4i.com） | Zone: Read / DNS: Read / Workers Routes: Read / Transform Rules: Read / Zone WAF: Read / Dynamic URL Redirects: Read / Zone Settings: Read / SSL and Certificates: Read |
+
 > Cloudflare Access（staging の保護）を使う場合は、先に Zero Trust の組織を一度作っておく
 > （ダッシュボード → Zero Trust。Free プラン、50 ユーザーまで無料）。
 
-### 3. GitHub fine-grained PAT
+### 3. GitHub fine-grained PAT（2 本）
 
-<https://github.com/settings/personal-access-tokens/new> で、対象を `RimlTempest/rimltools` だけにする。
+<https://github.com/settings/personal-access-tokens/new> で、どちらも対象を `RimlTempest/rimltools` だけにする。
 
-| Repository permissions | 権限                                       |
-| ---------------------- | ------------------------------------------ |
-| Administration         | Read and write（リポジトリ設定・rulesets） |
-| Environments           | Read and write                             |
-| Secrets                | Read and write                             |
-| Variables              | Read and write                             |
-| Metadata               | Read-only（必須）                          |
+| Repository permissions                                      | apply 用 `TF_APPLY_GITHUB_TOKEN` | plan 用 `TF_PLAN_GITHUB_TOKEN` |
+| ----------------------------------------------------------- | -------------------------------- | ------------------------------ |
+| Administration（リポジトリ設定・rulesets・Dependabot 設定） | Read and write                   | Read-only                      |
+| Environments（environment と その secret / variable）       | Read and write                   | Read-only                      |
+| Secrets                                                     | Read and write                   | Read-only                      |
+| Variables                                                   | Read and write                   | Read-only                      |
+| Metadata                                                    | Read-only（必須）                | Read-only（必須）              |
 
 ### 4. GitHub に登録する
 
 `!` シェルは非対話なので、値はクリップボード経由で渡す。値をクリップボードにコピーした直後に 1 行ずつ実行する。
 
+**plan 用（repository secret）**
+
 ```bash
-pbpaste | gh secret set TF_API_TOKEN -R RimlTempest/rimltools
-pbpaste | gh secret set TF_VAR_cloudflare_api_token -R RimlTempest/rimltools
-pbpaste | gh secret set TF_VAR_github_token -R RimlTempest/rimltools
+pbpaste | gh secret set TF_PLAN_API_TOKEN -R RimlTempest/rimltools
+pbpaste | gh secret set TF_PLAN_CLOUDFLARE_API_TOKEN -R RimlTempest/rimltools
+pbpaste | gh secret set TF_PLAN_GITHUB_TOKEN -R RimlTempest/rimltools
+```
+
+**apply 用（`production` environment の secret）**
+
+`production` environment は既にある。Terraform が管理するのは `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`（CI のデプロイ用）だけで、
+`TF_APPLY_*` は Terraform の管理外。apply のための資格情報を apply 自身が作る鶏と卵を避けるため、**最初の 1 回は手で登録する**。
+
+```bash
+pbpaste | gh secret set TF_APPLY_API_TOKEN -R RimlTempest/rimltools -e production
+pbpaste | gh secret set TF_APPLY_CLOUDFLARE_API_TOKEN -R RimlTempest/rimltools -e production
+pbpaste | gh secret set TF_APPLY_GITHUB_TOKEN -R RimlTempest/rimltools -e production
+```
+
+> 初回 apply までは `production` environment にブランチ制限が無い（Terraform が main のみに絞る）。
+> それまでに `environment: production` を使うワークフローを main 以外で動かさないこと。
+> 手で先に絞ってもよい: Settings → Environments → production → Deployment branches → Selected branches → `main`。
+
+**共通（repository variable、秘密ではない）**
+
+```bash
 gh variable set TF_CLOUD_ORGANIZATION -R RimlTempest/rimltools --body '<org>'
 gh variable set CLOUDFLARE_ACCOUNT_ID -R RimlTempest/rimltools --body '<account id>'
 # staging を Cloudflare Access で保護する場合（JSON の配列）
 gh variable set TF_VAR_ACCESS_EMAILS -R RimlTempest/rimltools --body '["you@example.com"]'
 ```
 
-登録したら `gh secret list -R RimlTempest/rimltools` で 3 件が見えること（値が空で登録されていないか、更新日時で確認）。
+登録後、`gh secret list -R RimlTempest/rimltools` で 3 件、`gh secret list -R RimlTempest/rimltools -e production` で 3 件が見えること
+（値が空で登録されていないか、更新日時で確認）。
+
+**旧名の secret が残っていたら消す**（書き込みトークンが repository secret に残らないように）:
+
+```bash
+gh secret delete TF_API_TOKEN -R RimlTempest/rimltools
+gh secret delete TF_VAR_cloudflare_api_token -R RimlTempest/rimltools
+gh secret delete TF_VAR_github_token -R RimlTempest/rimltools
+```
 
 ### 5. 初回 plan を確認する
 
@@ -82,15 +139,17 @@ gh variable set TF_VAR_ACCESS_EMAILS -R RimlTempest/rimltools --body '["you@exam
       environments（staging / preview）と secret / variable
 - [ ] ruleset の required checks: develop = `gate`, `security-gate`, `conventional` / main = 左記 + `release-guard`
       （**これらのチェックを出すワークフローがまだ無いと、PR がマージできなくなる**。先にワークフローが develop に入っていること）
+- [ ] plan が権限不足（403）で落ちていない。落ちたら plan 用トークンに足りない Read 権限を足す（Edit は足さない）
 
 問題なければ Release PR（develop → main）をマージすると、main への push で apply される。
 手元で確認したいときは:
 
 ```bash
 cd infra/terraform
+# plan 用（読み取り専用）の値を使う
 export TF_CLOUD_ORGANIZATION='<org>' TF_TOKEN_app_terraform_io='...' \
   TF_VAR_cloudflare_api_token='...' TF_VAR_github_token='...' TF_VAR_cloudflare_account_id='...'
-terraform init && terraform plan
+terraform init && terraform plan -lock=false
 ```
 
 ## ドメイン移行（`<tool>.riml4i.com` → `<tool>.tools.riml4i.com`）
@@ -125,3 +184,20 @@ terraform init && terraform plan
 - Free プランの rate limiting は 1 本・式は path のみ・IP 単位・10 秒。host で絞れないため、ゾーン全体の `/api/auth/` に効く
 - zone の entry point ruleset は phase ごとに 1 つ。既存のものは取り込まれ、ルールはこの定義で置き換わる
 - GitHub の variable は空値を持てないため、production の `WORKER_SUFFIX` は作らない（workflow では空文字として展開される）
+
+## 読み取り専用トークンでの plan の既知の制約
+
+provider の docs（各リソースの "Accepted Permissions"）では、ここで使うリソースと data source はすべて Read 権限で読める。
+ただし次の点は plan 用トークンでは見えない、または確認できていない。
+
+- **secret の値**: `github_actions_environment_secret` は GitHub API が値を返さないので、値の差分は plan に出ない
+  （更新日時の変化だけを検出する）。CI トークンを作り直したときの反映は apply で確認する
+- **CI トークンの値**: `cloudflare_account_token` の値は発行時にしか返らない。Read で見えるのはポリシーと状態だけ
+- **Access**: `cloudflare_zero_trust_access_application` は docs に Accepted Permissions の記載が無い。
+  policy と同じ `Access: Apps and Policies: Read` で読める想定。403 になったら plan 用トークンに Read を足す
+- **zone ruleset**: `cloudflare_ruleset` も記載が無い。phase ごとの Read 権限（Transform Rules / Zone WAF / Dynamic URL Redirects）で読める想定
+- **HCP の state**: plan は state を読むので、plan 用 HCP トークンでも state 内の値（CI トークンの値を含む）は読める。
+  state の読み取りを外すと plan できないため、ここは権限では防げない。対策は次の 2 点:
+  - fork からの PR には GitHub が secret を渡さない（public リポジトリの既定）。secret を使えるのは push 権限のある人のブランチだけ
+  - 漏洩が疑われたら `cloudflare_account_token.ci` を `terraform apply -replace` で作り直す（GitHub の secret も同時に更新される）
+- plan は `-lock=false` で実行する（state のロックという書き込みを避ける。apply はロックする）
