@@ -15,7 +15,4 @@ regexes = [
 
 [[allowlists]]
 description = "外部から取り込んだスキルの説明文（悪い例としての架空の値）"
-paths = [
-  '''(^|/)\.agents/skills/''',
-  '''(^|/)\.claude/skills/''',
-]
+paths = ['''(^|/)\.agents/skills/''', '''(^|/)\.claude/skills/''']
