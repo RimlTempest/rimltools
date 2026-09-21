@@ -261,3 +261,26 @@ resource "github_actions_environment_variable" "this" {
   variable_name = each.value.name
   value         = each.value.value
 }
+
+# デプロイと flags 同期のワークフローは、ここに載っている environment にだけ出す。
+# environment の secret / variable（上）が揃ってから載るよう、それらに依存させる。
+resource "github_actions_variable" "release_environments" {
+  repository    = github_repository.this.name
+  variable_name = "RELEASE_ENVIRONMENTS"
+  value         = jsonencode(var.release_environments)
+
+  depends_on = [
+    github_actions_environment_secret.cloudflare_api_token,
+    github_actions_environment_secret.cloudflare_account_id,
+    github_actions_environment_variable.this,
+  ]
+}
+
+# GITHUB_TOKEN の既定は読み取りのみ。Release PR（release-pr.yml）が develop → main の PR を
+# 作れるよう、Actions による PR の作成を許可する。この設定は承認も許すが、ruleset の
+# 必須レビュー数は 0 なので、承認によってマージ条件が緩むことはない（ADR-0002）。
+resource "github_workflow_repository_permissions" "this" {
+  repository                       = github_repository.this.name
+  default_workflow_permissions     = "read"
+  can_approve_pull_request_reviews = true
+}

@@ -115,3 +115,14 @@ variable "ops_token_permission_groups" {
   type        = list(string)
   default     = ["Account Analytics Read"]
 }
+
+variable "release_environments" {
+  description = "Environments whose secrets and variables are in place, so the deploy and flags workflows may run there (repo variable RELEASE_ENVIRONMENTS). Workflows skip any environment not listed."
+  type        = list(string)
+  default     = ["staging", "production"]
+
+  validation {
+    condition     = alltrue([for e in var.release_environments : contains(["staging", "production", "preview"], e)])
+    error_message = "release_environments may only contain staging, production and preview."
+  }
+}

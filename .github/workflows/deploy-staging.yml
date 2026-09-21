@@ -48,7 +48,8 @@ jobs:
 
   release:
     needs: plan
-    if: needs.plan.outputs.tools != '[]'
+    # Terraform が environment を用意するまでは RELEASE_ENVIRONMENTS に入らず、ここで止まる（docs/release.md）
+    if: needs.plan.outputs.tools != '[]' && contains(fromJSON(vars.RELEASE_ENVIRONMENTS || '[]'), 'staging')
     strategy:
       fail-fast: false
       matrix:

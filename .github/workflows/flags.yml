@@ -70,9 +70,11 @@ jobs:
   sync:
     name: sync ${{ matrix.tool }} → ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'production' || 'staging') }}
     needs: validate
+    # 同期先の environment が未設定（Terraform 適用前）なら RELEASE_ENVIRONMENTS に入らず、ここで止まる
     if: >-
-      github.event_name == 'push'
-      || (github.event_name == 'workflow_dispatch' && inputs.action == 'sync')
+      (github.event_name == 'push'
+      || (github.event_name == 'workflow_dispatch' && inputs.action == 'sync'))
+      && contains(fromJSON(vars.RELEASE_ENVIRONMENTS || '[]'), (github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'production' || 'staging')))
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'production' || 'staging') }}
     concurrency:
@@ -113,7 +115,7 @@ jobs:
   kill:
     name: kill ${{ inputs.tool }}/${{ inputs.flag }} (${{ inputs.environment }})
     # 緊急停止は、正本 JSON の検証が落ちていても止めない
-    if: github.event_name == 'workflow_dispatch' && inputs.action == 'kill'
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'kill' && contains(fromJSON(vars.RELEASE_ENVIRONMENTS || '[]'), inputs.environment)
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     concurrency:
