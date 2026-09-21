@@ -1,0 +1,97 @@
+# Dependabot（docs/security.md の「依存取得」層）
+#
+# - 版の更新（version updates）は cooldown で公開から 7 日（major は 14 日）寝かせてから PR にする。
+#   乗っ取られたアカウントから出た悪性版は、多くが数日以内に発見・撤回されるため。
+#   bunfig.toml の minimumReleaseAge（7 日）と同じ待ち時間に揃えている。
+# - 脆弱性の修正（security updates）は cooldown の対象外で、勧告が出たらすぐ PR になる。
+#   有効化はリポジトリ設定（Terraform の github_repository で管理）。
+# - PR は作業ブランチの develop 宛て。CI の gate / security-gate を通ってから squash で入れる。
+version: 2
+
+updates:
+  # bun workspaces（lockfile はルートに 1 つ）
+  - package-ecosystem: bun
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      time: '05:00'
+      timezone: Asia/Tokyo
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    open-pull-requests-limit: 5
+    labels: [dependencies, javascript]
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
+    groups:
+      # minor / patch はまとめて 1 本にする（major は個別に読んでから入れる）
+      bun-minor-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+      bun-security:
+        applies-to: security-updates
+        patterns: ['*']
+
+  # qrcc の Rust（engine / worker）
+  - package-ecosystem: cargo
+    directory: /products/qrcc
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      time: '05:00'
+      timezone: Asia/Tokyo
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    open-pull-requests-limit: 5
+    labels: [dependencies, rust]
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      cargo-minor-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+
+  # GitHub Actions（SHA 固定のまま、`# vX.Y.Z` コメントごと更新される）
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      time: '05:00'
+      timezone: Asia/Tokyo
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    labels: [dependencies, github-actions]
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions-minor-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+
+  # Terraform の provider（infra/terraform。ディレクトリができるまでは何もしない）
+  - package-ecosystem: terraform
+    directory: /infra/terraform
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      time: '05:00'
+      timezone: Asia/Tokyo
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    labels: [dependencies, terraform]
+    commit-message:
+      prefix: chore
+      include: scope
