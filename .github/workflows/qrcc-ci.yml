@@ -3,11 +3,8 @@ name: qrcc CI
 on:
   workflow_call:
 
-# paths-filter は pull_request で GitHub API の listFiles を呼ぶため、
-# 既定の制限された GITHUB_TOKEN では "Resource not accessible by integration" になる。
-permissions:
-  contents: read
-  pull-requests: read
+# 既定は何も無し。ジョブごとに必要な権限だけ足す（docs/security.md）。
+permissions: {}
 
 env:
   CARGO_TERM_COLOR: always
@@ -19,14 +16,18 @@ defaults:
 jobs:
   changes:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       ts: ${{ steps.filter.outputs.ts }}
       rust: ${{ steps.filter.outputs.rust }}
       markup: ${{ steps.filter.outputs.markup }}
       web: ${{ steps.filter.outputs.web }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.4
         id: filter
         with:
           filters: |
@@ -60,8 +61,11 @@ jobs:
   guard:
     name: 不変条件の検査
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
       - name: qrcc-api は公開されていないこと (ADR-0002)
         run: |
           if grep -qE '^\s*"routes"\s*:' apps/api/wrangler.jsonc; then
@@ -95,8 +99,8 @@ jobs:
           done
       - name: ドメイン層に I/O が漏れていないこと
         run: |
-          hits=$(find shared/contract/src features/*/contract features/*/core -name '*.ts' ! -name '*.test.ts' 2>/dev/null \
-            | xargs -r grep -nE '\b(fetch|localStorage|process\.env)\b' || true)
+          hits=$(find shared/contract/src features/*/contract features/*/core -name '*.ts' ! -name '*.test.ts' -print0 2>/dev/null \
+            | xargs -0 -r grep -nE '\b(fetch|localStorage|process\.env)\b' || true)
           if [ -n "$hits" ]; then
             echo "$hits"
             echo "::error::contract and core layers must stay I/O free. Inject dependencies instead."
@@ -104,8 +108,8 @@ jobs:
           fi
       - name: feature 同士が内部を直接 import していないこと (ADR-0007)
         run: |
-          hits=$(find features -name '*.ts' -o -name '*.tsx' 2>/dev/null \
-            | xargs -r grep -nE "from '\\.\\./\\.\\./[a-z-]+/(contract|core|ui|server)/" || true)
+          hits=$(find features \( -name '*.ts' -o -name '*.tsx' \) -print0 2>/dev/null \
+            | xargs -0 -r grep -nE "from '\\.\\./\\.\\./[a-z-]+/(contract|core|ui|server)/" || true)
           if [ -n "$hits" ]; then
             echo "$hits"
             echo "::error::features must not reach into each other by relative path. Import via the '@qrcc/<feature>' entry points."
@@ -115,9 +119,12 @@ jobs:
   fmt-lint:
     name: fmt + lint (oxfmt / oxlint)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
-      - uses: jdx/mise-action@v3
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
         with: { cache: true }
       - run: bun install --frozen-lockfile
       - run: bun run fmt:check
@@ -128,11 +135,14 @@ jobs:
     needs: changes
     if: needs.changes.outputs.ts == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
-      - uses: jdx/mise-action@v3
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
         with: { cache: true }
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with: { workspaces: products/qrcc }
       # wasm-bindgen が生成する .d.ts は型検査の入力。git 管理外なのでここで作る
       - run: cargo install wasm-pack --locked
@@ -144,9 +154,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.ts == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
-      - uses: jdx/mise-action@v3
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
         with: { cache: true }
       - run: bun install --frozen-lockfile
       - run: bun run test
@@ -156,9 +169,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.markup == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
-      - uses: jdx/mise-action@v3
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
         with: { cache: true }
       - run: bun install --frozen-lockfile
       - run: bun run lint:html
@@ -168,11 +184,14 @@ jobs:
     needs: changes
     if: needs.changes.outputs.rust == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
-      - uses: jdx/mise-action@v3
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
         with: { cache: true }
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with: { workspaces: products/qrcc }
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
@@ -189,11 +208,14 @@ jobs:
     needs: changes
     if: needs.changes.outputs.web == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
-      - uses: jdx/mise-action@v3
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
         with: { cache: true }
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with: { workspaces: products/qrcc }
       - run: bun install --frozen-lockfile
       - run: cargo install worker-build --locked
@@ -230,7 +252,7 @@ jobs:
           fi
       - run: bun run --filter '@qrcc/e2e' install-browsers
       - run: bun run a11y
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:
           name: playwright-report
