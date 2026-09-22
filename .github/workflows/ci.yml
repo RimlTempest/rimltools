@@ -73,6 +73,9 @@ jobs:
       - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - run: bun run check:root
       - run: bun run test:root
+      # infra/tfstate（OpenTofu の state 置き場の Worker、ADR-0009）も軽いので毎回
+      - run: bun run check:tfstate
+      - run: bun run test:tfstate
 
   qrcc:
     needs: changes
