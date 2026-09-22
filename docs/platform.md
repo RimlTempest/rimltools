@@ -22,7 +22,7 @@ hotfix/*   ──PR──▶  main（develop へも取り込み直す）
 | -------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------- |
 | コード・ビルド       | bun workspaces / cargo                                          | `products/<tool>/`                                                   |
 | バージョン・デプロイ | wrangler（`versions upload` / `versions deploy`）               | Worker のコードと bindings                                           |
-| インフラ             | Terraform（HCP Terraform Free で state 管理）                   | ドメイン・DNS・D1・Worker の枠・ルールセット・GitHub の設定と secret |
+| インフラ             | OpenTofu（state は自前 backend で暗号化、秘密は SOPS）          | ドメイン・DNS・D1・Worker の枠・ルールセット・GitHub の設定と secret |
 | 機能の出し分け       | `@rimltools/flags`（OpenFeature 互換、D1 に定義）               | dark launch・A/B・機能単位のカナリア・kill switch                    |
 | セキュリティ         | GitHub Actions（CodeQL / gitleaks / osv-scanner / zizmor など） | PR と定期スキャン                                                    |
 | 運用                 | GraphQL Analytics / Workers Logs / 定期 synthetic               | SLO・エラーバジェット・自動ロールバック                              |
@@ -67,9 +67,10 @@ CI の guard が `DROP` / `RENAME` を含む migration を `-- contract:` 注記
 noter の Durable Object は「1 オブジェクトにつき同時に 1 版」なので、DO クラスの migration を含む
 リリースは canary を飛ばして一括切り替えにする（ADR-0003）。
 
-## 4. IaC（Terraform）
+## 4. IaC（OpenTofu）
 
-`infra/terraform/` に置き、HCP Terraform Free（500 リソースまで）で state を管理する。
+`infra/terraform/` と `infra/grafana/` に置く。state は自前の http backend（`infra/tfstate`、Worker + D1）に、
+OpenTofu が暗号化してから送る。秘密の入力値は SOPS（age）で暗号化して `infra/secrets/` に置く（ADR-0009）。
 
 | Terraform が持つ                                                | wrangler が持つ                                                |
 | --------------------------------------------------------------- | -------------------------------------------------------------- |
@@ -80,8 +81,8 @@ noter の Durable Object は「1 オブジェクトにつき同時に 1 版」�
 | CI 用の Cloudflare API トークン（権限を最小化）                 |                                                                |
 | GitHub: リポジトリ設定・rulesets・environments・Actions secrets |                                                                |
 
-- 変更は PR で `terraform plan` の結果をコメントし、`main` へのマージで apply する。
-- 手で作るのは **HCP Terraform の組織と workspace、Terraform 用のブートストラップトークン 2 本だけ**（`infra/terraform/README.md`）。
+- 変更は PR で `tofu plan` の結果をコメントし、`main` へのマージで apply する。
+- GitHub に手で登録する secret は **age の秘密鍵 2 本だけ**（`docs/bootstrap.md`）。
 
 ## 5. DevSecOps
 
