@@ -242,6 +242,41 @@ describe('ScanScreen', () => {
     )
   })
 
+  /**
+   * 項目が 1 つも無い連絡先で、中身の無い説明リスト（<dl>）を出さない。
+   * 空の <dl> は支援技術に「リスト、0 項目」とだけ伝わり、何の情報も無い。
+   */
+  test('項目が空の連絡先では、空の説明リストを出さない', async () => {
+    const { container } = render(
+      <ScanScreen
+        startCamera={undefined}
+        decodeImageFile={decodesTo(found('MECARD:;;'))}
+        copyText={undefined}
+      />,
+    )
+    await userEvent.upload(screen.getByLabelText('コードが写っている画像'), pngFile())
+    await waitFor(() => expect(screen.getByText('MECARD:;;')).toBeDefined())
+    for (const list of container.querySelectorAll('dl')) {
+      expect(list.querySelectorAll('dt').length).toBeGreaterThan(0)
+    }
+  })
+
+  test('項目のある連絡先は、ある項目だけを説明リストに出す', async () => {
+    render(
+      <ScanScreen
+        startCamera={undefined}
+        decodeImageFile={decodesTo(found('MECARD:N:山田 太郎;TEL:0312345678;;'))}
+        copyText={undefined}
+      />,
+    )
+    await userEvent.upload(screen.getByLabelText('コードが写っている画像'), pngFile())
+    await waitFor(() => expect(screen.getByText('山田 太郎')).toBeDefined())
+    expect(screen.getByText('氏名')).toBeDefined()
+    expect(screen.getByText('電話')).toBeDefined()
+    expect(screen.queryByText('メール')).toBeNull()
+    expect(screen.queryByText('組織')).toBeNull()
+  })
+
   /** javascript: を踏ませない。リンクにするのは http(s) だけ。 */
   test('http(s) でない内容はリンクにしない', async () => {
     render(
