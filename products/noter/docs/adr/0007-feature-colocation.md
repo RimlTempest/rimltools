@@ -1,19 +1,15 @@
 # ADR-0007: 機能単位の co-location でディレクトリを構成する
 
-- 状態: Accepted
+- 状態: Accepted → **ルートの [ADR-0012](../../../../docs/adr/0012-feature-colocation.md) に統合**（2026-09-22、plan 001 段階 3）
 - 日付: 2026-09-06
-- 関連: qrcc ADR-0007 を移植・改訂 / [ADR-0002](0002-auxiliary-worker-and-private-durable-object.md)
+- 関連: [ADR-0002](0002-auxiliary-worker-and-private-durable-object.md)
 
-## 文脈
+qrcc と noter で同じ決定をしていたため、本文はルートの ADR にまとめた。この番号は欠番にせず残す
+（既存の参照を壊さないため）。以下はこのプロダクトに固有の補足だけ。
 
-qrcc でレイヤ別構成（`packages/contracts`, `packages/core`, `packages/ui`, …）を
-機能別に組み替え、「1 機能 = 1 ディレクトリ = 1 並行レーン」が成立した。
-noter も同じ構成を採る。ただし Rust（`engine/` / `worker/`）が無く、代わりに
-Durable Object とブラウザ側の同期アダプタがある。
+## noter 固有の補足
 
-## 決定
-
-**トップレベルを機能で割り、1 機能に必要なものを 1 ディレクトリへ集める。**
+noter のレイヤ（Rust は無く、代わりに Durable Object とブラウザ側の同期アダプタがある）:
 
 ```
 features/<name>/
@@ -34,34 +30,6 @@ apps/
 └─ sync/        薄いシェル。DocumentRoom を re-export するだけ
 ```
 
-各 feature は Bun workspace パッケージ（`@noter/<name>`）で、
-**公開面は `exports` に列挙したサブパスだけ**。feature 同士は
-`@noter/<name>/<subpath>` 経由でのみ依存し、相対パスで他 feature に手を伸ばさない。
-
-## ルートの co-location
-
-TanStack Router の virtual file routes を使い、ルートの実体を feature 内に置く。
-
-- `apps/web/tsr.config.json` … `routesDirectory` をリポジトリルートの `features/` に向ける
-- `apps/web/src/routes.ts` … URL 構造だけを宣言する唯一の横断ファイル
-- `features/<name>/ui/<name>.route.tsx` … ルート定義（`createFileRoute`）
-- `features/<name>/ui/<name>-screen.tsx` … 画面コンポーネント（feature 所有・テスト対象）
-- `features/<name>/ui/<name>-wiring.route.ts` … composition root（依存の配線）
-
-`*.route.tsx` は **apps/web の TypeScript プログラムに属する**（`routeTree.gen.ts` の
-`Register` 型拡張が必要なため）。feature 側の `tsconfig.json` は `*.route.tsx` を
-`exclude` し、apps/web が `../../features/*/ui/*.route.tsx` を `include` する。
-
-## 理由
-
-- 変更が 1 ディレクトリに閉じる。「TOML の診断を直す」は `features/formats/` の中だけ
-- レーンと所有ディレクトリが 1:1（`docs/parallel-lanes.md`）
-- 同期の「DO 側」と「ブラウザ側」が `features/sync/worker` と `features/sync/client` で
-  隣り合い、プロトコルの契約（`features/sync/contract`）を共有する
-
-## 帰結
-
-- feature を足す = ディレクトリを足す + `apps/web/src/routes.ts` に 1 行
-- feature を消す = ディレクトリを消す + その 1 行を消す
-- `features/sync/core` は Yjs に依存してよい（Yjs は I/O を持たない純粋ライブラリ）が、
-  `cloudflare:workers` に依存してはならない
+- `features/<name>/ui/<name>-wiring.route.ts` が composition root（依存の配線）
+- 同期の「DO 側」と「ブラウザ側」が `features/sync/worker` と `features/sync/client` で隣り合い、プロトコルの契約（`features/sync/contract`）を共有する
+- `features/sync/core` は Yjs に依存してよい（Yjs は I/O を持たない純粋ライブラリ）が、`cloudflare:workers` に依存してはならない

@@ -1,35 +1,15 @@
 # ADR-0007: 機能単位の co-location（縦割り）でディレクトリを構成する
 
-- 状態: Accepted
+- 状態: Accepted → **ルートの [ADR-0012](../../../../docs/adr/0012-feature-colocation.md) に統合**（2026-09-22、plan 001 段階 3）
 - 日付: 2026-09-01
-- 影響: [ADR-0002](0002-auxiliary-worker-split.md) / [ADR-0003](0003-rust-core-dual-target.md) の
-  境界規約はそのまま維持する
+- 影響: [ADR-0002](0002-auxiliary-worker-split.md) / [ADR-0003](0003-rust-core-dual-target.md) の境界規約はそのまま維持する
 
-## 文脈
+qrcc と noter で同じ決定をしていたため、本文はルートの ADR にまとめた。この番号は欠番にせず残す
+（既存の参照を壊さないため）。以下はこのプロダクトに固有の補足だけ。
 
-当初の構成は技術レイヤ別だった。
+## qrcc 固有の補足
 
-```
-packages/contracts   型
-packages/core        ロジック
-packages/ui          UI
-crates/qrcc-render   生成エンジン (Rust)
-crates/qrcc-decode   デコーダ (Rust)
-apps/web/src/routes  ルート
-apps/web/src/features/<name>  画面
-```
-
-「生成」という 1 つの機能を触るのに 5 箇所を横断する必要があり、
-
-- 変更の影響範囲が読めない
-- 並行レーンの所有ディレクトリが features/ の下で衝突しやすい
-- Rust とフロントの対応関係がディレクトリから読めない
-
-という問題があった。
-
-## 決定
-
-**トップレベルを機能で割り、1 機能に必要なものを 1 ディレクトリへ集める。**
+qrcc のレイヤ（Rust を含む）:
 
 ```
 features/<name>/
@@ -51,43 +31,6 @@ apps/
 └─ api/         薄いシェル。features/*/engine と worker を束ねる
 ```
 
-各 feature は Bun workspace パッケージ (`@qrcc/<name>`) であり、
-**公開面は `exports` に列挙したサブパスだけ**。
-
-## ルートの co-location
-
-TanStack Router の **virtual file routes** を使い、ルートの実体を feature 内に置く。
-
-- `apps/web/tsr.config.json` … `routesDirectory` を リポジトリルートの `features/` に向ける
-- `apps/web/src/routes.ts` … URL 構造だけを宣言する唯一の横断ファイル
-- `features/<name>/ui/<name>.route.tsx` … ルート定義（`createFileRoute`）
-- `features/<name>/ui/<name>-screen.tsx` … 画面コンポーネント（feature 所有・テスト対象）
-
-`*.route.tsx` は **apps/web の TypeScript プログラムに属する**
-（`routeTree.gen.ts` による `Register` 型拡張が必要なため）。
-feature 側の `tsconfig.json` は `*.route.tsx` を `exclude` し、
-apps/web が `../../features/*/ui/*.route.tsx` を `include` する。
-物理配置は feature の中、型の所有はアプリ側、という分担になる。
-
-## 理由
-
-- **変更が 1 ディレクトリに閉じる。** 「生成に DataMatrix を足す」は
-  `features/generate/` の中だけで完結する
-- **レーンと所有ディレクトリが 1:1 になる。** worktree 並行作業で衝突が起きない
-  （`docs/parallel-lanes.md`）
-- **フロントとバックエンドの対応が目で見える。** `features/generate/ui` と
-  `features/generate/engine` が隣にある
-- **削除しやすい。** 機能をやめるときディレクトリごと消せる
-
-## 帰結・注意点
-
-- feature 同士は `@qrcc/<name>` の公開サブパス経由でのみ依存する。
-  相対パスで他 feature の内部に手を伸ばすと CI の `guard` が落ちる
-- 共有したくなったものは `shared/` に上げる。**上げる前に 2 回重複させる**（DRY の運用）
-- `routesDirectory` の相対パス基準が Vite プラグイン（`srcDirectory` 基準）と
-  `tsr generate` CLI（プロジェクトルート基準）で異なるため、
-  `vite.config.ts` では絶対パスに解決して渡す。定義元は `tsr.config.json` 1 つ
-- Cargo は一致しない glob メンバーをエラーにするため、`features/*/worker` は
-  最初の 1 つを作るときにルート `Cargo.toml` へ追加する
-- レイヤ別の共通ルール（contract/core は I/O 禁止、engine は `worker` 非依存）は
-  ディレクトリ名で判定できるため、CI の `guard` が全 feature に一括で適用する
+- `engine/` は純粋 Rust で `worker` crate に依存しない（ブラウザの wasm に載る。ADR-0003）。I/O は `worker/` に置き、apps/api からのみ使う
+- Cargo は一致しない glob メンバーをエラーにするため、`features/*/worker` は最初の 1 つを作るときにルート `Cargo.toml` へ追加する
+- engine が `worker` に依存していないことは CI の guard（`scripts/guard.sh`）が全 feature に一括で検査する
