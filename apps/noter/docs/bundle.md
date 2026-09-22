@@ -6,13 +6,13 @@ noter-web は 2026-09 の時点で 2.47 MiB になり、残りが 0.6 MiB を切
 
 ## 結果
 
-|                                                    |    変更前 |    変更後 |                                差 |
-| -------------------------------------------------- | --------: | --------: | --------------------------------: |
-| noter-web のサーバ（`apps/web/dist/server`、gzip） | 2,472 KiB |   869 KiB |            **-1,603 KiB（-65%）** |
-| 上限 3 MiB に対する割合                            |       80% |       28% |                                   |
-| サーバのチャンク数                                 |       142 |        47 |                                   |
-| クライアント JS の合計（gzip）                     | 1,401 KiB | 1,406 KiB | +5 KiB（チャンクが 1 つ増えた分） |
-| トップページで先読みする JS（gzip）                | 127,297 B | 127,416 B |                            +119 B |
+|                                                        |    変更前 |    変更後 |                                差 |
+| ------------------------------------------------------ | --------: | --------: | --------------------------------: |
+| noter-web のサーバ（`services/web/dist/server`、gzip） | 2,472 KiB |   869 KiB |            **-1,603 KiB（-65%）** |
+| 上限 3 MiB に対する割合                                |       80% |       28% |                                   |
+| サーバのチャンク数                                     |       142 |        47 |                                   |
+| クライアント JS の合計（gzip）                         | 1,401 KiB | 1,406 KiB | +5 KiB（チャンクが 1 つ増えた分） |
+| トップページで先読みする JS（gzip）                    | 127,297 B | 127,416 B |                            +119 B |
 
 | 手当て                                                    | サーバ（gzip） |
 | --------------------------------------------------------- | -------------: |
@@ -69,14 +69,14 @@ noter-web は 2026-09 の時点で 2.47 MiB になり、残りが 0.6 MiB を切
 
 ## 予算（CI で守る）
 
-`products/<tool>/bundle-budget.json` に予算を書き、`scripts/check-bundle.sh` がビルドの後に
+`apps/<tool>/bundle-budget.json` に予算を書き、`scripts/check-bundle.sh` がビルドの後に
 `bun ../../scripts/bundle-budget.ts .` を呼ぶ（CI では `product-ci.yml` の build ジョブ）。
 
-| プロダクト | 対象                                      | 予算（gzip） | 実測（2026-09） | 根拠                                                                |
-| ---------- | ----------------------------------------- | -----------: | --------------: | ------------------------------------------------------------------- |
-| noter      | `apps/web/dist/server` の js / mjs / wasm |      1.5 MiB |         869 KiB | 上限 3 MiB の半分。約 660 KiB の伸びしろを残す                      |
-| qrcc       | `apps/web/dist/server` の js / mjs / wasm |        2 MiB |        1.51 MiB | 上限の 2/3。wasm の上限（ADR-0003）は既存の検査が別に見る           |
-| portal     | `dist` の html / css / svg                |       32 KiB |         2.3 KiB | script を持たない静的ページ。大きな資産が紛れ込んだら気づけるように |
+| プロダクト | 対象                                          | 予算（gzip） | 実測（2026-09） | 根拠                                                                |
+| ---------- | --------------------------------------------- | -----------: | --------------: | ------------------------------------------------------------------- |
+| noter      | `services/web/dist/server` の js / mjs / wasm |      1.5 MiB |         869 KiB | 上限 3 MiB の半分。約 660 KiB の伸びしろを残す                      |
+| qrcc       | `services/web/dist/server` の js / mjs / wasm |        2 MiB |        1.51 MiB | 上限の 2/3。wasm の上限（ADR-0003）は既存の検査が別に見る           |
+| portal     | `dist` の html / css / svg                    |       32 KiB |         2.3 KiB | script を持たない静的ページ。大きな資産が紛れ込んだら気づけるように |
 
 - ファイルは 1 つずつ gzip して合計する。まとめて gzip した値より大きくなるので、判定は安全側に倒れる。
 - 対象のファイルが 1 つも無いときも失敗にする（出力先の名前が変わって検査が素通りになるのを防ぐ）。
@@ -92,6 +92,6 @@ noter-web は 2026-09 の時点で 2.47 MiB になり、残りが 0.6 MiB を切
 ## 内訳の出し方
 
 ```bash
-NOTER_BUNDLE_ANALYZE=1 bun run --cwd products/noter build   # サーバの sourcemap を出す（本番では出さない）
-bun scripts/bundle-report.ts products/noter/apps/web/dist/server 25
+NOTER_BUNDLE_ANALYZE=1 bun run --cwd apps/noter build   # サーバの sourcemap を出す（本番では出さない）
+bun scripts/bundle-report.ts apps/noter/services/web/dist/server 25
 ```

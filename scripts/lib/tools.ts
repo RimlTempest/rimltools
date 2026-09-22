@@ -42,7 +42,7 @@ export type Tool = {
    */
   appSecrets: string[]
   rust: boolean
-  workers: WorkerSpec[]
+  services: WorkerSpec[]
   d1: D1Spec[]
   release: ReleaseSpec
   slo: { availability: number; windowDays: number }
@@ -130,13 +130,13 @@ const parseTool = (
   const subdomain = str(r, raw, 'subdomain')
   const apex = bool(r, raw, 'apex')
 
-  const workers = records(r, raw, 'workers').map((w) => ({
+  const services = records(r, raw, 'services').map((w) => ({
     name: str(r, w, 'name'),
     role: parseRole(r, str(r, w, 'role')),
     buildConfig: str(r, w, 'buildConfig'),
     durableObjects: bool(r, w, 'durableObjects'),
   }))
-  if (workers.filter((w) => w.role === 'public').length !== 1) {
+  if (services.filter((w) => w.role === 'public').length !== 1) {
     errors.push(`${name}: exactly one public worker is required`)
   }
 
@@ -171,7 +171,7 @@ const parseTool = (
     legacyHosts: list(r, raw, 'legacyHosts').filter((h): h is string => typeof h === 'string'),
     appSecrets,
     rust: bool(r, raw, 'rust'),
-    workers,
+    services,
     d1: records(r, raw, 'd1').map((d) => ({
       name: str(r, d, 'name'),
       binding: str(r, d, 'binding'),

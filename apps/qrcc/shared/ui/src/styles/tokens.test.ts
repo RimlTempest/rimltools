@@ -24,7 +24,7 @@ const KEPT_LOCAL: readonly string[] = ['--qrcc-measure']
 
 const appCssFiles = (): readonly string[] =>
   [
-    ...new Glob('{shared/ui/src,features/*/ui,apps/web/src}/**/*.css').scanSync(root.pathname),
+    ...new Glob('{shared/ui/src,features/*/ui,services/web/src}/**/*.css').scanSync(root.pathname),
   ].toSorted()
 
 describe('デザイントークンは riml-ds の別名', () => {

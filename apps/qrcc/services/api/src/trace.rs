@@ -1,4 +1,4 @@
-//! W3C Trace Context の最小対応（docs/observability.md）。
+//! W3C Trace Context の最小対応（docs/ops/telemetry.md）。
 //!
 //! qrcc-web は service binding の呼び出しに `traceparent` を付ける。ここでは span を
 //! 送らず（今後の課題）、trace_id をログに載せて Grafana でログ ↔ trace を繋ぐだけにする。

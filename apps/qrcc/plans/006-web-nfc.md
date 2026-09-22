@@ -5,7 +5,7 @@
 > **止めて報告**すること。完了したら `plans/README.md` の該当行を更新すること。
 >
 > **Drift check（最初に実行）**:
-> `git diff --stat 57f52ad..HEAD -- apps/web/src/routes.ts features/shell tsconfig.json`
+> `git diff --stat 57f52ad..HEAD -- services/web/src/routes.ts features/shell tsconfig.json`
 > 出力が空でなければ「Current state」の引用と実際のコードを突き合わせ、
 > 食い違えば STOP condition として扱うこと。
 
@@ -87,7 +87,7 @@ iOS もデスクトップも動かない。だから「動かない環境で何�
 ### URL 構造とナビ（どちらも 1 行の追記）
 
 ```ts
-// apps/web/src/routes.ts
+// services/web/src/routes.ts
 export const routes = rootRoute('shell/ui/root.route.tsx', [
   // トップページが生成と読み取りを兼ねる（/generate と /scan は廃止）
   index('shell/ui/home.route.tsx'),
@@ -113,7 +113,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
 ```
 
 ```css
-/* apps/web/src/styles/app.css — @import を 1 行追記する（append-only） */
+/* services/web/src/styles/app.css — @import を 1 行追記する（append-only） */
 @import '@qrcc/scan/ui/scan.css' layer(components);
 ```
 
@@ -206,10 +206,10 @@ export const canUseCamera = (): boolean =>
 **In scope**:
 
 - `features/nfc/**`（新規。package.json / tsconfig.json / contract / core / ui）
-- `apps/web/src/routes.ts`（1 行追記）
+- `services/web/src/routes.ts`（1 行追記）
 - `features/shell/ui/nav-items.ts`（1 行追記）
 - `features/shell/ui/global-nav.test.tsx`（項目数のテストがあれば追随）
-- `apps/web/src/styles/app.css`（1 行追記）
+- `services/web/src/styles/app.css`（1 行追記）
 - `tsconfig.json`（references に 1 行追記）
 - `e2e/tests/nfc.spec.ts`（新規）
 - `docs/architecture.md`（URL 構造の表に 1 行）
@@ -311,9 +311,9 @@ export const browserNfcWriter = (): WriteNfc => /* … */
 
 ### Step 5: 配線（3 箇所の 1 行追記）
 
-- `apps/web/src/routes.ts` に `route('/nfc', 'nfc/ui/nfc.route.tsx')`
+- `services/web/src/routes.ts` に `route('/nfc', 'nfc/ui/nfc.route.tsx')`
 - `features/shell/ui/nav-items.ts` に `{ to: '/nfc', label: 'NFC タグに書く' }`
-- `apps/web/src/styles/app.css` に `@import '@qrcc/nfc/ui/nfc.css' layer(components);`
+- `services/web/src/styles/app.css` に `@import '@qrcc/nfc/ui/nfc.css' layer(components);`
 
 `features/shell/ui/global-nav.test.tsx` に項目数を数えるテストがあるので、
 落ちたら追随させること。

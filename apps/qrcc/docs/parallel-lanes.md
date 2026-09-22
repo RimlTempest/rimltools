@@ -19,7 +19,7 @@ co-location により、レーンの所有範囲がディレクトリ境界と�
                     │                ▼
                     │           feat/shell ──────────▶ feat/auth
                     │        （features/shell,        （features/auth）
-                    │          apps/web）                    │
+                    │          services/web）                    │
                     ▼                                        │
               feat/generate ◀──────────────────┘             │
              （features/generate）                            │
@@ -29,7 +29,7 @@ co-location により、レーンの所有範囲がディレクトリ境界と�
                    │                                （features/manage）
                    └──────────────────────────────────────┘
 
-          feat/api-worker（apps/api）… feat/shared-kernel の後、他とは独立
+          feat/api-worker（services/api）… feat/shared-kernel の後、他とは独立
           chore/devops（.github, scripts, docs）… 随時
 ```
 
@@ -42,20 +42,20 @@ co-location により、レーンの所有範囲がディレクトリ境界と�
 **自分のレーンが所有していないディレクトリを編集しない。** 必要なら
 「先にそのレーンにお願いする」か「main にマージしてから rebase する」。
 
-| レーン          | ブランチ               | 所有ディレクトリ                      | 依存                     |
-| --------------- | ---------------------- | ------------------------------------- | ------------------------ |
-| shared-contract | `feat/shared-contract` | `shared/contract/**`                  | —                        |
-| shared-kernel   | `feat/shared-kernel`   | `shared/kernel/**`                    | shared-contract          |
-| shared-ui       | `feat/shared-ui`       | `shared/ui/**`                        | shared-contract          |
-| shell           | `feat/shell`           | `features/shell/**`, `apps/web/**`    | shared-ui                |
-| generate        | `feat/generate`        | `features/generate/**`                | shared-kernel, shared-ui |
-| scan            | `feat/scan`            | `features/scan/**`                    | generate                 |
-| print           | `feat/print`           | `features/print/**`                   | generate                 |
-| auth            | `feat/auth`            | `features/auth/**`                    | shell                    |
-| manage          | `feat/manage`          | `features/manage/**`                  | auth, generate           |
-| wasm-bridge     | `feat/wasm-bridge`     | `shared/wasm/**`                      | generate                 |
-| api-worker      | `feat/api-worker`      | `apps/api/**`                         | shared-kernel            |
-| devops          | `chore/devops`         | `.github/**`, `scripts/**`, `docs/**` | —                        |
+| レーン          | ブランチ               | 所有ディレクトリ                       | 依存                     |
+| --------------- | ---------------------- | -------------------------------------- | ------------------------ |
+| shared-contract | `feat/shared-contract` | `shared/contract/**`                   | —                        |
+| shared-kernel   | `feat/shared-kernel`   | `shared/kernel/**`                     | shared-contract          |
+| shared-ui       | `feat/shared-ui`       | `shared/ui/**`                         | shared-contract          |
+| shell           | `feat/shell`           | `features/shell/**`, `services/web/**` | shared-ui                |
+| generate        | `feat/generate`        | `features/generate/**`                 | shared-kernel, shared-ui |
+| scan            | `feat/scan`            | `features/scan/**`                     | generate                 |
+| print           | `feat/print`           | `features/print/**`                    | generate                 |
+| auth            | `feat/auth`            | `features/auth/**`                     | shell                    |
+| manage          | `feat/manage`          | `features/manage/**`                   | auth, generate           |
+| wasm-bridge     | `feat/wasm-bridge`     | `shared/wasm/**`                       | generate                 |
+| api-worker      | `feat/api-worker`      | `services/api/**`                      | shared-kernel            |
+| devops          | `chore/devops`         | `.github/**`, `scripts/**`, `docs/**`  | —                        |
 
 機械可読な定義は `scripts/lanes.tsv`。
 
@@ -74,12 +74,12 @@ features/<name>/
 feature の実体はディレクトリ内に閉じるが、アプリに組み込むための宣言だけは
 横断ファイルに集まる。設計上、いずれも **append-only の 1 行**で済むようにしてある。
 
-| 何を足すか     | どこに 1 行                      |
-| -------------- | -------------------------------- |
-| 画面の URL     | `apps/web/src/routes.ts`         |
-| 画面のスタイル | `apps/web/src/styles/app.css`    |
-| ナビの項目     | `features/shell/ui/nav-items.ts` |
-| RPC メソッド   | `apps/api/src/dispatch.rs`       |
+| 何を足すか     | どこに 1 行                       |
+| -------------- | --------------------------------- |
+| 画面の URL     | `services/web/src/routes.ts`      |
+| 画面のスタイル | `services/web/src/styles/app.css` |
+| ナビの項目     | `features/shell/ui/nav-items.ts`  |
+| RPC メソッド   | `services/api/src/dispatch.rs`    |
 
 複数レーンを並行させると、この 4 ファイルは rebase で競合しうる。
 **競合したら解決せず、両方の行を残す**（順序は問わない）。それ以外の場所で
@@ -94,7 +94,7 @@ feature の実体はディレクトリ内に閉じるが、アプリに組み込
 | ルート `Cargo.toml`                                                                | `[workspace.dependencies]` の追加は `feat/shared-kernel` のみ。`features/*/worker` の初回追加だけ例外（該当レーンが行う） |
 | `Cargo.lock`                                                                       | 競合したら `cargo update -w` で再生成                                                                                     |
 | ルート `tsconfig.json`                                                             | `feat/shared-contract` が全 references を先に登録しておく                                                                 |
-| `apps/web/src/routes.ts`                                                           | `feat/shell` が所有。URL 1 行の追加のみ他レーンから依頼                                                                   |
+| `services/web/src/routes.ts`                                                       | `feat/shell` が所有。URL 1 行の追加のみ他レーンから依頼                                                                   |
 | `routeTree.gen.ts` / `worker-configuration.d.ts`                                   | **git 管理しない**。`bun run --filter @qrcc/web gen` で生成                                                               |
 | ルートの `.oxlintrc.json` / `.oxfmtrc.json` / `lefthook.yml`、`.markuplintrc.json` | `chore/devops` のみ変更可                                                                                                 |
 | `docs/**`                                                                          | 各レーンは**自分の章のみ**追記                                                                                            |
@@ -104,7 +104,7 @@ feature の実体はディレクトリ内に閉じるが、アプリに組み込
 ```bash
 # レーンを開始
 bun run wt new feat/scan-ui        # .claude/worktrees/qrcc/feat-scan-ui を作り、依存も入れる（リポジトリ直下からは bun run wt qrcc new …）
-cd <リポジトリ直下>/.claude/worktrees/qrcc/feat-scan-ui/products/qrcc
+cd <リポジトリ直下>/.claude/worktrees/qrcc/feat-scan-ui/apps/qrcc
 
 # 作業中: develop の更新を取り込む（毎日 / 依存レーンがマージされたら必ず）
 bun run wt sync
@@ -158,10 +158,10 @@ PR ごとに **変更されたレーンの範囲だけ**を実行して時間を
 | ------------------------- | --------------------------------------------------------------- |
 | `fmt-lint`                | 常に                                                            |
 | `typecheck`               | `**/*.ts(x)`, `tsconfig*`                                       |
-| `test-ts`                 | `features/**`, `shared/**`, `apps/web/**`                       | `bun test`（Small/Medium） |
-| `test-rust`               | `crates/**`, `apps/api/**`                                      |
+| `test-ts`                 | `features/**`, `shared/**`, `services/web/**`                   | `bun test`（Small/Medium） |
+| `test-rust`               | `crates/**`, `services/api/**`                                  |
 | `markuplint`              | `**/*.tsx`                                                      |
-| `a11y` (Playwright + axe) | `apps/web/**`, `shared/ui/**`                                   |
+| `a11y` (Playwright + axe) | `services/web/**`, `shared/ui/**`                               |
 | `wasm-size`               | `crates/**`（バンドルサイズ上限を守る）                         |
 | `guard`                   | 常に（`qrcc-api` に `routes` が生えていないか等の不変条件検査） |
 

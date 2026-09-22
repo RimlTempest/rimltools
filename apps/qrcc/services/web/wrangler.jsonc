@@ -30,7 +30,7 @@
 
   "vars": {
     "APP_ORIGIN": "https://qrcc.riml4i.com",
-    // テレメトリ（docs/observability.md）。空なら無効。本番・staging の値はリリース時に入れる。
+    // テレメトリ（docs/ops/telemetry.md）。空なら無効。本番・staging の値はリリース時に入れる。
     // OTEL_EXPORTER_OTLP_HEADERS は secret（wrangler secret put）。
     "OTEL_SERVICE_NAME": "qrcc-web",
     "OTEL_EXPORTER_OTLP_ENDPOINT": "",

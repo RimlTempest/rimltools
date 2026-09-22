@@ -16,7 +16,7 @@ description: noter の構成と拡張手順。どこに何を置くか迷った�
 | ある feature の公開型・エラー型                          | `features/<name>/contract`                                 |
 | I/O のない TS ロジック（Yjs の純粋操作を含む）           | `features/<name>/core`                                     |
 | D1 / Better Auth に触るサーバ側コード                    | `features/<name>/server`                                   |
-| Durable Object（WebSocket・DO storage・alarm）           | `features/sync/worker`（class はここだけ）+ `apps/sync`    |
+| Durable Object（WebSocket・DO storage・alarm）           | `features/sync/worker`（class はここだけ）+ `services/sync`    |
 | ブラウザ側の同期クライアント（WebSocket・再接続）        | `features/sync/client`                                     |
 | 画面（router 非依存）                                    | `features/<name>/ui/*-screen.tsx`                          |
 | ルート定義・env・composition root                        | `features/<name>/ui/*.route.tsx` / `*-wiring.route.ts`     |
@@ -35,7 +35,7 @@ DO にロジックを寄せたくなったら、まずブラウザでできな�
 - `shared/contract` と `features/*/contract` は**何にも依存しない**。ここに実装を書かない。
 - `features/<name>/core` に **I/O を書かない**。時計・乱数・fetch・storage・WebSocket は
   すべて引数で受け取る。
-- `apps/sync` の `wrangler.jsonc` に **`routes` を追加しない。`workers_dev` は `false`**。
+- `services/sync` の `wrangler.jsonc` に **`routes` を追加しない。`workers_dev` は `false`**。
   DO は web Worker の binding 経由でしか到達できないことが認可の前提
   （[ADR-0002](../../../docs/adr/0002-auxiliary-worker-and-private-durable-object.md)）。
 - **DO は認可しない。web Worker が認可し、役割をヘッダで渡す。**
@@ -90,12 +90,12 @@ CI の `guard` ジョブがこれらを検査する。
 ### 新しいログイン方法を追加する
 
 Better Auth のプラグインを `features/auth/server/src/auth-options.ts` に追加し、
-必要なら `apps/web/migrations/` にマイグレーションを 1 本足す。
+必要なら `services/web/migrations/` にマイグレーションを 1 本足す。
 アプリ本体のコードは変更しない（[ADR-0010](../../../docs/adr/0010-auth-guest-and-google.md)）。
 
 ### D1 に列を足す
 
-1. `apps/web/migrations/NNNN_<説明>.sql` を**追加**する（既存を編集しない）
+1. `services/web/migrations/NNNN_<説明>.sql` を**追加**する（既存を編集しない）
 2. 読み出し側のパース関数（`features/<name>/server/src/parse-row.ts`）を更新し、
    **古い行でも壊れない**ようにする（新列は必ず nullable かデフォルト付き）
 3. ロールバック SQL は書かない（前方移行のみ運用）
@@ -125,7 +125,7 @@ Better Auth のプラグインを `features/auth/server/src/auth-options.ts` に
 
 ## 5. web Worker → Durable Object の契約
 
-web Worker（`apps/web/src/server.ts`）→ DO（`DocumentRoom`）の呼び出しは
+web Worker（`services/web/src/server.ts`）→ DO（`DocumentRoom`）の呼び出しは
 [docs/realtime-protocol.md](../../../docs/realtime-protocol.md) が唯一の定義。
 渡すヘッダは `features/sync/contract/src/headers.ts` の定数のみ。
 
@@ -133,7 +133,7 @@ web Worker（`apps/web/src/server.ts`）→ DO（`DocumentRoom`）の呼び出�
 
 1. `docs/realtime-protocol.md` を先に更新
 2. `features/sync/contract` に型と定数を足す（この時点で両側のテストが落ちる = red）
-3. DO 側（`features/sync/core` → `worker`）→ web 側（`apps/web/src/server.ts`）→
+3. DO 側（`features/sync/core` → `worker`）→ web 側（`services/web/src/server.ts`）→
    クライアント（`features/sync/client`）の順に実装
 
 ## 6. 迷ったら

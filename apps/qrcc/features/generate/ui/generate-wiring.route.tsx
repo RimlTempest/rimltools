@@ -13,7 +13,7 @@ import type { RenderFailure } from './generate-screen.tsx'
 import { GenerateScreen } from './generate-screen.tsx'
 // TODO: api-client は全 feature が使う基盤なので shared/ へ移す（PR で相談）。
 // いまは route ファイル（アプリ側の配線）からのみ参照している。
-import { makeApiClient } from '../../../apps/web/src/server/api-client.ts'
+import { makeApiClient } from '../../../services/web/src/server/api-client.ts'
 
 /**
  * 生成をサーバ（qrcc-api）に依頼する。

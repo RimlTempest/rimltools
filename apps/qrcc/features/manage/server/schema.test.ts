@@ -9,7 +9,7 @@ import { join } from 'node:path'
  * D1 は SQLite なので、同じマイグレーションを `bun:sqlite` のインメモリ DB に
  * 流せば Worker を起動せずに制約を検証できる（Small のまま実物を試せる）。
  */
-const MIGRATIONS_DIR = join(import.meta.dir, '../../../apps/api/migrations')
+const MIGRATIONS_DIR = join(import.meta.dir, '../../../services/api/migrations')
 
 const applyMigrations = (): Database => {
   const db = new Database(':memory:')

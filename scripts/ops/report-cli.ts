@@ -69,7 +69,7 @@ const main = async (): Promise<number> => {
       t.slo.availability,
       sumTraffic(
         workers.value.filter((r) => r.date >= dateRange(now, t.slo.windowDays).start),
-        t.workers.map((w) => w.name),
+        t.services.map((w) => w.name),
       ),
     ),
   }))

@@ -2,8 +2,8 @@ BETTER_AUTH_SECRET=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
-# ローカルの LGTM（observability/local/README.md）に trace・ログ・Faro を送るとき（任意）。
-# docker compose -f observability/local/compose.yaml up -d を先に。未設定なら何も送らない。
+# ローカルの LGTM（ops/local/README.md）に trace・ログ・Faro を送るとき（任意）。
+# docker compose -f ops/local/compose.yaml up -d を先に。未設定なら何も送らない。
 # OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
 # FARO_URL=http://127.0.0.1:12347/collect
 # DEPLOYMENT_ENV=local

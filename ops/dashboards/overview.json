@@ -123,7 +123,7 @@
           }
         }
       ],
-      "description": "Cloudflare GraphQL の 5 分窓の件数を 1 分あたりに換算（scripts/observability/push-metrics.ts）",
+      "description": "Cloudflare GraphQL の 5 分窓の件数を 1 分あたりに換算（scripts/ops/push-metrics.ts）",
       "fieldConfig": {
         "defaults": {
           "unit": "reqpm"
@@ -326,7 +326,7 @@
           }
         }
       ],
-      "description": "Tempo の metrics-generator（span metrics）から。trace はサンプリングされているので、傾向を見るための値（docs/observability-grafana.md）。点をクリックすると exemplar の trace に飛べる",
+      "description": "Tempo の metrics-generator（span metrics）から。trace はサンプリングされているので、傾向を見るための値（docs/ops/grafana.md）。点をクリックすると exemplar の trace に飛べる",
       "fieldConfig": {
         "defaults": {
           "unit": "s"
@@ -649,7 +649,7 @@
           }
         }
       ],
-      "description": "observability.yml（5 分ごと）の最終成功からの経過。30 分を超えたら GitHub Actions を確認",
+      "description": "ops-metrics.yml（5 分ごと）の最終成功からの経過。30 分を超えたら GitHub Actions を確認",
       "fieldConfig": {
         "defaults": {
           "unit": "s",

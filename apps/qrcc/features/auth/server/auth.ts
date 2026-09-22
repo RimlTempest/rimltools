@@ -3,7 +3,7 @@
  *
  * ここだけが Better Auth の実体を知っている。ルートや server function は
  * `Auth` の 2 つの関数しか触らない。D1 とドリズルのインスタンスは
- * アプリ側（apps/web）から受け取る — feature が env を直接読まないため。
+ * アプリ側（services/web）から受け取る — feature が env を直接読まないため。
  */
 import { betterAuth } from 'better-auth'
 import type { DB } from '@better-auth/drizzle-adapter'

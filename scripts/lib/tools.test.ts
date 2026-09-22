@@ -10,15 +10,15 @@ const valid = {
       name: 'qrcc',
       title: 'QR',
       description: 'd',
-      path: 'products/qrcc',
+      path: 'apps/qrcc',
       subdomain: 'qrcc',
       legacyHosts: ['qrcc.example.com'],
       rust: true,
-      workers: [
+      services: [
         { name: 'qrcc-api', role: 'internal', buildConfig: 'a.json' },
         { name: 'qrcc-web', role: 'public', buildConfig: 'b.json' },
       ],
-      d1: [{ name: 'qrcc', binding: 'DB', migrationsConfig: 'apps/api/wrangler.jsonc' }],
+      d1: [{ name: 'qrcc', binding: 'DB', migrationsConfig: 'services/api/wrangler.jsonc' }],
       release: { mode: 'canary', steps: [10, 50, 100], bakeMinutes: 10 },
       slo: { availability: 99.5, windowDays: 28 },
       smoke: { cli: 'bun run smoke', browser: 'bun run smoke:browser', e2ePackage: '@qrcc/e2e' },
@@ -41,7 +41,7 @@ describe('parseTools', () => {
     const broken = structuredClone(valid)
     const [tool] = broken.tools
     if (tool === undefined) return
-    for (const worker of tool.workers) worker.role = 'internal'
+    for (const worker of tool.services) worker.role = 'internal'
     const result = parseTools(broken)
     expect(result.ok).toBe(false)
     if (result.ok) return

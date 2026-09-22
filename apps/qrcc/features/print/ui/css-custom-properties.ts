@@ -22,6 +22,6 @@ declare module 'csstype' {
  * `style` 属性に渡す値。上の宣言マージが効いた `CSSProperties`。
  *
  * この型を使う側から import されることで、宣言マージが
- * そのプログラム（apps/web を含む）に確実に読み込まれる。
+ * そのプログラム（services/web を含む）に確実に読み込まれる。
  */
 export type StyleWithCustomProperties = CSSProperties

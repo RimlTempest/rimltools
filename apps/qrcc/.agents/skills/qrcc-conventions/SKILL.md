@@ -1,6 +1,6 @@
 ---
 name: qrcc-conventions
-description: qrcc 固有のコーディング・マークアップ・テスト・worktree の規約。共通規約（rimltools-typescript / rimltools-html-a11y / rimltools-tdd / rimltools-worktree）と一緒に、products/qrcc 配下で TS/TSX・JSX/CSS・テスト・レーン作業をするときに読む。Rust engine との境界、生成コードの代替テキスト、カメラ読み取りの通知、ラベル印刷、ゴールデンテスト、cargo test、qrcc のレーン順で発火。
+description: qrcc 固有のコーディング・マークアップ・テスト・worktree の規約。共通規約（rimltools-typescript / rimltools-html-a11y / rimltools-tdd / rimltools-worktree）と一緒に、apps/qrcc 配下で TS/TSX・JSX/CSS・テスト・レーン作業をするときに読む。Rust engine との境界、生成コードの代替テキスト、カメラ読み取りの通知、ラベル印刷、ゴールデンテスト、cargo test、qrcc のレーン順で発火。
 ---
 
 # qrcc 固有の規約

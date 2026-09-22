@@ -43,7 +43,7 @@ export const makeDocumentsDeps = (env: CloudflareEnv) => {
 ```
 
 ```ts
-// apps/sync/src/index.ts（Durable Object 側。class の中で core の関数を組み立てる）
+// services/sync/src/index.ts（Durable Object 側。class の中で core の関数を組み立てる）
 export class DocumentRoom extends DurableObject<CloudflareEnv> {
   readonly #room: Room
   constructor(ctx: DurableObjectState, env: CloudflareEnv) {

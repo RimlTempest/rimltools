@@ -11,7 +11,7 @@ describe('documentHead', () => {
     expect(description).toBeDefined()
   })
 
-  /** PWA（plan 007）。どちらも `apps/web/public` に実体がある。 */
+  /** PWA（plan 007）。どちらも `services/web/public` に実体がある。 */
   test('manifest と apple-touch-icon へのリンクが出る', () => {
     expect(head.links).toContainEqual({ rel: 'manifest', href: '/manifest.webmanifest' })
     expect(head.links).toContainEqual({ rel: 'apple-touch-icon', href: '/apple-touch-icon.png' })

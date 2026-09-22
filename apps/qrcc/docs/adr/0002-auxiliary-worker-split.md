@@ -21,7 +21,7 @@ Cloudflare 上でどう配置するか。素朴には 2 つの Worker を別々�
 ビルド・同一デプロイに含める。
 
 ```ts
-// apps/web/vite.config.ts
+// services/web/vite.config.ts
 cloudflare({
   viteEnvironment: { name: 'ssr' },
   auxiliaryWorkers: [{ configPath: '../api/wrangler.jsonc' }],
@@ -48,5 +48,5 @@ cloudflare({
   `routes` を追加してはならない（CI でチェックする）。
 - Vite 7 以上が必須。
 - Rust のビルド（`worker-build`）を Vite のビルドパイプラインに載せる必要がある。
-  `apps/api/package.json` の `build` スクリプトから `worker-build --release` を呼ぶ。
+  `services/api/package.json` の `build` スクリプトから `worker-build --release` を呼ぶ。
 - 障害の切り分けはログのタグで行う。両 Worker とも `observability.enabled = true`。

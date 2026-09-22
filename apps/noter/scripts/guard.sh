@@ -5,14 +5,14 @@ cd "$(dirname "$0")/.."
 
 # --- noter-sync は公開されていないこと (ADR-0002)
 (
-if grep -qE '^\s*"routes"\s*:' apps/sync/wrangler.jsonc; then
-  echo "::error file=apps/sync/wrangler.jsonc::noter-sync must not be reachable from the internet. Remove 'routes' (ADR-0002)."
+if grep -qE '^\s*"routes"\s*:' services/sync/wrangler.jsonc; then
+  echo "::error file=services/sync/wrangler.jsonc::noter-sync must not be reachable from the internet. Remove 'routes' (ADR-0002)."
   exit 1
 fi
 # workers_dev は既定が true。routes が無くても
 # noter-sync.<subdomain>.workers.dev で公開されるので、明示的な false を要求する。
-if ! grep -qE '^\s*"workers_dev"\s*:\s*false\s*,?\s*$' apps/sync/wrangler.jsonc; then
-  echo "::error file=apps/sync/wrangler.jsonc::noter-sync must set \"workers_dev\": false. It defaults to true and publishes the Worker on workers.dev even without routes (ADR-0002)."
+if ! grep -qE '^\s*"workers_dev"\s*:\s*false\s*,?\s*$' services/sync/wrangler.jsonc; then
+  echo "::error file=services/sync/wrangler.jsonc::noter-sync must set \"workers_dev\": false. It defaults to true and publishes the Worker on workers.dev even without routes (ADR-0002)."
   exit 1
 fi
 )
@@ -22,7 +22,7 @@ fi
 # R2 は Cloudflare 側で利用上限を設定できず、超過分が従量課金される。
 # 「無料で運用する」を構造的に守るため、宣言そのものを禁じる。
 # KV は課金されないが、用途が無いので併せて弾く（ADR-0009）。
-for f in apps/web/wrangler.jsonc apps/sync/wrangler.jsonc; do
+for f in services/web/wrangler.jsonc services/sync/wrangler.jsonc; do
   if grep -qE '^\s*"(r2_buckets|kv_namespaces)"\s*:' "$f"; then
     echo "::error file=$f::R2/KV bindings are forbidden. R2 has no spending cap and would break free-tier operation (ADR-0009)."
     exit 1
@@ -34,8 +34,8 @@ done
 (
 # new_classes（key-value backed）は Paid プラン限定。Free では
 # new_sqlite_classes しか使えない。
-if grep -qE '"new_classes"' apps/sync/wrangler.jsonc; then
-  echo "::error file=apps/sync/wrangler.jsonc::use new_sqlite_classes (ADR-0009)"
+if grep -qE '"new_classes"' services/sync/wrangler.jsonc; then
+  echo "::error file=services/sync/wrangler.jsonc::use new_sqlite_classes (ADR-0009)"
   exit 1
 fi
 )
@@ -59,8 +59,8 @@ fi
 (
 # NOTER_DEV_OPEN_WS は認可を丸ごと素通りさせる。.dev.vars と e2e の
 # 起動環境にだけ置き、デプロイされる設定には絶対に載せない。
-if grep -q 'NOTER_DEV_OPEN_WS' apps/web/wrangler.jsonc apps/sync/wrangler.jsonc; then
-  echo "::error file=apps/web/wrangler.jsonc::NOTER_DEV_OPEN_WS must never be declared in wrangler config. It bypasses authorization for /ws."
+if grep -q 'NOTER_DEV_OPEN_WS' services/web/wrangler.jsonc services/sync/wrangler.jsonc; then
+  echo "::error file=services/web/wrangler.jsonc::NOTER_DEV_OPEN_WS must never be declared in wrangler config. It bypasses authorization for /ws."
   exit 1
 fi
 )

@@ -1,5 +1,5 @@
 /**
- * observability/dashboards/*.json（Terraform が Grafana に配る正本）の整合性チェック。
+ * ops/dashboards/*.json（Terraform が Grafana に配る正本）の整合性チェック。
  * data source は Terraform が作る 3 つ（infra/grafana/datasources.tf）だけを参照させる。
  * そうしておくと、相関（exemplar → trace、trace → log、log → trace）が常に効く。
  */

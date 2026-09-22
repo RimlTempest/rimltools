@@ -1,6 +1,6 @@
 ---
 name: noter-conventions
-description: noter 固有のコーディング・マークアップ・テスト・worktree の規約。共通規約（rimltools-typescript / rimltools-html-a11y / rimltools-tdd / rimltools-worktree）と一緒に、products/noter 配下で TS/TSX・JSX/CSS・テスト・レーン作業をするときに読む。Durable Object の class 例外、2 つの composition root、WebSocket close code、Mermaid 図・同時編集カーソル・CodeMirror の a11y、Yjs の収束テスト、noter のレーン順で発火。
+description: noter 固有のコーディング・マークアップ・テスト・worktree の規約。共通規約（rimltools-typescript / rimltools-html-a11y / rimltools-tdd / rimltools-worktree）と一緒に、apps/noter 配下で TS/TSX・JSX/CSS・テスト・レーン作業をするときに読む。Durable Object の class 例外、2 つの composition root、WebSocket close code、Mermaid 図・同時編集カーソル・CodeMirror の a11y、Yjs の収束テスト、noter のレーン順で発火。
 ---
 
 # noter 固有の規約

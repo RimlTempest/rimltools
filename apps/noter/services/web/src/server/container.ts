@@ -5,7 +5,7 @@
  * `env` や service binding を直接触らない（.claude/skills/noter-architecture）。
  *
  * D1 バインディングを Drizzle に渡す配線をここに置くのは、`D1Database` の
- * グローバル型が apps/web のプログラムでしか解決できないため。
+ * グローバル型が services/web のプログラムでしか解決できないため。
  * Durable Object（`DOCUMENT_ROOM`）への呼び出しも同じ理由でここに閉じる。
  */
 import { drizzle } from 'drizzle-orm/d1'

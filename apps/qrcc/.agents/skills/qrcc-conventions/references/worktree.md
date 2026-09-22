@@ -7,12 +7,12 @@
 | ファイル | 規約 |
 | --- | --- |
 | `Cargo.lock` | 競合時は `cargo update -w && git add Cargo.lock` |
-| products/qrcc の `Cargo.toml` | `feat/shared-kernel`（Rust 共有プリミティブのレーン）のみが編集する |
-| `.markuplintrc.json` / `tsconfig.json`（products/qrcc 直下） | `chore/devops` のみ（lint / fmt の設定はルートの `.oxlintrc.json` / `.oxfmtrc.json` に一本化済み） |
+| apps/qrcc の `Cargo.toml` | `feat/shared-kernel`（Rust 共有プリミティブのレーン）のみが編集する |
+| `.markuplintrc.json` / `tsconfig.json`（apps/qrcc 直下） | `chore/devops` のみ（lint / fmt の設定はルートの `.oxlintrc.json` / `.oxfmtrc.json` に一本化済み） |
 
 ## レーンのマージ順（qrcc）
 
-正本は `products/qrcc/scripts/lanes.tsv`。統合前の skill に書かれていた順序（`feat/contracts` → `feat/rust-core` …）は lanes.tsv と食い違っていたので、lanes.tsv に合わせた。
+正本は `apps/qrcc/scripts/lanes.tsv`。統合前の skill に書かれていた順序（`feat/contracts` → `feat/rust-core` …）は lanes.tsv と食い違っていたので、lanes.tsv に合わせた。
 
 ```
 feat/shared-contract

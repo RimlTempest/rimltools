@@ -295,7 +295,7 @@ export type LabelSheet = {
   **JSON 1 列**に格納し、検索対象の列（`kind`, `name`, `updated_at`, `folder_id`,
   `owner_id`）だけを実列に出す。無料枠の row read を節約するため。
 - JSON は読み出し時に必ずパース関数を通す（スキーマ変更に強くする）。
-- マイグレーションは `apps/api/migrations/NNNN_*.sql` に連番で追加。ロールバックは書かない
+- マイグレーションは `services/api/migrations/NNNN_*.sql` に連番で追加。ロールバックは書かない
   （D1 は前方移行のみ運用）。
 
 ## 10. 不変条件

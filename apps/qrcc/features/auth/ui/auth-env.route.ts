@@ -7,7 +7,7 @@
  *
  * `D1Database` の型は Workers ランタイムが供給するもので、feature 単体の
  * TypeScript プログラムでは解決できない。`*.route.*` はアプリ側の配線として
- * apps/web のプログラムに属するので、ここに置くと素直に型が付く。
+ * services/web のプログラムに属するので、ここに置くと素直に型が付く。
  */
 import { drizzle } from 'drizzle-orm/d1'
 import type { ActorWire } from '@qrcc/auth/contract'

@@ -213,7 +213,7 @@ const STAGING_SUFFIX = '-staging'
 export const scriptIdentity = (registry: Registry, script: string): Identity => {
   const staging = script.endsWith(STAGING_SUFFIX)
   const base = staging ? script.slice(0, -STAGING_SUFFIX.length) : script
-  const tool = registry.tools.find((t) => t.workers.some((w) => w.name === base))
+  const tool = registry.tools.find((t) => t.services.some((w) => w.name === base))
   if (tool === undefined) return { tool: 'unknown', environment: 'unknown' }
   return { tool: tool.name, environment: staging ? 'staging' : 'production' }
 }

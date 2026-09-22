@@ -40,11 +40,11 @@
 
 ## Commands you will need
 
-| Purpose | Command                                                | Expected             |
-| ------- | ------------------------------------------------------ | -------------------- |
-| Tests   | `bun test features/formats`                            | pass                 |
-| Check   | `bun run check`                                        | exit 0               |
-| Build   | `bun run build` → `du -sh apps/web/dist/client/assets` | mermaid が別チャンク |
+| Purpose | Command                                                    | Expected             |
+| ------- | ---------------------------------------------------------- | -------------------- |
+| Tests   | `bun test features/formats`                                | pass                 |
+| Check   | `bun run check`                                            | exit 0               |
+| Build   | `bun run build` → `du -sh services/web/dist/client/assets` | mermaid が別チャンク |
 
 ## Suggested executor toolkit
 
@@ -54,7 +54,7 @@
 ## Scope
 
 **In scope**: `features/formats/**`, `features/editor/ui/editor-screen.tsx`（差し込みのみ）, `features/editor/ui/problems-panel.tsx`（新規）,
-`apps/web/package.json`, `apps/web/tsconfig.json`, ルート `tsconfig.json`, `apps/web/src/styles/app.css`（1 行）, `e2e/tests/{formats,a11y}.spec.ts`, `plans/README.md`
+`services/web/package.json`, `services/web/tsconfig.json`, ルート `tsconfig.json`, `services/web/src/styles/app.css`（1 行）, `e2e/tests/{formats,a11y}.spec.ts`, `plans/README.md`
 
 **Out of scope**: `docs/**`、`features/{sync,documents,auth}/**`、`shared/**`（`document-kind.ts` に種別を足さない）
 
@@ -120,7 +120,7 @@
 - `e2e/tests/formats.spec.ts`: JSON 文書で `{"a":1` → 問題 1 件、`}` を足すと 0 件、整形で 2 スペースインデントになる。Markdown で mermaid が `svg[role="img"]` になる。
 - `e2e/tests/a11y.spec.ts`: Markdown（mermaid 含む）と JSON の `/d/:id` を検査。
 
-**Verify**: `bun run e2e -- --grep formats` / `bun run a11y` → pass。`bun run build` 後、`/bin/ls apps/web/dist/client/assets | grep -i mermaid` → 別チャンクがある。
+**Verify**: `bun run e2e -- --grep formats` / `bun run a11y` → pass。`bun run build` 後、`/bin/ls services/web/dist/client/assets | grep -i mermaid` → 別チャンクがある。
 
 ## Test plan
 

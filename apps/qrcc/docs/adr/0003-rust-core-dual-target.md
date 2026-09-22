@@ -22,7 +22,7 @@
 
 ```
 crates/qrcc-core, qrcc-render, qrcc-decode, qrcc-print   … 純粋ロジック
-   ├─ apps/api        (workers-rs)      → Worker で実行
+   ├─ services/api        (workers-rs)      → Worker で実行
    └─ crates/qrcc-wasm (wasm-bindgen)   → packages/wasm → ブラウザで実行
 ```
 

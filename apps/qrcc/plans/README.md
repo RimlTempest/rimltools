@@ -80,8 +80,8 @@ Status の値: TODO / IN PROGRESS / DONE / BLOCKED（理由を 1 行）/ REJECTE
 | 005  | `features/scan/**`                                                                          | `features/generate/**`, `contract/decode.ts` の `Detection` 型 |
 | 006  | `features/nfc/**` + `routes.ts` / `nav-items.ts` / `app.css` / `tsconfig.json` に各 1 行    | `features/generate/**`, `features/scan/**`, `home.route.tsx`   |
 
-**共有する追記ポイント**: `apps/web/src/routes.ts`、`features/shell/ui/nav-items.ts`、
-`apps/web/src/styles/app.css`、ルートの `tsconfig.json`。いずれも 006 だけが
+**共有する追記ポイント**: `services/web/src/routes.ts`、`features/shell/ui/nav-items.ts`、
+`services/web/src/styles/app.css`、ルートの `tsconfig.json`。いずれも 006 だけが
 1 行ずつ足す。他のレーンは触らない。
 
 ### 001（WebMCP）との関係
@@ -135,7 +135,7 @@ Status の値: TODO / IN PROGRESS / DONE / BLOCKED（理由を 1 行）/ REJECTE
   `vendor/` とスクリプトを削除。`bun install --frozen-lockfile` はレジストリの integrity で通る。ADR-0011）
 - `--qrcc-*` は全部 `var(--rd-*)` の別名になった。残した生値は `radius-lg` / `measure` / `text-base|lg|xl|2xl` の 6 つ
   （`shared/ui/src/styles/tokens.test.ts` の `KEPT_LOCAL`）。新しい `--qrcc-*` を足すとテストが落ちる。新しい CSS は `--rd-*` を直接使う
-- 新規 worktree で `apps/web` 単体ビルドをする前に `bun run build`（wasm / api 込み）が要る（`apps/api/build/worker/shim.mjs` が無いと
+- 新規 worktree で `services/web` 単体ビルドをする前に `bun run build`（wasm / api 込み）が要る（`services/api/build/worker/shim.mjs` が無いと
   @cloudflare/vite-plugin が失敗）。トークンとは無関係
 - 受け入れた視覚差分（border が 0.72→0.6 で 3:1 を満たすようになった等）は ADR-0011 の表。a11y 180 passed、テスト 890
 - 段階 2（riml-ds の reset / base）は css tgz の peerDependency 解決（registry 404）を解く必要があった。

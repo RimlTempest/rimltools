@@ -5,9 +5,9 @@ cd "$(dirname "$0")/.."
 
 # ブラウザ向けは生成用とデコード用の 2 チャンクに分かれている。
 # 体感に直結するのは全画面で読む生成用なので、まとめて測らず別々に見る。
-worker=$(find apps/web/dist/qrcc_api -name '*.wasm' -exec wc -c {} + | tail -1 | awk '{print $1}')
-generate=$(find apps/web/dist/client -name 'qrcc_wasm_bg*.wasm' -exec gzip -c {} + | wc -c)
-decode=$(find apps/web/dist/client -name 'qrcc_scan_wasm_bg*.wasm' -exec gzip -c {} + | wc -c)
+worker=$(find services/web/dist/qrcc_api -name '*.wasm' -exec wc -c {} + | tail -1 | awk '{print $1}')
+generate=$(find services/web/dist/client -name 'qrcc_wasm_bg*.wasm' -exec gzip -c {} + | wc -c)
+decode=$(find services/web/dist/client -name 'qrcc_scan_wasm_bg*.wasm' -exec gzip -c {} + | wc -c)
 echo "worker wasm: ${worker} bytes"
 echo "browser wasm: generate ${generate} bytes gzip / decode ${decode} bytes gzip"
 # 見つからないまま素通りすると、名前を変えた瞬間に検査が消える

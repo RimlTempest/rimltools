@@ -57,7 +57,7 @@ test('2 人が同じ位置に同時挿入しても両者の文書が一致する
 | `features/<name>/core`, `*/contract`        | Small のみ | 純粋関数。フェイクは素のオブジェクト                        |
 | `features/formats/core`                     | Small      | 入力文字列 → 診断/整形結果。フィクスチャは `fixtures/`      |
 | ユースケース関数 (`makeXxx`)                | Small      | 依存はインメモリのフェイク実装                              |
-| D1 リポジトリ (`features/*/server`)         | Medium     | `bun:sqlite` に `apps/web/migrations/*.sql` を当てて検証    |
+| D1 リポジトリ (`features/*/server`)         | Medium     | `bun:sqlite` に `services/web/migrations/*.sql` を当てて検証    |
 | Better Auth まわり                          | Medium     | `bun:sqlite` + `recordingClient`（fetch のフェイク）        |
 | `features/sync/client`（provider）          | Small      | WebSocket をフェイク（`send` を配列に貯める）。再接続の backoff は `now` 注入 |
 | React コンポーネント                        | Small      | Testing Library。ロールとアクセシブル名で取得する           |
@@ -70,7 +70,7 @@ test('2 人が同じ位置に同時挿入しても両者の文書が一致する
 - 同期テストでは「相手の文書が特定の文字列になる」を `expect.poll` で待つ。
 - Large では**文書をテストごとに新規作成**する（共有 DO の状態を引き継がない）。
 
-## コマンド（products/noter 直下）
+## コマンド（apps/noter 直下）
 
 ```
 bun run test                        # 全ワークスペースの Small/Medium

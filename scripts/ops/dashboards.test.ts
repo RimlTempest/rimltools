@@ -3,7 +3,7 @@ import { readdir } from 'node:fs/promises'
 
 import { checkDashboard } from './dashboards.ts'
 
-const DIR = new URL('../../observability/dashboards/', import.meta.url)
+const DIR = new URL('../../ops/dashboards/', import.meta.url)
 
 const panel = (id: number, uid: string) => ({
   id,
@@ -50,7 +50,7 @@ describe('checkDashboard', () => {
   })
 })
 
-describe('observability/dashboards/*.json', () => {
+describe('ops/dashboards/*.json', () => {
   test('every committed dashboard passes the checks and has a unique uid', async () => {
     const files = (await readdir(DIR)).filter((f) => f.endsWith('.json'))
     expect(files.length).toBeGreaterThan(0)

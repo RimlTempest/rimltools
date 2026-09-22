@@ -19,7 +19,7 @@
 
 ## 指標の定義
 
-`scripts/observability/push-metrics.ts` が Cloudflare GraphQL（`workersInvocationsAdaptive`、
+`scripts/ops/push-metrics.ts` が Cloudflare GraphQL（`workersInvocationsAdaptive`、
 `d1AnalyticsAdaptiveGroups`）から作る。値は **5 分窓ごとの集計**を窓の終わりの時刻で送った gauge。
 
 | 指標                                                    | ラベル                                           | 意味                                                                 |
@@ -107,11 +107,11 @@ Worker への注入はリリース（`scripts/release/`）の後続作業。値�
 ## ローカルで試す
 
 本番と同じダッシュボード・データソース（uid）・相関の設定を、手元の Grafana LGTM（docker compose）で
-動かせる。起動・アプリの接続・本番との違いは `observability/local/README.md`。
+動かせる。起動・アプリの接続・本番との違いは `ops/local/README.md`。
 
 ```bash
-docker compose -f observability/local/compose.yaml up -d
-bun scripts/observability/local-smoke.ts
+docker compose -f ops/local/compose.yaml up -d
+bun scripts/ops/local-smoke.ts
 ```
 
 ## tfstate への認証失敗（infra/tfstate）

@@ -46,7 +46,7 @@ export type ManageCallOptions = {
 }
 
 /**
- * RPC の口。利用側で定義する（ISP）ので、`apps/web` の実装型を import しない。
+ * RPC の口。利用側で定義する（ISP）ので、`services/web` の実装型を import しない。
  *
  * 戻り値の外側は「意味のある返事が届いたか」、内側は「その返事が成功か」。
  * この入れ子は docs/api-contract.md の封筒と 1:1 で対応する。

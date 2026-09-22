@@ -3,7 +3,7 @@
   "budgets": [
     {
       "name": "worker (qrcc-web, server)",
-      "dir": "apps/web/dist/server",
+      "dir": "services/web/dist/server",
       "extensions": [".js", ".mjs", ".wasm"],
       "maxGzipBytes": 1048576,
       "reason": "Workers Free の上限 3 MiB（gzip）の 1/3。2026-09 の実測 688 KiB（ブラウザ用 wasm をサーバのビルドから外した後）から約 336 KiB の伸びしろ。ブラウザ用 wasm が SSR に戻ると 1.5 MiB を超えるので、ここで止まる（docs/bundle.md）"

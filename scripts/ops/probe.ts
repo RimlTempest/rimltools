@@ -15,7 +15,7 @@ export type Target = { name: string; host: string }
 
 /** ツール固有の軽い確認。叩くたびに Worker を 1 回起動するので最小限にする。 */
 export const EXTRA_CHECKS: Record<string, ExtraCheck[]> = {
-  // WebSocket の入口は Upgrade 無しで 426 を返す（products/noter/scripts/smoke.ts の WS_PROBE_PATH と同じ）
+  // WebSocket の入口は Upgrade 無しで 426 を返す（apps/noter/scripts/smoke.ts の WS_PROBE_PATH と同じ）
   noter: [{ path: '/ws/doc_000000000000000000000000', expected: 426 }],
 }
 

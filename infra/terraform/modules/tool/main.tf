@@ -7,7 +7,7 @@ locals {
     staging    = { suffix = "-staging" }
   }
 
-  public_worker = one([for w in var.tool.workers : w.name if w.role == "public"])
+  public_worker = one([for w in var.tool.services : w.name if w.role == "public"])
 
   d1 = merge([
     for env, e in local.environments : {
@@ -20,7 +20,7 @@ locals {
 
   workers = merge([
     for env, e in local.environments : {
-      for w in var.tool.workers : "${env}/${w.name}" => {
+      for w in var.tool.services : "${env}/${w.name}" => {
         env  = env
         name = "${w.name}${e.suffix}"
         role = w.role

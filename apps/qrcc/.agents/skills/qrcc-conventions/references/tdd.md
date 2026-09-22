@@ -43,7 +43,7 @@ fn qr_m_level_encodes_known_matrix() {
 | 画面フロー・カメラ・印刷                  | Large      | Playwright。カメラは fake device で代替             |
 | アクセシビリティ                          | Large      | Playwright + `@axe-core/playwright`（AAA タグ込み） |
 
-## コマンド（products/qrcc 直下）
+## コマンド（apps/qrcc 直下）
 
 ```
 bun run test                 # 全ワークスペースの Small/Medium

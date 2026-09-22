@@ -107,7 +107,7 @@ qrcc のトークン体系（`--qrcc-*`）を `--noter-*` として移植し、�
 @import './print.css';
 ```
 
-feature の CSS（`features/<name>/ui/<name>.css`）は `apps/web/src/styles/app.css` に
+feature の CSS（`features/<name>/ui/<name>.css`）は `services/web/src/styles/app.css` に
 `@import '@noter/<name>/ui/<name>.css' layer(components);` を**追記のみ**。
 
 クラス命名: `.noter-<block>__<element>` + 状態は `data-*`（`data-variant`, `data-state`）。

@@ -62,7 +62,7 @@ jobs:
         run: |
           ./osv-scanner scan source --config .github/osv-scanner.toml \
             --lockfile bun.lock \
-            --lockfile products/qrcc/Cargo.lock
+            --lockfile apps/qrcc/Cargo.lock
 
   dependency-review:
     name: dependency-review (PR)

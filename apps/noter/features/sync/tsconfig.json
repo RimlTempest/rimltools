@@ -7,7 +7,7 @@
     "lib": ["es2024", "dom", "dom.iterable"]
   },
   // worker/ は Workers ランタイムの型（cloudflare:workers）を要るので、
-  // apps/sync の tsconfig で型検査する（*.route.tsx を apps/web が見るのと同じ分担）。
+  // services/sync の tsconfig で型検査する（*.route.tsx を services/web が見るのと同じ分担）。
   // contract/ core/ client/ は plan 002 が足す（いまは空でよい）。
   "include": ["contract/**/*", "core/**/*", "client/**/*"],
   "references": [

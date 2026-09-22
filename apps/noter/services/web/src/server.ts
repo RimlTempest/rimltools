@@ -14,7 +14,7 @@ const WS_PATH = /^\/ws\/([^/]+)$/
 // Worker のエントリは default export でしか宣言できない
 // oxlint-disable-next-line import/no-default-export
 export default {
-  // 計装（docs/observability.md）。OTEL_EXPORTER_OTLP_ENDPOINT / FARO_URL が無ければ素通し
+  // 計装（docs/ops/telemetry.md）。OTEL_EXPORTER_OTLP_ENDPOINT / FARO_URL が無ければ素通し
   fetch: instrument<CloudflareEnv>(
     async (request, env) => {
       const documentId = WS_PATH.exec(new URL(request.url).pathname)?.[1]

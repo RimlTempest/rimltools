@@ -1,7 +1,7 @@
 # Grafana LGTM（Loki / Grafana / Tempo / Mimir 相当の Prometheus + OTel Collector）と
 # Faro の受け口（Alloy）をローカルで起動する。使い方は README.md。
 #
-#   docker compose -f observability/local/compose.yaml up -d
+#   docker compose -f ops/local/compose.yaml up -d
 #
 # イメージはタグ + digest で固定する（公開から 7 日以上経った版。docs/security.md）。
 # otel-lgtm を上げるときは、prometheus/prometheus.yaml を新しいイメージの

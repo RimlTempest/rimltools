@@ -18,7 +18,7 @@ features/<name>/
 ├─ ui/          React・CSS・テスト・<name>.route.tsx
 ├─ server/      TanStack server functions（qrcc-web で動く）
 ├─ engine/      純粋 Rust。`worker` 非依存。ブラウザ wasm にも載る
-└─ worker/      Rust の I/O アダプタ。`worker` 依存可。apps/api からのみ使う
+└─ worker/      Rust の I/O アダプタ。`worker` 依存可。services/api からのみ使う
 
 shared/
 ├─ contract/    Result・Brand・共通 ID・エラー（TS）
@@ -26,11 +26,11 @@ shared/
 ├─ ui/          デザインシステム
 └─ wasm/        ブラウザ向け wasm 束ね（engine/ + TS ラッパ）
 
-apps/
+services/
 ├─ web/         薄いシェル。Vite/Wrangler 設定、router、URL 構成
 └─ api/         薄いシェル。features/*/engine と worker を束ねる
 ```
 
-- `engine/` は純粋 Rust で `worker` crate に依存しない（ブラウザの wasm に載る。ADR-0003）。I/O は `worker/` に置き、apps/api からのみ使う
+- `engine/` は純粋 Rust で `worker` crate に依存しない（ブラウザの wasm に載る。ADR-0003）。I/O は `worker/` に置き、services/api からのみ使う
 - Cargo は一致しない glob メンバーをエラーにするため、`features/*/worker` は最初の 1 つを作るときにルート `Cargo.toml` へ追加する
 - engine が `worker` に依存していないことは CI の guard（`scripts/guard.sh`）が全 feature に一括で検査する

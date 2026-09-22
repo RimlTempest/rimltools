@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat <plan-003 のマージコミット>..HEAD -- features/documents features/auth features/sync/contract apps/web shared/contract`
+> **Drift check (run first)**: `git diff --stat <plan-003 のマージコミット>..HEAD -- features/documents features/auth features/sync/contract services/web shared/contract`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
@@ -41,12 +41,12 @@ plan 002 の開発フラグ（`NOTER_DEV_OPEN_WS`）を消して本番相当の�
   既定期限 90 日（`SHARE_LINK_MAX_AGE_MS`）、無期限は owner の明示選択。
 - 文書: `document(id, owner_id, kind, title, created_at, updated_at, deleted_at)`。soft delete → 一覧非表示・`/d/` 404・WS 4404。
   1 ユーザー `MAX_DOCUMENTS_PER_USER`(200)、メンバー `MAX_MEMBERS`(50)。
-- plan 002 で作った `apps/web/src/server/ws-authorize.ts` は開発フラグで通すスタブ。**この plan で本物に置き換え、
+- plan 002 で作った `services/web/src/server/ws-authorize.ts` は開発フラグで通すスタブ。**この plan で本物に置き換え、
   `NOTER_DEV_OPEN_WS` を全て削除する**（`.dev.vars.example`、`e2e/playwright.config.ts`、CI guard の検査は残してよい）。
 - plan 003 の `promoteAccount` の `transfer` は no-op。**この plan で `document.owner_id` / `document_member.user_id` の移譲に置き換える**。
 - plan 001 の `features/shell/ui/home-screen.tsx` はプレースホルダ。**ホームの本体は `features/documents/ui/home-screen.tsx`**
-  に置き、`apps/web/src/routes.ts` の index を `documents/ui/home.route.tsx` に差し替える（shell のプレースホルダは削除）。
-- `apps/web/src/server/container.ts` は plan 003 で `{ auth, currentActor }`。ここに `documents` リポジトリを足す。
+  に置き、`services/web/src/routes.ts` の index を `documents/ui/home.route.tsx` に差し替える（shell のプレースホルダは削除）。
+- `services/web/src/server/container.ts` は plan 003 で `{ auth, currentActor }`。ここに `documents` リポジトリを足す。
 - D1 の書き込みは無料枠の制約（`docs/free-tier-budget.md`）。**一覧の読み取りは 1 クエリ、作成は 2 行（document + member）**。
 
 ## Commands you will need
@@ -66,13 +66,13 @@ plan 002 の開発フラグ（`NOTER_DEV_OPEN_WS`）を消して本番相当の�
 
 ## Scope
 
-**In scope**: `features/documents/**`, `apps/web/migrations/0002_documents.sql`, `apps/web/src/server/{container,ws-authorize,ws-gate}.ts`,
-`apps/web/src/routes.ts`（index 差し替え + `/new` `/d/$documentId` `/d/$documentId/raw` `/s/$token` 追加）,
-`apps/web/src/styles/app.css`（1 行）, `apps/web/package.json`, `apps/web/tsconfig.json`, ルート `tsconfig.json`,
+**In scope**: `features/documents/**`, `services/web/migrations/0002_documents.sql`, `services/web/src/server/{container,ws-authorize,ws-gate}.ts`,
+`services/web/src/routes.ts`（index 差し替え + `/new` `/d/$documentId` `/d/$documentId/raw` `/s/$token` 追加）,
+`services/web/src/styles/app.css`（1 行）, `services/web/package.json`, `services/web/tsconfig.json`, ルート `tsconfig.json`,
 `features/auth/core/promote-account.ts` の deps 配線（`container.ts` 側のみ）, `features/shell/ui/home-screen*.tsx`（削除）,
 `features/shell/ui/home.route.tsx`（削除）, `e2e/tests/{sync,share}.spec.ts`, `e2e/playwright.config.ts`, `.dev.vars.example`, `plans/README.md`
 
-**Out of scope**: `docs/**`、`features/{editor,formats}/**`、`features/sync/{core,worker}/**`、`apps/sync/**`
+**Out of scope**: `docs/**`、`features/{editor,formats}/**`、`features/sync/{core,worker}/**`、`services/sync/**`
 
 ## Git workflow
 
@@ -100,7 +100,7 @@ plan 002 の開発フラグ（`NOTER_DEV_OPEN_WS`）を消して本番相当の�
 
 ### Step 2: D1 スキーマ
 
-`apps/web/migrations/0002_documents.sql`:
+`services/web/migrations/0002_documents.sql`:
 
 ```sql
 CREATE TABLE document (
@@ -165,7 +165,7 @@ server routes（`features/documents/ui/*.route.ts`）:
 - `/s/$token`（page、`beforeLoad` で処理）: `findShareLink` → `isShareLinkUsable` → visitor ならゲスト発行 → `upsertMember(resolveJoinedRole)` → `redirect('/d/:id')`。
   不正時はコンポーネントで「このリンクは無効です。作成者に新しいリンクを依頼してください」+ ホームへのリンク。
 
-`apps/web/src/server/ws-authorize.ts` を本物に置き換える:
+`services/web/src/server/ws-authorize.ts` を本物に置き換える:
 
 ```ts
 export const authorizeWs = async (request, env, documentId) => {
@@ -194,7 +194,7 @@ export const authorizeWs = async (request, env, documentId) => {
   `features/documents/ui/document.route.tsx` に**暫定のエディタ画面**（タイトル `<h1>`、種別、役割、共有ボタン + ダイアログ、
   「エディタは準備中です」）を置く。plan 005 が `features/editor/ui/editor.route.tsx` に置き換える。
 - `features/documents/ui/documents.css`。
-- `apps/web/src/routes.ts`: index を `documents/ui/home.route.tsx`、`route('/new', …)` は不要（server function で redirect するため。`ux.md` の `/new` は server function の呼称）。
+- `services/web/src/routes.ts`: index を `documents/ui/home.route.tsx`、`route('/new', …)` は不要（server function で redirect するため。`ux.md` の `/new` は server function の呼称）。
   `route('/d/$documentId', 'documents/ui/document.route.tsx')`, `route('/d/$documentId/raw', 'documents/ui/raw.route.ts')`, `route('/s/$token', 'documents/ui/share-entry.route.tsx')`。
 - `features/shell/ui/nav-items.ts`: 「新規作成」はホームのボタンで代替するので項目を足さない。
 
@@ -202,7 +202,7 @@ export const authorizeWs = async (request, env, documentId) => {
 
 ### Step 5: 昇格時の移譲
 
-`apps/web/src/server/container.ts` で `promoteAccount` の `transfer` に `repo.transferOwnership` を渡す。
+`services/web/src/server/container.ts` で `promoteAccount` の `transfer` に `repo.transferOwnership` を渡す。
 `features/documents/server/repository.test.ts`（Miniflare 不要: Drizzle のクエリ生成のみ検証するか、`bun:sqlite` に同じ DDL を流してテスト）で
 「to が既に viewer の文書で from が editor なら editor になる」を確認。
 

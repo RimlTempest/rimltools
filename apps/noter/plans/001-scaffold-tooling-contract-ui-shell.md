@@ -37,18 +37,18 @@ lefthook、CI の `guard`）を機械的に効かせておくことが、後続�
   存在するのは `CLAUDE.md` / `DESIGN.md` / `README.md` / `docs/**` / `.agents/skills/**` /
   `.claude/**` / `scripts/lanes.tsv` / `.gitignore` / `plans/**` のみ。**コードは無い**。
 - 移植元: `/Users/riml/orca/projects/qrcc2`（読み取り専用。**絶対に書き込まない**）。
-  qrcc2 には `apps/web/.dev.vars` などシークレットがある。**`.dev.vars` / `.env` は
+  qrcc2 には `services/web/.dev.vars` などシークレットがある。**`.dev.vars` / `.env` は
   読まない・コピーしない**。
 - 設計上の決定（この plan が従うもの）:
   - `docs/adr/0001-stack.md`: TS のみ。Rust / cargo / wasm を入れない
-  - `docs/adr/0002-auxiliary-worker-and-private-durable-object.md`: `apps/sync` は
+  - `docs/adr/0002-auxiliary-worker-and-private-durable-object.md`: `services/sync` は
     auxiliary Worker。`routes` を書かず `workers_dev: false`
   - `docs/adr/0004-durable-object-class-exception.md`: `class` は
     `features/sync/worker/document-room.ts` のみ許可
   - `docs/adr/0006-typescript-7-and-oxc.md`: TS 7.0.2、oxlint 1.80.0、oxfmt 0.65.0、
     markuplint は `tools/markuplint` に TS 6.0.3 で隔離
   - `docs/adr/0007-feature-colocation.md`: `features/<name>/{contract,core,ui,server}`、
-    ルートは `features/<name>/ui/<name>.route.tsx`、URL は `apps/web/src/routes.ts`
+    ルートは `features/<name>/ui/<name>.route.tsx`、URL は `services/web/src/routes.ts`
   - `docs/adr/0009-free-tier-d1-and-do-only.md`: `r2_buckets` / `kv_namespaces` を書かない。
     DO は `new_sqlite_classes`
   - `DESIGN.md` §トークン: CSS 変数の接頭辞は `--noter-`、テーマの保存キーは `noter-theme`、
@@ -71,8 +71,8 @@ lefthook、CI の `guard`）を機械的に効かせておくことが、後続�
   - `shared/ui/**`（全部）
   - `features/shell/ui/{app-shell,breadcrumbs,global-nav,link-renderer,router-link,root-document,settings-screen}.tsx|ts`
     とそのテスト、`features/shell/ui/css.d.ts`, `shell.css`
-  - `apps/web/{vite.config.ts,tsr.config.json,tsconfig.json}`, `apps/web/src/{router.tsx,routes.ts}`,
-    `apps/web/src/styles/app.css`
+  - `services/web/{vite.config.ts,tsr.config.json,tsconfig.json}`, `services/web/src/{router.tsx,routes.ts}`,
+    `services/web/src/styles/app.css`
   - `e2e/{package.json,tsconfig.json,playwright.config.ts}`, `e2e/tests/a11y.spec.ts`
   - `.github/workflows/ci.yml`
 - qrcc2 の `package.json` (root) の要点:
@@ -82,7 +82,7 @@ lefthook、CI の `guard`）を機械的に効かせておくことが、後続�
 "scripts": {
   "dev": "bun run --filter '@qrcc/web' dev",
   "test": "bun test shared/ features/ apps/ scripts/",
-  "typecheck": "bun run --filter '@qrcc/wasm' build:types && bun run --filter '@qrcc/web' gen && tsc --build && tsc -p apps/web --noEmit",
+  "typecheck": "bun run --filter '@qrcc/wasm' build:types && bun run --filter '@qrcc/web' gen && tsc --build && tsc -p services/web --noEmit",
   "lint": "oxlint --type-aware",
   "fmt": "oxfmt .", "fmt:check": "oxfmt --check .",
   "lint:html": "node tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json 'features/**/ui/**/*.tsx' 'shared/ui/src/**/*.tsx'",
@@ -93,7 +93,7 @@ lefthook、CI の `guard`）を機械的に効かせておくことが、後続�
 "devDependencies": { "@types/bun": "1.4.0", "lefthook": "2.1.12", "oxfmt": "0.65.0", "oxlint": "1.80.0", "oxlint-tsgolint": "7.0.2001", "typescript": "7.0.2", "wrangler": "4.127.1" }
 ```
 
-- qrcc2 `apps/web/wrangler.jsonc` の要点（`services` と D1 が noter では変わる）:
+- qrcc2 `services/web/wrangler.jsonc` の要点（`services` と D1 が noter では変わる）:
 
 ```jsonc
 "name": "qrcc-web", "main": "@tanstack/react-start/server-entry",
@@ -105,7 +105,7 @@ lefthook、CI の `guard`）を機械的に効かせておくことが、後続�
 "vars": { "APP_ORIGIN": "https://qrcc.riml4i.com" }
 ```
 
-- qrcc2 `apps/web/vite.config.ts` の要点: `cloudflare({ viteEnvironment: { name: 'ssr' }, auxiliaryWorkers: [{ configPath: '../api/wrangler.jsonc' }] })` → `tanstackStart({ router: { routesDirectory, virtualRouteConfig } })` → `viteReact()`、`build.rollupOptions.external: [/^cloudflare:/]`。
+- qrcc2 `services/web/vite.config.ts` の要点: `cloudflare({ viteEnvironment: { name: 'ssr' }, auxiliaryWorkers: [{ configPath: '../api/wrangler.jsonc' }] })` → `tanstackStart({ router: { routesDirectory, virtualRouteConfig } })` → `viteReact()`、`build.rollupOptions.external: [/^cloudflare:/]`。
 - qrcc2 `.oxlintrc.json` の要点: `"jsPlugins": ["./tools/oxlint-plugin-qrcc/index.js"]`、
   ルール `qrcc/no-class`, `qrcc/no-type-assertion`, `qrcc/no-enum`、override で
   `shared/contract/src/**/*.ts`, `shared/kernel/conformance/**/*.ts`, `features/*/contract/**/*.ts`,
@@ -117,14 +117,14 @@ lefthook、CI の `guard`）を機械的に効かせておくことが、後続�
 
 ## Commands you will need
 
-| Purpose   | Command                                                                                              | Expected on success           |
-| --------- | ---------------------------------------------------------------------------------------------------- | ----------------------------- |
-| Toolchain | `cd /Users/riml/orca/projects/noter && mise install`                                                 | exit 0                        |
-| Install   | `bun install`                                                                                        | exit 0、`bun.lock` 生成       |
-| Check     | `bun run check`                                                                                      | exit 0                        |
-| Tests     | `bun run test`                                                                                       | exit 0、全 pass               |
-| Build     | `bun run build`                                                                                      | exit 0、`apps/web/dist/` 生成 |
-| Dev smoke | `bun run dev` を background で起動し `curl -s -o /dev/null -w '%{http_code}' http://localhost:5173/` | `200`                         |
+| Purpose   | Command                                                                                              | Expected on success               |
+| --------- | ---------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Toolchain | `cd /Users/riml/orca/projects/noter && mise install`                                                 | exit 0                            |
+| Install   | `bun install`                                                                                        | exit 0、`bun.lock` 生成           |
+| Check     | `bun run check`                                                                                      | exit 0                            |
+| Tests     | `bun run test`                                                                                       | exit 0、全 pass                   |
+| Build     | `bun run build`                                                                                      | exit 0、`services/web/dist/` 生成 |
+| Dev smoke | `bun run dev` を background で起動し `curl -s -o /dev/null -w '%{http_code}' http://localhost:5173/` | `200`                             |
 
 ## Suggested executor toolkit
 
@@ -144,7 +144,7 @@ lefthook、CI の `guard`）を機械的に効かせておくことが、後続�
 - `shared/contract/**`, `shared/ui/**`
 - `features/shell/**`
 - `features/sync/worker/document-room.ts`, `features/sync/package.json`, `features/sync/tsconfig.json`（**スタブのみ**）
-- `apps/web/**`, `apps/sync/**`
+- `services/web/**`, `services/sync/**`
 - `e2e/**`
 - `.github/workflows/ci.yml`
 - `.dev.vars.example`（ルート。キー名のみ、値は空）
@@ -156,7 +156,7 @@ lefthook、CI の `guard`）を機械的に効かせておくことが、後続�
 - `docs/**`, `CLAUDE.md`, `DESIGN.md`, `README.md`, `.agents/**`, `.claude/**` — 設計文書。変更が必要だと思ったら STOP
 - `features/{auth,documents,editor,formats}/**`, `shared/webmcp/**` — 後続 plan
 - `.github/workflows/deploy.yml` — plan 007
-- qrcc2 の `apps/web/.dev.vars`、`.env` 系 — **読まない**
+- qrcc2 の `services/web/.dev.vars`、`.env` 系 — **読まない**
 
 ## Git workflow
 
@@ -220,7 +220,7 @@ qrcc2 から次をコピーし、書き換える。コピーは `cp`、置換は
     "dev": "bun run --filter '@noter/web' dev",
     "build": "bun run --filter '@noter/web' build",
     "test": "bun test shared/ features/ apps/ scripts/",
-    "typecheck": "bun run --filter '@noter/web' gen && tsc --build && tsc -p apps/web --noEmit",
+    "typecheck": "bun run --filter '@noter/web' gen && tsc --build && tsc -p services/web --noEmit",
     "lint": "oxlint --type-aware",
     "lint:fix": "oxlint --type-aware --fix",
     "fmt": "oxfmt .",
@@ -351,7 +351,7 @@ qrcc2 `features/shell/ui/` から `app-shell.tsx`, `app-shell.test.tsx`, `breadc
   「markdown・yaml・toml・json を複数人で同時に編集できるノート。共有リンクを開くだけで参加できます。」に。
   `theme-color` の値は `DESIGN.md` の `--noter-surface` ライト/ダークの値にする。
   `manifest` / `apple-touch-icon` の `<link>` は**外す**（plan 007 で戻す）。`icon` は `/icon.svg` のまま残し、
-  `apps/web/public/icon.svg` に簡単な SVG（丸 + "n"）を置く。
+  `services/web/public/icon.svg` に簡単な SVG（丸 + "n"）を置く。
 - `ui/root.route.tsx`: 認証と service worker を含まない版。
 
 ```tsx
@@ -365,7 +365,7 @@ import {
 import { AppShell } from './app-shell.tsx'
 import { RootDocument, documentHead } from './root-document.tsx'
 import { routerLink } from './router-link.tsx'
-import appCss from '../../../apps/web/src/styles/app.css?url'
+import appCss from '../../../services/web/src/styles/app.css?url'
 
 const Shell = ({ children }: { readonly children: React.ReactNode }) => (
   <RootDocument>
@@ -400,18 +400,18 @@ export const Route = createRootRoute({
 
 **Verify**: `bun test features/shell` → 全 pass。`bunx oxlint --type-aware features/shell` → 0 errors。
 
-### Step 5: `apps/web` を配線する
+### Step 5: `services/web` を配線する
 
-- `apps/web/package.json`: qrcc2 を元に `@qrcc/*` を消し、`@noter/contract`, `@noter/shell`, `@noter/ui`
+- `services/web/package.json`: qrcc2 を元に `@qrcc/*` を消し、`@noter/contract`, `@noter/shell`, `@noter/ui`
   のみ依存に。`@tanstack/react-router 1.170.32`, `@tanstack/react-start 1.168.49`, `react 19.2.8`,
   `react-dom 19.2.8`; devDependencies は `@cloudflare/vite-plugin 1.54.4`, `@tanstack/router-cli 1.167.33`,
   `@tanstack/virtual-file-routes 1.162.0`, `@types/react 19.2.7`, `@types/react-dom 19.2.4`,
   `@vitejs/plugin-react 6.1.1`, `vite 8.2.2`, `wrangler 4.127.1`。**`@vitejs/plugin-rsc` は入れない**。
   scripts は qrcc2 と同じ。`db:local` は `wrangler d1 migrations apply noter --local`。
-- `apps/web/tsr.config.json`: そのままコピー。
-- `apps/web/tsconfig.json`: コピーし references を `shared/contract`, `shared/ui`, `features/shell` に。
-- `apps/web/vite.config.ts`: コピーし `auxiliaryWorkers: [{ configPath: '../sync/wrangler.jsonc' }]`、コメントの Rust 言及を書き換える。
-- `apps/web/wrangler.jsonc`:
+- `services/web/tsr.config.json`: そのままコピー。
+- `services/web/tsconfig.json`: コピーし references を `shared/contract`, `shared/ui`, `features/shell` に。
+- `services/web/vite.config.ts`: コピーし `auxiliaryWorkers: [{ configPath: '../sync/wrangler.jsonc' }]`、コメントの Rust 言及を書き換える。
+- `services/web/wrangler.jsonc`:
 
 ```jsonc
 {
@@ -442,9 +442,9 @@ export const Route = createRootRoute({
 }
 ```
 
-`apps/web/migrations/` は空ディレクトリだと git に入らないので `apps/web/migrations/.gitkeep` を置く。
+`services/web/migrations/` は空ディレクトリだと git に入らないので `services/web/migrations/.gitkeep` を置く。
 
-- `apps/web/src/routes.ts`:
+- `services/web/src/routes.ts`:
 
 ```ts
 import { index, rootRoute, route } from '@tanstack/virtual-file-routes'
@@ -454,15 +454,15 @@ export const routes = rootRoute('shell/ui/root.route.tsx', [
 ])
 ```
 
-- `apps/web/src/router.tsx`: そのままコピー。
-- `apps/web/src/styles/app.css`: `@import '@noter/ui/styles.css'; @import '@noter/shell/ui/shell.css' layer(components);` の 2 行 + qrcc2 のコメント。
-- `apps/web/src/server/container.ts`: qrcc2 のものをコピー（`Record<never, never>` のプレースホルダ）。
-- `apps/web/public/icon.svg`: Step 4 のとおり。
+- `services/web/src/router.tsx`: そのままコピー。
+- `services/web/src/styles/app.css`: `@import '@noter/ui/styles.css'; @import '@noter/shell/ui/shell.css' layer(components);` の 2 行 + qrcc2 のコメント。
+- `services/web/src/server/container.ts`: qrcc2 のものをコピー（`Record<never, never>` のプレースホルダ）。
+- `services/web/public/icon.svg`: Step 4 のとおり。
 
-**Verify**: `bun install && bun run --filter '@noter/web' gen` → exit 0、`apps/web/src/routeTree.gen.ts` と
-`apps/web/src/worker-configuration.d.ts` が生成される。
+**Verify**: `bun install && bun run --filter '@noter/web' gen` → exit 0、`services/web/src/routeTree.gen.ts` と
+`services/web/src/worker-configuration.d.ts` が生成される。
 
-### Step 6: `apps/sync` と DO のスタブを置く
+### Step 6: `services/sync` と DO のスタブを置く
 
 - `features/sync/package.json`:
 
@@ -480,9 +480,9 @@ export const routes = rootRoute('shell/ui/root.route.tsx', [
 
 - `features/sync/tsconfig.json`: `features/shell` のものを元に `include: ["contract/**/*", "core/**/*", "worker/**/*", "client/**/*"]`、
   `lib: ["es2024"]`、`types: ["bun", "./worker-configuration"]` は使わず、代わりに
-  `apps/sync/src/worker-configuration.d.ts`（`wrangler types` 生成物）を `include` に足す方法は
-  複雑なので、**この plan では `worker/` を `apps/sync` の tsconfig に含めて型検査する**
-  （qrcc2 が `*.route.tsx` を apps/web 側で検査するのと同じ分担）。
+  `services/sync/src/worker-configuration.d.ts`（`wrangler types` 生成物）を `include` に足す方法は
+  複雑なので、**この plan では `worker/` を `services/sync` の tsconfig に含めて型検査する**
+  （qrcc2 が `*.route.tsx` を services/web 側で検査するのと同じ分担）。
   `features/sync/tsconfig.json` の `include` は `["contract/**/*", "core/**/*", "client/**/*"]`、
   `exclude` に `worker` を足す。
 - `features/sync/worker/document-room.ts`（**唯一 `class` を許すファイル**）:
@@ -499,12 +499,12 @@ export class DocumentRoom extends DurableObject<CloudflareEnv> {
 ```
 
 - `features/sync/worker/index.ts`: `export { DocumentRoom } from './document-room.ts'`
-- `apps/sync/package.json`: `@noter/sync-worker`、依存 `@noter/sync: workspace:*`、devDependencies `wrangler 4.127.1`、
+- `services/sync/package.json`: `@noter/sync-worker`、依存 `@noter/sync: workspace:*`、devDependencies `wrangler 4.127.1`、
   scripts `{ "gen": "wrangler types --env-interface CloudflareEnv ./src/worker-configuration.d.ts", "typecheck": "bun run gen && tsc -p . --noEmit" }`。
-- `apps/sync/tsconfig.json`: `tsconfig.base.json` を extends、`lib: ["es2024"]`, `types: ["bun"]`, `composite: false`,
+- `services/sync/tsconfig.json`: `tsconfig.base.json` を extends、`lib: ["es2024"]`, `types: ["bun"]`, `composite: false`,
   `emitDeclarationOnly: false`, `noEmit: true`、`include: ["src/**/*", "../../features/sync/worker/**/*"]`、
   references `../../shared/contract`, `../../features/sync`。
-- `apps/sync/src/index.ts`:
+- `services/sync/src/index.ts`:
 
 ```ts
 export { DocumentRoom } from '@noter/sync/worker'
@@ -512,10 +512,10 @@ export { DocumentRoom } from '@noter/sync/worker'
 export default { fetch: (): Response => new Response('not found', { status: 404 }) }
 ```
 
-（`import/no-default-export` は `apps/sync/src/index.ts` に対して `.oxlintrc.json` の overrides に
-`{ "files": ["apps/sync/src/index.ts"], "rules": { "import/no-default-export": "off" } }` を足して許可する。）
+（`import/no-default-export` は `services/sync/src/index.ts` に対して `.oxlintrc.json` の overrides に
+`{ "files": ["services/sync/src/index.ts"], "rules": { "import/no-default-export": "off" } }` を足して許可する。）
 
-- `apps/sync/wrangler.jsonc`:
+- `services/sync/wrangler.jsonc`:
 
 ```jsonc
 {
@@ -536,9 +536,9 @@ export default { fetch: (): Response => new Response('not found', { status: 404 
 
 - ルート `package.json` の `typecheck` に `bun run --filter '@noter/sync-worker' typecheck &&` を `tsc --build` の前に足す。
 
-**Verify**: `bun install && bun run typecheck` → exit 0。`bun run build` → exit 0 で `apps/web/dist/` に
+**Verify**: `bun install && bun run typecheck` → exit 0。`bun run build` → exit 0 で `services/web/dist/` に
 `noter_sync`（または同名の auxiliary 出力）と `client/` が生成される。
-`grep -nE '"routes"|"workers_dev": true' apps/sync/wrangler.jsonc` → ヒットなし。
+`grep -nE '"routes"|"workers_dev": true' services/sync/wrangler.jsonc` → ヒットなし。
 
 ### Step 7: e2e と a11y
 
@@ -559,12 +559,12 @@ export default { fetch: (): Response => new Response('not found', { status: 404 
 - `env.CARGO_TERM_COLOR`、`rust` フィルタ、`rust` ジョブ、`Swatinem/rust-cache`、`cargo install …`、
   wasm サイズ検査を**すべて削除**
 - `guard` ジョブ:
-  - 「qrcc-api は公開されていないこと」→ 対象を `apps/sync/wrangler.jsonc`、文言を `noter-sync` に
-  - 「従量課金されるバインディング」→ 対象 `apps/web/wrangler.jsonc apps/sync/wrangler.jsonc`
+  - 「qrcc-api は公開されていないこと」→ 対象を `services/sync/wrangler.jsonc`、文言を `noter-sync` に
+  - 「従量課金されるバインディング」→ 対象 `services/web/wrangler.jsonc services/sync/wrangler.jsonc`
   - 「engine crate …」→ **削除**し、代わりに 2 つ追加:
     ```bash
     # DO は SQLite backed のみ (ADR-0009)
-    if grep -qE '"new_classes"' apps/sync/wrangler.jsonc; then echo "::error::use new_sqlite_classes (ADR-0009)"; exit 1; fi
+    if grep -qE '"new_classes"' services/sync/wrangler.jsonc; then echo "::error::use new_sqlite_classes (ADR-0009)"; exit 1; fi
     # class は DO の殻だけ (ADR-0004)
     hits=$(grep -rlE '^\s*(export\s+)?(abstract\s+)?class\s' --include='*.ts' --include='*.tsx' shared features apps scripts | grep -v 'features/sync/worker/document-room.ts' || true)
     if [ -n "$hits" ]; then echo "$hits"; echo "::error::class is only allowed in features/sync/worker/document-room.ts (ADR-0004)"; exit 1; fi
@@ -599,8 +599,8 @@ export default { fetch: (): Response => new Response('not found', { status: 404 
 - [ ] `bun run a11y` exits 0
 - [ ] `grep -rn 'qrcc' --include='*.ts' --include='*.tsx' --include='*.json' --include='*.jsonc' --include='*.css' --include='*.yml' --include='*.toml' --include='*.sh' . | grep -v node_modules | grep -v '^./plans/' | grep -v '^./docs/' | grep -v '^./.agents/' | grep -v '^./.claude/'` → 出力なし
 - [ ] `grep -rln 'cargo\|rustc\|wasm-pack' --include='*.json' --include='*.yml' --include='*.toml' --include='*.sh' . | grep -v node_modules | grep -v '^./.agents' | grep -v '^./plans'` → 出力なし
-- [ ] `grep -nE '"(routes|r2_buckets|kv_namespaces)"' apps/sync/wrangler.jsonc` → なし; `grep -c '"workers_dev": false' apps/sync/wrangler.jsonc` → 1
-- [ ] `grep -c new_sqlite_classes apps/sync/wrangler.jsonc` → 1
+- [ ] `grep -nE '"(routes|r2_buckets|kv_namespaces)"' services/sync/wrangler.jsonc` → なし; `grep -c '"workers_dev": false' services/sync/wrangler.jsonc` → 1
+- [ ] `grep -c new_sqlite_classes services/sync/wrangler.jsonc` → 1
 - [ ] `git status --porcelain` に Scope 外のファイルが無い; `/Users/riml/orca/projects/qrcc2` で `git status --porcelain` が**この作業の前後で変わっていない**
 - [ ] `plans/README.md` の 001 の行が DONE
 
@@ -617,10 +617,10 @@ export default { fetch: (): Response => new Response('not found', { status: 404 
 
 ## Maintenance notes
 
-- `tsconfig.json`（ルート）と `apps/web/tsconfig.json` の references、`apps/web/src/routes.ts`、
-  `apps/web/src/styles/app.css` は後続 plan が 1 行ずつ足す append-only ファイル
+- `tsconfig.json`（ルート）と `services/web/tsconfig.json` の references、`services/web/src/routes.ts`、
+  `services/web/src/styles/app.css` は後続 plan が 1 行ずつ足す append-only ファイル
 - `features/sync/worker/document-room.ts` はスタブ。plan 002 が中身を書く。**このファイル以外に `class` を書いてはならない**
-- `apps/web/wrangler.jsonc` と `apps/sync/wrangler.jsonc` の `database_id: "REPLACE_ME"` は
+- `services/web/wrangler.jsonc` と `services/sync/wrangler.jsonc` の `database_id: "REPLACE_ME"` は
   デプロイ時に人が書く（`docs/deployment.md`）。ローカル dev は `REPLACE_ME` のままで動く
 - レビュー観点: `.oxlintrc.json` に `noter/*` 4 ルールと `no-class` の override があるか、
   `ci.yml` の `guard` に 5 つの検査（非公開・R2/KV・new_classes・class・I/O・相対 import）があるか

@@ -1,8 +1,8 @@
 /**
- * ローカルの LGTM（observability/local/compose.yaml）が動いているかを確かめる。
+ * ローカルの LGTM（ops/local/compose.yaml）が動いているかを確かめる。
  *
- *   docker compose -f observability/local/compose.yaml up -d
- *   bun scripts/observability/local-smoke.ts
+ *   docker compose -f ops/local/compose.yaml up -d
+ *   bun scripts/ops/local-smoke.ts
  *
  * 1. 本番と同じ形（@rimltools/telemetry の OTLP/JSON）の trace と log を collector に送る
  * 2. Faro の payload を Alloy（faro.receiver）に送る
@@ -23,7 +23,7 @@ export type SmokeSample = {
 
 const SERVICE = 'qrcc-web'
 
-/** 本番の Worker が送るのと同じ resource（docs/observability.md の契約）。環境だけ local */
+/** 本番の Worker が送るのと同じ resource（docs/ops/telemetry.md の契約）。環境だけ local */
 const RESOURCE: Resource = {
   'service.name': SERVICE,
   'service.namespace': 'rimltools',

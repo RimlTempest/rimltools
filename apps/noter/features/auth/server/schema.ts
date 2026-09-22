@@ -6,7 +6,7 @@
  * 型は通るのに実行時だけ落ちる。列名は snake_case（docs/domain-model.md）。
  * 対応は `schema.test.ts` が `0001_auth.sql` と機械的に突き合わせる。
  *
- * 実体は `apps/web/migrations/*.sql`。Drizzle のマイグレーション生成は使わない
+ * 実体は `services/web/migrations/*.sql`。Drizzle のマイグレーション生成は使わない
  * （D1 は wrangler の連番マイグレーションで前方移行のみ運用する）。
  *
  * **`user.promoted_from` はここに書かない。** Better Auth の管理外の列で、

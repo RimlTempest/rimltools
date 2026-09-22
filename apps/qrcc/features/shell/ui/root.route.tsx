@@ -16,7 +16,7 @@ import { currentActorWire } from '@qrcc/auth/ui/auth-env'
 import { registerServiceWorker, routerLink, scheduleTelemetry } from '@rimltools/shell'
 import { AppShell, RootDocument, documentHead } from './shell-kit.tsx'
 // スタイルの組み立てはアプリの責務。feature からは href を受け取るだけ。
-import appCss from '../../../apps/web/src/styles/app.css?url'
+import appCss from '../../../services/web/src/styles/app.css?url'
 
 const Shell = ({ children }: { readonly children: React.ReactNode }) => (
   <RootDocument>

@@ -1,7 +1,7 @@
 /**
  * ビルド成果物のサイズ予算を検査する（判定は scripts/lib/bundle-budget.ts）。
  *
- *   bun scripts/bundle-budget.ts products/noter
+ *   bun scripts/bundle-budget.ts apps/noter
  *
  * `<product>/bundle-budget.json` の各予算について、対象ディレクトリの中のファイルを
  * 1 つずつ gzip して合計する。1 つでも超えたら（または対象が 0 件なら）exit 1。

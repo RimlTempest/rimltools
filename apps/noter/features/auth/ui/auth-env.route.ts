@@ -6,13 +6,13 @@
  * 手順をここに 1 つだけ置いて写し間違いを防ぐ。
  *
  * `*.route.*` は feature に co-location されたアプリ側の配線なので、
- * composition root（`apps/web/src/server/container.ts`）を直接使ってよい。
+ * composition root（`services/web/src/server/container.ts`）を直接使ってよい。
  * feature 本体（contract / core / server / 画面）はここを import しない。
  */
 import type { ActorWire } from '@noter/auth/contract'
 import { toActorWire } from '@noter/auth/contract'
-import type { WebEnv } from '../../../apps/web/src/server/container.ts'
-import { makeContainer } from '../../../apps/web/src/server/container.ts'
+import type { WebEnv } from '../../../services/web/src/server/container.ts'
+import { makeContainer } from '../../../services/web/src/server/container.ts'
 
 /** サインイン状態と、この環境で選べるログイン手段。 */
 export type AuthEnvSnapshot = {

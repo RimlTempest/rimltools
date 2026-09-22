@@ -25,7 +25,7 @@ shared/
 ├─ ui/          デザインシステム（トークン・基本コンポーネント）
 └─ webmcp/      WebMCP ツール登録（ADR-0012）
 
-apps/
+services/
 ├─ web/         薄いシェル。Vite/Wrangler 設定、router、URL 構成、src/server.ts（WS 中継）
 └─ sync/        薄いシェル。DocumentRoom を re-export するだけ
 ```

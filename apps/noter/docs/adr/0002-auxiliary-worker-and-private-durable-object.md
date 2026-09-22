@@ -21,7 +21,7 @@ Worker は `noter-web`（SSR・認証・認可）と `noter-sync`（`DocumentRoo
 - DO は認可しない。web が付けた `X-Noter-Role` / `X-Noter-Actor` / `X-Noter-Name` を信じる
 
 ```jsonc
-// apps/web/wrangler.jsonc
+// services/web/wrangler.jsonc
 "durable_objects": {
   "bindings": [{ "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom", "script_name": "noter-sync" }]
 }
@@ -40,7 +40,7 @@ Worker は `noter-web`（SSR・認証・認可）と `noter-sync`（`DocumentRoo
 
 ## 帰結
 
-- CI の `guard` ジョブが `apps/sync/wrangler.jsonc` に `routes` / `workers_dev: true` が
+- CI の `guard` ジョブが `services/sync/wrangler.jsonc` に `routes` / `workers_dev: true` が
   無いことを検査する。**これを足すと権限昇格になる**
 - `noter-sync` は D1 に `document.updated_at` の touch 以外の書き込みをしない
   （[ADR-0005](0005-persistence-alarm-coalescing.md)）。読み取りは一切しない

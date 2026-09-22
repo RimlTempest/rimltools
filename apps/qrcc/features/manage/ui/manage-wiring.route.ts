@@ -12,7 +12,7 @@
  *
  * `D1Database` の型は Workers ランタイムが供給するもので、feature 単体の
  * TypeScript プログラムでは解決できない。`*.route.*` はアプリ側の配線として
- * apps/web のプログラムに属するので、ここに置くと素直に型が付く。
+ * services/web のプログラムに属するので、ここに置くと素直に型が付く。
  */
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
@@ -40,7 +40,7 @@ import type { ManageDeps } from './manage-deps.tsx'
 import { browserCopyText, browserRandomBytes } from './browser-manage.ts'
 // TODO: api-client は全 feature が使う基盤なので shared/ へ移す（PR で相談）。
 // いまは route ファイル（アプリ側の配線）からのみ参照している。
-import { makeApiClient } from '../../../apps/web/src/server/api-client.ts'
+import { makeApiClient } from '../../../services/web/src/server/api-client.ts'
 
 export const manageContextFn = createServerFn({ method: 'GET' }).handler(
   async (): Promise<ManageContext> => {

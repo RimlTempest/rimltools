@@ -5,14 +5,14 @@ cd "$(dirname "$0")/.."
 
 # --- qrcc-api は公開されていないこと (ADR-0002)
 (
-if grep -qE '^\s*"routes"\s*:' apps/api/wrangler.jsonc; then
-  echo "::error file=apps/api/wrangler.jsonc::qrcc-api must not be reachable from the internet. Remove 'routes' (ADR-0002)."
+if grep -qE '^\s*"routes"\s*:' services/api/wrangler.jsonc; then
+  echo "::error file=services/api/wrangler.jsonc::qrcc-api must not be reachable from the internet. Remove 'routes' (ADR-0002)."
   exit 1
 fi
 # workers_dev は既定が true。routes が無くても
 # qrcc-api.<subdomain>.workers.dev で公開されるので、明示的な false を要求する。
-if ! grep -qE '^\s*"workers_dev"\s*:\s*false\s*,?\s*$' apps/api/wrangler.jsonc; then
-  echo "::error file=apps/api/wrangler.jsonc::qrcc-api must set \"workers_dev\": false. It defaults to true and publishes the Worker on workers.dev even without routes (ADR-0002)."
+if ! grep -qE '^\s*"workers_dev"\s*:\s*false\s*,?\s*$' services/api/wrangler.jsonc; then
+  echo "::error file=services/api/wrangler.jsonc::qrcc-api must set \"workers_dev\": false. It defaults to true and publishes the Worker on workers.dev even without routes (ADR-0002)."
   exit 1
 fi
 )
@@ -22,7 +22,7 @@ fi
 # R2 は Cloudflare 側で利用上限を設定できず、超過分が従量課金される。
 # 「無料で運用する」を構造的に守るため、宣言そのものを禁じる。
 # KV は課金されないが、用途が無いので併せて弾く（ADR-0009）。
-for f in apps/web/wrangler.jsonc apps/api/wrangler.jsonc; do
+for f in services/web/wrangler.jsonc services/api/wrangler.jsonc; do
   if grep -qE '^\s*"(r2_buckets|kv_namespaces)"\s*:' "$f"; then
     echo "::error file=$f::R2/KV bindings are forbidden. R2 has no spending cap and would break free-tier operation (ADR-0009)."
     exit 1

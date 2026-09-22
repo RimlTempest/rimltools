@@ -11,7 +11,7 @@ import { account, accountPromotion, session, user, verification } from './schema
  * 片方だけ直すと、型は通るのに実行時だけ壊れる。実物の SQLite に
  * マイグレーションを当て、列名を突き合わせて機械的に検出する。
  */
-const MIGRATIONS_DIR = join(import.meta.dir, '../../../apps/api/migrations')
+const MIGRATIONS_DIR = join(import.meta.dir, '../../../services/api/migrations')
 
 const migrated = (): Database => {
   const db = new Database(':memory:')

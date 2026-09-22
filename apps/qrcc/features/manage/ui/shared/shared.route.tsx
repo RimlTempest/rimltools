@@ -28,7 +28,7 @@ import type { SharedCodeDeps } from './shared-code-screen.tsx'
 import { SharedCodeScreen } from './shared-code-screen.tsx'
 // TODO: api-client は全 feature が使う基盤なので shared/ へ移す（PR で相談）。
 // いまは route ファイル（アプリ側の配線）からのみ参照している。
-import { makeApiClient } from '../../../../apps/web/src/server/api-client.ts'
+import { makeApiClient } from '../../../../services/web/src/server/api-client.ts'
 
 const routerLink: CodeLinkRenderer = ({ to, label }) => <Link to={to}>{label}</Link>
 

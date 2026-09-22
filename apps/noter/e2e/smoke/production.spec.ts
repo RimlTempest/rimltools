@@ -63,7 +63,7 @@ test('ログイン画面にゲストの導線が出る', async ({ page }) => {
 /**
  * `/ws/:documentId` はルータより手前で `src/server.ts` が横取りする
  * （ADR-0002）。デプロイでこの配線が外れると、同時編集だけが静かに死ぬ。
- * Upgrade を付けなければ 426 が返る（`apps/web/src/server/ws-gate.ts`）。
+ * Upgrade を付けなければ 426 が返る（`services/web/src/server/ws-gate.ts`）。
  *
  * 文書 ID は実在しなくてよい。Upgrade の判定が先に来るので、認可も
  * 検索も走らず、本番のデータには一切触れない。

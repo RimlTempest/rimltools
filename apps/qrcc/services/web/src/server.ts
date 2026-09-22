@@ -2,7 +2,7 @@
  * qrcc-web の Worker エントリ（`wrangler.jsonc` の `main`）。
  *
  * TanStack Start の既定ハンドラを計装（`@rimltools/telemetry`）で包むだけ。
- * OTEL_EXPORTER_OTLP_ENDPOINT / FARO_URL が無ければ何もしない（docs/observability.md）。
+ * OTEL_EXPORTER_OTLP_ENDPOINT / FARO_URL が無ければ何もしない（docs/ops/telemetry.md）。
  */
 import startHandler from '@tanstack/react-start/server-entry'
 import { instrument } from '@rimltools/telemetry/worker'

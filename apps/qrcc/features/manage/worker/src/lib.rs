@@ -64,7 +64,7 @@ pub const METHODS: &[&str] = &[
     "shares.resolve",
 ];
 
-/// D1 が要るメソッドか。apps/api はこれで経路を分ける。
+/// D1 が要るメソッドか。services/api はこれで経路を分ける。
 pub fn handles(method: &str) -> bool {
     METHODS.contains(&method)
 }

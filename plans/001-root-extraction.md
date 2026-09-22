@@ -2,7 +2,7 @@
 
 - 状態: 段階 1 完了（#10）。段階 2 完了（#20 に #18 を含む。shell は 2b として #20、markuplint 設定の一本化は #22）。段階 2 の残り（smoke・archify・tools.d.ts）と段階 3（auth・ADR）は #26 / #28 / 段階 3c の PR。残課題は末尾
 - 目的: 2 つのプロダクトで同じもの・ほぼ同じものを 1 か所にし、3 つ目以降のツールが
-  「products/<tool> を足すだけ」で同じ規約・道具に乗れるようにする（ADR-0001）
+  「apps/<tool> を足すだけ」で同じ規約・道具に乗れるようにする（ADR-0001）
 - 原則: **挙動を変えないリファクタ**。各段階で `bun run check` と `bun run test`
   （両プロダクト + ルート）が通ること。差分が大きいものは無理に共通化しない
 
@@ -24,14 +24,14 @@
 
 ## 段階 2（前提: PR #2〜#7 と監視系 PR がマージ済み）
 
-衝突を避けるため、`products/**` のコードと CI に触る統合は並行 PR がすべて入ってから行う。
+衝突を避けるため、`apps/**` のコードと CI に触る統合は並行 PR がすべて入ってから行う。
 
 1. **`packages/contract`（`@rimltools/contract`）** — `shared/contract` は 12 ファイル共通のうち 8 が同一。
    - 共通化: `result` / `brand` / 同一の 8 ファイル。
    - 据え置き: `id.ts`（0.73。ID の接頭辞と文字集合がプロダクトごと）は「生成関数を受け取る汎用版」を
      packages に置き、プロダクトは接頭辞だけ渡す。`rpc.ts`（qrcc のみ）、`document-kind` / `limits` / `role`（noter のみ）は
      プロダクトに残す。
-   - `products/*/shared/contract` は packages を再 export する薄い層にし、import 元の一斉置換は別コミット。
+   - `apps/*/shared/contract` は packages を再 export する薄い層にし、import 元の一斉置換は別コミット。
 2. **`packages/ui`（`@rimltools/ui`）** — `shared/ui` は 25 ファイル共通のうち 9 が同一、9 がクラス名の接頭辞だけ違う。
    - コンポーネント（button / field / live-region / skip-link / visually-hidden / theme）と print / utilities の CSS を共通化し、
      クラス名の接頭辞（`qrcc-` / `noter-`）を `rt-` などの共通接頭辞に寄せる（見た目の差分が出ないことを a11y / e2e で確認）。
@@ -41,7 +41,7 @@
 3. **`packages/shell`** — `features/shell/ui` のうち breadcrumbs / global-nav / link-renderer / router-link / app-shell /
    register-sw（0.97〜0.99）を共通化。`root.route.tsx`（0.69）・`nav-items.ts`（0.79）・`shell.css`（0.70）はプロダクトに残す。
 4. **lint / fmt 設定の一本化** — ルートの `.oxlintrc.json` / `.oxfmtrc.json` に products の overrides を集約し、
-   `ignorePatterns` の `products/**` を外す。lefthook のプロダクト別グループをルート 1 つに簡素化。
+   `ignorePatterns` の `apps/**` を外す。lefthook のプロダクト別グループをルート 1 つに簡素化。
    - `.markuplintrc.json`: 同一ファイルでも、ルートに置く（または products から `extends` する）と
      qrcc でエラー 6 件・警告 73 件になる（プロダクト直下なら 0 件）。`overrides` の相対 glob と
      React spec の解決が設定ファイルの位置基準で変わるため。原因を切り分けてから一本化する。
@@ -52,7 +52,7 @@
    共通化の前後で一致。**release（`scripts/release/smoke.ts`）と ops（`scripts/ops/synthetic.ts`）の資産抽出とは寄せていない**:
    release はデプロイ時にアイコン・manifest・画像まで確かめ、ops は 30 分ごとなので最小限に絞っている。1 つにすると
    どちらかの挙動が変わる。
-7. **archify** — ✅ 段階 3c。`--repo-root` に git のトップを渡し、仕様の `sources[].path` を `products/<tool>/...` に書き換えた
+7. **archify** — ✅ 段階 3c。`--repo-root` に git のトップを渡し、仕様の `sources[].path` を `apps/<tool>/...` に書き換えた
    （仕様の `repository.url` も rimltools に）。両プロダクトで validate / deliver / PNG 書き出しまで通る。
    あわせて lefthook の markuplint ジョブが archify の生成 HTML を拾って空振り防止のガード（#22）に落とされていたのを直した。
 8. **`scripts/lib/tools.d.ts` の二重管理** — ✅ 段階 3c。`tsconfig.base.json` が `emitDeclarationOnly` なので、outDir の無い
@@ -76,7 +76,7 @@
 ## 共通化しないもの
 
 - ドメイン（`features/*` のうち auth / shell 以外）、`docs/architecture.md`・`domain-model.md`
-- PWA のアイコン・manifest（`apps/web/public`、0.23）
+- PWA のアイコン・manifest（`services/web/public`、0.23）
 - `lanes.tsv`・`parallel-lanes.md`（プロダクトごとのレーン定義）
 
 ## 段階 3 の結果と残課題（2026-09-22）

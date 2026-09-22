@@ -1,4 +1,4 @@
-# ローカル専用。本番では scripts/observability/push-metrics.ts が Cloudflare GraphQL の値を
+# ローカル専用。本番では scripts/ops/push-metrics.ts が Cloudflare GraphQL の値を
 # rimltools_worker_* として Mimir に送る。ローカルには GraphQL が無いので、Tempo の
 # span metrics（SERVER の span）から同じ名前・同じラベルの系列を作り、概要ダッシュボードを
 # ローカルでも同じように映す。

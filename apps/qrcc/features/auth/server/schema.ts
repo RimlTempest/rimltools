@@ -6,7 +6,7 @@
  * 型は通るのに実行時だけ落ちる。列名は qrcc の規約どおり snake_case
  * （docs/domain-model.md）。対応は `schema.test.ts` が機械的に検査する。
  *
- * 実体は `apps/api/migrations/*.sql`。Drizzle のマイグレーション生成は使わない
+ * 実体は `services/api/migrations/*.sql`。Drizzle のマイグレーション生成は使わない
  * （D1 は wrangler の連番マイグレーションで前方移行のみ運用する）。
  */
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'

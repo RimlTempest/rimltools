@@ -114,7 +114,7 @@ const withVersionSecrets = async <T>(
     && !Array.isArray(parsed.value)
       ? Object.fromEntries(Object.entries(parsed.value))
       : {}
-  const publicWorker = tool.workers.find((w) => w.role === 'public')
+  const publicWorker = tool.services.find((w) => w.role === 'public')
   const secrets = versionSecrets({
     env: deployEnv.name,
     tool: tool.name,
@@ -206,7 +206,7 @@ const loadPrepared = async (
   deployEnv: DeployEnv,
 ): Promise<Result<PreparedConfig[], string>> => {
   const out: PreparedConfig[] = []
-  for (const worker of tool.workers) {
+  for (const worker of tool.services) {
     const path = preparedPath(tool.path, worker.buildConfig, deployEnv.name)
     const file = Bun.file(path)
     if (!(await file.exists())) return { ok: false, error: `${path} not found. Run prepare first.` }
@@ -508,7 +508,7 @@ const stepGuard = async (): Promise<number> => {
 }
 
 const stepPrepare = async (tool: Tool, deployEnv: DeployEnv): Promise<number> => {
-  for (const worker of tool.workers) {
+  for (const worker of tool.services) {
     const source = join(tool.path, worker.buildConfig)
     const file = Bun.file(source)
     if (!(await file.exists())) return fail(`${source} not found. Build ${tool.name} first.`)
@@ -661,11 +661,11 @@ const stepResume = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promise
 }
 
 const workersFor = (tool: Tool, worker: string | undefined) =>
-  worker === undefined ? tool.workers : tool.workers.filter((w) => w.name === worker)
+  worker === undefined ? tool.services : tool.services.filter((w) => w.name === worker)
 
 const stepPromote = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promise<number> => {
   if (args.version === undefined) return fail('promote needs --version')
-  const target = args.worker ?? tool.workers.find((w) => w.role === 'public')?.name
+  const target = args.worker ?? tool.services.find((w) => w.role === 'public')?.name
   if (target === undefined) return fail(`${tool.name} has no public worker`)
   const deps = makeDeps(tool, deployEnv)
   const res = await deps.deploy(
@@ -709,7 +709,7 @@ const stepRollback = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promi
 const stepPreview = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promise<number> => {
   const alias = args.alias
   if (alias === undefined) return fail('preview needs --alias')
-  const worker = tool.workers.find((w) => w.role === 'public')
+  const worker = tool.services.find((w) => w.role === 'public')
   if (worker === undefined) return fail(`${tool.name} has no public worker`)
   const config = preparedPath(tool.path, worker.buildConfig, deployEnv.name)
   const attached = await withVersionSecrets(tool, deployEnv, config, (extra) =>

@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat <plan-002 のマージコミット>..HEAD -- features/auth features/shell apps/web shared/contract`
+> **Drift check (run first)**: `git diff --stat <plan-002 のマージコミット>..HEAD -- features/auth features/shell services/web shared/contract`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
@@ -42,7 +42,7 @@ qrcc に同じ設計（anonymous + Google、昇格）の実装があり、その
   ui/        sign-in 画面・設定画面・auth.css・auth-env
   package.json  exports: ./contract ./server ./ui ./ui/auth.css ./ui/auth-env
   ```
-  および `apps/api/migrations/0001_auth.sql`（qrcc の auth テーブル定義）、`apps/web/src/server/container.ts`
+  および `services/api/migrations/0001_auth.sql`（qrcc の auth テーブル定義）、`services/web/src/server/container.ts`
   （`makeAuth(env)` の配線）、`features/shell/ui/root.route.tsx`（`beforeLoad` で actor を取る部分）。
   qrcc の `Actor` は `visitor | guest | user` の判別共用体。noter でもそのまま。
 - **qrcc の `.dev.vars` は読まない。** キー名は `BETTER_AUTH_SECRET` / `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
@@ -51,8 +51,8 @@ qrcc に同じ設計（anonymous + Google、昇格）の実装があり、その
   1.7.2 → 1.7.3 で API 変更が無いことを changelog で確認し、あれば 1.7.2 に揃える。
 - plan 001 の `features/shell/ui/root.route.tsx` は認証を持たない。この plan で `beforeLoad` に actor 取得を足す。
 - plan 001 の `features/shell/ui/settings.route.tsx` はプレースホルダ。**この plan で `features/auth/ui/settings.route.tsx` に移し**、
-  `apps/web/src/routes.ts` の `/settings/account` の参照先を差し替える（shell 側のファイルは削除）。
-- D1 スキーマ: `apps/web/migrations/0001_auth.sql`。qrcc の `0001_auth.sql` を元に `user` に
+  `services/web/src/routes.ts` の `/settings/account` の参照先を差し替える（shell 側のファイルは削除）。
+- D1 スキーマ: `services/web/migrations/0001_auth.sql`。qrcc の `0001_auth.sql` を元に `user` に
   `promoted_from TEXT NULL` を足す。**この plan では document 系テーブルを作らない**（plan 004 の `0002`）。
 
 ## Commands you will need
@@ -72,13 +72,13 @@ qrcc に同じ設計（anonymous + Google、昇格）の実装があり、その
 
 ## Scope
 
-**In scope**: `features/auth/**`, `apps/web/migrations/0001_auth.sql`, `apps/web/src/server/container.ts`,
-`apps/web/src/routes.ts`（2 行: `/sign-in` 追加、`/settings/account` 差し替え）、`apps/web/src/styles/app.css`（1 行）、
-`apps/web/package.json`（依存）、`apps/web/tsconfig.json` + ルート `tsconfig.json`（reference 1 行）、
+**In scope**: `features/auth/**`, `services/web/migrations/0001_auth.sql`, `services/web/src/server/container.ts`,
+`services/web/src/routes.ts`（2 行: `/sign-in` 追加、`/settings/account` 差し替え）、`services/web/src/styles/app.css`（1 行）、
+`services/web/package.json`（依存）、`services/web/tsconfig.json` + ルート `tsconfig.json`（reference 1 行）、
 `features/shell/ui/root.route.tsx`（`beforeLoad` と `AppShell` への actor 受け渡し）、`features/shell/ui/settings.route.tsx`（削除）、
 `features/shell/ui/nav-items.ts`（文言のみ）、`e2e/tests/a11y.spec.ts`（`/sign-in` を追加）、`plans/README.md`
 
-**Out of scope**: `docs/**`、`features/{sync,documents,editor,formats}/**`、`apps/sync/**`、`.oxlintrc.json`
+**Out of scope**: `docs/**`、`features/{sync,documents,editor,formats}/**`、`services/sync/**`、`.oxlintrc.json`
 
 ## Git workflow
 
@@ -116,7 +116,7 @@ qrcc `features/auth/server/*` を移植。`auth-options.ts` の `baseURL` は `e
 `features/auth/server/schema.ts`（Drizzle）は `0001_auth.sql` と一致させる。`drizzle-kit` は使わず SQL を手書きする
 （qrcc と同じ）。
 
-`apps/web/src/server/container.ts`: `makeContainer(env)` → `{ auth, currentActor }`。qrcc の形をそのまま。
+`services/web/src/server/container.ts`: `makeContainer(env)` → `{ auth, currentActor }`。qrcc の形をそのまま。
 
 `features/auth/ui/api.route.ts`（`/api/auth/$`）: qrcc と同じく server route で `auth.handler(request)`。
 
@@ -138,9 +138,9 @@ qrcc `features/auth/server/*` を移植。`auth-options.ts` の `baseURL` は `e
 - `features/shell/ui/root.route.tsx`: `beforeLoad` で `currentActor` server function を呼び `context.actor` に。
   `AppShell` に `actor` を渡し、ヘッダ右に「ゲスト」/表示名 + `/settings/account` リンクを出す
   （qrcc の `app-shell.tsx` の対応部分を参考に）。
-- `apps/web/src/routes.ts`: `route('/sign-in', 'auth/ui/sign-in.route.tsx')`、`/settings/account` を `auth/ui/settings.route.tsx` に、
+- `services/web/src/routes.ts`: `route('/sign-in', 'auth/ui/sign-in.route.tsx')`、`/settings/account` を `auth/ui/settings.route.tsx` に、
   `route('/api/auth/$', 'auth/ui/api.route.ts')`。
-- `apps/web/src/styles/app.css`: `@import '@noter/auth/ui/auth.css' layer(components);`
+- `services/web/src/styles/app.css`: `@import '@noter/auth/ui/auth.css' layer(components);`
 - `e2e/tests/a11y.spec.ts`: `/sign-in` を対象に追加。
 
 **Verify**: `bun run check && bun run test && bun run a11y` → exit 0。ブラウザ手動: `/sign-in` → ゲストで続ける → ヘッダに「ゲスト」。
@@ -164,14 +164,14 @@ qrcc `features/auth/server/*` を移植。`auth-options.ts` の `baseURL` は `e
 
 - [ ] `bun run check` / `bun run test` / `bun run a11y` exit 0
 - [ ] `grep -rn 'cookieCache' features/auth` → なし
-- [ ] `apps/web/migrations/0001_auth.sql` に `promoted_from` がある
+- [ ] `services/web/migrations/0001_auth.sql` に `promoted_from` がある
 - [ ] `curl` で anonymous sign-in が 200 かつ `HttpOnly; SameSite=Lax`
 - [ ] `git diff --name-only` が Scope 内のみ
 
 ## STOP conditions
 
 - `better-auth 1.7.3` / `@better-auth/drizzle-adapter` が `bun install` で解決できない、または anonymous plugin の API が qrcc 1.7.2 と違う
-- TanStack Start の server route（`/api/auth/$`）が `apps/web/src/server.ts`（plan 002 のカスタム entry）と共存できない
+- TanStack Start の server route（`/api/auth/$`）が `services/web/src/server.ts`（plan 002 のカスタム entry）と共存できない
 - D1 ローカルで `0001_auth.sql` が失敗する
 
 ## Maintenance notes

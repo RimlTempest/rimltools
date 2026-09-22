@@ -9,7 +9,7 @@ Bun workspaces の monorepo。
 ## 作業を始める前に読むもの
 
 `rimltools-*` と外部の skill（`better-interface` など）はリポジトリ直下の `.claude/skills/` に、
-qrcc 固有の skill（`qrcc-architecture` / `qrcc-conventions`）は `products/qrcc/.claude/skills/` にある。
+qrcc 固有の skill（`qrcc-architecture` / `qrcc-conventions`）は `apps/qrcc/.claude/skills/` にある。
 共通の規約とプロダクト固有の差分は必ず両方読む。ルートの `CLAUDE.md` も参照。
 
 | 状況                             | 読むスキル                                               |
@@ -51,7 +51,7 @@ Stack / Components 節など）は読み替えるか無視すること。
   `*/engine`）で `throw` しない。** 失敗は `Result<T, E>` で返す。
 - **依存（時計・乱数・fetch・D1）は関数引数で受け取る。**
   配線は composition root だけ。
-- **`apps/api` の `wrangler.jsonc` に `routes` を足さない。**
+- **`services/api` の `wrangler.jsonc` に `routes` を足さない。**
   公開すると認可が二重化して権限昇格の穴になる（ADR-0002）。
 - **`*/engine`（Rust）は `worker` crate に依存しない。** ブラウザ向け wasm が壊れる。
   I/O が要るなら `features/<name>/worker` を作る（ADR-0003 / ADR-0007）。

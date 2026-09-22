@@ -75,7 +75,7 @@ describe('readConfig', () => {
     expect(result.ok).toBe(false)
   })
 
-  // ローカルの LGTM（observability/local）だけは http で受ける。トークンを送らない前提
+  // ローカルの LGTM（ops/local）だけは http で受ける。トークンを送らない前提
   test.each(['http://127.0.0.1:4318', 'http://localhost:4318/', 'http://[::1]:4318'])(
     'accepts plain http only for the loopback collector %p',
     (endpoint) => {

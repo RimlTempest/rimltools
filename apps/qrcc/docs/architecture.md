@@ -66,7 +66,7 @@ qrcc2/
 │  │  ├─ contract/            型・API 契約（TS）
 │  │  ├─ core/                純粋ロジック（TS・I/O なし）
 │  │  ├─ ui/                  React・CSS・テスト
-│  │  │  ├─ generate.route.tsx    ルート定義（型の所有は apps/web）
+│  │  │  ├─ generate.route.tsx    ルート定義（型の所有は services/web）
 │  │  │  └─ generate-screen.tsx   画面（feature 所有・テスト対象）
 │  │  ├─ server/              server functions（qrcc-web で動く）
 │  │  ├─ engine/              Rust: qrcc-generate（worker 非依存・wasm にも載る）
@@ -80,7 +80,7 @@ qrcc2/
 │  ├─ kernel/engine/          Rust: qrcc-kernel  共有プリミティブ
 │  ├─ ui/                     @qrcc/ui        デザインシステム・トークン
 │  └─ wasm/                   @qrcc/wasm      ブラウザ向け wasm（engine + TS ラッパ）
-├─ apps/
+├─ services/
 │  ├─ web/                    薄いシェル。Vite/Wrangler 設定・router・URL 構成
 │  │  ├─ src/routes.ts        URL 構造だけを宣言する唯一の横断ファイル
 │  │  └─ tsr.config.json      routesDirectory = ../../features
@@ -103,7 +103,7 @@ shared/contract ◀── shared/ui ◀──┐
                                         │
                     ┌───────────────────┴────────────────┐
                     ▼                                    ▼
-             shared/wasm (ブラウザ)                 apps/api (Worker)
+             shared/wasm (ブラウザ)                 services/api (Worker)
 ```
 
 規約（CI の `guard` が機械的に検査する）:
@@ -185,10 +185,10 @@ Rust は `match` の網羅性チェックで**必ずコンパイルエラーに�
 
 生成・読み取りは端末内の wasm で完結する（[ADR-0003](adr/0003-rust-core-dual-target.md)）
 ため、ネットワークが無くても本来は動く。それを実際に成立させているのが
-`apps/web/public/` に置いた静的ファイルだけの PWA 化（plans/009-pwa.md）。
+`services/web/public/` に置いた静的ファイルだけの PWA 化（plans/009-pwa.md）。
 
 - **ビルドプラグインを使わない。** `manifest.webmanifest` / アイコン / `sw.js`
-  はすべて `apps/web/public/` の静的ファイルで、Vite の `publicDir` が
+  はすべて `services/web/public/` の静的ファイルで、Vite の `publicDir` が
   そのまま `dist/client/` にコピーする。`vite.config.ts` は 1 行も変えない
   （`cloudflare()` と `tanstackStart()` の順序に 3 つ目のプラグインを足す
   リスクを取らない判断）

@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { env } from 'cloudflare:workers'
 import { parseDocumentKind } from '@noter/contract'
-import { makeContainer } from '../../../apps/web/src/server/container.ts'
+import { makeContainer } from '../../../services/web/src/server/container.ts'
 
 /**
  * 新規作成（`POST /new`）。ホームの種別ボタンが素の `<form>` で叩く。

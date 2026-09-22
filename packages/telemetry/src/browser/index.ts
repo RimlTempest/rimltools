@@ -1,5 +1,5 @@
 /**
- * ブラウザ側の計装（Grafana Faro）。docs/observability.md §ブラウザ。
+ * ブラウザ側の計装（Grafana Faro）。docs/ops/telemetry.md §ブラウザ。
  *
  * - 設定は Worker が <head> に埋め込んだ meta（`rimltools-telemetry`）から読む
  * - セッションのサンプリングは SDK を読み込む**前**に決める（外れたら 1 バイトも増えない）

@@ -3,7 +3,7 @@
 #
 # 可用性:   成功した invocation の割合（イベント比）
 # レイテンシ: 5 分窓ごとの wall time p99 が目標以下だった窓の割合（時間比）。
-#            Workers の分位点は窓ごとの集計値しか取れないため（docs/observability-grafana.md）。
+#            Workers の分位点は窓ごとの集計値しか取れないため（docs/ops/grafana.md）。
 
 locals {
   slo_labels = { team = "rimltools" }

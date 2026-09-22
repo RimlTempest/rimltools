@@ -12,7 +12,7 @@ import { makeD1SqlRunner } from '../server/sql.ts'
  * ここが無いと Google ログインは成立しない（docs/deployment.md）。
  *
  * D1 バインディングを Drizzle に渡す配線は、`D1Database` のグローバル型が
- * 見える apps/web 側のプログラム（= このルートファイル）で行う。
+ * 見える services/web 側のプログラム（= このルートファイル）で行う。
  */
 export const Route = createFileRoute('/api/auth/$')({
   server: {

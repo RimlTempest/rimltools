@@ -1,5 +1,5 @@
 # 本番（infra/grafana/datasources.tf）と同じ uid と相関の設定を、ローカルの LGTM に向けたもの。
-# ダッシュボード（observability/dashboards/*.json）は uid で data source を参照するので、
+# ダッシュボード（ops/dashboards/*.json）は uid で data source を参照するので、
 # ここの uid を変えるとダッシュボードが空になる。本番側を変えたらここも揃える。
 apiVersion: 1
 

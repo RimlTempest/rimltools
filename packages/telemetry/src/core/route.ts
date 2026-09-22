@@ -1,6 +1,6 @@
 /**
  * span 名・ルートに使うパスの正規化。ID を含むパスのままだと系列（カーディナリティ）が
- * 爆発し、Grafana Cloud Free の 10k series をすぐ使い切る（docs/observability.md）。
+ * 爆発し、Grafana Cloud Free の 10k series をすぐ使い切る（docs/ops/telemetry.md）。
  */
 
 // 数字を含む 8 文字以上の英数字（ULID・UUID・prefix 付き ID など）

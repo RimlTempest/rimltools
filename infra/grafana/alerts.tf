@@ -79,7 +79,7 @@ locals {
         severity = "warning"
         pending  = "0m"
         paused   = !var.metrics_push_enabled
-        summary  = "observability.yml の最終成功から 30 分以上経過。GitHub Actions を確認"
+        summary  = "ops-metrics.yml の最終成功から 30 分以上経過。GitHub Actions を確認"
         expr     = "(time() - max(rimltools_metrics_push_last_success_timestamp_seconds) > 1800) or absent(rimltools_metrics_push_last_success_timestamp_seconds)"
       },
     ],

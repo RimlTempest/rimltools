@@ -15,8 +15,8 @@ description: qrcc2 の構成と拡張手順。どこに何を置くか迷った�
 | 型・API 契約・`Result`             | `shared/contract` （実装依存ゼロ。誰もが import する） |
 | I/O のない TS ロジック             | `features/<name>/core`                                 |
 | 生成・デコード・PDF のアルゴリズム | `features/*/engine`（Rust）                            |
-| D1 / R2 / KV に触るコード          | `apps/api`（Rust）または `apps/web/src/server`         |
-| 画面                               | `apps/web/src/features/<feature>`                      |
+| D1 / R2 / KV に触るコード          | `services/api`（Rust）または `services/web/src/server`         |
+| 画面                               | `services/web/src/features/<feature>`                      |
 | 再利用する UI 部品                 | `shared/ui`                                            |
 | ブラウザで動かす Rust              | `shared/wasm/engine` → `shared/wasm/src`               |
 
@@ -30,7 +30,7 @@ description: qrcc2 の構成と拡張手順。どこに何を置くか迷った�
   時計・乱数・fetch・ストレージはすべて引数で受け取る。
 - `shared/kernel/engine|render|decode|print` は `worker` crate に依存しない
   （ブラウザ向けビルドが壊れる）。
-- `apps/api` の `wrangler.jsonc` に **`routes` を追加しない**。
+- `services/api` の `wrangler.jsonc` に **`routes` を追加しない**。
   公開すると認可が二重になり、権限昇格の穴になる（[ADR-0002](../../../docs/adr/0002-auxiliary-worker-split.md)）。
 - UI から `env` や service binding を直接触らない。必ず composition root 経由。
 
@@ -61,7 +61,7 @@ CI の `guard` ジョブがこれらを検査する。
 1. `shared/contract/src/payload.ts` の `CodePayload` union にメンバー追加
 2. `features/generate/core/payload/<kind>.ts` に `encode` / `parse` / `describe` を実装
 3. `features/generate/core/payload/registry.ts`（Mapped Type）に 1 行追加
-4. `apps/web/src/features/generate/payload-forms/<kind>.tsx` にフォームを追加
+4. `services/web/src/features/generate/payload-forms/<kind>.tsx` にフォームを追加
    （フォームもレジストリ引き）
 5. Small テスト: 正常系・境界値・エンコード後にデコードして元に戻ること
 
@@ -79,13 +79,13 @@ PDF ジェネレータも変更不要（[ADR-0005](../../../docs/adr/0005-pdf-an
 
 ### 新しいログイン方法を追加する
 
-Better Auth のプラグインを `apps/web/src/server/auth.ts` に追加し、
-必要なら `apps/api/migrations/` にマイグレーションを 1 本足す。
+Better Auth のプラグインを `services/web/src/server/auth.ts` に追加し、
+必要なら `services/api/migrations/` にマイグレーションを 1 本足す。
 アプリ本体のコードは変更しない（[ADR-0004](../../../docs/adr/0004-auth-guest-and-google.md)）。
 
 ### D1 に列を足す
 
-1. `apps/api/migrations/NNNN_<説明>.sql` を**追加**する（既存を編集しない）
+1. `services/api/migrations/NNNN_<説明>.sql` を**追加**する（既存を編集しない）
 2. 読み出し側のパース関数を更新し、**古い行でも壊れない**ようにする
    （新列は必ず nullable かデフォルト付き）
 3. ロールバック SQL は書かない（前方移行のみ運用）

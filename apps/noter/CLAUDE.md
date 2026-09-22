@@ -9,7 +9,7 @@ Rust は使わない。Bun workspaces の monorepo。
 ## 作業を始める前に読むもの
 
 `rimltools-*` と外部の skill（`better-interface` など）はリポジトリ直下の `.claude/skills/` に、
-noter 固有の skill（`noter-architecture` / `noter-conventions`）は `products/noter/.claude/skills/` にある。
+noter 固有の skill（`noter-architecture` / `noter-conventions`）は `apps/noter/.claude/skills/` にある。
 共通の規約とプロダクト固有の差分は必ず両方読む。ルートの `CLAUDE.md` も参照。
 
 | 状況                             | 読むスキル                                                |
@@ -51,8 +51,8 @@ bunx modern-web-guidance@latest retrieve "<id>"
 - **ドメイン層（`shared/contract` / `features/*/contract` / `features/*/core`）で
   `throw` しない。** 失敗は `Result<T, E>` で返す。
 - **依存（時計・乱数・fetch・D1・DO storage・WebSocket）は関数引数で受け取る。**
-  配線は composition root（`*-wiring.route.ts` と `apps/sync/src/index.ts`）だけ。
-- **`apps/sync` の `wrangler.jsonc` に `routes` を足さない。`workers_dev` を `true` にしない。**
+  配線は composition root（`*-wiring.route.ts` と `services/sync/src/index.ts`）だけ。
+- **`services/sync` の `wrangler.jsonc` に `routes` を足さない。`workers_dev` を `true` にしない。**
   DO が web Worker の binding 以外から届くと、認可が二重化して権限昇格の穴になる（ADR-0002）。
 - **Durable Object の中で `setTimeout` / `setInterval` / 標準 `WebSocket` API を使わない。**
   hibernation が効かなくなり duration 枠を食い潰す。遅延は `ctx.storage.setAlarm`（ADR-0003）。

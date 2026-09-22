@@ -2,14 +2,14 @@
 feat/shared-contract	-	shared/contract	Result・Brand・共通ID・エラー型。全レーンの先行条件
 feat/shared-kernel	feat/shared-contract	shared/kernel	Rust 共有プリミティブ (qrcc-kernel)。TS 側 contract と対になる
 feat/shared-ui	feat/shared-contract	shared/ui	デザイントークン・基本コンポーネント (WCAG AAA / ダークモード)
-feat/shell	feat/shared-ui	features/shell,apps/web	ルートドキュメント・レイアウト・ナビ・テーマ切替、apps/web の配線
+feat/shell	feat/shared-ui	features/shell,services/web	ルートドキュメント・レイアウト・ナビ・テーマ切替、services/web の配線
 feat/generate	feat/shared-kernel,feat/shared-ui	features/generate	生成: contract/core/ui/engine。QR・バーコードの詳細設定
 feat/scan	feat/generate	features/scan,e2e/tests/scan.spec.ts	読み取り: カメラ・画像読み込み・rxing デコーダ
 feat/print	feat/generate	features/print,e2e/tests/print.spec.ts	印刷: ラベル面付け・PDF 生成・台紙定義
-feat/auth	feat/shell	features/auth,apps/api/migrations,e2e/tests/auth.spec.ts	Better Auth によるゲスト/Googleログインとアカウント昇格
+feat/auth	feat/shell	features/auth,services/api/migrations,e2e/tests/auth.spec.ts	Better Auth によるゲスト/Googleログインとアカウント昇格
 feat/manage	feat/auth,feat/generate	features/manage,e2e/tests/manage.spec.ts	一覧・編集・共有・フォルダ管理
 feat/wasm-bridge	feat/generate	shared/wasm	ブラウザ向け wasm-bindgen バインディングと動的ロード
-feat/api-worker	feat/shared-kernel	apps/api	workers-rs の auxiliary Worker と D1 CRUD
+feat/api-worker	feat/shared-kernel	services/api	workers-rs の auxiliary Worker と D1 CRUD
 feat/share-view	feat/manage	features/manage/ui/shared,e2e/tests/shared.spec.ts	共有リンクの閲覧画面。サインイン不要で読めること
 feat/manage-polish	feat/manage	features/manage/ui,e2e/tests/manage.spec.ts	編集画面のプレビューとフォルダの改名・削除 UI
 chore/devops	-	.github,scripts,docs,e2e/smoke,e2e/playwright.prod.config.ts	CI/CD・デプロイ・運用ドキュメント

@@ -14,7 +14,7 @@ import type { SqlRow, SqlRunner, SqlStatement, SqlValue, StorageError } from '..
 const MIGRATIONS = ['0001_auth.sql', '0002_documents.sql']
 
 const migrationSql = (name: string): string =>
-  readFileSync(new URL(`../../../../apps/web/migrations/${name}`, import.meta.url), 'utf8')
+  readFileSync(new URL(`../../../../services/web/migrations/${name}`, import.meta.url), 'utf8')
 
 export const openTestDatabase = (): Database => {
   const database = new Database(':memory:')

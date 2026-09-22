@@ -4,7 +4,7 @@ export const qrcc: Tool = {
   name: 'qrcc',
   title: 'QR',
   description: 'd',
-  path: 'products/qrcc',
+  path: 'apps/qrcc',
   subdomain: 'qrcc',
   apex: false,
   listed: true,
@@ -13,21 +13,21 @@ export const qrcc: Tool = {
   legacyHosts: ['qrcc.example.com'],
   appSecrets: [],
   rust: true,
-  workers: [
+  services: [
     {
       name: 'qrcc-api',
       role: 'internal',
-      buildConfig: 'apps/web/dist/qrcc_api/wrangler.json',
+      buildConfig: 'services/web/dist/qrcc_api/wrangler.json',
       durableObjects: false,
     },
     {
       name: 'qrcc-web',
       role: 'public',
-      buildConfig: 'apps/web/dist/server/wrangler.json',
+      buildConfig: 'services/web/dist/server/wrangler.json',
       durableObjects: false,
     },
   ],
-  d1: [{ name: 'qrcc', binding: 'DB', migrationsConfig: 'apps/api/wrangler.jsonc' }],
+  d1: [{ name: 'qrcc', binding: 'DB', migrationsConfig: 'services/api/wrangler.jsonc' }],
   release: { mode: 'canary', steps: [10, 50, 100], bakeMinutes: 10 },
   slo: { availability: 99.5, windowDays: 28 },
   smoke: { cli: 'bun run smoke', browser: 'bun run smoke:browser', e2ePackage: '@qrcc/e2e' },
@@ -36,33 +36,33 @@ export const qrcc: Tool = {
 export const noter: Tool = {
   ...qrcc,
   name: 'noter',
-  path: 'products/noter',
+  path: 'apps/noter',
   subdomain: 'noter',
   host: 'noter.tools.example.com',
   stagingHost: 'noter-staging.tools.example.com',
   rust: false,
-  workers: [
+  services: [
     {
       name: 'noter-sync',
       role: 'internal',
-      buildConfig: 'apps/web/dist/noter_sync/wrangler.json',
+      buildConfig: 'services/web/dist/noter_sync/wrangler.json',
       durableObjects: true,
     },
     {
       name: 'noter-web',
       role: 'public',
-      buildConfig: 'apps/web/dist/server/wrangler.json',
+      buildConfig: 'services/web/dist/server/wrangler.json',
       durableObjects: false,
     },
   ],
-  d1: [{ name: 'noter', binding: 'DB', migrationsConfig: 'apps/web/wrangler.jsonc' }],
+  d1: [{ name: 'noter', binding: 'DB', migrationsConfig: 'services/web/wrangler.jsonc' }],
 }
 
 export const portal: Tool = {
   ...qrcc,
   name: 'portal',
   title: 'RimlTools',
-  path: 'products/portal',
+  path: 'apps/portal',
   subdomain: 'portal',
   apex: true,
   listed: false,
@@ -70,7 +70,7 @@ export const portal: Tool = {
   stagingHost: 'staging.tools.example.com',
   legacyHosts: [],
   rust: false,
-  workers: [
+  services: [
     {
       name: 'rimltools-portal',
       role: 'public',

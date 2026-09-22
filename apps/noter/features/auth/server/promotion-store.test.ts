@@ -17,7 +17,7 @@ const GUEST = asUserId('usr_0123456789abcdefghjkmnpq')
 const GOOGLE = asUserId('usr_qpnmkjhgfedcba9876543210')
 const OTHER = asUserId('usr_2222222222222222222222zz')
 
-const MIGRATION = join(import.meta.dir, '../../../apps/web/migrations/0001_auth.sql')
+const MIGRATION = join(import.meta.dir, '../../../services/web/migrations/0001_auth.sql')
 
 /**
  * 本物の SQLite に本物のマイグレーションを当てて動かす（Medium テスト）。

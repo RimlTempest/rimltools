@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { env } from 'cloudflare:workers'
 import { FILE_EXTENSION, MIME_TYPE, parseDocumentId } from '@noter/contract'
-import { makeContainer } from '../../../apps/web/src/server/container.ts'
+import { makeContainer } from '../../../services/web/src/server/container.ts'
 
 /**
  * `/d/:id/raw`（docs/realtime-protocol.md §6）。

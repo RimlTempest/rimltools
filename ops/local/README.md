@@ -16,10 +16,10 @@ Worker（wrangler / vite dev）─ OTLP/HTTP ─▶ :4318 ─┘   ├ OTel Coll
 ## 起動と確認
 
 ```bash
-docker compose -f observability/local/compose.yaml up -d   # colima 等で docker-compose なら docker-compose -f ...
-bun scripts/observability/local-smoke.ts                   # trace / log / span metrics / recording rule / Faro を確かめる
+docker compose -f ops/local/compose.yaml up -d   # colima 等で docker-compose なら docker-compose -f ...
+bun scripts/ops/local-smoke.ts                   # trace / log / span metrics / recording rule / Faro を確かめる
 open http://127.0.0.1:3000                                  # 匿名で閲覧できる（Explore も可）。編集は admin / admin
-docker compose -f observability/local/compose.yaml down -v  # 片付け（-v でデータも消す）
+docker compose -f ops/local/compose.yaml down -v  # 片付け（-v でデータも消す）
 ```
 
 ## アプリから送る
@@ -42,7 +42,7 @@ docker compose -f observability/local/compose.yaml down -v  # 片付け（-v で
 ## 本番との違い
 
 - **メトリクス**: 本番は Cloudflare GraphQL の値を `rimltools_worker_*` として Mimir に送る
-  （`scripts/observability/push-metrics.ts`）。ローカルには GraphQL が無いので、Tempo の span metrics
+  （`scripts/ops/push-metrics.ts`）。ローカルには GraphQL が無いので、Tempo の span metrics
   から同じ名前・同じラベルの系列を recording rule で作る（`prometheus/recording-rules.yaml`）。
   `environment` は常に `local`。CPU 時間（`rimltools_worker_cpu_time_ms`）は span に無いので作らず、
   そのパネルは空になる。wall time の分位点は、5 分窓に 2 本以上のリクエストが来てから値が出る

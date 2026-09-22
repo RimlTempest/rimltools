@@ -26,15 +26,15 @@ describe('findVersionProblems', () => {
   test('reports the same package pinned to different versions, with who uses which', () => {
     const problems = findVersionProblems(
       [
-        manifest('products/qrcc', { dependencies: { 'better-auth': '1.7.2' } }),
-        manifest('products/noter', { dependencies: { 'better-auth': '1.7.3' } }),
+        manifest('apps/qrcc', { dependencies: { 'better-auth': '1.7.2' } }),
+        manifest('apps/noter', { dependencies: { 'better-auth': '1.7.3' } }),
       ],
       new Map([['better-auth', ['1.7.2', '1.7.3']]]),
     )
     expect(problems).toContainEqual({
       kind: 'pinned-drift',
       name: 'better-auth',
-      detail: '1.7.2 (products/qrcc), 1.7.3 (products/noter)',
+      detail: '1.7.2 (apps/qrcc), 1.7.3 (apps/noter)',
     })
   })
 

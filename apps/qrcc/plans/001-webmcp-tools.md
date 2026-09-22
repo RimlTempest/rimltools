@@ -314,7 +314,7 @@ await document.modelContext.registerTool(
   画面を触ろうとすると状態のリフトアップが必要になり、この計画の範囲を超える。
 - `features/manage/**` — 保存・一覧・共有はツールにしない。認証が要り、
   D1 書き込みと Worker リクエストが発生して無料枠を消費する（オーナーの決定）。
-- `apps/api/**`、`apps/web/wrangler.jsonc` — WebMCP は完全に client-side。
+- `services/api/**`、`services/web/wrangler.jsonc` — WebMCP は完全に client-side。
   サーバ側の変更は一切不要。
 - Origin Trial トークンの meta タグやヘッダ — 今回は登録しない（オーナーの決定）。
 - `webmcp-types` npm パッケージの追加 — 0.x で変動が激しいため、
@@ -636,7 +636,7 @@ covering:
   この計画からは意図的に外してある。
 - **Origin Trial トークンを後から入れる場合**は、`features/shell/ui/root-document.tsx`
   の `<head>` に `<meta http-equiv="origin-trial" content="…">` を足すか、
-  `apps/web/wrangler.jsonc` で `Origin-Trial` ヘッダを返す。トークンは
+  `services/web/wrangler.jsonc` で `Origin-Trial` ヘッダを返す。トークンは
   オリジンごと・期限つきで、失効すると静かに無効になるので、
   入れるなら失効日を運用メモに残すこと。
 - **レビューで特に見るべき点**: 読み取りツールが `data:` 以外を絶対に受け付けない

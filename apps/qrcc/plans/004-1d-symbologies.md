@@ -171,7 +171,7 @@ TS が組み立てる `RenderRequest` の JSON と、Rust が読む形が一致�
 
 ```bash
 bun run build
-find apps/web/dist/client -name 'qrcc_wasm_bg*.wasm' -exec gzip -c {} + | wc -c
+find services/web/dist/client -name 'qrcc_wasm_bg*.wasm' -exec gzip -c {} + | wc -c
 # 200000 未満であること
 ```
 
@@ -256,7 +256,7 @@ find apps/web/dist/client -name 'qrcc_wasm_bg*.wasm' -exec gzip -c {} + | wc -c
 
 ```bash
 bun run build
-find apps/web/dist/client -name 'qrcc_wasm_bg*.wasm' -exec gzip -c {} + | wc -c
+find services/web/dist/client -name 'qrcc_wasm_bg*.wasm' -exec gzip -c {} + | wc -c
 ```
 
 **200,000 未満であること。** 着手前は 86,756 だった。

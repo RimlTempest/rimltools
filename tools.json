@@ -7,28 +7,28 @@
       "name": "qrcc",
       "title": "QR・バーコード",
       "description": "QR・バーコードの生成 / 読み取り / 管理 / 印刷",
-      "path": "products/qrcc",
+      "path": "apps/qrcc",
       "subdomain": "qrcc",
       "legacyHosts": ["qrcc.riml4i.com"],
       "appSecrets": ["BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
       "rust": true,
-      "workers": [
+      "services": [
         {
           "name": "qrcc-api",
           "role": "internal",
-          "buildConfig": "apps/web/dist/qrcc_api/wrangler.json"
+          "buildConfig": "services/web/dist/qrcc_api/wrangler.json"
         },
         {
           "name": "qrcc-web",
           "role": "public",
-          "buildConfig": "apps/web/dist/server/wrangler.json"
+          "buildConfig": "services/web/dist/server/wrangler.json"
         }
       ],
       "d1": [
         {
           "name": "qrcc",
           "binding": "DB",
-          "migrationsConfig": "apps/api/wrangler.jsonc"
+          "migrationsConfig": "services/api/wrangler.jsonc"
         }
       ],
       "release": {
@@ -50,29 +50,29 @@
       "name": "noter",
       "title": "noter",
       "description": "リアルタイム共同編集エディタ",
-      "path": "products/noter",
+      "path": "apps/noter",
       "subdomain": "noter",
       "legacyHosts": ["noter.riml4i.com"],
       "appSecrets": ["BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
       "rust": false,
-      "workers": [
+      "services": [
         {
           "name": "noter-sync",
           "role": "internal",
           "durableObjects": true,
-          "buildConfig": "apps/web/dist/noter_sync/wrangler.json"
+          "buildConfig": "services/web/dist/noter_sync/wrangler.json"
         },
         {
           "name": "noter-web",
           "role": "public",
-          "buildConfig": "apps/web/dist/server/wrangler.json"
+          "buildConfig": "services/web/dist/server/wrangler.json"
         }
       ],
       "d1": [
         {
           "name": "noter",
           "binding": "DB",
-          "migrationsConfig": "apps/web/wrangler.jsonc"
+          "migrationsConfig": "services/web/wrangler.jsonc"
         }
       ],
       "release": {
@@ -94,13 +94,13 @@
       "name": "portal",
       "title": "RimlTools",
       "description": "ツール一覧（tools.riml4i.com）",
-      "path": "products/portal",
+      "path": "apps/portal",
       "subdomain": "portal",
       "apex": true,
       "listed": false,
       "legacyHosts": [],
       "rust": false,
-      "workers": [
+      "services": [
         {
           "name": "rimltools-portal",
           "role": "public",

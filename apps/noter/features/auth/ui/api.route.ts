@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 // `cloudflare:workers` は Workers ランタイムの組み込みモジュール（vite.config.ts で external）
 import { env } from 'cloudflare:workers'
-import { makeContainer } from '../../../apps/web/src/server/container.ts'
+import { makeContainer } from '../../../services/web/src/server/container.ts'
 
 /**
  * Better Auth の HTTP エンドポイント（`/api/auth/*`）。

@@ -3,7 +3,7 @@ resolver = "3"
 # 機能ごとに co-location しているため、Rust crate も feature ディレクトリの中にある。
 # 規約:
 #   features/<name>/engine … 純粋 Rust。`worker` crate に依存しない（ブラウザ wasm にも載る）
-#   features/<name>/worker … I/O アダプタ。`worker` 依存可。apps/api からのみ使う
+#   features/<name>/worker … I/O アダプタ。`worker` 依存可。services/api からのみ使う
 #   shared/<name>/engine   … 全 feature が使う共有 Rust
 members = [
   "shared/*/engine",
@@ -11,7 +11,7 @@ members = [
   # features/*/worker は最初の 1 つを作るときにここへ追加する
   # （Cargo は一致しない glob をエラーにするため、事前登録できない）
   "features/*/worker",
-  "apps/api",
+  "services/api",
 ]
 
 [workspace.package]
@@ -61,7 +61,7 @@ worker = "0.8"
 console_error_panic_hook = "0.1"
 
 # ドメイン crate はパニックしない。opt-in は各 crate の [lints] workspace = true。
-# apps/api は worker マクロの展開に unwrap が含まれるため opt-in しない。
+# services/api は worker マクロの展開に unwrap が含まれるため opt-in しない。
 [workspace.lints.clippy]
 unwrap_used = "deny"
 expect_used = "deny"

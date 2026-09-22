@@ -6,7 +6,7 @@
  * 知らず、操作を props で受け取るだけなのでルータ抜きでテストできる。
  *
  * `*.route.*` は feature に co-location された**アプリ側の配線**なので、
- * composition root（`apps/web/src/server/container.ts`）を直接使ってよい。
+ * composition root（`services/web/src/server/container.ts`）を直接使ってよい。
  * feature 本体（contract / core / server / 画面）はここを import しない。
  */
 import { createServerFn } from '@tanstack/react-start'
@@ -40,7 +40,7 @@ import {
 } from '@noter/documents/contract'
 import type { DocumentService } from '@noter/documents/server'
 import type { Actor } from '@noter/auth/contract'
-import { makeContainer } from '../../../apps/web/src/server/container.ts'
+import { makeContainer } from '../../../services/web/src/server/container.ts'
 
 const NOT_FOUND: DocumentError = { kind: 'not_found' }
 const UNAVAILABLE: DocumentError = {

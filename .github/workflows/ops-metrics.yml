@@ -1,4 +1,4 @@
-name: Observability
+name: Ops metrics
 
 # Cloudflare の GraphQL Analytics（Workers / D1）を Grafana Cloud（Mimir）へ転送する（ADR-0008）。
 # Workers は metrics を OTLP で export できないため、5 分ごとにここで補う。
@@ -42,4 +42,4 @@ jobs:
           GRAFANA_METRICS_PUSH_USER: ${{ secrets.GRAFANA_METRICS_PUSH_USER }}
           GRAFANA_METRICS_PUSH_TOKEN: ${{ secrets.GRAFANA_METRICS_PUSH_TOKEN }}
           D1_DATABASE_NAMES: ${{ vars.D1_DATABASE_NAMES }}
-        run: bun scripts/observability/push-metrics.ts
+        run: bun scripts/ops/push-metrics.ts

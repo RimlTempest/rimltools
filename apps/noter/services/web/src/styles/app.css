@@ -1,7 +1,7 @@
 /*
  * アプリのスタイルの組み立て。ここが feature を横断する唯一の CSS。
  *
- * `apps/web/src/routes.ts`（URL 構造）と同じ考え方で、
+ * `services/web/src/routes.ts`（URL 構造）と同じ考え方で、
  * 新しい画面を足すレーンは @import を 1 行追記する（append-only）。
  *
  * カスケードレイヤの順序は `@noter/ui` が宣言している。

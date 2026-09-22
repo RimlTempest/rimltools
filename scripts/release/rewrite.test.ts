@@ -175,7 +175,7 @@ describe('parseJsonc', () => {
     expect(parseJsonc('{ "a": ').ok).toBe(false)
   })
 
-  test('fills telemetry vars for workers that declare them (docs/observability.md)', () => {
+  test('fills telemetry vars for workers that declare them (docs/ops/telemetry.md)', () => {
     const result = rewriteConfig(webConfig, {
       tool: qrcc,
       env: staging,

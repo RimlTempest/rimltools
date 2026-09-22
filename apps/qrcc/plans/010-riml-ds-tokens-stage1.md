@@ -4,7 +4,7 @@
 **計画時の main**: `c2d4e3b`
 
 > **Drift check（最初に実行）**:
-> `git diff --stat c2d4e3b..HEAD -- shared/ui apps/web/src/styles features/*/ui/*.css scripts/lanes.tsv`
+> `git diff --stat c2d4e3b..HEAD -- shared/ui services/web/src/styles features/*/ui/*.css scripts/lanes.tsv`
 > 差分が出たら内容を読む。`shared/ui/src/styles/tokens.css` に新しい `--qrcc-*` が増えていたら、Step 3 の表に**同じ規則で**行を足してから進める。
 
 ## なぜ
@@ -157,7 +157,7 @@ const KEPT_LOCAL: readonly string[] = [
 
 const appCssFiles = (): readonly string[] =>
   [
-    ...new Glob('{shared/ui/src,features/*/ui,apps/web/src}/**/*.css').scanSync(root.pathname),
+    ...new Glob('{shared/ui/src,features/*/ui,services/web/src}/**/*.css').scanSync(root.pathname),
   ].toSorted()
 
 describe('デザイントークンは riml-ds の別名', () => {
@@ -270,8 +270,8 @@ describe('デザイントークンは riml-ds の別名', () => {
 **Verify**:
 
 - `bun test shared/ui/src/styles` → 5 passed
-- `bun run --filter '@qrcc/web' build` → exit 0。`grep -c -- '--rd-color-palette-accent-600' apps/web/dist/client/assets/*.css` → 1 以上
-  （vite が `@import` を解決して 1 枚に畳んでいる）。`grep -c 'rd-color-surface-default' apps/web/dist/client/assets/*.css` → 1 以上
+- `bun run --filter '@qrcc/web' build` → exit 0。`grep -c -- '--rd-color-palette-accent-600' services/web/dist/client/assets/*.css` → 1 以上
+  （vite が `@import` を解決して 1 枚に畳んでいる）。`grep -c 'rd-color-surface-default' services/web/dist/client/assets/*.css` → 1 以上
 - `bun run dev` を起こしてトップを開き（Playwright を使ってよい）、ライト・ダークで背景と本文とボタンの色が付いていることをスクリーンショットで確認する
   （目視用。真っ白・真っ黒・透明ボタンになっていたら `@import` の順序か `file:` の解決を疑う）
 
@@ -341,18 +341,18 @@ Web Components + 各フレームワークのラッパー）に集め、アプリ
 
 ## Done criteria
 
-| コマンド                                                                  | 期待                                                   |
-| ------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `bun install --frozen-lockfile`                                           | exit 0                                                 |
-| `bun run check`                                                           | exit 0                                                 |
-| `bun test shared/ui/src/styles`                                           | 5 passed                                               |
-| `bun run test`                                                            | 全 green（既存 + 5）                                   |
-| `bun run --filter '@qrcc/web' build`                                      | exit 0                                                 |
-| `grep -c 'rd-color-palette-accent-600' apps/web/dist/client/assets/*.css` | ≥ 1                                                    |
-| `grep -c 'oklch(' shared/ui/src/styles/tokens.css`                        | 0                                                      |
-| `bun run a11y`                                                            | 全 green                                               |
-| `git diff --stat main..HEAD -- features apps/web/src`                     | 空（アプリの CSS / TSX は触っていない）                |
-| `command ls vendor/riml-ds`                                               | `SOURCE` と `rimltempest-riml-ds-tokens-*.tgz` の 2 つ |
+| コマンド                                                                      | 期待                                                   |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `bun install --frozen-lockfile`                                               | exit 0                                                 |
+| `bun run check`                                                               | exit 0                                                 |
+| `bun test shared/ui/src/styles`                                               | 5 passed                                               |
+| `bun run test`                                                                | 全 green（既存 + 5）                                   |
+| `bun run --filter '@qrcc/web' build`                                          | exit 0                                                 |
+| `grep -c 'rd-color-palette-accent-600' services/web/dist/client/assets/*.css` | ≥ 1                                                    |
+| `grep -c 'oklch(' shared/ui/src/styles/tokens.css`                            | 0                                                      |
+| `bun run a11y`                                                                | 全 green                                               |
+| `git diff --stat main..HEAD -- features services/web/src`                     | 空（アプリの CSS / TSX は触っていない）                |
+| `command ls vendor/riml-ds`                                                   | `SOURCE` と `rimltempest-riml-ds-tokens-*.tgz` の 2 つ |
 
 ## STOP 条件
 

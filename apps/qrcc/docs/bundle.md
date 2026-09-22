@@ -10,10 +10,10 @@ wasm の予算（ADR-0003: ブラウザの生成 gzip 200 KB / デコード gzip
 ## 計測のしかた
 
 ```bash
-cd products/qrcc
+cd apps/qrcc
 QRCC_BUNDLE_ANALYZE=1 bun run build          # sourcemap を出す（本番のビルドには出さない）
 bun ../../scripts/bundle-budget.ts .         # 予算に対する合計と、大きいファイル
-bun ../../scripts/bundle-report.ts apps/web/dist/server 20   # JS をパッケージ別に按分（wasm は含まない）
+bun ../../scripts/bundle-report.ts services/web/dist/server 20   # JS をパッケージ別に按分（wasm は含まない）
 ```
 
 `bundle-report.ts` は sourcemap の文字数比で gzip サイズを按分した**推定値**。
@@ -38,7 +38,7 @@ bun ../../scripts/bundle-report.ts apps/web/dist/server 20   # JS をパッケ�
 呼ばれた場合は拒否された Promise を返し、`makeWasmRenderer` / `makeWasmDecoder` が `wasm_unavailable` にする
 （呼び出し側の扱いは変わらない）。ブラウザに配信する wasm は変わらない（`dist/client` にそのまま残る）。
 
-noter の Mermaid / CodeMirror と同じ型の問題（`products/noter/docs/bundle.md`）。
+noter の Mermaid / CodeMirror と同じ型の問題（`apps/noter/docs/bundle.md`）。
 
 ## 変更後の内訳（JS、上位 20）
 

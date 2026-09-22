@@ -3,7 +3,7 @@
  *
  * 画面（server function / server route）はここを呼ぶだけで、権限表も上限も
  * 知らない。判定は `can(role, action)` 1 枚（ADR-0011）で、`/ws/` の認可
- * （`apps/web/src/server/ws-authorize.ts`）と同じ関数を通る。
+ * （`services/web/src/server/ws-authorize.ts`）と同じ関数を通る。
  *
  * I/O は `DocumentServiceDeps` として引数で受け取る。時計も乱数も
  * Durable Object への呼び出しも、この層では作らない。

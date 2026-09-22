@@ -16,7 +16,7 @@ import { authSchema } from './schema.ts'
  * Google の新規サインインとゲストの昇格（どちらも account を作る）が失敗する。
  * e2e はゲストのサインインしか通らないので、account の作成はここで確かめる。
  */
-const MIGRATIONS_DIR = join(import.meta.dir, '../../../apps/api/migrations')
+const MIGRATIONS_DIR = join(import.meta.dir, '../../../services/api/migrations')
 
 const migratedDatabase = (): Database => {
   const sqlite = new Database(':memory:')

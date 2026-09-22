@@ -16,7 +16,7 @@ test.beforeAll(async ({ request }) => {
   const response = await request.get('/api/auth/get-session')
   expect(
     response.ok(),
-    'ローカルの D1 が未準備です。`cd apps/web && bunx wrangler d1 migrations apply qrcc --local` を実行してください。',
+    'ローカルの D1 が未準備です。`cd services/web && bunx wrangler d1 migrations apply qrcc --local` を実行してください。',
   ).toBe(true)
 })
 

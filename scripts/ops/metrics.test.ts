@@ -28,7 +28,7 @@ const registry: Registry = {
       name: 'qrcc',
       title: 'QR',
       description: 'd',
-      path: 'products/qrcc',
+      path: 'apps/qrcc',
       subdomain: 'qrcc',
       apex: false,
       listed: true,
@@ -37,7 +37,7 @@ const registry: Registry = {
       legacyHosts: [],
       appSecrets: [],
       rust: true,
-      workers: [
+      services: [
         { name: 'qrcc-api', role: 'internal', buildConfig: 'a', durableObjects: false },
         { name: 'qrcc-web', role: 'public', buildConfig: 'b', durableObjects: false },
       ],

@@ -9,4 +9,4 @@ qrcc と noter で同じ決定をしていたため、本文はルートの ADR 
 ## noter 固有の補足
 
 - エディタ画面は SSR の後にクライアントが WebSocket を張って初めて意味を持つ。サーバでレンダリングする価値があるのはシェルとホーム一覧だけ
-- `apps/web/src/server.ts` のカスタム server entry（WS 中継）は RSC と無関係に動く
+- `services/web/src/server.ts` のカスタム server entry（WS 中継）は RSC と無関係に動く

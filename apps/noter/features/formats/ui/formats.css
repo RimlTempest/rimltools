@@ -1,7 +1,7 @@
 /*
  * プレビューの見た目。
  *
- * `apps/web/src/styles/app.css` から `layer(components)` で読み込む前提なので、
+ * `services/web/src/styles/app.css` から `layer(components)` で読み込む前提なので、
  * このファイル自身は `@layer` を宣言しない（`@noter/ui` の順序に従う）。
  * 色・寸法はセマンティックトークンだけを参照する。
  */

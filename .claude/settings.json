@@ -40,7 +40,7 @@
       "Bash(wrangler secret:*)",
       "Bash(bunx wrangler secret:*)",
       "Bash(wrangler d1 execute:*--remote*)",
-      "Read(./apps/web/.dev.vars)",
+      "Read(./services/web/.dev.vars)",
       "Read(./.dev.vars)",
       "Read(./**/.env)"
     ]

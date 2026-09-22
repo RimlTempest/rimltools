@@ -23,4 +23,4 @@ minimumReleaseAgeExcludes = ["@rimltempest/riml-ds-css", "@rimltempest/riml-ds-t
 # マルウェア・typosquat・難読化などを検査し、fatal なら install を止める。
 scanner = "@socketsecurity/bun-security-scanner"
 
-# [test] はプロダクトごとに products/<name>/bunfig.toml に置く（preload が cwd 基準のため）。
+# [test] はプロダクトごとに apps/<name>/bunfig.toml に置く（preload が cwd 基準のため）。

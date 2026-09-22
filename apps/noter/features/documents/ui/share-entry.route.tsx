@@ -4,7 +4,7 @@ import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
 import { parseShareTokenInput } from '@noter/documents/contract'
 import { ShareEntryScreen } from '@noter/documents/ui'
-import { makeContainer } from '../../../apps/web/src/server/container.ts'
+import { makeContainer } from '../../../services/web/src/server/container.ts'
 
 type JoinResult = { readonly documentId: string | undefined }
 

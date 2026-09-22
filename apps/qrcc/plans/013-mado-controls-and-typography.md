@@ -208,7 +208,7 @@ green: 設計どおりに。`manage.css` の `.qrcc-manage-undo` を消す（gre
 red: `shared/ui/src/styles/tokens.test.ts` の `KEPT_LOCAL` を `['--qrcc-measure']` に → 落ちる。
 `shared/ui/src/styles/mado.test.ts` に「`index.css` が `typography.css` と `atoms.css` を import している」を足す → 落ちる。
 
-green: `index.css` / `base.css` / `tokens.css` を設計どおりに。`grep -rn -- '--qrcc-text-\(base\|lg\|xl\|2xl\)' shared features apps/web/src` が 0 件。
+green: `index.css` / `base.css` / `tokens.css` を設計どおりに。`grep -rn -- '--qrcc-text-\(base\|lg\|xl\|2xl\)' shared features services/web/src` が 0 件。
 
 ### Step 5 — 実ブラウザ（`test(e2e): window controls and dialog chrome`）
 
@@ -227,7 +227,7 @@ green: `index.css` / `base.css` / `tokens.css` を設計どおりに。`grep -rn
 - `bun run check` exit 0、`bun run test` 全 pass、`bun run a11y` 全 pass
 - `grep -rn 'rd-window-title' shared/ui/src/components/window.tsx` の見出し行に `data-tone` が無い。`grep -c 'rd-window-bar' shared/ui/src/components/window.tsx` ≥ 1
 - `grep -rn 'qrcc-manage-undo' features shared` が 0 件
-- `grep -rn -- '--qrcc-text-\(base\|lg\|xl\|2xl\)' shared features apps/web/src` が 0 件
+- `grep -rn -- '--qrcc-text-\(base\|lg\|xl\|2xl\)' shared features services/web/src` が 0 件
 - `grep -c "typography.css\|atoms.css" shared/ui/src/styles/index.css` が 2
 - `grep -n 'aria-labelledby' features/manage/ui/shared/shared-code-screen.tsx` が 0 件（`<Window>` が持つ）
 - `git diff --name-only 6c84985...HEAD` が触ってよいパスに収まる（`bash scripts/guard.sh` があればそれで）

@@ -49,7 +49,7 @@ Workers Free の上限は**アカウント全体**の日次合計（00:00 UTC �
 
 > Durable Objects（noter-sync）のリクエスト・行書き込みはまだ集計していない
 > （`durableObjectsInvocationsAdaptiveGroups` を足すのが次の一手）。noter 側の見方は
-> `products/noter/docs/free-tier-budget.md` §5。
+> `apps/noter/docs/free-tier-budget.md` §5。
 
 ## 監視自体のコスト
 

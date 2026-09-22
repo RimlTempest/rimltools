@@ -3,7 +3,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
 import { useState } from 'react'
-// ルートは apps/web 側の配線なので、feature の公開サブパス越しに使う。
+// ルートは services/web 側の配線なので、feature の公開サブパス越しに使う。
 // routeTree.gen.ts が loader の型を書けるようにするため（相対パスだと名前を付けられない）
 import type { ActorWire } from '@qrcc/auth/contract'
 import { parseActorWire } from '@qrcc/auth/contract'

@@ -109,8 +109,8 @@ features/documents   @noter/documents  contract / core / server / ui  … D1: �
 features/sync        @noter/sync       contract / core / worker / client … DO Room ロジックと provider
 features/editor      @noter/editor     core / ui … CodeMirror・presence・状態表示
 features/formats     @noter/formats    core / ui … 解析・診断・整形・プレビュー（Mermaid）
-apps/web             @noter/web        TanStack Start エントリ、`src/server.ts`（/ws 横取り）、migrations
-apps/sync            @noter/sync-worker Worker エントリ（DO class を re-export するだけ）
+services/web             @noter/web        TanStack Start エントリ、`src/server.ts`（/ws 横取り）、migrations
+services/sync            @noter/sync-worker Worker エントリ（DO class を re-export するだけ）
 e2e                  @noter/e2e        Playwright（同時編集・a11y・smoke）
 tools/               oxlint plugin / markuplint（TS 6 隔離）
 scripts/             wt.sh / lanes.tsv / smoke.ts
@@ -131,7 +131,7 @@ feature 間は `@noter/<name>/<subpath>` のみ（[ADR-0007](adr/0007-feature-co
 | `/sign-in`           | page             | auth         | Google ログイン / ゲストのまま続ける                     |
 | `/settings/account`  | page             | auth         | アカウント連携・表示名                                   |
 | `/api/auth/*`        | handler          | auth         | Better Auth                                              |
-| `/ws/:documentId`    | **server entry** | apps/web     | WebSocket Upgrade。ルータを通さず `src/server.ts` で処理 |
+| `/ws/:documentId`    | **server entry** | services/web | WebSocket Upgrade。ルータを通さず `src/server.ts` で処理 |
 
 ## 9. 変更するときの入口
 

@@ -1,8 +1,8 @@
 /**
  * Cloudflare GraphQL → Grafana Cloud（OTLP metrics）への転送（ADR-0008）。
- * `.github/workflows/observability.yml` が 5 分ごとに実行する。
+ * `.github/workflows/ops-metrics.yml` が 5 分ごとに実行する。
  *
- *   bun scripts/observability/push-metrics.ts [--dry-run]
+ *   bun scripts/ops/push-metrics.ts [--dry-run]
  *
  * 環境変数:
  *   CLOUDFLARE_ANALYTICS_TOKEN / CLOUDFLARE_ACCOUNT_ID  … Account Analytics: Read だけのトークン

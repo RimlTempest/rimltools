@@ -35,7 +35,7 @@ Google アカウントに引き継げないと困る。
 
 ## 帰結
 
-- D1 に `user` / `session` / `account` / `verification` が増える（`apps/web/migrations/0001_auth.sql`）
+- D1 に `user` / `session` / `account` / `verification` が増える（`services/web/migrations/0001_auth.sql`）
 - 移譲は `document.owner_id` と `document_member.user_id` の両方を書き換える。
   移譲済みかどうかは `user.promoted_from` 列で判定し、二重移譲を防ぐ
 - 共有リンク経由のゲストは 1 端末 1 ユーザー。別端末で開くと別ゲストになる

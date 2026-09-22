@@ -42,7 +42,7 @@ playwright-report/
 LANE.md
 
 # tanstack / wrangler generated
-apps/web/src/routeTree.gen.ts
+services/web/src/routeTree.gen.ts
 apps/*/build/
 
 # archify visual-check の副産物

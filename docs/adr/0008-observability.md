@@ -15,15 +15,15 @@
 
 **Grafana Cloud Free** を使い、Grafana 側の設定はすべて `infra/grafana`（Terraform）で持つ。
 
-| 信号                        | 送り方                                                                                                      | 保存先       |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
-| traces                      | Worker 内の軽量 OTLP/JSON 送信（`@rimltools/telemetry`、tail sampling）                                     | Tempo        |
-| logs                        | 同上（`trace_id` / `span_id` 付き）                                                                         | Loki         |
-| metrics（Workers / D1）     | GitHub Actions の cron が Cloudflare GraphQL を読み、OTLP で送る（`scripts/observability/push-metrics.ts`） | Mimir        |
-| metrics（エンドポイント別） | Tempo の metrics-generator（span metrics / service graph）                                                  | Mimir        |
-| 実利用者（Web Vitals など） | Grafana Faro Web SDK                                                                                        | Loki / Tempo |
-| 外形監視                    | Grafana Synthetic Monitoring（HTTP、1 probe・5 分間隔）                                                     | Mimir        |
-| オンコール                  | Grafana Cloud IRM（Free は 3 ユーザー）                                                                     | —            |
+| 信号                        | 送り方                                                                                            | 保存先       |
+| --------------------------- | ------------------------------------------------------------------------------------------------- | ------------ |
+| traces                      | Worker 内の軽量 OTLP/JSON 送信（`@rimltools/telemetry`、tail sampling）                           | Tempo        |
+| logs                        | 同上（`trace_id` / `span_id` 付き）                                                               | Loki         |
+| metrics（Workers / D1）     | GitHub Actions の cron が Cloudflare GraphQL を読み、OTLP で送る（`scripts/ops/push-metrics.ts`） | Mimir        |
+| metrics（エンドポイント別） | Tempo の metrics-generator（span metrics / service graph）                                        | Mimir        |
+| 実利用者（Web Vitals など） | Grafana Faro Web SDK                                                                              | Loki / Tempo |
+| 外形監視                    | Grafana Synthetic Monitoring（HTTP、1 probe・5 分間隔）                                           | Mimir        |
+| オンコール                  | Grafana Cloud IRM（Free は 3 ユーザー）                                                           | —            |
 
 - 相関: Mimir の exemplar → Tempo、Tempo → Loki（同じ trace_id）/ Mimir（span metrics）、Loki → Tempo。
   自前の data source（`rt-mimir` / `rt-loki` / `rt-tempo`）に設定し、ダッシュボードはこの 3 つだけを使う。
@@ -33,7 +33,7 @@
 - Workers Paid に移ったら、traces / logs は Workers 標準の OTLP export（`observability.traces.destinations`）に
   切り替えられる。送り先と属性（`service.name` など）を同じにしてあるので、ダッシュボードとアラートはそのまま使える。
 
-## 無料枠の試算（docs/observability-grafana.md §無料枠）
+## 無料枠の試算（docs/ops/grafana.md §無料枠）
 
 | 項目             | 上限（Free）        | 見積もり                                                          | 割合  |
 | ---------------- | ------------------- | ----------------------------------------------------------------- | ----- |

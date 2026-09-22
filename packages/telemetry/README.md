@@ -1,7 +1,7 @@
 # @rimltools/telemetry
 
 Workers（Free プラン）向けの軽量な OTLP/JSON 送信と、ブラウザ向けの Grafana Faro の薄いラッパ。
-仕様・設定・相関の約束は [`docs/observability.md`](../../docs/observability.md)。
+仕様・設定・相関の約束は [`docs/ops/telemetry.md`](../../docs/ops/telemetry.md)。
 
 | サブパス                       | 用途                                                                      |
 | ------------------------------ | ------------------------------------------------------------------------- |

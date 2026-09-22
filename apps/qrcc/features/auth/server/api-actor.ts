@@ -1,7 +1,7 @@
 /**
  * qrcc-api を呼ぶときの `actor`（ADR-0002）と、環境変数の読み出し。
  *
- * `apps/web/src/server/api-client.ts` の `CallOptions.actor` は
+ * `services/web/src/server/api-client.ts` の `CallOptions.actor` は
  * **検証済みの `UserId`** しか受け取らない。未ログインではキーごと落とす
  * （`exactOptionalPropertyTypes` なので `undefined` を入れられない）。
  *

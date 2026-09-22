@@ -19,7 +19,7 @@ export { referencedAssets } from '../../../scripts/smoke/page.ts'
 export type SmokeResult = PageSmoke & {
   /**
    * `/ws/:documentId` を **Upgrade ヘッダ無しで** GET したときの状態コード。
-   * 426 が正解（`apps/web/src/server/ws-gate.ts`）。
+   * 426 が正解（`services/web/src/server/ws-gate.ts`）。
    */
   readonly wsProbe: number
 }

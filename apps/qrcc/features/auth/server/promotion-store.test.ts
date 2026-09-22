@@ -7,7 +7,7 @@ import { ok, parseUserId } from '@qrcc/contract'
 import type { SqlRow, SqlRunner, SqlStatement, SqlValue } from './sql.ts'
 import { makePromotionStore } from './promotion-store.ts'
 
-const MIGRATIONS_DIR = join(import.meta.dir, '../../../apps/api/migrations')
+const MIGRATIONS_DIR = join(import.meta.dir, '../../../services/api/migrations')
 
 const asUserId = (value: string): UserId => {
   const parsed = parseUserId(value)

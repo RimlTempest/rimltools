@@ -49,7 +49,7 @@ QR コード・バーコードの **生成 / 読み取り / 管理 / 印刷** �
 mise install          # node / bun / rust (wasm32 ターゲット込み)
 bun install
 cargo install worker-build --locked
-cp apps/web/.dev.vars.example apps/web/.dev.vars   # 値を埋める
+cp services/web/.dev.vars.example services/web/.dev.vars   # 値を埋める
 
 bun run dev           # web + api の両 Worker が Miniflare で起動
 ```

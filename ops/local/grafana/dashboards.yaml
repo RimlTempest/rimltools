@@ -1,4 +1,4 @@
-# observability/dashboards/*.json（本番と同じ正本）を、フォルダ RimlTools に読み込む
+# ops/dashboards/*.json（本番と同じ正本）を、フォルダ RimlTools に読み込む
 apiVersion: 1
 
 providers:

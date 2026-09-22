@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat <plan-001 のマージコミット>..HEAD -- features/sync apps/sync apps/web/src/server.ts apps/web/wrangler.jsonc shared/contract`
+> **Drift check (run first)**: `git diff --stat <plan-001 のマージコミット>..HEAD -- features/sync services/sync services/web/src/server.ts services/web/wrangler.jsonc shared/contract`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
@@ -32,7 +32,7 @@ noter の中核は「同じ文書を開いている全員に更新を届け、�
 ## Current state
 
 - plan 001 完了時点の状態を前提にする。`features/sync/worker/document-room.ts` は 501 を返すスタブ、
-  `apps/sync/src/index.ts` はそれを re-export、`apps/web/wrangler.jsonc` に
+  `services/sync/src/index.ts` はそれを re-export、`services/web/wrangler.jsonc` に
   `DOCUMENT_ROOM`（`script_name: "noter-sync"`）binding と D1 `DB` が宣言済み。
 - **仕様の唯一の定義は `docs/realtime-protocol.md`**（§1 接続確立、§2 メッセージ形式、
   §3 受信処理の擬似コード、§4 永続化、§5 `/kick`、§6 `/snapshot`、§7 クライアント）。
@@ -73,13 +73,13 @@ export class DocumentRoom extends DurableObject<CloudflareEnv> {
 
 - ADR-0005: 損失窓 ≤ 5 秒、write 失敗は指数バックオフ（上限 60 秒）、v1 ではクライアントに通知しない。
 - `docs/free-tier-budget.md`: 受信 20 通 = 1 リクエスト。DO は `setTimeout` / `setInterval` を使わない。
-- `apps/web/src/server.ts`（**未作成**）: TanStack Start のカスタム server entry で `/ws/` を横取りする。
+- `services/web/src/server.ts`（**未作成**）: TanStack Start のカスタム server entry で `/ws/` を横取りする。
   qrcc には無いパターン。`@tanstack/react-start 1.168.x` の server entry は
   `import handler from '@tanstack/react-start/server-entry'` で得られ、`export default { fetch }` で包める
   （公式 docs "Server Entry Point"）。`wrangler.jsonc` の `main` を `./src/server.ts` に変える。
 - 上限は `@noter/contract` の `MAX_WS_MESSAGE_BYTES`（262144）と `MAX_MEMBERS`（50）。
 - **この時点で認証・文書テーブルは無い**（plan 003 / 004）。`/ws/` の認可は差し替え可能な関数として
-  `apps/web/src/server/ws-authorize.ts` に置き、この plan では**ローカル専用の開発フラグ**でのみ通す
+  `services/web/src/server/ws-authorize.ts` に置き、この plan では**ローカル専用の開発フラグ**でのみ通す
   （下記 Step 5）。plan 004 が実装を差し替える。
 
 ## Commands you will need
@@ -107,15 +107,15 @@ export class DocumentRoom extends DurableObject<CloudflareEnv> {
 
 - `features/sync/contract/src/**`, `features/sync/core/src/**`, `features/sync/worker/**`, `features/sync/client/src/**`（provider のみ最小）
 - `features/sync/package.json`, `features/sync/tsconfig.json`
-- `apps/sync/src/index.ts`, `apps/sync/tsconfig.json`
-- `apps/web/src/server.ts`, `apps/web/src/server/ws-authorize.ts`, `apps/web/src/server/container.ts`, `apps/web/wrangler.jsonc`（`main` のみ）
+- `services/sync/src/index.ts`, `services/sync/tsconfig.json`
+- `services/web/src/server.ts`, `services/web/src/server/ws-authorize.ts`, `services/web/src/server/container.ts`, `services/web/wrangler.jsonc`（`main` のみ）
 - `scripts/ws-probe.ts`
 - `e2e/tests/sync.spec.ts`
 - `.github/workflows/ci.yml`（guard に 1 検査追加）
 - `plans/README.md`（status 行）
 
 **Out of scope**: `docs/**`（矛盾したら STOP）、`features/{auth,documents,editor,formats}/**`、`shared/**`、
-`apps/sync/wrangler.jsonc`（変更不要のはず。必要なら STOP）
+`services/sync/wrangler.jsonc`（変更不要のはず。必要なら STOP）
 
 ## Git workflow
 
@@ -240,7 +240,7 @@ export class DocumentRoom extends DurableObject<CloudflareEnv> {
 **Verify**: `bun run typecheck` → exit 0。`grep -c 'class ' features/sync/worker/document-room.ts` → `1`。
 `grep -rn 'class ' features/sync/core features/sync/contract` → なし。
 
-### Step 4: `apps/web/src/server.ts`（カスタム server entry）
+### Step 4: `services/web/src/server.ts`（カスタム server entry）
 
 ```ts
 import startHandler from '@tanstack/react-start/server-entry'
@@ -256,9 +256,9 @@ export default {
 }
 ```
 
-- `apps/web/src/server/ws-gate.ts`: `Upgrade` が `websocket` でなければ 426、`parseDocumentId` 失敗は 404、
+- `services/web/src/server/ws-gate.ts`: `Upgrade` が `websocket` でなければ 426、`parseDocumentId` 失敗は 404、
   `authorizeWs(request, env, documentId)` が `err` なら 401/404、`ok` なら `env.DOCUMENT_ROOM.getByName(documentId).fetch(new Request(request, { headers: encodeIdentity(identity) を足したもの }))` を返す。
-- `apps/web/src/server/ws-authorize.ts`（plan 004 が差し替える）:
+- `services/web/src/server/ws-authorize.ts`（plan 004 が差し替える）:
   ```ts
   /** plan 004 でセッション + document_member による認可に置き換える。 */
   export const authorizeWs = async (
@@ -273,11 +273,11 @@ export default {
   }
   ```
   `NOTER_DEV_OPEN_WS` は **`.dev.vars` にだけ**書く（`.dev.vars.example` にキーを追加、値は空）。
-  `apps/web/wrangler.jsonc` の `vars` には**絶対に書かない**。CI の `guard` に
-  `if grep -q NOTER_DEV_OPEN_WS apps/web/wrangler.jsonc; then …exit 1; fi` を足す。
+  `services/web/wrangler.jsonc` の `vars` には**絶対に書かない**。CI の `guard` に
+  `if grep -q NOTER_DEV_OPEN_WS services/web/wrangler.jsonc; then …exit 1; fi` を足す。
   `wrangler types` が `NOTER_DEV_OPEN_WS` を型に出さない場合は `env` を `{ NOTER_DEV_OPEN_WS?: string }` を含む
   構造的型で受ける（`as` 禁止）。
-- `apps/web/wrangler.jsonc`: `"main": "./src/server.ts"`。
+- `services/web/wrangler.jsonc`: `"main": "./src/server.ts"`。
 - `e2e/playwright.config.ts` の `webServer.env` に `NOTER_DEV_OPEN_WS: '1'` を足す（e2e のみ）。
 
 **Verify**: `bun run build` → exit 0。`bun run dev` を起動し
@@ -329,7 +329,7 @@ Hibernation の実機挙動（`webSocketMessage` が起こすか）は e2e で�
 - [ ] `bun run check` / `bun run test` / `bun run build` exit 0
 - [ ] `grep -rln '^\s*\(export \)\?class ' features apps shared scripts --include='*.ts'` → `features/sync/worker/document-room.ts` のみ
 - [ ] `grep -rn 'setTimeout\|setInterval' features/sync/core features/sync/worker` → なし
-- [ ] `grep -n 'NOTER_DEV_OPEN_WS' apps/web/wrangler.jsonc` → なし; `.github/workflows/ci.yml` にその guard がある
+- [ ] `grep -n 'NOTER_DEV_OPEN_WS' services/web/wrangler.jsonc` → なし; `.github/workflows/ci.yml` にその guard がある
 - [ ] `curl … /ws/doc_…` が 426、`ws-probe` が step2 を受信、`e2e -- --grep sync` pass
 - [ ] `features/sync/core` に `throw` が無い（`no-throw-in-domain` が通る）
 
@@ -345,7 +345,7 @@ Hibernation の実機挙動（`webSocketMessage` が起こすか）は e2e で�
 
 ## Maintenance notes
 
-- `apps/web/src/server/ws-authorize.ts` は**plan 004 が必ず置き換える**。`NOTER_DEV_OPEN_WS` は plan 004 で削除する
+- `services/web/src/server/ws-authorize.ts` は**plan 004 が必ず置き換える**。`NOTER_DEV_OPEN_WS` は plan 004 で削除する
 - メッセージ種別を足すときは `docs/realtime-protocol.md` §8 の手順（contract → core → worker → web → client）
 - レビュー観点: viewer の update が本当に落ちているか（`inbound.test.ts`）、alarm が二重に張られないか、
   `deserializeAttachment` の結果を型ガード無しで使っていないか

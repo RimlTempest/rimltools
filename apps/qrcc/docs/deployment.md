@@ -12,8 +12,8 @@ bunx wrangler r2 bucket create qrcc-artifacts
 
 出力された ID を次の 2 ファイルの `REPLACE_ME` に書き込む。
 
-- `apps/web/wrangler.jsonc`
-- `apps/api/wrangler.jsonc`
+- `services/web/wrangler.jsonc`
+- `services/api/wrangler.jsonc`
 
 **D1 の `database_id` は両方で同じもの**を指す（同一 DB を 2 つの Worker から使う）。
 
@@ -30,7 +30,7 @@ R2 だけは利用上限を設定できず、超過分が従量課金される�
 `database_id` を書き込んだら、本番の D1 にスキーマを当てる。
 
 ```bash
-bunx wrangler d1 migrations apply qrcc --remote --config apps/api/wrangler.jsonc
+bunx wrangler d1 migrations apply qrcc --remote --config services/api/wrangler.jsonc
 ```
 
 ローカル（Miniflare）側は **e2e の起動手順に組み込まれている**ので手で当てる必要はない
@@ -38,7 +38,7 @@ bunx wrangler d1 migrations apply qrcc --remote --config apps/api/wrangler.jsonc
 手で当てたい場合は:
 
 ```bash
-cd apps/web && bunx wrangler d1 migrations apply qrcc --local
+cd services/web && bunx wrangler d1 migrations apply qrcc --local
 ```
 
 > マイグレーションを手順書に頼ると「CI では落ちるが手元では通る」差が生まれる。
@@ -47,9 +47,9 @@ cd apps/web && bunx wrangler d1 migrations apply qrcc --local
 ### シークレット
 
 ```bash
-bunx wrangler secret put BETTER_AUTH_SECRET   --config apps/web/wrangler.jsonc
-bunx wrangler secret put GOOGLE_CLIENT_ID     --config apps/web/wrangler.jsonc
-bunx wrangler secret put GOOGLE_CLIENT_SECRET --config apps/web/wrangler.jsonc
+bunx wrangler secret put BETTER_AUTH_SECRET   --config services/web/wrangler.jsonc
+bunx wrangler secret put GOOGLE_CLIENT_ID     --config services/web/wrangler.jsonc
+bunx wrangler secret put GOOGLE_CLIENT_SECRET --config services/web/wrangler.jsonc
 ```
 
 `BETTER_AUTH_SECRET` は `openssl rand -base64 32` などで生成する。
@@ -61,7 +61,7 @@ bunx wrangler secret put GOOGLE_CLIENT_SECRET --config apps/web/wrangler.jsonc
 > 非対話で入れるときは標準入力から渡す:
 >
 > ```bash
-> printf '%s' "$VALUE" | bunx wrangler secret put NAME --config apps/web/wrangler.jsonc
+> printf '%s' "$VALUE" | bunx wrangler secret put NAME --config services/web/wrangler.jsonc
 > ```
 
 > **初回デプロイ前に `secret put` すると、空のワーカーが先に作られる。**
@@ -84,7 +84,7 @@ Google OAuth の設定（Google Cloud Console）:
 ### カスタムドメイン
 
 `qrcc.riml4i.com` を `qrcc-web` の custom domain として登録する
-（`apps/web/wrangler.jsonc` の `routes` に定義済み）。
+（`services/web/wrangler.jsonc` の `routes` に定義済み）。
 DNS は Cloudflare が自動で CNAME を作る。
 
 ### GitHub Actions
@@ -147,8 +147,8 @@ Google の選択肢が出ること・qrcc-api が外から叩けないこと）�
 
 ```bash
 bun run build
-bunx wrangler d1 migrations apply qrcc --remote --config apps/api/wrangler.jsonc
-bunx wrangler deploy --config apps/web/wrangler.jsonc
+bunx wrangler d1 migrations apply qrcc --remote --config services/api/wrangler.jsonc
+bunx wrangler deploy --config services/web/wrangler.jsonc
 ```
 
 `qrcc-api` は auxiliary Worker なので、**entry Worker (`qrcc-web`) のデプロイに

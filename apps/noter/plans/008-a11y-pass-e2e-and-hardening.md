@@ -104,7 +104,7 @@
 - `grep -rn 'dangerouslySetInnerHTML' features shared` → 1 箇所（plan 006）
 - `grep -rn "Cookie\|session_token" features/*/ui` → クライアントで Cookie を読んでいない
 - `grep -rn 'NOTER_DEV_OPEN_WS' . --exclude-dir=node_modules --exclude-dir=plans` → CI guard のみ
-- `apps/sync/wrangler.jsonc` に `routes` / `workers_dev: true` が無い
+- `services/sync/wrangler.jsonc` に `routes` / `workers_dev: true` が無い
 - `docs/realtime-protocol.md` §1 の表と `ws-gate.ts` の HTTP コード（426 / 401 / 404）が一致
 
 **Verify**: 上記が全て成立。不一致は STOP。

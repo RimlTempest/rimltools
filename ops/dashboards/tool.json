@@ -648,7 +648,7 @@
           }
         }
       ],
-      "description": "Grafana Faro Web SDK の計測（実利用者）。クエリの形は初回データで要確認（docs/observability-grafana.md）",
+      "description": "Grafana Faro Web SDK の計測（実利用者）。クエリの形は初回データで要確認（docs/ops/grafana.md）",
       "fieldConfig": {
         "defaults": {
           "unit": "ms"
@@ -692,7 +692,7 @@
           }
         }
       ],
-      "description": "Grafana Faro Web SDK の計測（実利用者）。クエリの形は初回データで要確認（docs/observability-grafana.md）",
+      "description": "Grafana Faro Web SDK の計測（実利用者）。クエリの形は初回データで要確認（docs/ops/grafana.md）",
       "fieldConfig": {
         "defaults": {
           "unit": "ms"
@@ -736,7 +736,7 @@
           }
         }
       ],
-      "description": "Grafana Faro Web SDK の計測（実利用者）。クエリの形は初回データで要確認（docs/observability-grafana.md）",
+      "description": "Grafana Faro Web SDK の計測（実利用者）。クエリの形は初回データで要確認（docs/ops/grafana.md）",
       "fieldConfig": {
         "defaults": {
           "unit": "none"

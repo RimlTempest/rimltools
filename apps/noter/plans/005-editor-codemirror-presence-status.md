@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat <plan-004 のマージコミット>..HEAD -- features/editor features/sync/client features/documents/ui apps/web/src/routes.ts shared/ui`
+> **Drift check (run first)**: `git diff --stat <plan-004 のマージコミット>..HEAD -- features/editor features/sync/client features/documents/ui services/web/src/routes.ts shared/ui`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
@@ -33,7 +33,7 @@
   §6.3 / 6.4 / 6.5（オフライン・デプロイ・上限）、§7（ショートカット）、§8（文言）。`DESIGN.md` §CodeMirror テーマ
   （`EditorView.theme` のトークン割当）、§presence。`docs/accessibility.md` §2（2.1.2 Esc→Tab、2.5.7 表示ボタン、4.1.3 単一 `role="status"`）§3（リモートカーソルは `aria-hidden`）。
 - plan 004 の `features/documents/ui/document.route.tsx` は暫定画面。**この plan で `features/editor/ui/editor.route.tsx` に置き換え**、
-  `apps/web/src/routes.ts` の `/d/$documentId` の参照先を差し替える（documents 側の暫定ファイルは削除。`share-dialog.tsx` は残して import）。
+  `services/web/src/routes.ts` の `/d/$documentId` の参照先を差し替える（documents 側の暫定ファイルは削除。`share-dialog.tsx` は残して import）。
 - plan 002 の `features/sync/client` に `makeDocumentProvider(deps)` と `ConnectionState`。
 - `@noter/ui` に `LiveRegion`（qrcc 由来）がある。ステータスの読み上げはこれ 1 つに集約する。
 - npm: `@codemirror/state 6.7.4`, `view 6.43.11`, `commands 6.11.0`, `language 6.12.4`, `lint 6.9.7`, `search 6.7.2`,
@@ -60,7 +60,7 @@
 ## Scope
 
 **In scope**: `features/editor/**`, `features/sync/client/src/**`（presence 色の関数追加）, `features/documents/ui/document.route.tsx`（削除）,
-`apps/web/src/routes.ts`（1 行差し替え）, `apps/web/src/styles/app.css`（1 行）, `apps/web/package.json`, `apps/web/tsconfig.json`, ルート `tsconfig.json`,
+`services/web/src/routes.ts`（1 行差し替え）, `services/web/src/styles/app.css`（1 行）, `services/web/package.json`, `services/web/tsconfig.json`, ルート `tsconfig.json`,
 `shared/ui/src/components/avatar.tsx`（新規、`DESIGN.md` の `.noter-avatar`）, `e2e/tests/{editor,sync,a11y}.spec.ts`, `plans/README.md`
 
 **Out of scope**: `docs/**`、`features/formats/**`（プレビュー・診断は plan 006）、`features/sync/{core,worker}`、`features/documents/{core,server}`
@@ -117,7 +117,7 @@
   決定したら plan 003 の表示名更新 server function を呼ぶ（無ければ awareness のみに使い、STOP しない）。
 - `view-mode.tsx`: 3 ボタン、`localStorage` `noter-view-mode`、320px で縦積み（container query は CSS で）。
 - `editor.css`: `DESIGN.md` のトークンのみ。印刷は `@media print` でエディタ・ツールバー・参加者を隠す（`accessibility.md` §5）。
-- `apps/web/src/routes.ts`: `/d/$documentId` を `editor/ui/editor.route.tsx` に。`apps/web/src/styles/app.css` に `@import '@noter/editor/ui/editor.css' layer(components);`。
+- `services/web/src/routes.ts`: `/d/$documentId` を `editor/ui/editor.route.tsx` に。`services/web/src/styles/app.css` に `@import '@noter/editor/ui/editor.css' layer(components);`。
 
 **Verify**: `bun run check` → exit 0。`bun run dev` で 2 つのブラウザプロファイル（または通常 + シークレット）で同じ文書を開き、片方の入力が
 もう片方に出る、カーソルと名前が見える、ピルが「同期済み · hh:mm」になる。

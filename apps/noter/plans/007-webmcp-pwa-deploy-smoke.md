@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat <plan-006 のマージコミット>..HEAD -- shared/webmcp features/editor/ui features/shell/ui apps/web/public .github scripts e2e`
+> **Drift check (run first)**: `git diff --stat <plan-006 のマージコミット>..HEAD -- shared/webmcp features/editor/ui features/shell/ui services/web/public .github scripts e2e`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
@@ -34,11 +34,11 @@ qrcc の「AI Native な部分」（WebMCP）を noter に合わせた形で移�
   `propose-edit` は `features/editor/ui/proposal-panel.tsx` に差分プレビュー、ユーザーが「適用」を押すまで文書に触れない。
 - 移植元: `/Users/riml/orca/projects/qrcc2/shared/webmcp/src/{index.ts,index.test.ts}`（`document.modelContext` の有無判定・`registerTool` の書き方・
   API 無しで no-op のテスト）。qrcc の `features/shell/ui/root.route.tsx` でクライアント側 `useEffect` から登録している箇所も参照。
-- PWA: qrcc の `apps/web/public/{manifest.webmanifest,sw.js,icon-192.png,icon-512.png,icon-maskable-512.png,apple-touch-icon.png}` と
+- PWA: qrcc の `services/web/public/{manifest.webmanifest,sw.js,icon-192.png,icon-512.png,icon-maskable-512.png,apple-touch-icon.png}` と
   `features/shell/ui/register-sw.ts`、`root-document.tsx` の `<link rel="manifest">` / `apple-touch-icon`。**noter の SW は「アプリシェルのみキャッシュ、
   `/ws/` `/api/` `/d/` `/s/` はネットワーク直行」**。文書本文は Yjs がメモリ/再送で持つのでキャッシュしない。
 - Deploy: qrcc `.github/workflows/deploy.yml`（上に転記済みの要点）: `jdx/mise-action@v3`、`bun install --frozen-lockfile`、build、
-  D1 migrations `--remote`、**デプロイはビルドが生成した `apps/web/dist/<aux>/wrangler.json` → `apps/web/dist/server/wrangler.json` の順**
+  D1 migrations `--remote`、**デプロイはビルドが生成した `services/web/dist/<aux>/wrangler.json` → `services/web/dist/server/wrangler.json` の順**
   （元の `wrangler.jsonc` を直接渡すと "entry-point file was not found"。auxiliary は entry に同梱されないので先に上げる）、
   `bun run smoke <origin>` → `install-browsers` → `bun run smoke:browser`。
 - `docs/deployment.md` は「entry の 1 回で両方が上がる」と書いているが、**qrcc の実績では auxiliary を先に個別デプロイする必要がある**。
@@ -49,18 +49,18 @@ qrcc の「AI Native な部分」（WebMCP）を noter に合わせた形で移�
 
 ## Commands you will need
 
-| Purpose       | Command                                                                         | Expected                                                                       |
-| ------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Tests         | `bun test shared/webmcp features/editor`                                        | pass                                                                           |
-| Build         | `bun run build`                                                                 | `apps/web/dist/noter_sync/wrangler.json` と `dist/server/wrangler.json` がある |
-| Smoke         | `bun run smoke http://localhost:5173/`（dev 起動中）                            | exit 0、`/ws/` 426 を含む                                                      |
-| Browser smoke | `NOTER_SMOKE_URL=http://localhost:5173 bun run smoke:browser`                   | pass                                                                           |
-| YAML          | `python3 -c 'import yaml;yaml.safe_load(open(".github/workflows/deploy.yml"))'` | exit 0                                                                         |
+| Purpose       | Command                                                                         | Expected                                                                           |
+| ------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Tests         | `bun test shared/webmcp features/editor`                                        | pass                                                                               |
+| Build         | `bun run build`                                                                 | `services/web/dist/noter_sync/wrangler.json` と `dist/server/wrangler.json` がある |
+| Smoke         | `bun run smoke http://localhost:5173/`（dev 起動中）                            | exit 0、`/ws/` 426 を含む                                                          |
+| Browser smoke | `NOTER_SMOKE_URL=http://localhost:5173 bun run smoke:browser`                   | pass                                                                               |
+| YAML          | `python3 -c 'import yaml;yaml.safe_load(open(".github/workflows/deploy.yml"))'` | exit 0                                                                             |
 
 ## Scope
 
 **In scope**: `shared/webmcp/**`, `features/editor/ui/proposal-panel.tsx`(+test), `features/editor/ui/editor-screen.tsx`（`propose-edit` の口と WebMCP 登録）,
-`features/shell/ui/{register-sw.ts,root-document.tsx,root.route.tsx}`, `apps/web/public/**`, `scripts/smoke.ts`(+test), `e2e/playwright.prod.config.ts`,
+`features/shell/ui/{register-sw.ts,root-document.tsx,root.route.tsx}`, `services/web/public/**`, `scripts/smoke.ts`(+test), `e2e/playwright.prod.config.ts`,
 `e2e/smoke/production.spec.ts`, `e2e/package.json`（`smoke` script）, `.github/workflows/deploy.yml`, ルート `package.json`（`smoke:browser` は既存）, `plans/README.md`
 
 **Out of scope**: `docs/**`（deployment.md の修正は advisor）、`apps/*/wrangler.jsonc`、`features/{sync,documents,auth,formats}/**`、**本番環境への一切の操作**
@@ -93,10 +93,10 @@ qrcc の「AI Native な部分」（WebMCP）を noter に合わせた形で移�
 
 ### Step 3: PWA
 
-- `apps/web/public/manifest.webmanifest`: `name: "noter"`, `short_name: "noter"`, `start_url: "/"`, `display: "standalone"`,
+- `services/web/public/manifest.webmanifest`: `name: "noter"`, `short_name: "noter"`, `start_url: "/"`, `display: "standalone"`,
   `theme_color` / `background_color` は `DESIGN.md` の `--noter-surface` ライト値を hex 近似、icons は plan 001 の `icon.svg` から
   生成した PNG（`bunx sharp-cli` 等が無ければ **SVG を `icons` に `type: image/svg+xml` で 1 つ**登録し、PNG は STOP せず省略して報告）。
-- `apps/web/public/sw.js`: qrcc の `sw.js` を元に、キャッシュ名 `noter-shell-v1`、プリキャッシュは `/icon.svg` のみ（**`/` は入れない** — サインイン中の一覧を含む HTML が共有端末に残る）、
+- `services/web/public/sw.js`: qrcc の `sw.js` を元に、キャッシュ名 `noter-shell-v1`、プリキャッシュは `/icon.svg` のみ（**`/` は入れない** — サインイン中の一覧を含む HTML が共有端末に残る）、
   `fetch` は `GET` かつ `same-origin` かつ `mode !== 'navigate'` かつ `pathname` が `/_serverFn/` `/ws/` `/api/` `/d/` `/s/` で**始まらない**ときだけ stale-while-revalidate、それ以外は素通し
   （`/_serverFn/` は GET の server function があり、キャッシュすると一覧の失効反映が壊れる。実装時に e2e で発覚 — 事後修正済み）。
 - `features/shell/ui/register-sw.ts`（qrcc から）、`root.route.tsx` で `useEffect` 登録、`root-document.tsx` に `manifest` / `apple-touch-icon` の `<link>` を戻す。
@@ -121,8 +121,8 @@ qrcc の「AI Native な部分」（WebMCP）を noter に合わせた形で移�
 qrcc の `deploy.yml` を元に:
 
 - `Swatinem/rust-cache` と `cargo install` を削除、`build` は `bun run build` のみ
-- migrations: `bunx wrangler d1 migrations apply noter --remote --config apps/web/wrangler.jsonc`
-- deploy: `bunx wrangler deploy -c apps/web/dist/noter_sync/wrangler.json` → `bunx wrangler deploy -c apps/web/dist/server/wrangler.json`
+- migrations: `bunx wrangler d1 migrations apply noter --remote --config services/web/wrangler.jsonc`
+- deploy: `bunx wrangler deploy -c services/web/dist/noter_sync/wrangler.json` → `bunx wrangler deploy -c services/web/dist/server/wrangler.json`
   （生成ディレクトリ名は `bun run build` の出力で確認し、違えばそれに合わせる）
 - smoke: `bun run smoke https://noter.riml4i.com/` → `bun run --filter '@noter/e2e' install-browsers` → `bun run smoke:browser`
 - `push` トリガーはコメントアウトのまま（Secrets 登録後に人が外す）
@@ -140,7 +140,7 @@ Step 1・2・4 のとおり。`register-sw` はテストしない（qrcc も同�
 - [ ] `bun run build` の出力に aux と server の `wrangler.json` がある
 - [ ] `bun run smoke http://localhost:5173/` が `/ws/` 426 を検査して exit 0
 - [ ] `grep -rn 'exposedTo\|origin-trial' shared/webmcp features/shell` → なし
-- [ ] `apps/web/public/sw.js` に `/ws/` の除外がある
+- [ ] `services/web/public/sw.js` に `/ws/` の除外がある
 - [ ] `git log` に `wrangler deploy` を実行した形跡が無い（executor の報告で明示）
 
 ## STOP conditions

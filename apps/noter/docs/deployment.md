@@ -15,8 +15,8 @@ bunx wrangler d1 create noter
 出力された `database_id` を次の 2 ファイルに書き込む（**2026-09-07 に実施済み**。
 本番 D1 `noter` は APAC に作成し、ID は両ファイルにコミットしてある）。
 
-- `apps/web/wrangler.jsonc`
-- `apps/sync/wrangler.jsonc`
+- `services/web/wrangler.jsonc`
+- `services/sync/wrangler.jsonc`
 
 **D1 の `database_id` は両方で同じもの**を指す。`noter-sync` が D1 に行うのは
 `document.updated_at` の touch（`UPDATE` 1 行、60 秒スロットル）だけで、
@@ -38,7 +38,7 @@ R2 だけは利用上限を設定できず、超過分が従量課金される�
 ### D1 のマイグレーション
 
 ```bash
-bunx wrangler d1 migrations apply noter --remote --config apps/web/wrangler.jsonc
+bunx wrangler d1 migrations apply noter --remote --config services/web/wrangler.jsonc
 ```
 
 ローカル（Miniflare）側は e2e の起動手順に組み込まれている
@@ -46,15 +46,15 @@ bunx wrangler d1 migrations apply noter --remote --config apps/web/wrangler.json
 を実行する）。手で当てる場合:
 
 ```bash
-cd apps/web && bunx wrangler d1 migrations apply noter --local
+cd services/web && bunx wrangler d1 migrations apply noter --local
 ```
 
 ### シークレット
 
 ```bash
-bunx wrangler secret put BETTER_AUTH_SECRET   --config apps/web/wrangler.jsonc
-bunx wrangler secret put GOOGLE_CLIENT_ID     --config apps/web/wrangler.jsonc
-bunx wrangler secret put GOOGLE_CLIENT_SECRET --config apps/web/wrangler.jsonc
+bunx wrangler secret put BETTER_AUTH_SECRET   --config services/web/wrangler.jsonc
+bunx wrangler secret put GOOGLE_CLIENT_ID     --config services/web/wrangler.jsonc
+bunx wrangler secret put GOOGLE_CLIENT_SECRET --config services/web/wrangler.jsonc
 ```
 
 `BETTER_AUTH_SECRET` は `openssl rand -base64 32` で生成する。
@@ -66,7 +66,7 @@ bunx wrangler secret put GOOGLE_CLIENT_SECRET --config apps/web/wrangler.jsonc
 > 後から気づけない。非対話で入れるときは標準入力から渡す:
 >
 > ```bash
-> printf '%s' "$VALUE" | bunx wrangler secret put NAME --config apps/web/wrangler.jsonc
+> printf '%s' "$VALUE" | bunx wrangler secret put NAME --config services/web/wrangler.jsonc
 > ```
 
 > **初回デプロイ前に `secret put` すると、空のワーカーが先に作られる。**
@@ -83,9 +83,9 @@ Google OAuth の設定（Google Cloud Console）:
 ### カスタムドメイン
 
 `noter.riml4i.com` を `noter-web` の custom domain として登録する
-（`apps/web/wrangler.jsonc` の `routes` に定義済み）。DNS は Cloudflare が自動で作る。
+（`services/web/wrangler.jsonc` の `routes` に定義済み）。DNS は Cloudflare が自動で作る。
 
-**`apps/sync/wrangler.jsonc` には `routes` も `workers_dev: true` も書かない**
+**`services/sync/wrangler.jsonc` には `routes` も `workers_dev: true` も書かない**
 （[ADR-0002](adr/0002-auxiliary-worker-and-private-durable-object.md)）。
 `noter-sync` の `fetch` は常に 404 を返し、DO は `noter-web` の binding からしか届かない。
 
@@ -177,14 +177,14 @@ qrcc と同じ手順で、**手元の wrangler から**ブートストラップ�
 
 ```bash
 bun run build
-bunx wrangler d1 migrations apply noter --remote --config apps/web/wrangler.jsonc
-bunx wrangler deploy -c apps/web/dist/noter_sync/wrangler.json   # 先に DO を持つ側
-bunx wrangler deploy -c apps/web/dist/server/wrangler.json       # 次に entry
+bunx wrangler d1 migrations apply noter --remote --config services/web/wrangler.jsonc
+bunx wrangler deploy -c services/web/dist/noter_sync/wrangler.json   # 先に DO を持つ側
+bunx wrangler deploy -c services/web/dist/server/wrangler.json       # 次に entry
 ```
 
 > **元の `wrangler.jsonc` を直接渡さない。** `main` が framework の仮想エントリ
 > （またはソースの `src/server.ts`）を指しているので "entry-point file was not found"
-> で落ちる。デプロイにはビルドが `apps/web/dist/` に生成した `wrangler.json` を渡す。
+> で落ちる。デプロイにはビルドが `services/web/dist/` に生成した `wrangler.json` を渡す。
 >
 > **順序は `noter-sync` → `noter-web`。** `noter-web` の DO binding は
 > `script_name: "noter-sync"` を参照するため、先に `noter-sync` が存在している

@@ -1,6 +1,6 @@
 # リアルタイム同期プロトコル
 
-web Worker（`apps/web/src/server.ts`）→ `DocumentRoom`（Durable Object）→ ブラウザ
+web Worker（`services/web/src/server.ts`）→ `DocumentRoom`（Durable Object）→ ブラウザ
 （`features/sync/client`）の契約。**この文書が唯一の定義。** 型と定数は
 `features/sync/contract` に置き、両側のテストが同じ定数を読む。
 
@@ -151,5 +151,5 @@ web 側で `can(role, 'read')` を通してから呼ぶ。
 
 1. この文書を更新
 2. `features/sync/contract` に型・定数を追加（両側のテストが赤になる）
-3. `features/sync/core` → `features/sync/worker` → `apps/web/src/server.ts` → `features/sync/client` の順に実装
+3. `features/sync/core` → `features/sync/worker` → `services/web/src/server.ts` → `features/sync/client` の順に実装
 4. `e2e/tests/sync.spec.ts` に 2 コンテキストの結合テストを追加
