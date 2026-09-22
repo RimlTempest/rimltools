@@ -8,6 +8,8 @@
   "experimentalOperatorPosition": "start",
   "ignorePatterns": [
     "**/dist/**",
+    // Service Worker の生成物（scripts/build-sw.ts）
+    "**/public/sw.js",
     "**/node_modules/**",
     "**/.output/**",
     "**/target/**",

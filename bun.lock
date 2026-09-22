@@ -80,6 +80,10 @@
         "react-dom": "^19.2.0",
       },
     },
+    "packages/sw": {
+      "name": "@rimltools/sw",
+      "version": "0.1.0",
+    },
     "packages/telemetry": {
       "name": "@rimltools/telemetry",
       "version": "0.1.0",
@@ -133,6 +137,7 @@
         "@noter/sync": "workspace:*",
         "@noter/ui": "workspace:*",
         "@noter/webmcp": "workspace:*",
+        "@rimltools/sw": "workspace:*",
         "@rimltools/telemetry": "workspace:*",
         "@tanstack/react-router": "1.170.32",
         "@tanstack/react-start": "1.168.49",
@@ -377,6 +382,7 @@
         "@qrcc/shell": "workspace:*",
         "@qrcc/ui": "workspace:*",
         "@qrcc/wasm": "workspace:*",
+        "@rimltools/sw": "workspace:*",
         "@rimltools/telemetry": "workspace:*",
         "@tanstack/react-router": "1.170.32",
         "@tanstack/react-start": "1.168.49",
@@ -1020,6 +1026,8 @@
     "@rimltools/qrcc": ["@rimltools/qrcc@workspace:products/qrcc"],
 
     "@rimltools/shell": ["@rimltools/shell@workspace:packages/shell"],
+
+    "@rimltools/sw": ["@rimltools/sw@workspace:packages/sw"],
 
     "@rimltools/telemetry": ["@rimltools/telemetry@workspace:packages/telemetry"],
 

@@ -6,7 +6,7 @@
     "dev": "bun run --filter '@qrcc/web' dev",
     "build": "bun run --filter '@qrcc/wasm' build && bun run --filter '@qrcc/api' build && bun run --filter '@qrcc/web' build",
     "test": "bun test shared/ features/ apps/ scripts/",
-    "typecheck": "bun run --filter '@qrcc/wasm' build:types && bun run --filter '@qrcc/web' gen && tsc --build && tsc -p apps/web --noEmit",
+    "typecheck": "bun run --filter '@qrcc/wasm' build:types && bun run --filter '@qrcc/web' gen && tsc --build && tsc -p apps/web --noEmit && tsc -p apps/web/tsconfig.sw.json",
     "lint": "oxlint --type-aware",
     "lint:fix": "oxlint --type-aware --fix",
     "fmt": "oxfmt .",

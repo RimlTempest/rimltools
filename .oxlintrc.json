@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "jsPlugins": ["./tools/oxlint-plugin-rimltools/index.js"],
+  "jsPlugins": ["./tools/oxlint-plugin-rimltools/index.ts"],
   "plugins": [
     "typescript",
     "unicorn",
@@ -131,7 +131,7 @@
     },
     {
       "files": [
-        "tools/**/*.js",
+        "tools/**/*.ts",
         "products/*/tools/**/*.js",
         "**/*.config.ts",
         "**/*.config.js",
@@ -148,6 +148,8 @@
   ],
   "ignorePatterns": [
     "**/dist/**",
+    // Service Worker の生成物（scripts/build-sw.ts）
+    "**/public/sw.js",
     "**/*.d.ts",
     "**/.output/**",
     "**/target/**",

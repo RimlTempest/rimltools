@@ -27,3 +27,6 @@ infra/grafana/plan.txt
 scripts/**/*.d.ts
 products/portal/scripts/*.d.ts
 products/portal/src/*.d.ts
+
+# Service Worker は src/sw/sw.ts から生成する（scripts/build-sw.ts）
+products/*/apps/web/public/sw.js

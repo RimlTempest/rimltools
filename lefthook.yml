@@ -70,6 +70,13 @@ pre-commit:
       glob: 'infra/secrets/*'
       run: bun scripts/check-secrets.ts
 
+    # JavaScript のソースを置かない（scripts/lib/no-js.ts）。例外は vendored の skill だけ
+    - name: no-js
+      glob: '*.{js,mjs,cjs,jsx}'
+      exclude:
+        - '.agents/skills/**'
+      run: bun scripts/check-no-js.ts
+
     - name: secrets
       run: |
         # gitleaks（docs/security.md）があれば staged の差分を既定ルール + .gitleaks.toml で検査する。

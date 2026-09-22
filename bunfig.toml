@@ -15,6 +15,7 @@ minimumReleaseAge = 604800
 # - @rimltempest/riml-ds-*: このリポジトリの持ち主が自分で公開しているデザインシステム（ADR-0011）。
 #   乗っ取られた第三者のメンテナから届く悪性版を待つための設定なので、自分の版を 7 日待つ理由が無い。
 #   待たせると、riml-ds を上げた直後の 7 日間、どの package.json を変えても bun install が解決できない
+#   Socket の scanner（下）は引き続き検査する。
 minimumReleaseAgeExcludes = ["@rimltempest/riml-ds-css", "@rimltempest/riml-ds-tokens"]
 
 [install.security]
