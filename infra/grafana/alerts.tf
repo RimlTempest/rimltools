@@ -175,6 +175,14 @@ locals {
       summary  = "tfstate.tools.riml4i.com への認証失敗が 10 分で 20 回を超えた。資格情報の総当たりの疑い（docs/runbooks/secret-leak.md §2-3）"
       expr     = "sum(count_over_time({service_namespace=\"rimltools\", service_name=\"rimltools-tfstate\"} | event = `tfstate_auth_failed` [10m])) > 20"
     },
+    {
+      uid      = "rimltools-tfstate-retention-limit"
+      name     = "tfstate が版の上限に達して書き込みを拒否した"
+      severity = "critical"
+      pending  = "0m"
+      summary  = "tfstate が 507 を返した（7 日以内の版が 500 を超えた、または合計 1 GiB を超えた）。上書きの連打（資格情報の漏洩）を疑う。plan / apply は止まっている（docs/runbooks/tfstate-restore.md §7）"
+      expr     = "sum(count_over_time({service_namespace=\"rimltools\", service_name=\"rimltools-tfstate\"} | event = `tfstate_retention_limit` [10m])) > 0"
+    },
   ]
 }
 
