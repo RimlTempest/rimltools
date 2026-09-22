@@ -13,7 +13,11 @@ export type VersionInfo = {
 
 export type LockAttempt = { acquired: true } | { acquired: false; holder: Lock }
 
-/** state の置き場所。I/O はここの実装（D1 / メモリ）だけに閉じる */
+/**
+ * state の置き場所。I/O はここの実装（D1 / メモリ）だけに閉じる。
+ * 削除の操作は持たない。書き込み用の資格情報が漏れても、state と版の履歴を消せないようにするため
+ * （消すときは人が wrangler d1 execute で行う。docs/runbooks/tfstate-restore.md）
+ */
 export type StateStore = {
   getState: (path: string) => Promise<Result<string | null, string>>
   putState: (
@@ -22,7 +26,6 @@ export type StateStore = {
     meta: StateMeta,
     now: number,
   ) => Promise<Result<void, string>>
-  deleteState: (path: string) => Promise<Result<void, string>>
   listVersions: (path: string) => Promise<Result<VersionInfo[], string>>
   getLock: (path: string, now: number) => Promise<Result<Lock | null, string>>
   /** 期限切れ（expires_at <= now）のロックは奪える */

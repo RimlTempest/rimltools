@@ -116,16 +116,6 @@ export const createD1Store = (db: D1Like, options: D1StoreOptions = {}): StateSt
         return ok(undefined)
       }),
 
-    deleteState: (path) =>
-      attempt(async () => {
-        await db.batch([
-          db.prepare('DELETE FROM states WHERE path = ?').bind(path),
-          db.prepare('DELETE FROM state_versions WHERE path = ?').bind(path),
-          db.prepare('DELETE FROM state_chunks WHERE path = ?').bind(path),
-        ])
-        return ok(undefined)
-      }),
-
     listVersions: (path) =>
       attempt(async () => {
         const { results } = await db

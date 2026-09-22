@@ -84,11 +84,9 @@ describe.each(stores)('%s store', (_name, make) => {
     expect(versions.value.map((v) => v.serial)).toEqual([5, 4, 3])
   })
 
-  test('delete removes the state and its versions', async () => {
+  test('the store offers no way to delete state', async () => {
     const store = await make()
-    await store.putState(P, 'b', { serial: 1, lineage: 'l' }, 0)
-    await store.deleteState(P)
-    expect(await store.getState(P)).toEqual({ ok: true, value: null })
+    expect('deleteState' in store).toBe(false)
   })
 
   test('lock: acquire, conflict, expiry, release', async () => {

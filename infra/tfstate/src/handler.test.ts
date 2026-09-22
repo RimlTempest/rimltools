@@ -3,12 +3,14 @@ import { describe, expect, test } from 'bun:test'
 import { handle, type HandlerDeps } from './handler.ts'
 import { createMemoryStore } from './memory-store.ts'
 
+const READ_PASSWORD = 'read-secret-0123456789abcdef0123456789'
+const WRITE_PASSWORD = 'write-secret-0123456789abcdef0123456789'
 const creds = {
-  read: { user: 'reader', password: 'read-secret-0123456789' },
-  write: { user: 'writer', password: 'write-secret-0123456789' },
+  read: { user: 'reader', password: READ_PASSWORD },
+  write: { user: 'writer', password: WRITE_PASSWORD },
 }
-const READ = `Basic ${btoa('reader:read-secret-0123456789')}`
-const WRITE = `Basic ${btoa('writer:write-secret-0123456789')}`
+const READ = `Basic ${btoa(`reader:${READ_PASSWORD}`)}`
+const WRITE = `Basic ${btoa(`writer:${WRITE_PASSWORD}`)}`
 const PATH = 'https://tfstate.example.com/states/rimltools-production'
 
 const encrypted = (serial: number) =>
@@ -26,8 +28,9 @@ const lockBody = (id: string) =>
 const setup = (overrides: Partial<HandlerDeps> = {}) => {
   let clock = 1_000_000
   const logs: Record<string, unknown>[] = []
+  const store = createMemoryStore()
   const deps: HandlerDeps = {
-    store: createMemoryStore(),
+    store,
     now: () => clock,
     credentials: creds,
     lockTtlMs: 60_000,
@@ -38,12 +41,15 @@ const setup = (overrides: Partial<HandlerDeps> = {}) => {
     handle(
       new Request(url, {
         method,
-        headers: auth === null ? {} : { authorization: auth },
+        headers: {
+          'cf-connecting-ip': '203.0.113.7',
+          ...(auth === null ? {} : { authorization: auth }),
+        },
         ...(body === undefined ? {} : { body }),
       }),
       deps,
     )
-  return { call, logs, advance: (ms: number) => (clock += ms) }
+  return { call, logs, store, advance: (ms: number) => (clock += ms) }
 }
 
 describe('auth and routing', () => {
@@ -71,13 +77,46 @@ describe('auth and routing', () => {
     expect((await call('PUT', PATH, WRITE, encrypted(1))).status).toBe(405)
   })
 
+  test('auth failures are logged as tfstate_auth_failed without credentials', async () => {
+    const { call, logs } = setup()
+    await call('GET', PATH, `Basic ${btoa('writer:guess-guess-guess')}`)
+    await call('LOCK', PATH, READ, lockBody('a'))
+    const failures = logs.filter((l) => l['event'] === 'tfstate_auth_failed')
+    expect(failures).toEqual([
+      expect.objectContaining({
+        method: 'GET',
+        path: '/states/rimltools-production',
+        status: 401,
+        result: 'unauthorized',
+        ip: '203.0.113.7',
+      }),
+      expect.objectContaining({
+        method: 'LOCK',
+        path: '/states/rimltools-production',
+        status: 403,
+        result: 'forbidden',
+        ip: '203.0.113.7',
+      }),
+    ])
+    const text = JSON.stringify(logs)
+    expect(text).not.toContain('guess-guess')
+    expect(text).not.toContain(READ_PASSWORD)
+    expect(text).not.toContain('Basic ')
+  })
+
+  test('successful requests are not logged as auth failures', async () => {
+    const { call, logs } = setup()
+    await call('GET', PATH, READ)
+    expect(logs.some((l) => l['event'] === 'tfstate_auth_failed')).toBe(false)
+  })
+
   test('logs never include the body or the credentials', async () => {
     const { call, logs } = setup()
     await call('LOCK', PATH, WRITE, lockBody('a'))
     await call('POST', `${PATH}?ID=a`, WRITE, encrypted(1))
     const text = JSON.stringify(logs)
     expect(text).not.toContain('cipher-1')
-    expect(text).not.toContain('write-secret')
+    expect(text).not.toContain(WRITE_PASSWORD)
     expect(logs.at(-1)).toMatchObject({
       method: 'POST',
       path: '/states/rimltools-production',
@@ -123,12 +162,17 @@ describe('state', () => {
     expect((await call('POST', `${PATH}?ID=a`, WRITE, encrypted(1))).status).toBe(413)
   })
 
-  test('DELETE removes the state', async () => {
-    const { call } = setup()
+  test('DELETE is 405 and leaves the state and its history intact', async () => {
+    const { call, store } = setup()
     await call('LOCK', PATH, WRITE, lockBody('a'))
     await call('POST', `${PATH}?ID=a`, WRITE, encrypted(1))
-    expect((await call('DELETE', `${PATH}?ID=a`, WRITE)).status).toBe(200)
-    expect((await call('GET', PATH, READ)).status).toBe(204)
+    await call('POST', `${PATH}?ID=a`, WRITE, encrypted(2))
+    const res = await call('DELETE', `${PATH}?ID=a`, WRITE)
+    expect(res.status).toBe(405)
+    expect(res.headers.get('allow')).not.toContain('DELETE')
+    expect(await (await call('GET', PATH, READ)).text()).toBe(encrypted(2))
+    const versions = await store.listVersions('/states/rimltools-production')
+    expect(versions.ok && versions.value.map((v) => v.serial)).toEqual([2, 1])
   })
 })
 

@@ -26,10 +26,6 @@ export const createMemoryStore = (options: { keepVersions?: number } = {}): Stat
       states.set(path, [...entries, { body, info }].slice(-keep))
       return ok(undefined)
     },
-    deleteState: async (path) => {
-      states.delete(path)
-      return ok(undefined)
-    },
     listVersions: async (path) => ok((states.get(path) ?? []).map((e) => e.info).toReversed()),
     getLock: async (path, now) => {
       const held = locks.get(path)
