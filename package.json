@@ -13,7 +13,7 @@
   "type": "module",
   "scripts": {
     "check": "bun run check:root && bun run check:qrcc && bun run check:noter && bun run check:portal && bun run check:tfstate",
-    "check:root": "oxfmt --check . && oxlint --type-aware && tsc -p tsconfig.json && tsc --build packages/ui packages/shell && bun run --cwd packages/ui lint:html && bun run --cwd packages/shell lint:html",
+    "check:root": "oxfmt --check . && oxlint --type-aware && tsc -p tsconfig.json && bun scripts/check-versions.ts && tsc --build packages/ui packages/shell && bun run --cwd packages/ui lint:html && bun run --cwd packages/shell lint:html",
     "check:qrcc": "bun run --cwd products/qrcc check",
     "check:noter": "bun run --cwd products/noter check",
     "check:portal": "bun run --cwd products/portal check",
@@ -46,7 +46,7 @@
     "oxlint": "1.80.0",
     "oxlint-tsgolint": "7.0.2001",
     "typescript": "7.0.2",
-    "wrangler": "4.127.1"
+    "wrangler": "4.129.0"
   },
   "overrides": {
     "sharp": "0.35.4"

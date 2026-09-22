@@ -1,10 +1,12 @@
 /**
  * ブラウザ側のサインイン操作の共通部分（Better Auth のクライアント → `Result`）。
  *
- * クライアントそのもの（`createAuthClient`）はプロダクトが作って渡す。
- * better-auth をここで import しないのは、各プロダクトの better-auth の版をそのまま使うため。
- * プロダクト固有の操作（noter の表示名変更など）は、プロダクトが同じクライアントで足す。
+ * クライアントは `createBrowserAuthClient` で作り、操作は `makeBaseAuthActions` が受け取る
+ * （テストでは偽物のクライアントを渡す）。プロダクト固有の操作（noter の表示名変更など）は、
+ * プロダクトが同じクライアントで足す。
  */
+import { createAuthClient } from 'better-auth/client'
+import { anonymousClient } from 'better-auth/client/plugins'
 import type { Result } from '@rimltools/contract'
 
 export type BaseAuthError = { readonly kind: 'unavailable'; readonly detail: string }
@@ -56,3 +58,13 @@ export const makeBaseAuthActions = (
     toAuthResult(await client.signIn.social({ provider: 'google', callbackURL: deps.callbackURL })),
   signOut: async () => toAuthResult(await client.signOut()),
 })
+
+/**
+ * Better Auth のブラウザ側クライアント（ゲスト用の anonymous プラグイン付き）。
+ * baseURL は指定しない。表示中のオリジンをそのまま使う。
+ */
+export const createBrowserAuthClient = (options: { readonly basePath?: string } = {}) =>
+  createAuthClient({
+    ...(options.basePath === undefined ? {} : { basePath: options.basePath }),
+    plugins: [anonymousClient()],
+  })
