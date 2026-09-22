@@ -3,9 +3,12 @@
  *
  * dev サーバはプロキシの後ろで http を受けるので、リクエストの URL からは
  * ブラウザが見ている https のオリジンが分からない。そこで portless が渡す URL を
- * Worker に伝えて使う（docs/local-dev.md）。ただし値を信じる範囲は
- * `.localhost`（RFC 6761 でループバックに限られる名前）の https に限る。
+ * Worker に伝えて使う（docs/local-dev.md）。ただし値を信じる範囲は、次の名前の https に限る。
  * 本番に誤って値が入っても、任意のドメインへリダイレクトさせる穴にならない。
+ *
+ * - `localhost` と `*.localhost`（RFC 6761 でループバックに限られる名前。portless の既定）
+ * - `*.local.riml4i.com`（自分のドメインの下のローカル専用 TLD。Google は `.localhost` の
+ *   リダイレクト URI を受け付けないので、`PORTLESS_TLD=local.riml4i.com` で使う）
  */
 
 import type { Result } from './result.ts'
@@ -13,8 +16,11 @@ import { err, ok } from './result.ts'
 
 export type LocalDevOriginError = 'invalid' | 'not-https' | 'not-localhost'
 
+/** サブドメインだけを許す、ローカル専用のドメイン（そのもののホストは許さない） */
+export const LOCAL_DEV_DOMAINS = ['localhost', 'local.riml4i.com'] as const
+
 const isLocalhostName = (hostname: string): boolean =>
-  hostname === 'localhost' || hostname.endsWith('.localhost')
+  hostname === 'localhost' || LOCAL_DEV_DOMAINS.some((domain) => hostname.endsWith(`.${domain}`))
 
 export const parseLocalDevOrigin = (value: string): Result<string, LocalDevOriginError> => {
   if (!URL.canParse(value)) return err('invalid')

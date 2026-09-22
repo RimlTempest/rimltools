@@ -10,6 +10,8 @@ describe('parseLocalDevOrigin', () => {
     ['https://fix-ui.qrcc.rimltools.localhost', 'https://fix-ui.qrcc.rimltools.localhost'],
     ['https://qrcc.rimltools.localhost:8443/path?q=1', 'https://qrcc.rimltools.localhost:8443'],
     ['https://localhost', 'https://localhost'],
+    // Google ログインも通すための、自分のドメインの下のローカル専用 TLD（docs/local-dev.md）
+    ['https://qrcc.rimltools.local.riml4i.com', 'https://qrcc.rimltools.local.riml4i.com'],
   ])('accepts %p as %p', (input, origin) => {
     expect(parseLocalDevOrigin(input)).toEqual({ ok: true, value: origin })
   })
@@ -22,6 +24,11 @@ describe('parseLocalDevOrigin', () => {
     // `.localhost` で終わるように見せかけた別ドメイン
     ['https://qrcc.rimltools.localhost.evil.example', 'not-localhost'],
     ['https://evillocalhost', 'not-localhost'],
+    // local.riml4i.com そのもの・本番のホスト・似せた別ドメインは不可
+    ['https://local.riml4i.com', 'not-localhost'],
+    ['https://qrcc.riml4i.com', 'not-localhost'],
+    ['https://qrcc.local.riml4i.com.evil.example', 'not-localhost'],
+    ['https://evil-local.riml4i.com', 'not-localhost'],
     ['https://user:pass@qrcc.rimltools.localhost', 'invalid'],
   ]
   test.each(rejected)('rejects %p (%s)', (input, reason) => {
