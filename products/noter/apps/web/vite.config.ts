@@ -21,7 +21,12 @@ export default defineConfig({
   // TanStack Start が server function を切り出したモジュールは、
   // Cloudflare プラグインが外部化する環境の外でも解析される。
   // `cloudflare:*` は Workers ランタイムが供給するので、常に外部扱いにする。
-  build: { rollupOptions: { external: [/^cloudflare:/] } },
+  //
+  // NOTER_BUNDLE_ANALYZE=1 のときだけ sourcemap を出す（docs/bundle.md の集計用。本番には出さない）。
+  build: {
+    rollupOptions: { external: [/^cloudflare:/] },
+    sourcemap: process.env['NOTER_BUNDLE_ANALYZE'] === '1',
+  },
   plugins: [
     // cloudflare() は tanstackStart() より前に置く（Cloudflare 公式手順）。
     // auxiliaryWorkers に noter-sync を含めることで、DocumentRoom(DO) を
