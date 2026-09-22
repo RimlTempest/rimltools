@@ -4,9 +4,11 @@ import { authorize, constantTimeEqual, parseBasicAuth } from './auth.ts'
 
 const basic = (user: string, pass: string) => `Basic ${btoa(`${user}:${pass}`)}`
 
+const READ_PASSWORD = 'read-secret-0123456789abcdef0123456789'
+const WRITE_PASSWORD = 'write-secret-0123456789abcdef0123456789'
 const creds = {
-  read: { user: 'reader', password: 'read-secret-0123456789' },
-  write: { user: 'writer', password: 'write-secret-0123456789' },
+  read: { user: 'reader', password: READ_PASSWORD },
+  write: { user: 'writer', password: WRITE_PASSWORD },
 }
 
 describe('parseBasicAuth', () => {
@@ -36,7 +38,7 @@ describe('constantTimeEqual', () => {
 
 describe('authorize', () => {
   test('read credentials may only GET', () => {
-    const header = basic('reader', 'read-secret-0123456789')
+    const header = basic('reader', READ_PASSWORD)
     expect(authorize(header, 'GET', creds)).toEqual({ ok: true, value: 'read' })
     for (const method of ['POST', 'DELETE', 'LOCK', 'UNLOCK']) {
       const result = authorize(header, method, creds)
@@ -45,7 +47,7 @@ describe('authorize', () => {
   })
 
   test('write credentials may use every method', () => {
-    const header = basic('writer', 'write-secret-0123456789')
+    const header = basic('writer', WRITE_PASSWORD)
     for (const method of ['GET', 'POST', 'DELETE', 'LOCK', 'UNLOCK']) {
       expect(authorize(header, method, creds)).toEqual({ ok: true, value: 'write' })
     }
@@ -56,11 +58,30 @@ describe('authorize', () => {
       ok: false,
       error: 'unauthorized',
     })
-    expect(authorize(basic('reader', 'write-secret-0123456789'), 'GET', creds)).toEqual({
+    expect(authorize(basic('reader', WRITE_PASSWORD), 'GET', creds)).toEqual({
       ok: false,
       error: 'unauthorized',
     })
     expect(authorize(null, 'GET', creds)).toEqual({ ok: false, error: 'unauthorized' })
+  })
+
+  test('requires configured passwords of at least 32 characters', () => {
+    const short = {
+      read: { user: 'r', password: 'x'.repeat(31) },
+      write: { user: 'w', password: 'y'.repeat(32) },
+    }
+    expect(authorize(basic('w', 'y'.repeat(32)), 'GET', short)).toEqual({
+      ok: false,
+      error: 'misconfigured',
+    })
+    const enough = {
+      read: { user: 'r', password: 'x'.repeat(32) },
+      write: { user: 'w', password: 'y'.repeat(32) },
+    }
+    expect(authorize(basic('w', 'y'.repeat(32)), 'GET', enough)).toEqual({
+      ok: true,
+      value: 'write',
+    })
   })
 
   test('refuses to run with empty or too short configured secrets', () => {

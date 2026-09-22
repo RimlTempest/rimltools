@@ -5,8 +5,12 @@ export type Credentials = { read: Credential; write: Credential }
 export type Role = 'read' | 'write'
 export type AuthError = 'unauthorized' | 'forbidden' | 'misconfigured'
 
-/** 資格情報として受け付ける最短の長さ。短い値が設定されていたら全リクエストを拒否する */
-const MIN_SECRET_LENGTH = 20
+/**
+ * 設定されたパスワードの最短の長さ。短い値が設定されていたら全リクエストを拒否する。
+ * tfstate には rate limiting が掛かっていない（Free の 1 本は /api/auth/ に使っている）ので、
+ * 総当たりへの守りは長さになる。`openssl rand -base64 48`（64 文字）を想定
+ */
+export const MIN_SECRET_LENGTH = 32
 
 export const parseBasicAuth = (header: string | null): Result<Credential, 'malformed'> => {
   if (header === null || !header.startsWith('Basic ')) return err('malformed')
