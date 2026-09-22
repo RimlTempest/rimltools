@@ -6,10 +6,8 @@
  * `Result` への変換と操作の共通部分は `@rimltools/auth/ui`（plan 001 段階 3）。
  * 表示名の変更は noter だけの操作なので、ここで同じクライアントを使って足す。
  */
-import { createAuthClient } from 'better-auth/client'
-import { anonymousClient } from 'better-auth/client/plugins'
 import { MAX_DISPLAY_NAME } from '@noter/contract'
-import { makeBaseAuthActions, toAuthResult } from '@rimltools/auth/ui'
+import { createBrowserAuthClient, makeBaseAuthActions, toAuthResult } from '@rimltools/auth/ui'
 import type { AuthActions } from './auth-actions.ts'
 
 type BrowserAuthDeps = {
@@ -18,8 +16,7 @@ type BrowserAuthDeps = {
 }
 
 export const makeBrowserAuthActions = (deps: BrowserAuthDeps): AuthActions => {
-  // baseURL は指定しない。表示中のオリジンをそのまま使う
-  const client = createAuthClient({ basePath: '/api/auth', plugins: [anonymousClient()] })
+  const client = createBrowserAuthClient({ basePath: '/api/auth' })
 
   return {
     ...makeBaseAuthActions(client, deps),

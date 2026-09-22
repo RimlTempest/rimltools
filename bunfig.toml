@@ -12,7 +12,10 @@ linker = "hoisted"
 # 更新する経路（Dependabot）は cooldown で同じ待ち時間を掛けている。
 minimumReleaseAge = 604800
 # 公開直後でも入れる必要があるもの。原則空にしておき、足すときは理由を書く。
-minimumReleaseAgeExcludes = []
+# - @rimltempest/riml-ds-*: このリポジトリの持ち主が自分で公開しているデザインシステム（ADR-0011）。
+#   乗っ取られた第三者のメンテナから届く悪性版を待つための設定なので、自分の版を 7 日待つ理由が無い。
+#   待たせると、riml-ds を上げた直後の 7 日間、どの package.json を変えても bun install が解決できない
+minimumReleaseAgeExcludes = ["@rimltempest/riml-ds-css", "@rimltempest/riml-ds-tokens"]
 
 [install.security]
 # install / add / update の直前に、Socket の公開 API（API キー不要の free mode）で

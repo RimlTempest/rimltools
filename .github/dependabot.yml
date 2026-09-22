@@ -28,7 +28,36 @@ updates:
       prefix-development: chore
       include: scope
     groups:
-      # minor / patch はまとめて 1 本にする（major は個別に読んでから入れる）
+      # 全ツールが使う依存は、major も含めて 1 本の PR で全 workspace を同時に上げる。
+      # workspace ごとに版がずれると、1 つの Worker やバンドルに 2 つの版が入る
+      # （better-auth で実際に起きた。scripts/check-versions.ts が CI でずれを止める）。
+      # グループは上から順に当てはめられるので、この 2 つを先頭に置く。
+      shared-platform:
+        applies-to: version-updates
+        patterns:
+          - 'better-auth'
+          - '@better-auth/*'
+          - 'react'
+          - 'react-dom'
+          - '@types/react'
+          - '@types/react-dom'
+          - '@tanstack/*'
+          - 'wrangler'
+          - '@cloudflare/*'
+          - 'typescript'
+          - 'vite'
+          - '@vitejs/*'
+      shared-platform-security:
+        applies-to: security-updates
+        patterns:
+          - 'better-auth'
+          - '@better-auth/*'
+          - 'react'
+          - 'react-dom'
+          - '@tanstack/*'
+          - 'wrangler'
+          - '@cloudflare/*'
+      # それ以外の minor / patch はまとめて 1 本にする（major は個別に読んでから入れる）
       bun-minor-patch:
         applies-to: version-updates
         update-types: [minor, patch]

@@ -64,8 +64,10 @@ describe('D1 マイグレーション', () => {
   test('ロールバックを書かない（前方移行のみ運用）', () => {
     for (const name of migrationFiles()) {
       const sql = readFileSync(join(MIGRATIONS_DIR, name), 'utf8')
-      expect(sql).not.toMatch(/DROP\s+TABLE/i)
       expect(sql).not.toMatch(/--\s*down/i)
+      // DROP TABLE は、先頭に `-- contract:` の注記がある前方移行（表の作り直しなど）だけに許す。
+      // リリースの guard（scripts/release/migrations.ts）と同じ基準
+      if (!/^--\s*contract:/i.test(sql.trimStart())) expect(sql).not.toMatch(/DROP\s+TABLE/i)
     }
   })
 
@@ -107,6 +109,63 @@ describe('D1 マイグレーション', () => {
       )
     insertAccount('a1')
     expect(() => insertAccount('a2')).toThrow()
+  })
+})
+
+const insertAccountWithoutIssuer = (db: Database, id: string, accountId: string) =>
+  db.run(
+    'INSERT INTO account (id, account_id, provider_id, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, 0, 0)',
+    [id, accountId, 'google', 'u1'],
+  )
+
+describe('account の issuer 廃止（better-auth 1.7.3、0005 の expand）', () => {
+  test('新しい版（issuer を書かない）で account を作れる', () => {
+    const db = applyMigrations()
+    insertUser(db, 'u1', 'a@example.com')
+    insertAccountWithoutIssuer(db, 'a1', 'google-123')
+    expect(db.query('SELECT id FROM account').all()).toHaveLength(1)
+  })
+
+  test('同じプロバイダと外部アカウント ID の組は 1 つだけ（1.6 と同じ一意性）', () => {
+    const db = applyMigrations()
+    insertUser(db, 'u1', 'a@example.com')
+    insertAccountWithoutIssuer(db, 'a1', 'google-123')
+    expect(() => insertAccountWithoutIssuer(db, 'a2', 'google-123')).toThrow()
+  })
+
+  test('0005 は既存の account を 1 行も落とさない', () => {
+    const db = new Database(':memory:')
+    db.exec('PRAGMA foreign_keys = ON')
+    const before = migrationFiles().filter((name) => name < '0005')
+    const after = migrationFiles().filter((name) => name >= '0005')
+    for (const name of before) db.exec(readFileSync(join(MIGRATIONS_DIR, name), 'utf8'))
+    insertUser(db, 'u1', 'a@example.com')
+    db.run(
+      'INSERT INTO account (id, issuer, account_id, provider_id, user_id, access_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, 2)',
+      ['a1', 'https://accounts.google.com', 'google-123', 'google', 'u1', 'tok'],
+    )
+    for (const name of after) db.exec(readFileSync(join(MIGRATIONS_DIR, name), 'utf8'))
+    expect(db.query('SELECT * FROM account').all()).toEqual([
+      {
+        id: 'a1',
+        issuer: 'https://accounts.google.com',
+        account_id: 'google-123',
+        provider_id: 'google',
+        user_id: 'u1',
+        access_token: 'tok',
+        refresh_token: null,
+        id_token: null,
+        access_token_expires_at: null,
+        refresh_token_expires_at: null,
+        scope: null,
+        password: null,
+        created_at: 1,
+        updated_at: 2,
+      },
+    ])
+    // ユーザーを消せば account も消える（外部キーを作り直しで失っていない）
+    db.run('DELETE FROM "user" WHERE id = ?', ['u1'])
+    expect(db.query('SELECT id FROM account').all()).toHaveLength(0)
   })
 })
 

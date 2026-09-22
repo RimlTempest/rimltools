@@ -38,7 +38,7 @@ export const session = sqliteTable('session', {
 
 export const account = sqliteTable('account', {
   id: text('id').primaryKey(),
-  issuer: text('issuer').notNull(),
+  // issuer は書かない（better-auth 1.7.3 で廃止。D1 には 0006 まで NULL 可で残る。schema.test.ts の PENDING_CONTRACT）
   accountId: text('account_id').notNull(),
   providerId: text('provider_id').notNull(),
   userId: text('user_id')
