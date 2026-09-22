@@ -12,7 +12,8 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@rimltools/contract": "workspace:*"
+    "@rimltools/contract": "workspace:*",
+    "@rimltools/telemetry": "workspace:*"
   },
   "devDependencies": {
     "wrangler": "4.127.1"
