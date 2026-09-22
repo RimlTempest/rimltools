@@ -15,6 +15,15 @@ const options = buildAuthOptions({
 })
 
 describe('Better Auth の設定（ADR-0004 のセキュリティ上の決め事）', () => {
+  // 共通化（@rimltools/auth）の前後で設定が変わっていないことの確認。
+  // qrcc は basePath とゲストのメールドメインを書かず、Better Auth の既定のまま使う
+  test('basePath とゲストのメールドメインは書かない（Better Auth の既定のまま）', () => {
+    expect('basePath' in options).toBe(false)
+    const anonymousPlugin = options.plugins[0]
+    expect(anonymousPlugin?.id).toBe('anonymous')
+    expect(anonymousPlugin?.options?.emailDomainName).toBeUndefined()
+  })
+
   test('セッションの有効期限は 30 日', () => {
     expect(GUEST_SESSION_DAYS).toBe(30)
     expect(options.session?.expiresIn).toBe(30 * 24 * 60 * 60)

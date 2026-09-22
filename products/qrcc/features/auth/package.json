@@ -18,6 +18,7 @@
     "@better-auth/drizzle-adapter": "1.7.2",
     "@qrcc/contract": "workspace:*",
     "@qrcc/ui": "workspace:*",
+    "@rimltools/auth": "workspace:*",
     "better-auth": "1.7.2",
     "drizzle-orm": "0.45.2"
   }
