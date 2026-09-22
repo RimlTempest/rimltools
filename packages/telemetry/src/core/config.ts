@@ -14,6 +14,7 @@
  */
 
 import type { Result } from './result.ts'
+import { isAllowedCollectorUrl } from './collector-url.ts'
 
 export type Resource = Readonly<Record<string, string>>
 
@@ -81,8 +82,11 @@ export const readConfig = (
 ): Result<TelemetryConfig | null, string> => {
   const endpoint = text(env, 'OTEL_EXPORTER_OTLP_ENDPOINT')
   if (endpoint === undefined) return { ok: true, value: null }
-  if (!endpoint.startsWith('https://')) {
-    return { ok: false, error: 'OTEL_EXPORTER_OTLP_ENDPOINT must be https' }
+  if (!isAllowedCollectorUrl(endpoint)) {
+    return {
+      ok: false,
+      error: 'OTEL_EXPORTER_OTLP_ENDPOINT must be https (http only for loopback)',
+    }
   }
   const ratio = number(env, 'OTEL_TRACES_SAMPLER_ARG', DEFAULT_RATIO, (n) => n >= 0 && n <= 1)
   if (!ratio.ok) return ratio

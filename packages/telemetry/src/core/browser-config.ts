@@ -10,6 +10,7 @@
 
 import { envValue } from './config.ts'
 import type { Result } from './result.ts'
+import { isAllowedCollectorUrl } from './collector-url.ts'
 
 export type BrowserConfig = {
   readonly url: string
@@ -37,7 +38,7 @@ const rate = (raw: string | undefined): number => {
 
 export const browserConfigFromEnv = (env: object, app: string): BrowserConfig | null => {
   const url = text(env, 'FARO_URL')
-  if (url === undefined || !url.startsWith('https://')) return null
+  if (url === undefined || !isAllowedCollectorUrl(url)) return null
   return {
     url,
     app,

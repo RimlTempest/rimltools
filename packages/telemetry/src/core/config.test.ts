@@ -74,4 +74,28 @@ describe('readConfig', () => {
     )
     expect(result.ok).toBe(false)
   })
+
+  // ローカルの LGTM（observability/local）だけは http で受ける。トークンを送らない前提
+  test.each(['http://127.0.0.1:4318', 'http://localhost:4318/', 'http://[::1]:4318'])(
+    'accepts plain http only for the loopback collector %p',
+    (endpoint) => {
+      const result = readConfig(
+        { ...env, OTEL_EXPORTER_OTLP_ENDPOINT: endpoint },
+        { serviceName: 'x' },
+      )
+      expect(result.ok).toBe(true)
+    },
+  )
+
+  test.each([
+    'http://127.0.0.1.example.com:4318',
+    'http://localhost.evil.test',
+    'http://10.0.0.1:4318',
+  ])('still rejects plain http to %p', (endpoint) => {
+    const result = readConfig(
+      { ...env, OTEL_EXPORTER_OTLP_ENDPOINT: endpoint },
+      { serviceName: 'x' },
+    )
+    expect(result.ok).toBe(false)
+  })
 })
