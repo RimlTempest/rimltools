@@ -111,9 +111,12 @@ updates:
         applies-to: version-updates
         update-types: [minor, patch]
 
-  # Terraform の provider（infra/terraform。ディレクトリができるまでは何もしない）
-  - package-ecosystem: terraform
-    directory: /infra/terraform
+  # OpenTofu の provider（infra/terraform・infra/grafana。lock は registry.opentofu.org を指すので
+  # terraform ではなく opentofu エコシステムで見る。Dependabot は 2025-12 から opentofu に対応）
+  - package-ecosystem: opentofu
+    directories:
+      - /infra/terraform
+      - /infra/grafana
     target-branch: develop
     schedule:
       interval: weekly

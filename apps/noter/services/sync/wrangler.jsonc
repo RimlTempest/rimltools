@@ -2,7 +2,7 @@
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "noter-sync",
   "main": "./src/index.ts",
-  "compatibility_date": "2026-08-31",
+  "compatibility_date": "2026-09-14",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   // routes を書かない。workers_dev も false。DO は noter-web の binding からのみ届く（ADR-0002）。

@@ -15,6 +15,6 @@
   "dependencies": {
     "@qrcc/contract": "workspace:*",
     "@qrcc/ui": "workspace:*",
-    "@tanstack/react-router": "1.170.32"
+    "@tanstack/react-router": "1.170.36"
   }
 }

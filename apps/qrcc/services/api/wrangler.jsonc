@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "qrcc-api",
   "main": "build/worker/shim.mjs",
-  "compatibility_date": "2026-08-31",
+  "compatibility_date": "2026-09-14",
   "observability": { "enabled": true },
 
   // ── ここに "routes" を追加してはならない（ADR-0002）─────────────────
