@@ -36,6 +36,7 @@ const registry: Registry = {
       stagingHost: 'qrcc-staging.tools.example.com',
       legacyHosts: [],
       appSecrets: [],
+      localOAuthPort: null,
       rust: true,
       services: [
         { name: 'qrcc-api', role: 'internal', buildConfig: 'a', durableObjects: false },
