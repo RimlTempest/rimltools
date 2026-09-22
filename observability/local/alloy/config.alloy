@@ -1,0 +1,42 @@
+// Grafana Faro（ブラウザの RUM）の受け口。ブラウザ → faro.receiver → LGTM。
+// ログは Loki の push API、trace は OTLP で LGTM の collector へ送る。
+// 本番の Grafana Cloud では Faro の collector がこの役を担う。
+
+faro.receiver "rimltools" {
+  server {
+    listen_address = "0.0.0.0"
+    listen_port    = 12347
+    // ローカルの dev サーバ（vite）と e2e のオリジンだけを許可する
+    cors_allowed_origins = [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:4173",
+      "http://127.0.0.1:4173",
+    ]
+  }
+
+  output {
+    logs   = [loki.process.faro.receiver]
+    traces = [otelcol.exporter.otlphttp.lgtm.input]
+  }
+}
+
+// Faro のログに source="faro" を付ける（Loki は少なくとも 1 つのラベルでの絞り込みを要求する）
+loki.process "faro" {
+  stage.static_labels {
+    values = { source = "faro" }
+  }
+  forward_to = [loki.write.lgtm.receiver]
+}
+
+loki.write "lgtm" {
+  endpoint {
+    url = "http://lgtm:3100/loki/api/v1/push"
+  }
+}
+
+otelcol.exporter.otlphttp "lgtm" {
+  client {
+    endpoint = "http://lgtm:4318"
+  }
+}
