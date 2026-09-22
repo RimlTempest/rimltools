@@ -1,0 +1,15 @@
+{
+  "name": "@rimltools/sw",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RimlTools 共通の Service Worker 部品（キャッシュ戦略・イベントの配線）。キャッシュの方針（どのリクエストをどう扱うか）は各プロダクトの decide が決める。",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./handlers": "./src/handlers.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  }
+}
