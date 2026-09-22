@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import { handle, type HandlerDeps } from './handler.ts'
+import { DEFAULT_RETENTION } from './core/retention.ts'
 import { createMemoryStore } from './memory-store.ts'
 
 const READ_PASSWORD = 'read-secret-0123456789abcdef0123456789'
@@ -34,6 +35,7 @@ const setup = (overrides: Partial<HandlerDeps> = {}) => {
     now: () => clock,
     credentials: creds,
     lockTtlMs: 60_000,
+    retention: DEFAULT_RETENTION,
     log: (entry) => logs.push(entry),
     ...overrides,
   }
@@ -173,6 +175,62 @@ describe('state', () => {
     expect(await (await call('GET', PATH, READ)).text()).toBe(encrypted(2))
     const versions = await store.listVersions('/states/rimltools-production')
     expect(versions.ok && versions.value.map((v) => v.serial)).toEqual([2, 1])
+  })
+})
+
+describe('retention', () => {
+  const DAY = 24 * 60 * 60 * 1000
+  const write = async (call: ReturnType<typeof setup>['call'], serial: number) =>
+    (await call('POST', `${PATH}?ID=a`, WRITE, encrypted(serial))).status
+
+  test('many rewrites within 7 days cannot push out history', async () => {
+    const { call, store } = setup()
+    await call('LOCK', PATH, WRITE, lockBody('a'))
+    for (const serial of Array.from({ length: 30 }, (_, i) => i + 1)) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- 版は順に積む
+      expect(await write(call, serial)).toBe(200)
+    }
+    const versions = await store.listVersions('/states/rimltools-production')
+    expect(versions.ok && versions.value.length).toBe(30)
+  })
+
+  test('versions older than 7 days beyond the newest 20 are pruned', async () => {
+    const { call, store, advance } = setup()
+    await call('LOCK', PATH, WRITE, lockBody('a'))
+    for (const serial of Array.from({ length: 25 }, (_, i) => i + 1)) {
+      // oxlint-disable-next-line eslint/no-await-in-loop -- 版は順に積む
+      expect(await write(call, serial)).toBe(200)
+    }
+    advance(8 * DAY)
+    // ロックは期限切れなので取り直す
+    await call('LOCK', PATH, WRITE, lockBody('a'))
+    expect(await write(call, 26)).toBe(200)
+    const versions = await store.listVersions('/states/rimltools-production')
+    expect(versions.ok && versions.value.map((v) => v.serial)).toEqual(
+      Array.from({ length: 20 }, (_, i) => 26 - i),
+    )
+  })
+
+  test('refuses with 507 instead of pruning when the limit is reached, and logs it', async () => {
+    const { call, logs, store } = setup({
+      retention: { ...DEFAULT_RETENTION, maxVersions: 3 },
+    })
+    await call('LOCK', PATH, WRITE, lockBody('a'))
+    expect(await write(call, 1)).toBe(200)
+    expect(await write(call, 2)).toBe(200)
+    expect(await write(call, 3)).toBe(200)
+    const res = await call('POST', `${PATH}?ID=a`, WRITE, encrypted(4))
+    expect(res.status).toBe(507)
+    expect(await (await call('GET', PATH, READ)).text()).toBe(encrypted(3))
+    const versions = await store.listVersions('/states/rimltools-production')
+    expect(versions.ok && versions.value.map((v) => v.serial)).toEqual([3, 2, 1])
+    expect(logs).toContainEqual(
+      expect.objectContaining({
+        event: 'tfstate_retention_limit',
+        reason: 'too-many-versions',
+        path: '/states/rimltools-production',
+      }),
+    )
   })
 })
 

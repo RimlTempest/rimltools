@@ -50,8 +50,8 @@ const fakeD1 = async (): Promise<D1Like> => {
 }
 
 const stores: [string, () => Promise<StateStore>][] = [
-  ['memory', async () => createMemoryStore({ keepVersions: 3 })],
-  ['d1', async () => createD1Store(await fakeD1(), { chunkBytes: 8, keepVersions: 3 })],
+  ['memory', async () => createMemoryStore()],
+  ['d1', async () => createD1Store(await fakeD1(), { chunkBytes: 8 })],
 ]
 
 describe.each(stores)('%s store', (_name, make) => {
@@ -65,23 +65,43 @@ describe.each(stores)('%s store', (_name, make) => {
   test('put then get round-trips bodies larger than one chunk', async () => {
     const store = await make()
     const body = 'x'.repeat(50) + '終' + 'y'.repeat(7)
-    expect((await store.putState(P, body, { serial: 1, lineage: 'l' }, 0)).ok).toBe(true)
+    expect((await store.putState(P, body, { serial: 1, lineage: 'l' }, 0, [])).ok).toBe(true)
     expect(await store.getState(P)).toEqual({ ok: true, value: body })
   })
 
-  test('keeps only the latest versions and serves the newest', async () => {
+  test('prunes exactly the versions it is told to, and serves the newest', async () => {
     const store = await make()
     // 版は順に積む必要があるので、並列にせず 1 つずつつなぐ
     await [1, 2, 3, 4, 5].reduce<Promise<unknown>>(
       (previous, i) =>
-        previous.then(() => store.putState(P, `body-${i}`, { serial: i, lineage: 'l' }, i)),
+        previous.then(() =>
+          store.putState(
+            P,
+            `body-${i}`,
+            { serial: i, lineage: 'l' },
+            i * 10,
+            i === 5 ? [1, 3] : [],
+          ),
+        ),
       Promise.resolve(),
     )
     expect(await store.getState(P)).toEqual({ ok: true, value: 'body-5' })
     const versions = await store.listVersions(P)
     expect(versions.ok).toBe(true)
     if (!versions.ok) return
-    expect(versions.value.map((v) => v.serial)).toEqual([5, 4, 3])
+    expect(versions.value.map((v) => [v.version, v.serial, v.createdAt])).toEqual([
+      [5, 5, 50],
+      [4, 4, 40],
+      [2, 2, 20],
+    ])
+    expect(versions.value.every((v) => v.size === 6)).toBe(true)
+  })
+
+  test('never prunes the version it is writing', async () => {
+    const store = await make()
+    await store.putState(P, 'a', { serial: 1, lineage: 'l' }, 1, [])
+    await store.putState(P, 'b', { serial: 2, lineage: 'l' }, 2, [2])
+    expect(await store.getState(P)).toEqual({ ok: true, value: 'b' })
   })
 
   test('the store offers no way to delete state', async () => {

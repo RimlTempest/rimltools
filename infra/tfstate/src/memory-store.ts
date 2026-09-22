@@ -6,14 +6,13 @@ import type { StateStore, VersionInfo } from './store.ts'
 type Entry = { body: string; info: VersionInfo }
 
 /** テストとローカル確認用のストア。振る舞いは D1 版と同じ（store.contract.test.ts） */
-export const createMemoryStore = (options: { keepVersions?: number } = {}): StateStore => {
-  const keep = options.keepVersions ?? 20
+export const createMemoryStore = (): StateStore => {
   const states = new Map<string, Entry[]>()
   const locks = new Map<string, { lock: Lock; expiresAt: number }>()
 
   return {
     getState: async (path) => ok(states.get(path)?.at(-1)?.body ?? null),
-    putState: async (path, body, meta, now) => {
+    putState: async (path, body, meta, now, prune) => {
       const entries = states.get(path) ?? []
       const version = (entries.at(-1)?.info.version ?? 0) + 1
       const info = {
@@ -23,7 +22,12 @@ export const createMemoryStore = (options: { keepVersions?: number } = {}): Stat
         size: body.length,
         createdAt: now,
       }
-      states.set(path, [...entries, { body, info }].slice(-keep))
+      states.set(
+        path,
+        [...entries, { body, info }].filter(
+          (e) => e.info.version === version || !prune.includes(e.info.version),
+        ),
+      )
       return ok(undefined)
     },
     listVersions: async (path) => ok((states.get(path) ?? []).map((e) => e.info).toReversed()),

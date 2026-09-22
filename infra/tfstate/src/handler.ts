@@ -13,6 +13,7 @@ import { authorize, type Credentials } from './core/auth.ts'
 import { checkEncryptedState } from './core/guard.ts'
 import { parseLockInfo } from './core/lock.ts'
 import { parseStatePath } from './core/paths.ts'
+import { planRetention, type RetentionPolicy } from './core/retention.ts'
 import type { StateStore } from './store.ts'
 
 export type LogEntry = Record<string, string | number | boolean>
@@ -23,6 +24,8 @@ export type HandlerDeps = {
   credentials: Credentials
   /** ロックの有効期間。CI が落ちてロックが残っても、この時間が過ぎれば取り直せる */
   lockTtlMs: number
+  /** 版の保持ルール（core/retention.ts の DEFAULT_RETENTION） */
+  retention: RetentionPolicy
   /** 受け付ける state の最大バイト数 */
   maxStateBytes?: number
   log: (entry: LogEntry) => void
@@ -127,7 +130,24 @@ const serve = async (
   }
   const meta = checkEncryptedState(body)
   if (!meta.ok) return text(422, `${meta.error}. Refusing to store it.`)
-  const saved = await store.putState(path.value, body, meta.value, now)
+  const existing = await store.listVersions(path.value)
+  if (!existing.ok) return text(500, 'storage error')
+  const next = (existing.value[0]?.version ?? 0) + 1
+  const size = new TextEncoder().encode(body).length
+  const plan = planRetention(
+    [...existing.value, { version: next, createdAt: now, size }],
+    deps.retention,
+    now,
+  )
+  if (!plan.ok) {
+    // 古い版を消して空きを作ることはしない（履歴を押し出す攻撃にそのまま使われるため）
+    deps.log({ event: 'tfstate_retention_limit', path: path.value, ...plan.error })
+    return text(
+      507,
+      `retention limit reached (${plan.error.reason}). See docs/runbooks/tfstate-restore.md`,
+    )
+  }
+  const saved = await store.putState(path.value, body, meta.value, now, plan.value.prune)
   return saved.ok ? text(200, 'saved') : text(500, 'storage error')
 }
 

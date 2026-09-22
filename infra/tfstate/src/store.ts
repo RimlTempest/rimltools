@@ -20,11 +20,13 @@ export type LockAttempt = { acquired: true } | { acquired: false; holder: Lock }
  */
 export type StateStore = {
   getState: (path: string) => Promise<Result<string | null, string>>
+  /** 新しい版を書き、prune の版を同じ batch で消す（どの版を消すかは core/retention.ts が決める） */
   putState: (
     path: string,
     body: string,
     meta: StateMeta,
     now: number,
+    prune: readonly number[],
   ) => Promise<Result<void, string>>
   listVersions: (path: string) => Promise<Result<VersionInfo[], string>>
   getLock: (path: string, now: number) => Promise<Result<Lock | null, string>>

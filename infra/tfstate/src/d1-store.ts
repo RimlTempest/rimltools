@@ -6,8 +6,6 @@ import type { D1Like, D1Row, D1Stmt, LockAttempt, StateStore, VersionInfo } from
 export type D1StoreOptions = {
   /** 1 行に入れる本文の最大バイト数。D1 の 1 値の上限（2 MB）より十分小さくする */
   chunkBytes?: number
-  /** 残す版の数（復元用。docs/runbooks/tfstate-restore.md） */
-  keepVersions?: number
 }
 
 /** UTF-8 のバイト数で区切る。コードポイントの途中では切らない */
@@ -51,7 +49,6 @@ const attempt = async <T>(run: () => Promise<Result<T, string>>): Promise<Result
 
 export const createD1Store = (db: D1Like, options: D1StoreOptions = {}): StateStore => {
   const chunkBytes = options.chunkBytes ?? 1_000_000
-  const keep = options.keepVersions ?? 20
 
   const currentVersion = async (path: string): Promise<number | null> =>
     num(await db.prepare('SELECT version FROM states WHERE path = ?').bind(path).first(), 'version')
@@ -78,7 +75,7 @@ export const createD1Store = (db: D1Like, options: D1StoreOptions = {}): StateSt
         return ok(parts.join(''))
       }),
 
-    putState: (path, body, meta, now) =>
+    putState: (path, body, meta, now, prune) =>
       attempt(async () => {
         const latest = num(
           await db
@@ -90,7 +87,7 @@ export const createD1Store = (db: D1Like, options: D1StoreOptions = {}): StateSt
         const version = (latest ?? 0) + 1
         const chunks = splitByBytes(body, chunkBytes)
         const size = new TextEncoder().encode(body).length
-        const cutoff = version - keep
+        const doomed = prune.filter((v) => v !== version)
         const statements: D1Stmt[] = [
           db
             .prepare(
@@ -107,10 +104,10 @@ export const createD1Store = (db: D1Like, options: D1StoreOptions = {}): StateSt
               'INSERT INTO states (path, version, updated_at) VALUES (?, ?, ?) ON CONFLICT(path) DO UPDATE SET version = excluded.version, updated_at = excluded.updated_at',
             )
             .bind(path, version, now),
-          db.prepare('DELETE FROM state_chunks WHERE path = ? AND version <= ?').bind(path, cutoff),
-          db
-            .prepare('DELETE FROM state_versions WHERE path = ? AND version <= ?')
-            .bind(path, cutoff),
+          ...doomed.flatMap((v) => [
+            db.prepare('DELETE FROM state_chunks WHERE path = ? AND version = ?').bind(path, v),
+            db.prepare('DELETE FROM state_versions WHERE path = ? AND version = ?').bind(path, v),
+          ]),
         ]
         await db.batch(statements)
         return ok(undefined)

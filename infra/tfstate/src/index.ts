@@ -11,6 +11,7 @@
 import { instrument, log } from '@rimltools/telemetry/worker'
 
 import { STATE_PATHS } from './core/paths.ts'
+import { DEFAULT_RETENTION } from './core/retention.ts'
 import { createD1Store } from './d1-store.ts'
 import { handle } from './handler.ts'
 
@@ -36,12 +37,9 @@ export default {
           write: { user: env.WRITE_USER, password: env.WRITE_PASSWORD },
         },
         lockTtlMs: LOCK_TTL_MS,
+        retention: DEFAULT_RETENTION,
         log: (entry) =>
-          log(
-            entry['event'] === 'tfstate_auth_failed' ? 'warn' : 'info',
-            String(entry['event']),
-            entry,
-          ),
+          log(entry['event'] === 'tfstate' ? 'info' : 'warn', String(entry['event']), entry),
       }),
     {
       serviceName: 'rimltools-tfstate',
