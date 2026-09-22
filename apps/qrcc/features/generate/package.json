@@ -19,7 +19,7 @@
     "@qrcc/wasm": "workspace:*",
     "@qrcc/webmcp": "workspace:*",
     "@rimltools/telemetry": "workspace:*",
-    "@tanstack/react-router": "1.170.32",
-    "@tanstack/react-start": "1.168.49"
+    "@tanstack/react-router": "1.170.36",
+    "@tanstack/react-start": "1.168.54"
   }
 }

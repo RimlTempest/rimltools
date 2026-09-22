@@ -5,7 +5,7 @@
   // Terraform / OpenTofu ではなく wrangler で直接デプロイする（README のブートストラップ）。
   "name": "rimltools-tfstate",
   "main": "./src/index.ts",
-  "compatibility_date": "2026-08-31",
+  "compatibility_date": "2026-09-14",
   // @rimltools/telemetry の AsyncLocalStorage（node:async_hooks）に要る
   "compatibility_flags": ["nodejs_compat"],
   // span の cloudflare.worker.version_id に使う
