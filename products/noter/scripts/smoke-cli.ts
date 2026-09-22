@@ -1,24 +1,14 @@
 /**
- * `bun run smoke [URL]` の入口。
- *
- * 判定そのものは `smoke.ts` にあり、ここは引数と終了コードだけを扱う。
- * 不合格なら 1 で終わるので、CI のステップとしてそのまま使える。
+ * `bun run smoke [URL]` の入口。判定は `smoke.ts`、引数・表示・終了コードは
+ * リポジトリ直下の `scripts/smoke/cli.ts`（qrcc / noter 共通）。
  */
+import { runSmokeCli } from '../../../scripts/smoke/cli.ts'
 import { describeSmokeResult, runSmoke, smokeVerdict } from './smoke.ts'
 
-const DEFAULT_URL = 'https://noter.riml4i.com/'
-
-const baseUrl = process.argv[2] ?? DEFAULT_URL
-
-const result = await runSmoke(baseUrl, (url) =>
-  fetch(url, {
-    // 直前のデプロイを確実に見るため、途中のキャッシュを避ける
-    cache: 'no-store',
-    headers: { 'user-agent': 'noter-smoke' },
-  }),
-)
-
-console.log(`対象: ${baseUrl}`)
-console.log(describeSmokeResult(result))
-
-if (!smokeVerdict(result).ok) process.exit(1)
+await runSmokeCli({
+  defaultUrl: 'https://noter.riml4i.com/',
+  userAgent: 'noter-smoke',
+  run: runSmoke,
+  describe: describeSmokeResult,
+  verdict: smokeVerdict,
+})
