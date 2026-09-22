@@ -75,3 +75,7 @@
 ## 6. 機能を足すときのチェック
 
 `noter-architecture` スキル §4 の質問に答え、「増える」なら §2 の表と §4 の縮退表に行を足す。
+
+## Worker のバンドルサイズ
+
+Workers Free の Worker は gzip で 3 MiB まで。サイズの内訳・削減の経緯・CI の予算は `docs/bundle.md`。
