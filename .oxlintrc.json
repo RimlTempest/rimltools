@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "jsPlugins": ["./tools/oxlint-plugin-rimltools/index.js"],
+  "jsPlugins": ["./tools/oxlint-plugin-rimltools/index.ts"],
   "plugins": [
     "typescript",
     "unicorn",
@@ -131,7 +131,7 @@
     },
     {
       "files": [
-        "tools/**/*.js",
+        "tools/**/*.ts",
         "products/*/tools/**/*.js",
         "**/*.config.ts",
         "**/*.config.js",
