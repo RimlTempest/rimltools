@@ -79,7 +79,7 @@ mise install && bun install        # lefthook も入る
 
 ```bash
 cp apps/qrcc/services/web/.dev.vars.example apps/qrcc/services/web/.dev.vars
-cp apps/noter/.dev.vars.example apps/noter/services/web/.dev.vars
+cp apps/noter/services/web/.dev.vars.example apps/noter/services/web/.dev.vars
 
 bun run --cwd apps/qrcc/services/web db:local
 bun run --cwd apps/noter/services/web db:local
