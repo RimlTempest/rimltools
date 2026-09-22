@@ -47,3 +47,10 @@ TypeScript 7.0 は Go で書き直されたネイティブコンパイラで 202
 - エディタ連携は oxlint / oxfmt の LSP（`--lsp`）を使う。
 - Prettier 前提のプラグイン（Tailwind のクラス並べ替え等）は使えない。
   必要になったら oxfmt のプラグイン対応状況を確認してから判断する。
+
+## 追記（2026-09-22）: markuplint の実行方法
+
+markuplint は CLI ではなく `tools/markuplint/run.ts`（API で実行）から動かす。CLI は parser が当たらない
+ファイルを黙って飛ばして exit 0 で終わり、実際に導入時から 0 ファイルしか検査していなかった
+（`overrideMode` の既定 `reset` で JSX parser が外れていた）。ラッパーは対象ファイルがすべて検査されたことを確かめる。
+設定はリポジトリ直下の `.markuplintrc.json` 1 つ（`overrideMode: "merge"`）。詳細は `docs/security.md`。

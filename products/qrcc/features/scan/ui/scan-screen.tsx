@@ -87,6 +87,27 @@ const gs1ElementValue = (element: Gs1Element): string => {
   }
 }
 
+type DescriptionRow = readonly [label: string, value: string | undefined]
+
+/**
+ * 値のある行だけで説明リストを作る。1 行も無ければリスト自体を出さない
+ * （空の `<dl>` は支援技術に「リスト、0 項目」とだけ伝わり、情報が無い）。
+ */
+const optionalDescriptionList = (rows: readonly DescriptionRow[]) => {
+  const present = rows.filter((row): row is readonly [string, string] => row[1] !== undefined)
+  if (present.length === 0) return undefined
+  return (
+    <dl className="qrcc-scan__interpretation">
+      {present.map(([label, value]) => (
+        <Fragment key={label}>
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </Fragment>
+      ))}
+    </dl>
+  )
+}
+
 /** 値があるときだけ `<dt>`/`<dd>` の組を出す。 */
 const OptionalRow = ({
   label,
@@ -175,14 +196,12 @@ const InterpretationDetails = ({ interpretation }: { readonly interpretation: In
         </dl>
       )
     case 'contact':
-      return (
-        <dl className="qrcc-scan__interpretation">
-          <OptionalRow label="氏名" value={interpretation.fields.name} />
-          <OptionalRow label="電話" value={interpretation.fields.tel} />
-          <OptionalRow label="メール" value={interpretation.fields.email} />
-          <OptionalRow label="組織" value={interpretation.fields.org} />
-        </dl>
-      )
+      return optionalDescriptionList([
+        ['氏名', interpretation.fields.name],
+        ['電話', interpretation.fields.tel],
+        ['メール', interpretation.fields.email],
+        ['組織', interpretation.fields.org],
+      ])
     case 'email':
       return (
         <dl className="qrcc-scan__interpretation">
@@ -216,14 +235,12 @@ const InterpretationDetails = ({ interpretation }: { readonly interpretation: In
         </dl>
       )
     case 'event':
-      return (
-        <dl className="qrcc-scan__interpretation">
-          <OptionalRow label="件名" value={interpretation.summary} />
-          <OptionalRow label="開始" value={interpretation.start} />
-          <OptionalRow label="終了" value={interpretation.end} />
-          <OptionalRow label="場所" value={interpretation.location} />
-        </dl>
-      )
+      return optionalDescriptionList([
+        ['件名', interpretation.summary],
+        ['開始', interpretation.start],
+        ['終了', interpretation.end],
+        ['場所', interpretation.location],
+      ])
   }
 }
 
@@ -249,7 +266,7 @@ const DetectionItem = ({
   const interpretation = interpret(detection.text)
 
   return (
-    <li className="qrcc-scan__result">
+    <>
       <p className="qrcc-scan__result-text">
         {interpretation.kind === 'url' ? (
           <a href={interpretation.url} rel="noreferrer">
@@ -277,7 +294,7 @@ const DetectionItem = ({
           「{shorten(detection.text)}」をコピー
         </Button>
       )}
-    </li>
+    </>
   )
 }
 
@@ -422,14 +439,19 @@ export const ScanScreen = ({
             <p>まだ読み取っていません。カメラを起動するか、画像を選んでください。</p>
           ) : (
             <ul className="qrcc-scan__results">
+              {/* <li> は <ul> の中に直接書く（markuplint が子要素を静的に検査できるように） */}
               {state.history.map((detection, index) => (
-                <DetectionItem
+                <li
                   key={`${detection.symbology}-${detection.text}-${String(index)}`}
-                  detection={detection}
-                  copyText={copyText}
-                  onCopied={(text) => dispatch({ kind: 'copied', text })}
-                  onCopyFailed={() => dispatch({ kind: 'copy_failed' })}
-                />
+                  className="qrcc-scan__result"
+                >
+                  <DetectionItem
+                    detection={detection}
+                    copyText={copyText}
+                    onCopied={(text) => dispatch({ kind: 'copied', text })}
+                    onCopyFailed={() => dispatch({ kind: 'copy_failed' })}
+                  />
+                </li>
               ))}
             </ul>
           )}

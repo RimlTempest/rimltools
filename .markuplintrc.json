@@ -1,5 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/markuplint/markuplint/main/config.schema.json",
+  "$comment": "markuplint の設定はリポジトリで 1 つ（products と packages が --config で参照する）。overrideMode は既定の reset だと、overrides に一致したファイルで parser 設定ごと消えて .tsx が検査されなくなるので merge にする（tools/markuplint/run.ts）。 video の track 必須は音のある video だけに掛ける（字幕 WCAG 1.2.2 は音声のある媒体が対象。muted のカメラプレビューに空の track を足すのは見せかけになる）。",
+  "overrideMode": "merge",
   "extends": ["markuplint:recommended-react"],
   "parser": {
     "\\.[jt]sx$": "@markuplint/jsx-parser"
@@ -68,6 +70,12 @@
       "rules": {
         "required-element": ["track"]
       }
+    },
+    {
+      "selector": "video[muted]",
+      "rules": {
+        "required-element": false
+      }
     }
   ],
   "excludeFiles": [
@@ -75,10 +83,10 @@
     "**/dist/**",
     "**/.output/**",
     "**/routeTree.gen.ts",
-    "docs/architecture/*.html"
+    "**/docs/architecture/*.html"
   ],
   "overrides": {
-    "./{shared/ui/src,features/*/ui}/**/*.tsx": {
+    "./{products/*/shared/ui/src,products/*/features/*/ui,packages/*/src}/**/*.tsx": {
       "$comment": "コンポーネントは中身を props で受け取るため、静的解析からは常に空に見える。実際に空になっていないかは、描画後の DOM を見る e2e の axe チェックが担保する。",
       "rules": {
         "no-empty-palpable-content": false

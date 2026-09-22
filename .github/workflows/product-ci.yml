@@ -80,7 +80,8 @@ jobs:
               - 'products/${{ inputs.tool }}/scripts/rust-ci.sh'
             markup:
               - 'products/${{ inputs.tool }}/**/*.tsx'
-              - 'products/${{ inputs.tool }}/.markuplintrc.json'
+              - '.markuplintrc.json'
+              - 'scripts/lib/markuplint-guard.ts'
               - 'tools/markuplint/**'
             web:
               - *root

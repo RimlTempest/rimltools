@@ -95,7 +95,9 @@ const JsonTreeRoot = ({ value }: { readonly value: JsonValue }) => {
   return (
     <ul className="noter-json-tree">
       {children.map(([key, child]) => (
-        <JsonTreeItem key={key} name={key} value={child} depth={0} />
+        <li key={key} className={itemClass(child)}>
+          <JsonTreeItem name={key} value={child} depth={0} />
+        </li>
       ))}
     </ul>
   )
@@ -107,11 +109,23 @@ type JsonTreeItemProps = {
   readonly depth: number
 }
 
+/** 枝（中身のある配列・オブジェクト）か葉か。`<li>` の class を決める。 */
+const itemClass = (value: JsonValue): string => {
+  const children = childEntries(value)
+  return children === undefined || children.length === 0
+    ? 'noter-json-tree__leaf'
+    : 'noter-json-tree__branch'
+}
+
+/**
+ * ツリーの 1 項目の中身。`<li>` は親の `<ul>` の中に直接書く（markuplint が
+ * `<ul>` の子を静的に検査できるように。コンポーネント越しの `<li>` は追えない）。
+ */
 const JsonTreeItem = ({ name, value, depth }: JsonTreeItemProps) => {
   const children = childEntries(value)
   if (children === undefined || children.length === 0) {
     return (
-      <li className="noter-json-tree__leaf">
+      <>
         <span className="noter-json-tree__key">{name}</span>
         {children === undefined ? (
           <JsonScalar value={value} />
@@ -120,25 +134,25 @@ const JsonTreeItem = ({ name, value, depth }: JsonTreeItemProps) => {
             {Array.isArray(value) ? '空の配列' : '空のオブジェクト'}
           </span>
         )}
-      </li>
+      </>
     )
   }
   return (
-    <li className="noter-json-tree__branch">
-      <details open={depth < OPEN_DEPTH}>
-        <summary>
-          <span className="noter-json-tree__key">{name}</span>
-          <span className="noter-json-tree__meta">
-            {Array.isArray(value) ? `${children.length} 件の配列` : `${children.length} 項目`}
-          </span>
-        </summary>
-        <ul className="noter-json-tree">
-          {children.map(([key, child]) => (
-            <JsonTreeItem key={key} name={key} value={child} depth={depth + 1} />
-          ))}
-        </ul>
-      </details>
-    </li>
+    <details open={depth < OPEN_DEPTH}>
+      <summary>
+        <span className="noter-json-tree__key">{name}</span>
+        <span className="noter-json-tree__meta">
+          {Array.isArray(value) ? `${children.length} 件の配列` : `${children.length} 項目`}
+        </span>
+      </summary>
+      <ul className="noter-json-tree">
+        {children.map(([key, child]) => (
+          <li key={key} className={itemClass(child)}>
+            <JsonTreeItem name={key} value={child} depth={depth + 1} />
+          </li>
+        ))}
+      </ul>
+    </details>
   )
 }
 

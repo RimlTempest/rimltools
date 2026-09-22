@@ -108,9 +108,17 @@ RimlTools のセキュリティ対策を、**攻撃が通る経路の順に並�
 | zizmor / pin 検査: `qrcc-deploy.yml` `noter-deploy.yml` | 段階リリースの workflow（C レーン）に置き換える予定の旧デプロイ                    | 置き換え時に削除         | `.github/zizmor.yml`、`security.yml` |
 | `overrides.sharp = 0.35.4`                              | GHSA-rgj7-g3m4-5g8c。miniflare が 0.35.2 に完全固定しているため上書き              | miniflare の更新時に削除 | ルート `package.json`                |
 
+## 検査が空振りしていた件（2026-09、markuplint）
+
+markuplint は導入時から 1 ファイルも検査していなかった。`overrides` の既定動作（`overrideMode: "reset"`）で、
+overrides に一致した `.tsx` から JSX parser の設定ごと消え、markuplint は「拡張子が合わない」として黙って飛ばし exit 0 で終わっていた
+（Node 26 の `ERR_IMPORT_ATTRIBUTE_MISSING` はログに出るが、markuplint が自前で JSON を読み直すので原因ではない）。
+対策: `overrideMode: "merge"` にし、設定をルートの `.markuplintrc.json` 1 つにした。呼び出しはすべて `tools/markuplint/run.ts` を通し、
+**対象に一致したファイルがすべて検査されたか**を確かめて、0 件・未検査・エラーのどれでも失敗させる（`scripts/lib/markuplint-guard.ts`）。
+「緑だが何も見ていない」検査を足すときは、同じように対象件数を確かめる。
+
 ## 既知の課題
 
-- **markuplint の隔離インストールに lockfile が無い**（`products/*/tools/markuplint`）。
-  直接依存は完全固定だが、推移的な依存は install のたびに解決される。`bun.lock` をコミットして
-  Dependabot の対象に加えるべき（プロダクト側の変更）。
+- ~~markuplint の隔離インストールに lockfile が無い~~ → plan 001 段階 1 で `tools/markuplint/bun.lock` をコミットして解消。
+
 - セキュリティヘッダは未実装（上の「実行時」）。

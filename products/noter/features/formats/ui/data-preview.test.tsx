@@ -41,6 +41,17 @@ describe('DataPreview', () => {
     expect(items.map((item) => item.textContent)).toEqual(['name"noter"', 'port80'])
   })
 
+  test('葉と枝の項目は、それぞれの見た目の class を持つ', () => {
+    render(<DataPreview kind="json" text='{"a":1,"b":{"c":2},"d":[]}' />)
+    const classes = screen.getAllByRole('listitem').map((item) => item.className)
+    expect(classes).toEqual([
+      'noter-json-tree__leaf',
+      'noter-json-tree__branch',
+      'noter-json-tree__leaf',
+      'noter-json-tree__leaf',
+    ])
+  })
+
   test('入れ子は details で畳める', () => {
     render(<DataPreview kind="json" text='{"server":{"port":80}}' />)
     const group = screen.getByText(/^server$/)
