@@ -17,26 +17,26 @@ type CodeTableProps = {
 /** 並べ替えの向きを目でも示す。色だけに頼らない（1.4.1）。 */
 const SORT_MARK = { ascending: '▲', descending: '▼', none: '' } as const
 
-type SortableHeaderProps = {
+type SortButtonProps = {
   readonly column: SortColumn
   readonly label: string
   readonly sort: CodeSort
   readonly onSort: (column: SortColumn) => void
 }
 
-const SortableHeader = ({ column, label, sort, onSort }: SortableHeaderProps) => {
-  const direction = ariaSortFor(column, sort)
-  return (
-    <th scope="col" aria-sort={direction}>
-      <button type="button" className="qrcc-code-table__sort" onClick={() => onSort(column)}>
-        {label}
-        <span aria-hidden="true" className="qrcc-code-table__mark">
-          {SORT_MARK[direction]}
-        </span>
-      </button>
-    </th>
-  )
-}
+/**
+ * 並べ替え可能な列見出しの中身。`<th aria-sort>` は表の中に直接書く。
+ * コンポーネントの外に出しておくと、markuplint が「表の列見出し」だと判断でき、
+ * aria-sort の妥当性と行の列数を静的に検査できる。
+ */
+const SortButton = ({ column, label, sort, onSort }: SortButtonProps) => (
+  <button type="button" className="qrcc-code-table__sort" onClick={() => onSort(column)}>
+    {label}
+    <span aria-hidden="true" className="qrcc-code-table__mark">
+      {SORT_MARK[ariaSortFor(column, sort)]}
+    </span>
+  </button>
+)
 
 /**
  * 保存したコードの一覧。
@@ -59,10 +59,14 @@ export const CodeTable = ({
       <caption>保存したコード（{items.length} 件）</caption>
       <thead>
         <tr>
-          <SortableHeader column="name" label="名前" sort={sort} onSort={onSort} />
+          <th scope="col" aria-sort={ariaSortFor('name', sort)}>
+            <SortButton column="name" label="名前" sort={sort} onSort={onSort} />
+          </th>
           <th scope="col">種類</th>
           <th scope="col">フォルダ</th>
-          <SortableHeader column="updated" label="更新日時" sort={sort} onSort={onSort} />
+          <th scope="col" aria-sort={ariaSortFor('updated', sort)}>
+            <SortButton column="updated" label="更新日時" sort={sort} onSort={onSort} />
+          </th>
           <th scope="col">操作</th>
         </tr>
       </thead>
