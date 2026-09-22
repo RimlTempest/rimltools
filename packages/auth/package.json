@@ -2,7 +2,7 @@
   "name": "@rimltools/auth",
   "version": "0.1.0",
   "private": true,
-  "description": "RimlTools 共通のサインイン（Better Auth: Google + ゲスト + アカウント昇格）の部品。Actor の型、設定の組み立て、セッション → Actor、D1 の入口、ブラウザ側の操作。better-auth は型としてだけ参照し、実行時の部品（プラグイン・クライアント）はプロダクトが注入する（各プロダクトの better-auth の版をそのまま使うため）。",
+  "description": "RimlTools 共通のサインイン（Better Auth: Google + ゲスト + アカウント昇格）の部品。Actor の型、設定の組み立て、セッション → Actor、D1 の入口、ブラウザ側の操作。better-auth には依存しない（テストでだけ使う）。プラグインとクライアントはプロダクトが自分の版のものを注入し、BetterAuthOptions への適合もプロダクトが自分の版の型で確かめる。",
   "type": "module",
   "exports": {
     "./contract": "./src/contract/index.ts",
