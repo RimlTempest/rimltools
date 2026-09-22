@@ -126,19 +126,33 @@ export const makeWasmDecoder = (loadModule: () => Promise<WasmDecoderModule>): W
 }
 
 /**
+ * SSR のビルドでは wasm を読まない。
+ *
+ * 呼び出し側は `canUseBrowserWasm()` を確かめてから読むのでサーバでは実行されないが、
+ * 下の動的 import がそのままだと、SSR のビルドにも wasm（生成 98 KiB・デコード 779 KiB、
+ * gzip）が同梱され、Worker のバンドル（Free は 3 MiB）の半分以上を占めていた
+ * （docs/bundle.md）。`import.meta.env.SSR` はビルド時の定数なので、サーバ側では
+ * 分岐ごと import が消える。万一サーバで呼ばれても、例外ではなく拒否された Promise を
+ * 返すので、`makeWasmRenderer` / `makeWasmDecoder` が `wasm_unavailable` にする。
+ */
+const unavailableOnServer = (): Promise<never> =>
+  Promise.reject(new Error('browser wasm is not bundled into the server build'))
+
+/**
  * ブラウザで生成用 wasm を読み込む。
  *
  * 動的 import なので、生成画面に入るまで wasm を取りに行かない。
- * サーバ側（SSR）では `document` が無いので呼ばない。
  */
-export const loadBrowserWasm = async (): Promise<WasmModule> => {
-  const [module, wasmUrl] = await Promise.all([
-    import('../pkg/qrcc_wasm.js'),
-    import('../pkg/qrcc_wasm_bg.wasm?url'),
-  ])
-  await module.default({ module_or_path: wasmUrl.default })
-  return { render: module.render }
-}
+export const loadBrowserWasm: () => Promise<WasmModule> = import.meta.env.SSR
+  ? unavailableOnServer
+  : async () => {
+      const [module, wasmUrl] = await Promise.all([
+        import('../pkg/qrcc_wasm.js'),
+        import('../pkg/qrcc_wasm_bg.wasm?url'),
+      ])
+      await module.default({ module_or_path: wasmUrl.default })
+      return { render: module.render }
+    }
 
 /**
  * ブラウザでデコード用 wasm を読み込む。
@@ -146,14 +160,16 @@ export const loadBrowserWasm = async (): Promise<WasmModule> => {
  * 生成用の何倍もある（rxing を含む）ので、**読み取り画面に入って、かつ
  * ブラウザ組み込みの `BarcodeDetector` が使えないときだけ**取りに行く。
  */
-export const loadBrowserDecoder = async (): Promise<WasmDecoderModule> => {
-  const [module, wasmUrl] = await Promise.all([
-    import('../pkg/qrcc_scan_wasm.js'),
-    import('../pkg/qrcc_scan_wasm_bg.wasm?url'),
-  ])
-  await module.default({ module_or_path: wasmUrl.default })
-  return { decode: module.decode }
-}
+export const loadBrowserDecoder: () => Promise<WasmDecoderModule> = import.meta.env.SSR
+  ? unavailableOnServer
+  : async () => {
+      const [module, wasmUrl] = await Promise.all([
+        import('../pkg/qrcc_scan_wasm.js'),
+        import('../pkg/qrcc_scan_wasm_bg.wasm?url'),
+      ])
+      await module.default({ module_or_path: wasmUrl.default })
+      return { decode: module.decode }
+    }
 
 /** 実行環境で wasm を使えるか。SSR とハイドレーション前は使えない。 */
 export const canUseBrowserWasm = (): boolean =>
