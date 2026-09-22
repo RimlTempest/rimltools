@@ -11,7 +11,7 @@ locals {
       host        = try(t.apex, false) ? local.domain : "${t.subdomain}.${local.domain}"
       stagingHost = try(t.apex, false) ? "staging.${local.domain}" : "${t.subdomain}-staging.${local.domain}"
       legacyHosts = try(t.legacyHosts, [])
-      workers     = [for w in t.workers : w.name]
+      workers     = [for w in t.services : w.name]
       slo         = t.slo
     }
   }
@@ -24,7 +24,7 @@ locals {
     if lookup(var.synthetic_host_overrides, name, t.host) != ""
   }
 
-  # Grafana 側で固定する data source の UID（observability/dashboards/*.json が参照する）
+  # Grafana 側で固定する data source の UID（ops/dashboards/*.json が参照する）
   ds = {
     mimir = "rt-mimir"
     loki  = "rt-loki"

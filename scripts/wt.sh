@@ -2,7 +2,7 @@
 # worktree lane helper（全プロダクト共通）。See .claude/skills/rimltools-worktree
 #
 #   scripts/wt.sh <tool> <command> [args]   例: scripts/wt.sh qrcc new feat/scan-ui
-#   （products/<tool> の中で実行したときは <tool> を省略できる）
+#   （apps/<tool> の中で実行したときは <tool> を省略できる）
 set -euo pipefail
 
 die() { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -12,15 +12,15 @@ info() { printf '\033[36m==>\033[0m %s\n' "$*"; }
 # worktree はリポジトリ全体を切り出すので、中のプロダクトは "$path/$REL" にある。
 GIT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TOOL="${1:-}"
-if [ -n "$TOOL" ] && [ -d "$GIT_ROOT/products/$TOOL" ]; then
+if [ -n "$TOOL" ] && [ -d "$GIT_ROOT/apps/$TOOL" ]; then
   shift
 else
   case "${PWD#"$GIT_ROOT"/}" in
-    products/*) TOOL="${PWD#"$GIT_ROOT"/products/}"; TOOL="${TOOL%%/*}" ;;
-    *) die "usage: wt <tool> <command>  (tools: $(cd "$GIT_ROOT/products" && ls -d */ | tr -d / | tr '\n' ' '))" ;;
+    apps/*) TOOL="${PWD#"$GIT_ROOT"/apps/}"; TOOL="${TOOL%%/*}" ;;
+    *) die "usage: wt <tool> <command>  (tools: $(cd "$GIT_ROOT/apps" && ls -d */ | tr -d / | tr '\n' ' '))" ;;
   esac
 fi
-REL="products/$TOOL"
+REL="apps/$TOOL"
 ROOT="$GIT_ROOT/$REL"
 LANES="$ROOT/scripts/lanes.tsv"
 [ -f "$LANES" ] || die "no lanes defined for $TOOL ($LANES)"
@@ -120,7 +120,7 @@ cmd_sync() {
   if ! git rebase "$BASE"; then
     cat >&2 <<'EOF'
 
-rebase が止まりました。products/<tool>/docs/parallel-lanes.md の「6. 競合したときのプロトコル」に従ってください:
+rebase が止まりました。apps/<tool>/docs/parallel-lanes.md の「6. 競合したときのプロトコル」に従ってください:
   1. 所有ディレクトリ外を触っていないか確認する
   2. bun.lock      -> git checkout --ours bun.lock && bun install && git add bun.lock
      Cargo.lock    -> cargo update -w && git add Cargo.lock（Rust を持つプロダクトのみ）
@@ -199,7 +199,7 @@ usage: bun run wt [<tool>] <command>
   done <branch>   マージ済みレーンの worktree とブランチを片付ける
   status          全 worktree の状態（未コミット / develop との差分）
 
-詳細: .claude/skills/rimltools-worktree と products/<tool>/docs/parallel-lanes.md
+詳細: .claude/skills/rimltools-worktree と apps/<tool>/docs/parallel-lanes.md
 EOF
     exit 1 ;;
 esac

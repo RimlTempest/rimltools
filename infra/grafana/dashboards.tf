@@ -1,4 +1,4 @@
-# ダッシュボードの正本は observability/dashboards/*.json（scripts/observability/dashboards.ts が検査する）。
+# ダッシュボードの正本は ops/dashboards/*.json（scripts/ops/dashboards.ts が検査する）。
 
 resource "grafana_folder" "rimltools" {
   uid   = "rimltools"
@@ -6,10 +6,10 @@ resource "grafana_folder" "rimltools" {
 }
 
 resource "grafana_dashboard" "this" {
-  for_each = fileset("${path.module}/../../observability/dashboards", "*.json")
+  for_each = fileset("${path.module}/../../ops/dashboards", "*.json")
 
   folder      = grafana_folder.rimltools.uid
-  config_json = file("${path.module}/../../observability/dashboards/${each.value}")
+  config_json = file("${path.module}/../../ops/dashboards/${each.value}")
   overwrite   = true
   message     = "Managed by Terraform (infra/grafana)"
 

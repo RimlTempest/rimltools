@@ -1,0 +1,24 @@
+{
+  "name": "@rimltools/noter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --filter '@noter/web' dev",
+    "build": "bun run --filter '@noter/web' build",
+    "test": "bun test shared/ features/ services/ scripts/",
+    "typecheck": "bun run --filter '@noter/web' gen && tsc --build && bun run --filter '@noter/sync-worker' typecheck && tsc -p services/web --noEmit && tsc -p services/web/tsconfig.sw.json",
+    "lint": "oxlint --type-aware",
+    "lint:fix": "oxlint --type-aware --fix",
+    "fmt": "oxfmt .",
+    "fmt:check": "oxfmt --check .",
+    "lint:html": "node ../../tools/markuplint/run.ts --config ../../.markuplintrc.json 'features/**/ui/**/*.tsx' 'shared/ui/src/**/*.tsx'",
+    "a11y": "bun run --filter '@noter/e2e' a11y",
+    "check": "bun run fmt:check && bun run lint && bun run typecheck && bun run lint:html",
+    "wt": "../../scripts/wt.sh noter",
+    "archify": "../../scripts/archify.sh noter",
+    "e2e": "bun run --filter '@noter/e2e' test",
+    "smoke": "bun run scripts/smoke-cli.ts",
+    "smoke:browser": "bun run --filter '@noter/e2e' smoke",
+    "test:all": "bun run test && bun run e2e"
+  }
+}

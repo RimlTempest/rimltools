@@ -21,3 +21,17 @@ qrcc2 と noter2 は同じスタック・同じ規約（bun workspaces / TanStac
 
 - 旧リポジトリは archive（読み取り専用）。Issue・PR は移していない。
 - 各プロダクト内の ADR 番号（`products/<tool>/docs/adr/`）はそのまま残る。ルートの ADR はプロダクト横断の決定だけを書く。
+
+## 追記（2026-09-22）: ディレクトリ名の変更
+
+上の「決定」は統合時点の名前のまま残す。わかりにくいという理由で、次のとおり改名した。
+
+| 旧                                   | 新                               |
+| ------------------------------------ | -------------------------------- |
+| `products/<tool>/`                   | `apps/<tool>/`                   |
+| `products/<tool>/apps/<worker>/`     | `apps/<tool>/services/<worker>/` |
+| `observability/`（ダッシュボード等） | `ops/`                           |
+| `scripts/observability/`             | `scripts/ops/`                   |
+| `tools.json` の `workers`            | `tools.json` の `services`       |
+
+Worker 名・パッケージ名（`@qrcc/web` など）・Cloudflare 上のリソース名は変えていない。

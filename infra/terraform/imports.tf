@@ -11,7 +11,7 @@ locals {
 
   import_workers = merge([
     for name, t in local.tools : {
-      for w in t.workers : "${name}/${w.name}" => {
+      for w in t.services : "${name}/${w.name}" => {
         tool = name
         key  = "production/${w.name}"
         id   = local.existing_workers[w.name]

@@ -5,9 +5,9 @@ node_modules/
 dist/
 
 # scripts/release が環境ごとに書き出す wrangler 設定（docs/release.md）
-products/*/wrangler.staging.json
-products/*/wrangler.production.json
-products/*/wrangler.preview.json
+apps/*/wrangler.staging.json
+apps/*/wrangler.production.json
+apps/*/wrangler.preview.json
 .release/
 
 # terraform（infra/terraform）
@@ -25,8 +25,8 @@ infra/grafana/plan.txt
 # tsconfig.base.json は emitDeclarationOnly なので、outDir の無い型検査が .ts の隣に .d.ts を出すことがある。
 # 手書きの型宣言（*/css.d.ts・wasm-url.d.ts など）以外の .d.ts はコミットしない（plan 001 段階 3）
 scripts/**/*.d.ts
-products/portal/scripts/*.d.ts
-products/portal/src/*.d.ts
+apps/portal/scripts/*.d.ts
+apps/portal/src/*.d.ts
 
 # Service Worker は src/sw/sw.ts から生成する（scripts/build-sw.ts）
-products/*/apps/web/public/sw.js
+apps/*/services/web/public/sw.js

@@ -3,7 +3,7 @@
  *
  *   bun scripts/build-sw.ts <entry.ts> <out.js>
  *
- * 各プロダクトの `apps/web` の `bun run sw`（dev / build の前に自動で走る）が呼ぶ。
+ * 各プロダクトの `services/web` の `bun run sw`（dev / build の前に自動で走る）が呼ぶ。
  * 出力（`public/sw.js`）は生成物なのでコミットしない（.gitignore）。
  *
  * SW は `register('/sw.js')` で classic script として登録するので、import / export の

@@ -1,0 +1,41 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "qrcc-web",
+  "main": "./src/server.ts",
+  "compatibility_date": "2026-08-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+
+  // 入口はカスタムドメインだけにする。workers.dev を開けると APP_ORIGIN と
+  // 違うオリジンが増え、Cookie も OAuth のリダイレクト先も噛み合わなくなる。
+  "workers_dev": false,
+  // Custom Domain（qrcc.tools.riml4i.com）は Terraform の持ち物（ルート ADR-0005）。
+  // wrangler の routes に書くと versions deploy とは別経路で更新され、Terraform と取り合いになる。
+  // 環境ごとのホスト名と APP_ORIGIN は scripts/release が書き換えて出す（docs/release.md）。
+
+  // qrcc-api は routes を持たない auxiliary Worker。ここからのみ到達できる。
+  "services": [{ "binding": "API", "service": "qrcc-api" }],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "qrcc",
+      "database_id": "69c356fa-5d2f-4bfc-aa62-c528d1a73dcf",
+      "migrations_dir": "../api/migrations",
+    },
+  ],
+
+  // CF_VERSION_METADATA は span の cloudflare.worker.version_id に使う（段階リリースの版と突き合わせる）
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+
+  "vars": {
+    "APP_ORIGIN": "https://qrcc.riml4i.com",
+    // テレメトリ（docs/ops/telemetry.md）。空なら無効。本番・staging の値はリリース時に入れる。
+    // OTEL_EXPORTER_OTLP_HEADERS は secret（wrangler secret put）。
+    "OTEL_SERVICE_NAME": "qrcc-web",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "",
+    "FARO_URL": "",
+  },
+  // BETTER_AUTH_SECRET / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET は
+  // wrangler secret put で設定する。.dev.vars はコミットしない。
+}

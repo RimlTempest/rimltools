@@ -1,5 +1,5 @@
 /**
- * テレメトリ（Grafana Faro）の起動。設定は Worker が <head> に埋め込む（docs/observability.md）。
+ * テレメトリ（Grafana Faro）の起動。設定は Worker が <head> に埋め込む（docs/ops/telemetry.md）。
  * 初期表示が落ち着いてから、サンプリングに当たったセッションだけ SDK を読み込む。
  *
  * 呼び出し側は `import.meta.env.SSR` が偽のときだけ呼ぶこと（SSR のバンドルに Faro を入れない）。

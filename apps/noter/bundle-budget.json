@@ -1,0 +1,12 @@
+{
+  "$comment": "サイズ予算（scripts/check-bundle.sh → bun ../../scripts/bundle-budget.ts）。閾値の根拠は docs/bundle.md。",
+  "budgets": [
+    {
+      "name": "worker (noter-web, server)",
+      "dir": "services/web/dist/server",
+      "extensions": [".js", ".mjs", ".wasm"],
+      "maxGzipBytes": 1572864,
+      "reason": "Workers Free の上限 3 MiB（gzip）の半分。2026-09 の実測 869 KiB から約 660 KiB の伸びしろを残し、超えたら理由を書いて見直す（docs/bundle.md）"
+    }
+  ]
+}

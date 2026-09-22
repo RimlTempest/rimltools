@@ -20,9 +20,9 @@
     ".agents/skills/**",
     ".claude/skills/**",
     "skills-lock.json",
-    "products/*/.agents/skills/**",
-    "products/*/.claude/skills/**",
-    "products/*/docs/architecture/*.html",
+    "apps/*/.agents/skills/**",
+    "apps/*/.claude/skills/**",
+    "apps/*/docs/architecture/*.html",
     "infra/secrets/*.sops.yaml",
     "scripts/lib/fixtures/**",
     "docs/architecture/*.html"

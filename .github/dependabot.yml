@@ -6,6 +6,9 @@
 # - 脆弱性の修正（security updates）は cooldown の対象外で、勧告が出たらすぐ PR になる。
 #   有効化はリポジトリ設定（Terraform の github_repository で管理）。
 # - PR は作業ブランチの develop 宛て。CI の gate / security-gate を通ってから squash で入れる。
+# - グループ名は短くする。単独の依存を上げるグループ PR の件名は
+#   `chore(deps): bump <依存> from <版> to <版> in the <グループ> group` になり、conventional チェックの
+#   件名の上限に掛かるため（Dependabot の PR だけ上限 120 文字。scripts/lib/conventional.ts）。
 version: 2
 
 updates:
@@ -32,7 +35,7 @@ updates:
       # workspace ごとに版がずれると、1 つの Worker やバンドルに 2 つの版が入る
       # （better-auth で実際に起きた。scripts/check-versions.ts が CI でずれを止める）。
       # グループは上から順に当てはめられるので、この 2 つを先頭に置く。
-      shared-platform:
+      platform:
         applies-to: version-updates
         patterns:
           - 'better-auth'
@@ -47,7 +50,7 @@ updates:
           - 'typescript'
           - 'vite'
           - '@vitejs/*'
-      shared-platform-security:
+      platform-security:
         applies-to: security-updates
         patterns:
           - 'better-auth'
@@ -58,16 +61,16 @@ updates:
           - 'wrangler'
           - '@cloudflare/*'
       # それ以外の minor / patch はまとめて 1 本にする（major は個別に読んでから入れる）
-      bun-minor-patch:
+      bun:
         applies-to: version-updates
         update-types: [minor, patch]
-      bun-security:
+      security:
         applies-to: security-updates
         patterns: ['*']
 
   # qrcc の Rust（engine / worker）
   - package-ecosystem: cargo
-    directory: /products/qrcc
+    directory: /apps/qrcc
     target-branch: develop
     schedule:
       interval: weekly
@@ -83,7 +86,7 @@ updates:
       prefix: chore
       include: scope
     groups:
-      cargo-minor-patch:
+      cargo:
         applies-to: version-updates
         update-types: [minor, patch]
 
@@ -104,7 +107,7 @@ updates:
       prefix: ci
       include: scope
     groups:
-      actions-minor-patch:
+      actions:
         applies-to: version-updates
         update-types: [minor, patch]
 

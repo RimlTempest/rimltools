@@ -26,7 +26,7 @@ hotfix/* ──PR──▶ main ──自動──▶ production、その後 mai
 - `release-freeze` ラベル付きの Release PR に `fix:` / `revert:` 以外のコミットがある（エラーバジェット枯渇中。ADR-0007）
 - `DROP` / `RENAME` を含む D1 migration に `-- contract:` 注記が無い（§4）
 
-出すツールは「`products/<tool>/` 配下の変更（`*.md`・`docs/`・`plans/` を除く）」で決まる。
+出すツールは「`apps/<tool>/` 配下の変更（`*.md`・`docs/`・`plans/` を除く）」で決まる。
 `package.json` / `bun.lock` / `bunfig.toml` / `mise.toml` / `tools.json` / `packages/**` が変わると全ツールを出す。
 
 ## 2. 本番リリースの段階（ADR-0003）
@@ -137,7 +137,7 @@ Terraform が発行するトークン（`CLOUDFLARE_API_TOKEN`）に必要な pe
 `Account Analytics Read` と `Workers Observability Write` の両方が無いと、canary は毎回 `needs-human` で止まる（ロールバックはしない）。
 invocation log は `observability.enabled: true` で既定有効。`invocation_logs: false` の設定は prepare が拒否する。
 
-### テレメトリ（任意、docs/observability.md）
+### テレメトリ（任意、docs/ops/telemetry.md）
 
 | 種類     | 名前                    | 入る先                                                                                                 |
 | -------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |

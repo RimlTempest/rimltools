@@ -8,14 +8,14 @@ describe('findForbiddenJs', () => {
       findForbiddenJs([
         'scripts/a.js',
         'tools/x/index.mjs',
-        'products/qrcc/apps/web/public/sw.js',
+        'apps/qrcc/services/web/public/sw.js',
         'packages/ui/src/b.jsx',
         'c.cjs',
       ]),
     ).toEqual([
+      'apps/qrcc/services/web/public/sw.js',
       'c.cjs',
       'packages/ui/src/b.jsx',
-      'products/qrcc/apps/web/public/sw.js',
       'scripts/a.js',
       'tools/x/index.mjs',
     ])

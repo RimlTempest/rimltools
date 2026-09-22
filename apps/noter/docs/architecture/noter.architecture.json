@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "noter の構成",
+    "output": "noter-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/RimlTempest/rimltools",
+      "revision": "8c4e378e5be3f463dbfafcec94f129344d2e4552"
+    },
+    "views": [
+      {
+        "id": "compute",
+        "label": "計算はブラウザ",
+        "focus": ["browser", "editor", "webmcp"],
+        "note": "構文解析・診断・整形・Markdown → HTML・Mermaid → SVG はすべて端末内。Worker はこれらに関与しない。"
+      },
+      {
+        "id": "realtime",
+        "label": "リアルタイム同期",
+        "focus": ["browser", "web", "room", "dostore"],
+        "note": "noter-web が /ws/:documentId を認可してから DO binding に渡す。DocumentRoom は 1 文書 1 つで、Yjs 更新を中継し alarm で SQLite に集約保存する。"
+      },
+      {
+        "id": "auth",
+        "label": "認証と認可",
+        "focus": ["browser", "google", "web", "d1"],
+        "note": "Better Auth（Google / ゲスト）と D1 は noter-web にだけある。noter-sync は routes を持たず、DO は認可しない（ADR-0002）。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "webmcp",
+      "type": "external",
+      "label": "AI エージェント",
+      "sublabel": "WebMCP（ブラウザ内ツール）",
+      "pos": [40, 100],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "apps/noter/shared/webmcp/src/index.ts",
+          "label": "WebMCP"
+        }
+      ]
+    },
+    {
+      "id": "editor",
+      "type": "frontend",
+      "label": "エディタ・変換",
+      "sublabel": "CodeMirror 6・Yjs・Mermaid",
+      "tag": "ブラウザでだけ読む",
+      "pos": [330, 100],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "apps/noter/features/editor/ui/code-editor-view.ts",
+          "label": "CodeMirror（遅延）"
+        },
+        {
+          "path": "apps/noter/features/formats/ui/mermaid-block.tsx",
+          "label": "Mermaid（遅延）"
+        },
+        {
+          "path": "apps/noter/features/sync/client/src/provider.ts",
+          "label": "Yjs provider"
+        }
+      ]
+    },
+    {
+      "id": "google",
+      "type": "security",
+      "label": "Google OAuth",
+      "sublabel": "サインイン（任意・ゲスト可）",
+      "pos": [40, 284],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "packages/auth/src/server/auth-options.ts",
+          "label": "@rimltools/auth"
+        },
+        {
+          "path": "apps/noter/features/auth/server/auth-options.ts",
+          "label": "noter の設定"
+        }
+      ]
+    },
+    {
+      "id": "browser",
+      "type": "external",
+      "label": "ブラウザ / PWA",
+      "sublabel": "TanStack Start（React 19）",
+      "pos": [330, 284],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "apps/noter/services/web/src/router.tsx",
+          "label": "router"
+        },
+        {
+          "path": "packages/shell/src/app-shell.tsx",
+          "label": "@rimltools/shell"
+        },
+        {
+          "path": "packages/telemetry/src/browser/index.ts",
+          "label": "Faro"
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "type": "backend",
+      "label": "Worker: noter-web",
+      "sublabel": "SSR・Better Auth・/ws・OTLP",
+      "tag": "entry",
+      "pos": [620, 284],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "apps/noter/services/web/wrangler.jsonc",
+          "label": "wrangler"
+        },
+        {
+          "path": "apps/noter/services/web/src/server/ws-authorize.ts",
+          "label": "/ws の認可"
+        },
+        {
+          "path": "apps/noter/services/web/src/server.ts",
+          "label": "entry"
+        }
+      ]
+    },
+    {
+      "id": "room",
+      "type": "backend",
+      "label": "DO: DocumentRoom",
+      "sublabel": "noter-sync・Hibernation",
+      "tag": "1 文書 = 1 DO",
+      "pos": [910, 284],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "apps/noter/services/sync/wrangler.jsonc",
+          "label": "routes なし"
+        },
+        {
+          "path": "apps/noter/features/sync/worker/document-room.ts",
+          "label": "DocumentRoom"
+        }
+      ]
+    },
+    {
+      "id": "d1",
+      "type": "database",
+      "label": "D1",
+      "sublabel": "user・session・document・share",
+      "pos": [620, 468],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "apps/noter/features/auth/server/schema.ts",
+          "label": "auth schema"
+        },
+        {
+          "path": "apps/noter/features/documents/server/sql.ts",
+          "label": "documents"
+        }
+      ]
+    },
+    {
+      "id": "dostore",
+      "type": "database",
+      "label": "DO SQLite",
+      "sublabel": "state BLOB 1 行",
+      "tag": "alarm で集約保存",
+      "pos": [910, 468],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "apps/noter/features/sync/worker/storage.ts",
+          "label": "storage"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "端末（ブラウザ）",
+      "wraps": ["browser", "editor"]
+    },
+    {
+      "kind": "region",
+      "label": "Cloudflare Workers Free",
+      "wraps": ["web", "room", "d1", "dostore"]
+    },
+    {
+      "kind": "security-group",
+      "label": "非公開: noter-web の binding からのみ",
+      "wraps": ["room", "dostore"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "browser-editor",
+      "from": "browser",
+      "to": "editor",
+      "label": "解析・整形・描画は全部ここ",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "webmcp-editor",
+      "from": "webmcp",
+      "to": "editor",
+      "label": "WebMCP",
+      "variant": "dashed",
+      "labelDy": -26
+    },
+    {
+      "id": "browser-google",
+      "from": "browser",
+      "to": "google",
+      "label": "Google でサインイン",
+      "variant": "security",
+      "fromSide": "left",
+      "toSide": "right",
+      "labelDy": -26
+    },
+    {
+      "id": "browser-web",
+      "from": "browser",
+      "to": "web",
+      "label": "HTTPS + WSS（/ws/:documentId）",
+      "variant": "emphasis",
+      "labelDy": 56
+    },
+    {
+      "id": "web-room",
+      "from": "web",
+      "to": "room",
+      "label": "認可済み WS を DO binding へ",
+      "variant": "emphasis",
+      "labelDy": 56
+    },
+    {
+      "id": "web-d1",
+      "from": "web",
+      "to": "d1",
+      "label": "SQL",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 64
+    },
+    {
+      "id": "room-dostore",
+      "from": "room",
+      "to": "dostore",
+      "label": "Yjs state（alarm）",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "計算はブラウザ",
+      "items": [
+        "構文解析・診断・整形・Markdown・Mermaid はクライアント JS",
+        "CodeMirror と Mermaid はサーバのビルドに入れない（Worker は 0.85 MiB）"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "到達経路は 1 本",
+      "items": [
+        "noter-sync は routes も workers_dev も持たない（ADR-0002）",
+        "DO は認可しない。noter-web の認可済みコードだけが binding で届く"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "収束は CRDT に任せる",
+      "items": [
+        "Yjs が収束を保証するので DO は更新を中継するだけ",
+        "1 文書 1 DO のシングルスレッドで順序問題が消える（ADR-0001）"
+      ]
+    }
+  ]
+}

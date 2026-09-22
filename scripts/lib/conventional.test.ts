@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   checkComment,
   checkCommitMessage,
+  maxHeaderFor,
   parseReviewItems,
   reviewFindings,
 } from './conventional.ts'
@@ -123,5 +124,27 @@ describe('parseReviewItems', () => {
 
   test('returns an empty list for non-arrays', () => {
     expect(parseReviewItems({ message: 'Not Found' })).toEqual([])
+  })
+})
+
+describe('header length limit', () => {
+  const long = `chore(deps): bump @socketsecurity/bun-security-scanner from 1.10.12 to 1.11.0 in the bun group`
+  const longer = `${long}${'x'.repeat(120 - long.length)}`
+
+  test('ordinary commits and PRs keep the 100-character limit', () => {
+    expect(checkCommitMessage(`feat: ${'x'.repeat(95)}`).ok).toBe(false)
+    expect(maxHeaderFor('someone')).toBe(100)
+  })
+
+  test('Dependabot PRs may use up to 120 characters', () => {
+    expect(maxHeaderFor('dependabot[bot]')).toBe(120)
+    expect(checkCommitMessage(long, { maxHeader: maxHeaderFor('dependabot[bot]') }).ok).toBe(true)
+    expect(checkCommitMessage(longer, { maxHeader: 120 }).ok).toBe(true)
+    expect(checkCommitMessage(`${longer}y`, { maxHeader: 120 }).ok).toBe(false)
+  })
+
+  test('a look-alike login does not get the exception', () => {
+    expect(maxHeaderFor('dependabot')).toBe(100)
+    expect(maxHeaderFor('dependabot[bot]-fake')).toBe(100)
   })
 })
