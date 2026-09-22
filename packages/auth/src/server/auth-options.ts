@@ -5,8 +5,8 @@
  * **素のオブジェクトを組み立てる関数**として切り出し、テストで固定する。
  * D1 も乱数もここでは作らない（すべて引数で受け取る）。
  *
- * better-auth は **peer 依存**。版はリポジトリ直下の `package.json` の `overrides` で 1 つに固定してあり
- * （`scripts/check-versions.ts` が CI で確かめる）、プロダクトと同じ 1 つの better-auth を使う。
+ * better-auth は **peer 依存**。版は全 workspace で同じものに揃えてあり（`scripts/check-versions.ts` が
+ * CI で確かめ、Dependabot は 1 本の PR でまとめて上げる）、プロダクトと同じ 1 つの better-auth を使う。
  */
 import type { BetterAuthOptions } from 'better-auth'
 import { anonymous } from 'better-auth/plugins'
