@@ -1,22 +1,16 @@
-import { fileURLToPath } from 'node:url'
 import { defineConfig, devices } from '@playwright/test'
 
-/**
- * worktree ごとに違うポートを使う。
- *
- * 既定の 4173 を共有すると、`reuseExistingServer` が**別の worktree が起動した
- * サーバ**を掴んでしまい、別ブランチのビルドに対してテストが走る。
- * 実際にそれで無関係な失敗が大量に出たので、チェックアウトの場所から
- * 決まる値にしている（同じ worktree 内では再利用が効く）。
- */
-const portFromCheckout = () => {
-  const root = fileURLToPath(new URL('..', import.meta.url))
-  let hash = 0
-  for (const character of root) hash = (hash * 31 + (character.codePointAt(0) ?? 0)) % 1000
-  return 4200 + hash
-}
+import { allocateFreePort, resolveE2ePort } from '../../../scripts/lib/e2e-port.ts'
 
-const PORT = Number(process.env['QRCC_E2E_PORT'] ?? portFromCheckout())
+/**
+ * プレビューサーバのポートは実行ごとに OS から空きを 1 つもらう（scripts/lib/e2e-port.ts）。
+ *
+ * 既定の 4173 や、チェックアウトの場所から決まる番号を使うと、`reuseExistingServer` が
+ * 別の worktree・別プロダクトのサーバを掴んだり、テストの途中でそのサーバが消えたりした。
+ * 決めた番号は QRCC_E2E_PORT に書き残すので、Playwright の worker も同じ番号を使う。
+ * 起動済みのサーバを使い回したいときは QRCC_E2E_PORT を明示する。
+ */
+const PORT = resolveE2ePort(process.env, 'QRCC_E2E_PORT', allocateFreePort)
 const baseURL = `http://localhost:${PORT}`
 
 export default defineConfig({
@@ -54,7 +48,7 @@ export default defineConfig({
   ],
   webServer: {
     // api(Rust) → web の順にビルドしてから preview する。
-    // apps/api/build と apps/web/dist は git 管理外なので、必ずここで作る。
+    // services/api/build と services/web/dist は git 管理外なので、必ずここで作る。
     //
     // ローカル D1 のマイグレーションもここで当てる。認証はこれが無いと 500 になり、
     // 「CI では落ちるが手元では通る」という一番たちの悪い差が生まれる。
