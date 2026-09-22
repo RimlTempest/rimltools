@@ -1,0 +1,12 @@
+# observability/dashboards/*.json（本番と同じ正本）を、フォルダ RimlTools に読み込む
+apiVersion: 1
+
+providers:
+  - name: RimlTools
+    folder: RimlTools
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /otel-lgtm/rimltools/dashboards
+      foldersFromFilesStructure: false

@@ -36,6 +36,13 @@ describe('browserConfigFromEnv', () => {
 
   test('rejects non-https collectors', () => {
     expect(browserConfigFromEnv({ FARO_URL: 'http://f.test/c' }, 'n')).toBeNull()
+    expect(browserConfigFromEnv({ FARO_URL: 'http://localhost.evil.test/c' }, 'n')).toBeNull()
+  })
+
+  test('accepts the loopback collector of the local LGTM', () => {
+    expect(browserConfigFromEnv({ FARO_URL: 'http://127.0.0.1:12347/collect' }, 'n')?.url).toBe(
+      'http://127.0.0.1:12347/collect',
+    )
   })
 })
 

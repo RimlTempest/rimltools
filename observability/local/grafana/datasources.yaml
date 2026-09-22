@@ -1,0 +1,84 @@
+# 本番（infra/grafana/datasources.tf）と同じ uid と相関の設定を、ローカルの LGTM に向けたもの。
+# ダッシュボード（observability/dashboards/*.json）は uid で data source を参照するので、
+# ここの uid を変えるとダッシュボードが空になる。本番側を変えたらここも揃える。
+apiVersion: 1
+
+datasources:
+  - name: RimlTools Mimir
+    type: prometheus
+    uid: rt-mimir
+    url: http://127.0.0.1:9090
+    editable: false
+    jsonData:
+      httpMethod: POST
+      timeInterval: 30s
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: rt-tempo
+        - name: traceID
+          datasourceUid: rt-tempo
+
+  - name: RimlTools Loki
+    type: loki
+    uid: rt-loki
+    url: http://127.0.0.1:3100
+    editable: false
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        # OTLP で送ったログは trace_id を structured metadata に持つ
+        - name: TraceID
+          matcherType: label
+          matcherRegex: trace_id
+          datasourceUid: rt-tempo
+          url: '$${__value.raw}'
+          urlDisplayLabel: trace を開く
+        # 本文の JSON に trace_id を書いているログ
+        - name: TraceID (本文)
+          matcherType: regex
+          matcherRegex: '"trace_?[iI][dD]"\s*:\s*"([0-9a-f]{32})"'
+          datasourceUid: rt-tempo
+          url: '$${__value.raw}'
+          urlDisplayLabel: trace を開く
+
+  - name: RimlTools Tempo
+    type: tempo
+    uid: rt-tempo
+    url: http://127.0.0.1:3200
+    editable: false
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: rt-loki
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        filterByTraceID: true
+        filterBySpanID: false
+        tags:
+          - key: service.name
+            value: service_name
+          - key: deployment.environment.name
+            value: deployment_environment_name
+      tracesToMetrics:
+        datasourceUid: rt-mimir
+        spanStartTimeShift: -10m
+        spanEndTimeShift: 10m
+        tags:
+          - key: service.name
+            value: service
+        queries:
+          - name: p99
+            query: 'histogram_quantile(0.99, sum by (le) (rate(traces_spanmetrics_latency_bucket{$$__tags}[5m])))'
+          - name: エラー率
+            query: 'sum(rate(traces_spanmetrics_calls_total{$$__tags, status_code="STATUS_CODE_ERROR"}[5m])) / sum(rate(traces_spanmetrics_calls_total{$$__tags}[5m]))'
+      serviceMap:
+        datasourceUid: rt-mimir
+      nodeGraph:
+        enabled: true
+      lokiSearch:
+        datasourceUid: rt-loki
+      search:
+        hide: false
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: -30m
+        spanEndTimeShift: 30m

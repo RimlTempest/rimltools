@@ -57,7 +57,7 @@
         "name": "env",
         "label": "環境",
         "type": "custom",
-        "query": "production,staging",
+        "query": "production,staging,local",
         "current": {
           "text": "production",
           "value": "production"
@@ -72,6 +72,11 @@
             "text": "staging",
             "value": "staging",
             "selected": false
+          },
+          {
+            "selected": false,
+            "text": "local",
+            "value": "local"
           }
         ]
       }
