@@ -11,5 +11,7 @@
 /lefthook.yml             @RimlTempest
 /.gitleaks.toml           @RimlTempest
 /infra/                   @RimlTempest
+/infra/secrets/           @RimlTempest
+/.sops.yaml               @RimlTempest
 /scripts/release/         @RimlTempest
 /scripts/security/        @RimlTempest

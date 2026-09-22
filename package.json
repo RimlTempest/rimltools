@@ -7,16 +7,17 @@
     "products/*/features/*",
     "products/*/shared/*",
     "products/*/e2e",
-    "packages/*"
+    "packages/*",
+    "infra/tfstate"
   ],
   "type": "module",
   "scripts": {
-    "check": "bun run check:root && bun run check:qrcc && bun run check:noter && bun run check:portal",
+    "check": "bun run check:root && bun run check:qrcc && bun run check:noter && bun run check:portal && bun run check:tfstate",
     "check:root": "oxfmt --check . && oxlint --type-aware && tsc -p tsconfig.json && tsc --build packages/ui packages/shell && bun run --cwd packages/ui lint:html && bun run --cwd packages/shell lint:html",
     "check:qrcc": "bun run --cwd products/qrcc check",
     "check:noter": "bun run --cwd products/noter check",
     "check:portal": "bun run --cwd products/portal check",
-    "test": "bun run test:root && bun run test:qrcc && bun run test:noter && bun run test:portal",
+    "test": "bun run test:root && bun run test:qrcc && bun run test:noter && bun run test:portal && bun run test:tfstate",
     "test:root": "bun test ./scripts ./packages --path-ignore-patterns='packages/ui/**' --path-ignore-patterns='packages/shell/**' && bun run --cwd packages/ui test && bun run --cwd packages/shell test",
     "test:qrcc": "bun run --cwd products/qrcc test",
     "test:noter": "bun run --cwd products/noter test",
@@ -33,7 +34,9 @@
     "archify": "./scripts/archify.sh",
     "prepare": "lefthook install",
     "postinstall": "bun install --cwd tools/markuplint --frozen-lockfile",
-    "clean": "find . -maxdepth 5 -name node_modules -type d -prune -exec rm -rf {} + && bun install"
+    "clean": "find . -maxdepth 5 -name node_modules -type d -prune -exec rm -rf {} + && bun install",
+    "check:tfstate": "bun run --cwd infra/tfstate check",
+    "test:tfstate": "bun run --cwd infra/tfstate test"
   },
   "devDependencies": {
     "@socketsecurity/bun-security-scanner": "1.1.2",

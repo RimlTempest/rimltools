@@ -18,3 +18,9 @@ output "oncall_integration_link" {
   value       = local.oncall_enabled ? grafana_oncall_integration.alerting[0].link : null
   sensitive   = true
 }
+
+output "tfstate_otlp_headers" {
+  description = "tfstate Worker の OTEL_EXPORTER_OTLP_HEADERS（wrangler secret put で入れる。infra/tfstate/README.md「監視」）。"
+  value       = "Authorization=Basic%20${base64encode("${local.stack.id}:${grafana_cloud_access_policy_token.this["otlp-write-tfstate"].token}")}"
+  sensitive   = true
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@rimltools/tfstate",
+  "private": true,
+  "description": "OpenTofu の http backend。暗号化された state を D1 に置く Worker（docs/adr/0009-state-and-secrets.md）",
+  "type": "module",
+  "scripts": {
+    "gen": "wrangler types --include-env=false ./src/worker-configuration.d.ts",
+    "typecheck": "bun run gen && tsc -p tsconfig.json",
+    "test": "bun test ./src",
+    "check": "bun run typecheck",
+    "migrate": "wrangler d1 migrations apply rimltools-tfstate --remote",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@rimltools/contract": "workspace:*",
+    "@rimltools/telemetry": "workspace:*"
+  },
+  "devDependencies": {
+    "wrangler": "4.127.1"
+  }
+}

@@ -3,9 +3,11 @@
 [tools]
 node = "26.8.1"
 bun = "1.4.0"
-# terraform / tflint は infra/terraform 用（ADR-0005）
-terraform = "1.16.3"
+# opentofu / tflint は infra/terraform・infra/grafana 用、sops / age は infra/secrets 用（ADR-0005 / ADR-0009）
+opentofu = "1.12.6"
 tflint = "0.64.0"
+sops = "3.13.3"
+age = "1.3.2"
 rust = { version = "1.98.0", components = "rustfmt,clippy", targets = "wasm32-unknown-unknown" }
 
 [env]

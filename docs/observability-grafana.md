@@ -113,3 +113,10 @@ Worker への注入はリリース（`scripts/release/`）の後続作業。値�
 docker compose -f observability/local/compose.yaml up -d
 bun scripts/observability/local-smoke.ts
 ```
+
+## tfstate への認証失敗（infra/tfstate）
+
+tfstate Worker（OpenTofu の state 置き場）は `@rimltools/telemetry` で全リクエストのログを送る（`service_name = rimltools-tfstate`）。
+401 / 403 は `event = tfstate_auth_failed` の構造化ログになり、Loki のアラート `tfstate-auth-failures`（`infra/grafana/alerts.tf`、
+10 分で 20 回超で critical）が数える。送り先の設定は `infra/tfstate/README.md`「監視」。トークンは tfstate 専用
+（access policy `otlp-write-tfstate`、logs / traces の書き込みだけ）で、`tofu output -raw tfstate_otlp_headers` で取り出す。

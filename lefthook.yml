@@ -65,6 +65,11 @@ pre-commit:
             glob: '*.{js,jsx,ts,tsx,mjs,cjs}'
             run: bunx oxlint --type-aware --deny-warnings --no-error-on-unmatched-pattern {staged_files}
 
+    # infra/secrets に平文の秘密をコミットさせない（ADR-0009。CI の security.yml と同じ検査）
+    - name: sops-secrets
+      glob: 'infra/secrets/*'
+      run: bun scripts/check-secrets.ts
+
     - name: secrets
       run: |
         # gitleaks（docs/security.md）があれば staged の差分を既定ルール + .gitleaks.toml で検査する。

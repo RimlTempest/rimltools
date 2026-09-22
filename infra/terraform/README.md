@@ -1,7 +1,9 @@
 # infra/terraform
 
-Cloudflare と GitHub のリソースを Terraform で管理する（ADR-0005）。
-state は HCP Terraform Free に置き、plan / apply は GitHub Actions（`.github/workflows/terraform.yml`）の runner で行う。
+Cloudflare と GitHub のリソースを OpenTofu（`tofu`）で管理する（ADR-0005 / ADR-0009）。
+state は自前の http backend（`infra/tfstate` の Worker、D1 に保存）に置き、OpenTofu が**送る前に暗号化**する。
+plan / apply は GitHub Actions（`.github/workflows/terraform.yml`）の runner で行い、資格情報は SOPS で
+暗号化した `infra/secrets/*.sops.yaml` から渡す。
 
 | ファイル                     | 中身                                                                                                                       |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -19,45 +21,50 @@ Terraform は Worker の「枠」だけを作り、observability・workers.dev�
 
 ## ブートストラップ（1 回だけ、人の手で）
 
-人がトークンの値を扱うのはここだけ。以後の CI 用デプロイトークンは Terraform が発行して GitHub に書き込む。
+**GitHub に登録する secret は age の秘密鍵 2 本だけ**。それ以外の資格情報（state backend・Cloudflare・GitHub・
+Grafana のトークン、state の暗号化パスフレーズ、staging の Google OAuth）は、SOPS で暗号化してリポジトリに置く。
 
-資格情報は **plan 用（読み取り専用）と apply 用（書き込み）の 2 本立て**にする。
+| ファイル                        | 中身                   | 開ける鍵           | 鍵の置き場所                                                      |
+| ------------------------------- | ---------------------- | ------------------ | ----------------------------------------------------------------- |
+| `infra/secrets/plan.sops.yaml`  | 読み取り専用の資格情報 | plan 鍵 / apply 鍵 | plan 鍵: repository secret `SOPS_AGE_KEY_PLAN`                    |
+| `infra/secrets/apply.sops.yaml` | 書き込み用の資格情報   | apply 鍵だけ       | apply 鍵: `production` environment の secret `SOPS_AGE_KEY_APPLY` |
 
-|                | plan（PR）                                  | apply（main への push）                                     |
-| -------------- | ------------------------------------------- | ----------------------------------------------------------- |
-| 実行するコード | レビュー前の PR のコード                    | main にマージ済みのコード                                   |
-| 置き場所       | repository secret                           | `production` environment の secret（main からしか読めない） |
-| HCP            | `TF_PLAN_API_TOKEN`                         | `TF_APPLY_API_TOKEN`                                        |
-| Cloudflare     | `TF_PLAN_CLOUDFLARE_API_TOKEN`（Read のみ） | `TF_APPLY_CLOUDFLARE_API_TOKEN`（Edit）                     |
-| GitHub         | `TF_PLAN_GITHUB_TOKEN`（Read のみ）         | `TF_APPLY_GITHUB_TOKEN`（Read and write）                   |
+PR の plan はレビュー前のコードを実行する。plan 鍵で開けるのは読み取り専用の資格情報だけなので、PR の
+コードが環境変数を外へ送っても、本番は書き換えられない。apply 鍵は main からの apply だけが読める。
 
-PR のコードは data source や provider 経由で環境変数を外へ送れる。plan に書き込みトークンを渡すと、
-PR を出せる人がマージ前に本番を書き換えられてしまうため、plan には読み取り専用しか渡さない。
+手順の全体は `docs/bootstrap.md`。ここでは infra/terraform に関わる部分と、権限の一覧を置く。
 
-### 1. HCP Terraform
+### 1. age 鍵を 2 本作る
 
-1. <https://app.terraform.io> で organization を作る（名前は自由。以下 `<org>`）
-2. workspace `rimltools-production` を **CLI-driven workflow** で作る
-3. workspace の Settings → General → **Execution Mode を `Local`** にする
-   （runner で実行し state だけを HCP に置く。Remote にすると Cloudflare / GitHub のトークンを HCP にも置くことになる）
-4. API トークンを 2 本作る
-   - apply 用（`TF_APPLY_API_TOKEN`）: state の読み書きができるトークン
-   - plan 用（`TF_PLAN_API_TOKEN`）: 可能なら **state の読み取りだけ**の team を作り、その team token にする。
-     プランの都合でできない場合は別のトークンを発行し、漏洩時にそれだけ失効できるようにする（下の「既知の制約」）
+```bash
+mkdir -p ~/.config/sops/age
+age-keygen -o ~/.config/sops/age/rimltools-plan.txt
+age-keygen -o ~/.config/sops/age/rimltools-apply.txt
+```
 
-### 2. Cloudflare API トークン（2 本）
+- 出力された公開鍵（`age1...`）を、リポジトリ直下の `.sops.yaml` の placeholder と置き換える
+- **秘密鍵（`AGE-SECRET-KEY-...`）はパスワードマネージャーにも控える（必須）**。失うと secrets ファイルを開けなくなる
+- 秘密鍵はリポジトリに置かない（`infra/secrets` の検査と gitleaks が止めるが、そもそもコピーしない）
+
+### 2. state backend を用意する
+
+`infra/tfstate/README.md` の手順で Worker `rimltools-tfstate` と D1 を作り、読み取り用・書き込み用の資格情報を
+Worker の secret に入れる。state の暗号化パスフレーズも作る（`openssl rand -base64 48`、**パスワードマネージャーに控える。
+失うと state を読めなくなる**）。
+
+### 3. トークンを作る
 
 Cloudflare ダッシュボード → My Profile → API Tokens → Create Custom Token。どちらも対象はこのアカウントと `riml4i.com` ゾーンだけ。
 権限名は provider の docs（各リソースの "Accepted Permissions"）に合わせている。
 
-**apply 用 `TF_APPLY_CLOUDFLARE_API_TOKEN`**
+**apply 用**（`apply.sops.yaml` の `TF_VAR_cloudflare_api_token`）
 
 | 範囲               | 権限                                                                                                                                                                    |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Account            | Workers Scripts: Edit / D1: Edit / Account API Tokens: Edit / Access: Apps and Policies: Edit / Account Settings: Read                                                  |
 | Zone（riml4i.com） | Zone: Read / DNS: Edit / Workers Routes: Edit / Transform Rules: Edit / Zone WAF: Edit / Dynamic URL Redirects: Edit / Zone Settings: Edit / SSL and Certificates: Edit |
 
-**plan 用 `TF_PLAN_CLOUDFLARE_API_TOKEN`**（すべて Read）
+**plan 用**（`plan.sops.yaml` の `TF_VAR_cloudflare_api_token`、すべて Read）
 
 | 範囲               | 権限                                                                                                                                                                    |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -67,82 +74,53 @@ Cloudflare ダッシュボード → My Profile → API Tokens → Create Custom
 > Cloudflare Access（staging の保護）を使う場合は、先に Zero Trust の組織を一度作っておく
 > （ダッシュボード → Zero Trust。Free プラン、50 ユーザーまで無料）。
 
-### 3. GitHub fine-grained PAT（2 本）
+GitHub の fine-grained PAT は <https://github.com/settings/personal-access-tokens/new> で、どちらも対象を `RimlTempest/rimltools` だけにする。
 
-<https://github.com/settings/personal-access-tokens/new> で、どちらも対象を `RimlTempest/rimltools` だけにする。
+| Repository permissions                                      | apply 用（`apply.sops.yaml`） | plan 用（`plan.sops.yaml`） |
+| ----------------------------------------------------------- | ----------------------------- | --------------------------- |
+| Administration（リポジトリ設定・rulesets・Dependabot 設定） | Read and write                | Read-only                   |
+| Environments（environment と その secret / variable）       | Read and write                | Read-only                   |
+| Secrets                                                     | Read and write                | Read-only                   |
+| Variables                                                   | Read and write                | Read-only                   |
+| Metadata                                                    | Read-only（必須）             | Read-only（必須）           |
 
-| Repository permissions                                      | apply 用 `TF_APPLY_GITHUB_TOKEN` | plan 用 `TF_PLAN_GITHUB_TOKEN` |
-| ----------------------------------------------------------- | -------------------------------- | ------------------------------ |
-| Administration（リポジトリ設定・rulesets・Dependabot 設定） | Read and write                   | Read-only                      |
-| Environments（environment と その secret / variable）       | Read and write                   | Read-only                      |
-| Secrets                                                     | Read and write                   | Read-only                      |
-| Variables                                                   | Read and write                   | Read-only                      |
-| Metadata                                                    | Read-only（必須）                | Read-only（必須）              |
+Grafana Cloud のトークンは `infra/grafana/README.md` §1。
 
-### 4. GitHub に登録する
-
-`!` シェルは非対話なので、値はクリップボード経由で渡す。値をクリップボードにコピーした直後に 1 行ずつ実行する。
-
-**plan 用（repository secret）**
+### 4. secrets ファイルを作って暗号化する
 
 ```bash
-pbpaste | gh secret set TF_PLAN_API_TOKEN -R RimlTempest/rimltools
-pbpaste | gh secret set TF_PLAN_CLOUDFLARE_API_TOKEN -R RimlTempest/rimltools
-pbpaste | gh secret set TF_PLAN_GITHUB_TOKEN -R RimlTempest/rimltools
+cp infra/secrets/plan.example.yaml  infra/secrets/plan.sops.yaml
+cp infra/secrets/apply.example.yaml infra/secrets/apply.sops.yaml
+# 値を入れる（エディタで開いたらすぐ暗号化する。平文のままコミットしようとすると pre-commit が止める）
+sops encrypt -i infra/secrets/plan.sops.yaml
+sops encrypt -i infra/secrets/apply.sops.yaml
+# 以後の編集は sops で開く（保存時に暗号化される）
+sops infra/secrets/apply.sops.yaml
 ```
 
-**apply 用（`production` environment の secret）**
+`bun scripts/check-secrets.ts` が通ること（CI の security-gate と lefthook も同じ検査をする）。暗号化したファイルは PR でコミットする。
 
-`production` environment は既にある。Terraform が管理するのは `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`（CI のデプロイ用）だけで、
-`TF_APPLY_*` は Terraform の管理外。apply のための資格情報を apply 自身が作る鶏と卵を避けるため、**最初の 1 回は手で登録する**。
+### 5. GitHub に登録する
+
+値をクリップボードにコピーした直後に 1 行ずつ実行する（`!` シェルは非対話なので `pbpaste` で渡す）。
 
 ```bash
-pbpaste | gh secret set TF_APPLY_API_TOKEN -R RimlTempest/rimltools -e production
-pbpaste | gh secret set TF_APPLY_CLOUDFLARE_API_TOKEN -R RimlTempest/rimltools -e production
-pbpaste | gh secret set TF_APPLY_GITHUB_TOKEN -R RimlTempest/rimltools -e production
+# plan 鍵（repository secret）
+pbpaste | gh secret set SOPS_AGE_KEY_PLAN -R RimlTempest/rimltools
+# apply 鍵（production environment の secret。main からしか読めない）
+pbpaste | gh secret set SOPS_AGE_KEY_APPLY -R RimlTempest/rimltools -e production
+
+# 秘密ではない値（repository variable）
+gh variable set CLOUDFLARE_ACCOUNT_ID -R RimlTempest/rimltools --body '<account id>'
+gh variable set TF_VAR_ACCESS_EMAILS -R RimlTempest/rimltools --body '["<あなたのメールアドレス>"]'
 ```
 
 > 初回 apply までは `production` environment にブランチ制限が無い（Terraform が main のみに絞る）。
-> それまでに `environment: production` を使うワークフローを main 以外で動かさないこと。
-> 手で先に絞ってもよい: Settings → Environments → production → Deployment branches → Selected branches → `main`。
+> 先に手で絞っておく: Settings → Environments → production → Deployment branches → Selected branches → `main`。
 
-**共通（repository variable、秘密ではない）**
+旧方式（HCP Terraform）の secret が残っていたら消す: `TF_PLAN_*` / `TF_APPLY_*` / `TF_API_TOKEN` / `TF_VAR_*`（repository と production の両方）。
 
-```bash
-gh variable set TF_CLOUD_ORGANIZATION -R RimlTempest/rimltools --body '<org>'
-gh variable set CLOUDFLARE_ACCOUNT_ID -R RimlTempest/rimltools --body '<account id>'
-# staging を Cloudflare Access で保護する場合（JSON の配列）
-gh variable set TF_VAR_ACCESS_EMAILS -R RimlTempest/rimltools --body '["you@example.com"]'
-```
-
-登録後、`gh secret list -R RimlTempest/rimltools` で 3 件、`gh secret list -R RimlTempest/rimltools -e production` で 3 件が見えること
-（値が空で登録されていないか、更新日時で確認）。
-
-**staging の Google ログイン**（staging を使う場合。Terraform の外で人が用意する）:
-
-1. Google Cloud Console の OAuth クライアント（本番と同じクライアントでよい）に、承認済みのリダイレクト URI
-   `https://<tool>-staging.tools.riml4i.com/api/auth/callback/google` を**追加**する（qrcc と noter の 2 つ）
-2. クライアントの ID とシークレットを JSON にしてクリップボードに入れ、`production` environment に登録する
-   （apply にだけ渡る。plan には渡らない）:
-
-   ```bash
-   # 例: {"client_id":"xxx.apps.googleusercontent.com","client_secret":"GOCSPX-..."}
-   pbpaste | gh secret set TF_APPLY_GOOGLE_OAUTH_STAGING -R RimlTempest/rimltools -e production
-   ```
-
-登録しなくても apply は通る（staging の `APP_SECRETS` から Google のキーが抜けるだけ。`BETTER_AUTH_SECRET` は
-Terraform が生成する）。値は staging / preview の environment secret `APP_SECRETS` に入り、リリースが
-staging の public Worker の版に載せる。本番の Worker の secret には触らない（`docs/release.md`「アプリの secret」）。
-
-**旧名の secret が残っていたら消す**（書き込みトークンが repository secret に残らないように）:
-
-```bash
-gh secret delete TF_API_TOKEN -R RimlTempest/rimltools
-gh secret delete TF_VAR_cloudflare_api_token -R RimlTempest/rimltools
-gh secret delete TF_VAR_github_token -R RimlTempest/rimltools
-```
-
-### 5. 初回 plan を確認する
+### 6. 初回 plan を確認する
 
 `infra/terraform/**` を触る PR を出す（または Actions → Terraform → Run workflow）。PR に plan がコメントされる。
 **apply する前に、次を必ず確認する。**
@@ -164,10 +142,9 @@ gh secret delete TF_VAR_github_token -R RimlTempest/rimltools
 
 ```bash
 cd infra/terraform
-# plan 用（読み取り専用）の値を使う
-export TF_CLOUD_ORGANIZATION='<org>' TF_TOKEN_app_terraform_io='...' \
-  TF_VAR_cloudflare_api_token='...' TF_VAR_github_token='...' TF_VAR_cloudflare_account_id='...'
-terraform init && terraform plan -lock=false
+# plan 鍵（読み取り専用）で plan.sops.yaml を開き、tofu にだけ渡す
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/rimltools-plan.txt TF_VAR_cloudflare_account_id='...'
+sops exec-env ../secrets/plan.sops.yaml 'tofu init && tofu plan -lock=false'
 ```
 
 ## ドメイン移行（`<tool>.riml4i.com` → `<tool>.tools.riml4i.com`）
@@ -203,11 +180,10 @@ terraform init && terraform plan -lock=false
 期限が近づいたら（または漏洩時は）作り直す:
 
 ```bash
-terraform apply -replace='cloudflare_zero_trust_access_service_token.ci[0]'
+sops exec-env ../secrets/apply.sops.yaml "tofu apply -replace='cloudflare_zero_trust_access_service_token.ci[0]'"
 ```
 
-（Release PR 経由の apply でよい。`-replace` は手元で plan を確認してから、または `terraform.tfvars` を触らない
-一時的な変更として PR にする）
+（手元で apply 鍵を使う。apply 鍵を手元に出したくなければ、`-replace` を含む一時的な変更を PR にして Release PR で apply する）
 
 ## 制約・既知の限界
 
@@ -239,8 +215,9 @@ provider の docs（各リソースの "Accepted Permissions"）では、ここ�
 - **Access**: `cloudflare_zero_trust_access_application` は docs に Accepted Permissions の記載が無い。
   policy と同じ `Access: Apps and Policies: Read` で読める想定。403 になったら plan 用トークンに Read を足す
 - **zone ruleset**: `cloudflare_ruleset` も記載が無い。phase ごとの Read 権限（Transform Rules / Zone WAF / Dynamic URL Redirects）で読める想定
-- **HCP の state**: plan は state を読むので、plan 用 HCP トークンでも state 内の値（CI トークンの値を含む）は読める。
-  state の読み取りを外すと plan できないため、ここは権限では防げない。対策は次の 2 点:
-  - fork からの PR には GitHub が secret を渡さない（public リポジトリの既定）。secret を使えるのは push 権限のある人のブランチだけ
-  - 漏洩が疑われたら `cloudflare_account_token.ci` を `terraform apply -replace` で作り直す（GitHub の secret も同時に更新される）
+- **state の中身**: state は OpenTofu が暗号化してから backend に送るので、Worker と D1 は暗号文しか持たない。
+  plan は state を復号して読むので、plan 鍵で開ける `plan.sops.yaml` にも暗号化パスフレーズが入っている。
+  つまり plan 鍵が漏れると state 内の値（CI トークンの値を含む）は読める。ここは構造上の限界で、対策は次の 2 点:
+  - fork からの PR には GitHub が secret を渡さない（public リポジトリの既定）。plan 鍵を使えるのは push 権限のある人のブランチだけ
+  - 漏洩が疑われたら `docs/runbooks/secret-leak.md` の手順で、鍵・パスフレーズ・state 内のトークンを作り直す
 - plan は `-lock=false` で実行する（state のロックという書き込みを避ける。apply はロックする）

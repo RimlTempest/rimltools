@@ -1,0 +1,36 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // OpenTofu の state 置き場（docs/adr/0009-state-and-secrets.md）。
+  // state を管理する仕組み自身を state で管理すると鶏と卵になるので、この Worker だけは
+  // Terraform / OpenTofu ではなく wrangler で直接デプロイする（README のブートストラップ）。
+  "name": "rimltools-tfstate",
+  "main": "./src/index.ts",
+  "compatibility_date": "2026-08-31",
+  // @rimltools/telemetry の AsyncLocalStorage（node:async_hooks）に要る
+  "compatibility_flags": ["nodejs_compat"],
+  // span の cloudflare.worker.version_id に使う
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "observability": { "enabled": true, "logs": { "invocation_logs": true } },
+  // 公開は Custom Domain だけ。workers.dev と preview URL は閉じる（資格情報付きでも入口を増やさない）
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "tfstate.tools.riml4i.com", "custom_domain": true }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rimltools-tfstate",
+      // `wrangler d1 create rimltools-tfstate` の出力で置き換える（README §1）
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
+  // 計装（@rimltools/telemetry）。送り先と認証は secret（wrangler secret put）で入れる:
+  //   OTEL_EXPORTER_OTLP_ENDPOINT / OTEL_EXPORTER_OTLP_HEADERS（README「監視」）。無ければ何も送らない
+  "vars": {
+    "OTEL_SERVICE_NAME": "rimltools-tfstate",
+    "DEPLOYMENT_ENV": "production",
+    // 認証失敗のアラートが数えられるよう全件送る（plan / apply 1 回で数リクエストしか無い）
+    "OTEL_TRACES_SAMPLER_ARG": "1",
+  },
+  // secret（wrangler secret put）: READ_USER / READ_PASSWORD / WRITE_USER / WRITE_PASSWORD
+}

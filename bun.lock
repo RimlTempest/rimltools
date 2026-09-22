@@ -15,6 +15,16 @@
         "wrangler": "4.127.1",
       },
     },
+    "infra/tfstate": {
+      "name": "@rimltools/tfstate",
+      "dependencies": {
+        "@rimltools/contract": "workspace:*",
+        "@rimltools/telemetry": "workspace:*",
+      },
+      "devDependencies": {
+        "wrangler": "4.127.1",
+      },
+    },
     "packages/auth": {
       "name": "@rimltools/auth",
       "version": "0.1.0",
@@ -1009,6 +1019,8 @@
     "@rimltools/shell": ["@rimltools/shell@workspace:packages/shell"],
 
     "@rimltools/telemetry": ["@rimltools/telemetry@workspace:packages/telemetry"],
+
+    "@rimltools/tfstate": ["@rimltools/tfstate@workspace:infra/tfstate"],
 
     "@rimltools/ui": ["@rimltools/ui@workspace:packages/ui"],
 

@@ -7,18 +7,3 @@ rules:
   # 同じジョブ内で後から clone したファイルに差し替えられる経路は無い。
   self-repository:
     disable: true
-
-  # 一時除外: qrcc-deploy.yml / noter-deploy.yml は段階リリース（ADR-0003）の
-  # ワークフローに置き換える予定（C レーン）。置き換えたらこの 3 つの ignore を消す。
-  unpinned-uses:
-    ignore:
-      - qrcc-deploy.yml
-      - noter-deploy.yml
-  artipacked:
-    ignore:
-      - qrcc-deploy.yml
-      - noter-deploy.yml
-  excessive-permissions:
-    ignore:
-      - qrcc-deploy.yml
-      - noter-deploy.yml
