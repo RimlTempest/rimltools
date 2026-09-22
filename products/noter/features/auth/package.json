@@ -20,6 +20,7 @@
     "@noter/contract": "workspace:*",
     "@noter/shell": "workspace:*",
     "@noter/ui": "workspace:*",
+    "@rimltools/auth": "workspace:*",
     "better-auth": "1.7.3",
     "drizzle-orm": "0.45.2"
   },

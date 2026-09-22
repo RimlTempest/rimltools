@@ -1,8 +1,5 @@
 /**
- * 画面で使うゲストの制約の数値。
- *
- * サーバ設定（`@noter/auth/server` の `GUEST_SESSION_DAYS`）と同じ値だが、
- * UI がサーバ側モジュール（Better Auth や D1 を引き込む）を import しないよう、
- * ここで持つ。ずれないことは `guest-guide.test.ts` が確かめる。
+ * 画面で使うゲストの制約の数値。値は `@rimltools/auth/ui` が持ち、
+ * サーバ設定と一致することはそちらのテストが確かめる（plan 001 段階 3）。
  */
-export const GUEST_SESSION_DAYS = 30
+export { GUEST_SESSION_DAYS } from '@rimltools/auth/ui'
