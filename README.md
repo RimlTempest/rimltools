@@ -45,6 +45,8 @@ URL は `<tool>.tools.riml4i.com` へ移す予定。移行中は旧 URL もそ�
   秘密は SOPS（age）で暗号化してリポジトリに持つ（[ADR-0005](docs/adr/0005-infrastructure-as-code.md)・[ADR-0009](docs/adr/0009-state-and-secrets.md)）
 - **観測は Grafana LGTM。** trace・ログ・メトリクスを相互にたどり、SLO・オンコール・外形監視まで Grafana Cloud で見る
   （[ADR-0007](docs/adr/0007-sre.md)・[ADR-0008](docs/adr/0008-observability.md)）
+- **見た目は riml-ds。** 自作のデザインシステム [riml-ds](https://github.com/RimlTempest/riml-ds) のトークンと CSS を使い、部品も段階的に寄せる
+  （[ADR-0013](docs/adr/0013-riml-ds-adoption.md)。riml-ds への改善提案は [`docs/riml-ds-feedback.md`](docs/riml-ds-feedback.md)）
 
 ## ディレクトリ構成
 
