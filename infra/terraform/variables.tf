@@ -133,3 +133,15 @@ variable "google_oauth_staging_json" {
   default     = ""
   sensitive   = true
 }
+
+variable "state_passphrase" {
+  description = "Passphrase for OpenTofu state and plan encryption (PBKDF2 → AES-GCM). Comes from the SOPS-encrypted infra/secrets file (ADR-0009). Losing it makes the state unreadable."
+  type        = string
+  sensitive   = true
+  ephemeral   = true
+
+  validation {
+    condition     = length(var.state_passphrase) >= 32
+    error_message = "state_passphrase must be at least 32 characters (generate with: openssl rand -base64 48)."
+  }
+}

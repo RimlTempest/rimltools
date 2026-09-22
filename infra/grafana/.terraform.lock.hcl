@@ -1,12 +1,23 @@
-# This file is maintained automatically by "terraform init".
+# This file is maintained automatically by "tofu init".
 # Manual edits may be lost in future updates.
 
-provider "registry.terraform.io/grafana/grafana" {
+provider "registry.opentofu.org/grafana/grafana" {
   version     = "4.46.0"
   constraints = "4.46.0"
   hashes = [
+    "h1:4ht2uLwmZhnSgxD0eFaPdacz11yUEZ0N3vUfP1mnirE=",
     "h1:B/T/w2S/i2Ififrco0tlHU3IvclmbRb/J0sTc6hqG88=",
     "h1:FajCus3E8nqYFGk7VC1l0vRQs4VoL9H5E6x1d+CpGaY=",
+    "h1:IWydTb5OzjXV1KqKTkc+7fNG3chGHhpW6/N26l8KmTs=",
+    "h1:K9fFFOcQTYS4GaBKShNN7vKZTysfOLB/qrEyF9ngPLw=",
+    "h1:QKxfDx4AoGdFv59xU7ZFM9E8c7V4LnfbPhjKF3+WpVc=",
+    "h1:UUXVJJ8j4WnO2IJO24jeLkGjiEAO/ILCCBqOPHOguNM=",
+    "h1:Us9liS1XzeTcb9+MHOem8IfsirTam38jpx1xhqRp3nM=",
+    "h1:kc+lpSApn2IBG1POfZWLhUPmH8Ra728Q6uv+Zdj31cc=",
+    "h1:nvbEfb1kzj5Zovvk9EdfE2Nc7oOUtLLSpDMMXntbZqQ=",
+    "h1:ra4YUZTi7TxKZ3hlo6IzWbReEspj2mwpqgvv9Eo9vTk=",
+    "h1:uhnwCNFGvURyqB3XSj5ISd9sXF195pk52u11KrzOH9A=",
+    "h1:vkNm99bZXAeVba6ttcnYkkr5u1sEJtM/NeazdGNYsR8=",
     "zh:19f7fdc47921acfdf629abcaba66a1857bd8f97173124b5610002dcf1437fe3f",
     "zh:26638a04481a13030ad03f35d0e583d915bbca3c1ea8c00254292d3fddec4745",
     "zh:2967ffecbdc31e74d34584cb62b3641cf696bfa4a61e5caeeda34d0beb6a1321",
@@ -29,11 +40,22 @@ provider "registry.terraform.io/grafana/grafana" {
   ]
 }
 
-provider "registry.terraform.io/integrations/github" {
+provider "registry.opentofu.org/integrations/github" {
   version     = "6.13.0"
   constraints = "6.13.0"
   hashes = [
     "h1:2kD+4leuV8tBBXv+EPeehmfW6cDhIzVki61OXsGCtRI=",
+    "h1:99s0C+KmzXIsUJY0tKlgfcFUIuuXjCK0TAeeZ8HaOZQ=",
+    "h1:Mug81HyUTKKMngXMOtBxuQ8ge3dVnzt9tGcF9SxLcVE=",
+    "h1:RhCWa2aaFVKF/HzeR0fkIxZmoJvkGrv07hE0z09aPQs=",
+    "h1:YS8951MRtP4YNs2CNsDfqE7Mr9tDz/Y7xDSo18zyCkQ=",
+    "h1:Z0dj6yhxjLxg44gGNkh3zdAPY9iNkkiC+n7mEJcvUHY=",
+    "h1:a9VUv7chtxc+vro0uZo12PhBGbyeq3uKslrKLDHbkeg=",
+    "h1:awjLJy4zAQRONIVuKbsFSOpEWYWREdeeAXQHkhDXMDI=",
+    "h1:gz9DIUPAPQf0wI9dcmcNMgPBY/AwUfzKZbVnUMbAd9I=",
+    "h1:jPHxtaeO8mgFGGWdEmATq/BNGo1LkE6FYFgMa6Dum08=",
+    "h1:jXEm7QnQCF2UG4KTgDMwT2cEqezPE8a+3V0iA8N1r7k=",
+    "h1:jjeEBnfOJI+bV/rf1721l4B3fNO7Yws4AKf4NDdhiho=",
     "h1:y0Sujto8gttV86innNp/LTMzq7CqsFpBs7XKH8AlMl4=",
     "zh:0ab29fc21699f34345cf0bbbe44745fd1b143b7c73b410c1dc4abe05ffad0a84",
     "zh:1aed10d06755d420bb3a893bf548ab2932297a9d094c04c5a8501e949ca186ed",
