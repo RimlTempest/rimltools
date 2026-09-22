@@ -10,6 +10,7 @@
       "path": "products/qrcc",
       "subdomain": "qrcc",
       "legacyHosts": ["qrcc.riml4i.com"],
+      "appSecrets": ["BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
       "rust": true,
       "workers": [
         {
@@ -52,6 +53,7 @@
       "path": "products/noter",
       "subdomain": "noter",
       "legacyHosts": ["noter.riml4i.com"],
+      "appSecrets": ["BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
       "rust": false,
       "workers": [
         {

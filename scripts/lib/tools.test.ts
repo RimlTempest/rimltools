@@ -94,6 +94,35 @@ describe('parseTools', () => {
     expect(parseTools(noDb).ok).toBe(true)
   })
 
+  test('reads the app secret names the public worker needs', () => {
+    const withSecrets = structuredClone(valid)
+    const [tool] = withSecrets.tools
+    if (tool === undefined) return
+    Object.assign(tool, { appSecrets: ['BETTER_AUTH_SECRET', 'GOOGLE_CLIENT_ID'] })
+    const result = parseTools(withSecrets)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.tools[0]?.appSecrets).toEqual(['BETTER_AUTH_SECRET', 'GOOGLE_CLIENT_ID'])
+  })
+
+  test('defaults app secrets to none', () => {
+    const result = parseTools(valid)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.tools[0]?.appSecrets).toEqual([])
+  })
+
+  test('rejects app secret names that wrangler cannot bind', () => {
+    const broken = structuredClone(valid)
+    const [tool] = broken.tools
+    if (tool === undefined) return
+    Object.assign(tool, { appSecrets: ['better-auth'] })
+    const result = parseTools(broken)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error).toContain('appSecrets')
+  })
+
   test('rejects non-objects', () => {
     expect(parseTools(null).ok).toBe(false)
     expect(parseTools({ tools: 'x' }).ok).toBe(false)
