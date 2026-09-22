@@ -3,9 +3,9 @@
  *
  * ビューアは `prefers-color-scheme` で初期テーマを決めるので、Playwright の
  * `colorScheme` を切り替えて `<svg>` 要素だけを 2 倍解像度で撮る。
- * 入口は `scripts/archify.sh`。単体で使うなら:
+ * 入口は `scripts/archify.sh`。単体で使うなら（リポジトリ直下から）:
  *
- *   bun e2e/archify-png.ts docs/architecture/noter-architecture.html docs/architecture/noter-architecture
+ *   bun scripts/archify-png.ts docs/architecture/rimltools-architecture.html docs/architecture/rimltools-architecture
  */
 import { type Browser, chromium } from '@playwright/test'
 import { resolve } from 'node:path'
@@ -16,7 +16,7 @@ const THEMES = ['light', 'dark'] as const
 function readArgs(): { htmlPath: string; outBase: string } {
   const [htmlPath, outBase] = process.argv.slice(2)
   if (htmlPath === undefined || outBase === undefined) {
-    console.error('usage: bun e2e/archify-png.ts <viewer.html> <out-base>')
+    console.error('usage: bun scripts/archify-png.ts <viewer.html> <out-base>')
     process.exit(2)
   }
   return { htmlPath, outBase }
@@ -36,6 +36,10 @@ async function capture(browser: Browser, theme: (typeof THEMES)[number]): Promis
   await svg.waitFor()
   // Web フォントの読み込みを待たないと、フォールバック書体で撮れてしまう
   await page.evaluate('document.fonts.ready')
+  // ビューアの操作ボタン（テーマ切り替え・Present など）は図に重なって写るので隠す
+  await page.addStyleTag({
+    content: '.toolbar, .route-journey-controls { visibility: hidden !important; }',
+  })
   await svg.screenshot({ path: `${outBase}.${theme}.png` })
   await page.close()
 }

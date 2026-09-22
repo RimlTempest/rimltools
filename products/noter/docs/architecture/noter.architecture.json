@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/RimlTempest/rimltools",
-      "revision": "52a17ad45ed4a4d49a0a1be74cfbf38525d3c6f6"
+      "revision": "5018815e76c11e1c5df468994b3fede3f058a2de"
     },
     "views": [
       {
@@ -50,17 +50,17 @@
       "type": "frontend",
       "label": "エディタ・変換",
       "sublabel": "CodeMirror 6・Yjs・Mermaid",
-      "tag": "計算は端末内",
+      "tag": "ブラウザでだけ読む",
       "pos": [330, 100],
       "size": [170, 64],
       "sources": [
         {
-          "path": "products/noter/features/editor/ui/code-editor.tsx",
-          "label": "CodeMirror"
+          "path": "products/noter/features/editor/ui/code-editor-view.ts",
+          "label": "CodeMirror（遅延）"
         },
         {
-          "path": "products/noter/features/formats/core/render-markdown.ts",
-          "label": "markdown → HTML"
+          "path": "products/noter/features/formats/ui/mermaid-block.tsx",
+          "label": "Mermaid（遅延）"
         },
         {
           "path": "products/noter/features/sync/client/src/provider.ts",
@@ -77,8 +77,12 @@
       "size": [170, 64],
       "sources": [
         {
+          "path": "packages/auth/src/server/auth-options.ts",
+          "label": "@rimltools/auth"
+        },
+        {
           "path": "products/noter/features/auth/server/auth-options.ts",
-          "label": "Better Auth"
+          "label": "noter の設定"
         }
       ]
     },
@@ -95,8 +99,12 @@
           "label": "router"
         },
         {
-          "path": "products/noter/apps/web/src/routes.ts",
-          "label": "URL 構造"
+          "path": "packages/shell/src/app-shell.tsx",
+          "label": "@rimltools/shell"
+        },
+        {
+          "path": "packages/telemetry/src/browser/index.ts",
+          "label": "Faro"
         }
       ]
     },
@@ -104,7 +112,7 @@
       "id": "web",
       "type": "backend",
       "label": "Worker: noter-web",
-      "sublabel": "SSR・Better Auth・認可・/ws",
+      "sublabel": "SSR・Better Auth・/ws・OTLP",
       "tag": "entry",
       "pos": [620, 284],
       "size": [170, 64],
@@ -261,7 +269,7 @@
       "title": "計算はブラウザ",
       "items": [
         "構文解析・診断・整形・Markdown・Mermaid はクライアント JS",
-        "Worker は「誰が・どの文書に・どの権限で」だけ（無料枠を消費しない）"
+        "CodeMirror と Mermaid はサーバのビルドに入れない（Worker は 0.85 MiB）"
       ]
     },
     {

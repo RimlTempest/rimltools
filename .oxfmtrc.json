@@ -22,6 +22,7 @@
     "products/*/.claude/skills/**",
     "products/*/docs/architecture/*.html",
     "infra/secrets/*.sops.yaml",
-    "scripts/lib/fixtures/**"
+    "scripts/lib/fixtures/**",
+    "docs/architecture/*.html"
   ]
 }

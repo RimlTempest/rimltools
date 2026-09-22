@@ -6,6 +6,7 @@ paths-ignore:
   # archify が生成する単一ファイルの図（ライブラリを丸ごと埋め込んだ HTML）。
   # 実行されるアプリのコードではなく、`bun run archify` で作り直すもの。
   - 'products/*/docs/architecture/*.html'
+  - 'docs/architecture/*.html'
   # 取り込んだ外部 skill（skills-lock.json で版を固定。リポジトリのコードではない）
   - '.agents/skills/**'
   - 'products/*/.agents/skills/**'
