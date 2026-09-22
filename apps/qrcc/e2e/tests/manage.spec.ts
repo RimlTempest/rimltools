@@ -1,6 +1,6 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import type { Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../support/test.ts'
 
 /**
  * 保存・一覧・編集・共有・削除を、ローカル Miniflare の D1 に対して通す。

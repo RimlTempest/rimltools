@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import { AxeBuilder } from '@axe-core/playwright'
 import type { Locator, Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../support/test.ts'
 
 /**
  * Tab を押して目的の要素までフォーカスが届くか。

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../support/test.ts'
 
 const SLOW = { timeout: 20_000 }
 

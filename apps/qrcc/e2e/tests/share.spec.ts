@@ -1,6 +1,6 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import type { Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../support/test.ts'
 
 /**
  * 共有リンクを**実際にローカル D1 に作ってから**、サインアウトして開く。
