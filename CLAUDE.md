@@ -54,7 +54,7 @@ bun run --cwd apps/qrcc <script>   # 個別のスクリプト
   スクリプトから URL が要るなら `portless get <name>` か `PORTLESS_URL` を読む。
 - dev サーバはポートを自分で決めない。`PORT` / `HOST` に従う（`@rimltools/devtools`）。
   Worker にブラウザの https のオリジンを伝えるのは `DEV_PUBLIC_ORIGIN`（dev サーバのときだけ）。
-- 例外は 2 つだけ: Google ログイン用の `tools.json` の `localOAuthPort`（Google が `*.localhost` を
+- 例外は 2 つだけ: Google ログイン用の `tools.json` の `fixedDevPort`（Google が `*.localhost` を
   受け付けないため）と、e2e が OS から受け取る空きポート（portless を使わない）。
 - **portless のプロキシ起動・CA の信頼・`/etc/hosts` の変更は、端末の設定を変える操作なのでエージェントは
   実行しない。** ユーザーに `docs/local-dev.md` の手順を示す。確認は `bunx portless doctor` / `list` だけ。

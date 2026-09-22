@@ -77,7 +77,7 @@ Google OAuth の設定（Google Cloud Console）:
 - 承認済みリダイレクト URI: `https://noter.riml4i.com/api/auth/callback/google`
 - ローカル用: `http://localhost:5174/api/auth/callback/google`（リポジトリ直下で `bun run dev:noter:oauth`。
   Google は `*.localhost` を受け付けないので、ログインを試すときだけ portless を外して
-  `tools.json` の `localOAuthPort` で起動する。ルートの `docs/local-dev.md`）
+  `tools.json` の `fixedDevPort` で起動する。ルートの `docs/local-dev.md`）
 
 **Google の資格情報が未設定の環境では、Google のボタンを出さずゲストのみになる。**
 開発中はそのままで困らない。

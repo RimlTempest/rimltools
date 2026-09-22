@@ -12,7 +12,7 @@ export const qrcc: Tool = {
   stagingHost: 'qrcc-staging.tools.example.com',
   legacyHosts: ['qrcc.example.com'],
   appSecrets: [],
-  localOAuthPort: null,
+  fixedDevPort: null,
   rust: true,
   services: [
     {

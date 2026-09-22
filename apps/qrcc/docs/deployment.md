@@ -72,7 +72,7 @@ Google OAuth の設定（Google Cloud Console）:
 - 承認済みリダイレクト URI: `https://qrcc.riml4i.com/api/auth/callback/google`
 - ローカル用: `http://localhost:5173/api/auth/callback/google`（リポジトリ直下で `bun run dev:qrcc:oauth`。
   Google は `*.localhost` を受け付けないので、ログインを試すときだけ portless を外して
-  `tools.json` の `localOAuthPort` で起動する。ルートの `docs/local-dev.md`）
+  `tools.json` の `fixedDevPort` で起動する。ルートの `docs/local-dev.md`）
 - ローカル用（`vite preview` / e2e）: `e2e/playwright.config.ts` が決めるポート
 
 **Google の資格情報が未設定の環境では、Google のボタンを出さずゲストのみになる**

@@ -129,26 +129,26 @@ describe('parseTools', () => {
   })
 })
 
-describe('localOAuthPort', () => {
+describe('fixedDevPort', () => {
   test('省略すると null（認証の無いツール）', () => {
     const result = parseTools(valid)
-    expect(result.ok && result.value.tools[0]?.localOAuthPort).toBeNull()
+    expect(result.ok && result.value.tools[0]?.fixedDevPort).toBeNull()
   })
 
   test('1024〜65535 の整数を受け付ける', () => {
     const withPort = structuredClone(valid)
     const [tool] = withPort.tools
     if (tool === undefined) return
-    Object.assign(tool, { localOAuthPort: 5173 })
+    Object.assign(tool, { fixedDevPort: 5173 })
     const result = parseTools(withPort)
-    expect(result.ok && result.value.tools[0]?.localOAuthPort).toBe(5173)
+    expect(result.ok && result.value.tools[0]?.fixedDevPort).toBe(5173)
   })
 
   test.each([80, 70000, 5173.5, '5173'])('不正な値 %p を拒否する', (port) => {
     const broken = structuredClone(valid)
     const [tool] = broken.tools
     if (tool === undefined) return
-    Object.assign(tool, { localOAuthPort: port })
+    Object.assign(tool, { fixedDevPort: port })
     expect(parseTools(broken).ok).toBe(false)
   })
 
@@ -156,11 +156,11 @@ describe('localOAuthPort', () => {
     const broken = structuredClone(valid)
     const [tool] = broken.tools
     if (tool === undefined) return
-    Object.assign(tool, { localOAuthPort: 5173 })
+    Object.assign(tool, { fixedDevPort: 5173 })
     broken.tools.push({ ...structuredClone(tool), name: 'other', subdomain: 'other' })
     const result = parseTools(broken)
     expect(result.ok).toBe(false)
     if (result.ok) return
-    expect(result.error).toContain('localOAuthPort 5173')
+    expect(result.error).toContain('fixedDevPort 5173')
   })
 })

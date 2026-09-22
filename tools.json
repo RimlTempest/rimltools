@@ -11,7 +11,7 @@
       "subdomain": "qrcc",
       "legacyHosts": ["qrcc.riml4i.com"],
       "appSecrets": ["BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
-      "localOAuthPort": 5173,
+      "fixedDevPort": 5173,
       "rust": true,
       "services": [
         {
@@ -55,7 +55,7 @@
       "subdomain": "noter",
       "legacyHosts": ["noter.riml4i.com"],
       "appSecrets": ["BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
-      "localOAuthPort": 5174,
+      "fixedDevPort": 5174,
       "rust": false,
       "services": [
         {

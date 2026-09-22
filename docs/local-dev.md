@@ -73,7 +73,7 @@ bun run dev:qrcc:oauth    # → http://localhost:5173
 bun run dev:noter:oauth   # → http://localhost:5174
 ```
 
-ポートは `tools.json` の `localOAuthPort`（ツールごとに重複しない）。Google には
+ポートは `tools.json` の `fixedDevPort`（ツールごとに重複しない）。Google には
 `http://localhost:<port>/api/auth/callback/google` を登録する。
 
 ## worktree と同時起動

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { planOAuthDev } from './oauth-dev.ts'
 
-const tool = { name: 'qrcc', path: 'apps/qrcc', localOAuthPort: 5173 }
+const tool = { name: 'qrcc', path: 'apps/qrcc', fixedDevPort: 5173 }
 
 describe('planOAuthDev', () => {
   test('portless を外し、固定ポートで起動する計画を返す', () => {
@@ -17,10 +17,10 @@ describe('planOAuthDev', () => {
     })
   })
 
-  test('localOAuthPort の無いツールは失敗にする', () => {
-    const result = planOAuthDev({ ...tool, localOAuthPort: null })
+  test('fixedDevPort の無いツールは失敗にする', () => {
+    const result = planOAuthDev({ ...tool, fixedDevPort: null })
     expect(result.ok).toBe(false)
     if (result.ok) return
-    expect(result.error).toContain('qrcc has no localOAuthPort')
+    expect(result.error).toContain('qrcc has no fixedDevPort')
   })
 })
