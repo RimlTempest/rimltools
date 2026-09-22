@@ -149,7 +149,7 @@ resource "cloudflare_workers_custom_domain" "legacy" {
 # --- Access (staging) ------------------------------------------------------------
 
 resource "cloudflare_zero_trust_access_application" "staging" {
-  count = var.access_policy_id == null ? 0 : 1
+  count = length(var.access_policy_ids) > 0 ? 1 : 0
 
   account_id       = var.account_id
   name             = "${var.tool.name} (staging)"
@@ -157,8 +157,8 @@ resource "cloudflare_zero_trust_access_application" "staging" {
   domain           = local.hosts.staging
   session_duration = "24h"
 
-  policies = [{
-    id         = var.access_policy_id
-    precedence = 1
+  policies = [for i, id in var.access_policy_ids : {
+    id         = id
+    precedence = i + 1
   }]
 }

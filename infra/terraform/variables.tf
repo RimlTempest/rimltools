@@ -126,3 +126,10 @@ variable "release_environments" {
     error_message = "release_environments may only contain staging, production and preview."
   }
 }
+
+variable "google_oauth_staging_json" {
+  description = "Google OAuth client for staging as JSON ({\"client_id\": \"...\", \"client_secret\": \"...\"}). Passed only to apply (production environment secret TF_APPLY_GOOGLE_OAUTH_STAGING). Empty leaves the Google keys out of APP_SECRETS."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
