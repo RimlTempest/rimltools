@@ -13,7 +13,7 @@
   "type": "module",
   "scripts": {
     "check": "bun run check:root && bun run check:qrcc && bun run check:noter && bun run check:portal && bun run check:tfstate",
-    "check:root": "oxfmt --check . && oxlint --type-aware && tsc -p tsconfig.json && bun scripts/check-versions.ts && tsc --build packages/ui packages/shell && bun run --cwd packages/ui lint:html && bun run --cwd packages/shell lint:html",
+    "check:root": "oxfmt --check . && bun scripts/check-no-js.ts && oxlint --type-aware && tsc -p tsconfig.json && bun scripts/check-versions.ts && tsc --build packages/ui packages/shell packages/sw && bun run --cwd packages/ui lint:html && bun run --cwd packages/shell lint:html",
     "check:qrcc": "bun run --cwd products/qrcc check",
     "check:noter": "bun run --cwd products/noter check",
     "check:portal": "bun run --cwd products/portal check",
