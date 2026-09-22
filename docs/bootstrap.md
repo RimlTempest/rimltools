@@ -9,75 +9,88 @@
 
 ## 全体の流れ
 
-| 段  | やること                                    | どこで                                                |
-| --- | ------------------------------------------- | ----------------------------------------------------- |
-| 1   | アカウントと workspace を用意する           | HCP Terraform / Grafana Cloud / Cloudflare Zero Trust |
-| 2   | トークンを作る（plan 用・apply 用を分ける） | HCP / Cloudflare / GitHub / Grafana                   |
-| 3   | GitHub に secret と variable を登録する     | 端末                                                  |
-| 4   | 初回 plan を確認する                        | PR のコメント                                         |
-| 5   | 初回 apply（staging だけ有効）              | Release PR をマージ                                   |
-| 6   | staging にデプロイして確かめる              | develop への push                                     |
-| 7   | production を有効にする                     | PR → Release PR                                       |
-| 8   | 最初の本番リリース（段階リリース）          | Release PR                                            |
-| 9   | ドメインを `<tool>.tools.riml4i.com` へ移す | PR を数回                                             |
-| 10  | 監視を仕上げる                              | Grafana / PR                                          |
-| 11  | 後片付け                                    | GitHub / 端末                                         |
+| 段  | やること                                      | どこで                               |
+| --- | --------------------------------------------- | ------------------------------------ |
+| 1   | アカウントと鍵・state の置き場所を用意する    | Grafana Cloud / Cloudflare / 端末    |
+| 2   | トークンを作り、SOPS で暗号化してコミットする | Cloudflare / GitHub / Grafana / 端末 |
+| 3   | GitHub に age 鍵 2 本と variable を登録する   | 端末                                 |
+| 4   | 初回 plan を確認する                          | PR のコメント                        |
+| 5   | 初回 apply（staging だけ有効）                | Release PR をマージ                  |
+| 6   | staging にデプロイして確かめる                | develop への push                    |
+| 7   | production を有効にする                       | PR → Release PR                      |
+| 8   | 最初の本番リリース（段階リリース）            | Release PR                           |
+| 9   | ドメインを `<tool>.tools.riml4i.com` へ移す   | PR を数回                            |
+| 10  | 監視を仕上げる                                | Grafana / PR                         |
+| 11  | 後片付け                                      | GitHub / 端末                        |
 
-## 1. アカウントと workspace
+## 1. アカウント・鍵・state の置き場所
 
-1. **HCP Terraform**（<https://app.terraform.io>、Free）
-   - organization を作る（以下 `<org>`）
-   - workspace を 2 つ、**CLI-driven workflow** で作る: `rimltools-production`（Cloudflare・GitHub）と `rimltools-observability`（Grafana）
-   - どちらも Settings → General → **Execution Mode を `Local`** にする（トークンを HCP に置かないため）
-2. **Grafana Cloud**（Free、カード不要）
+1. **age 鍵を 2 本作る**（SOPS の暗号化に使う。`infra/terraform/README.md` §1）
+
+   ```bash
+   mkdir -p ~/.config/sops/age
+   age-keygen -o ~/.config/sops/age/rimltools-plan.txt
+   age-keygen -o ~/.config/sops/age/rimltools-apply.txt
+   ```
+
+   - 出力された公開鍵（`age1...`）で、リポジトリ直下の `.sops.yaml` の placeholder を置き換える（PR でコミットする）
+   - **秘密鍵を 2 本ともパスワードマネージャーに控える（必須）**。失うと secrets ファイルを開けなくなる
+
+2. **state の暗号化パスフレーズを作る**: `openssl rand -base64 48`。**パスワードマネージャーに控える（必須）**。失うと state を読めなくなる
+
+3. **state の置き場所（tfstate Worker）を作る**: `infra/tfstate/README.md` のブートストラップ
+   （D1 の作成 → migration → 資格情報 4 つを `wrangler secret put` → `wrangler deploy`）。
+   D1 の database_id を `infra/tfstate/wrangler.jsonc` に書いて PR でコミットする
+
+4. **Grafana Cloud**（Free、カード不要）
    - サインアップ時にできるスタックの slug を `rimltools` にする（違う名前にしたら `infra/grafana/terraform.tfvars` の `stack_slug` を直す）
-3. **Cloudflare Zero Trust**
+
+5. **Cloudflare Zero Trust**
    - ダッシュボード → Zero Trust で組織を一度作る（Free、50 ユーザーまで）。staging を本人だけに閉じるのに使う
-4. **Google Cloud Console**（既存の OAuth クライアント）
+
+6. **Google Cloud Console**（既存の OAuth クライアント）
    - 承認済みのリダイレクト URI に、次を**追加**する（既存の URI は消さない）
      - `https://qrcc.tools.riml4i.com/api/auth/callback/google`
      - `https://noter.tools.riml4i.com/api/auth/callback/google`
      - `https://qrcc-staging.tools.riml4i.com/api/auth/callback/google`
      - `https://noter-staging.tools.riml4i.com/api/auth/callback/google`
 
-## 2. トークンを作る
+## 2. トークンを作り、SOPS で暗号化する
 
 どれも **plan 用（読み取り専用）と apply 用（書き込み）の 2 本**を作る。
 PR のコードが動く plan に書き込み権限を渡さないため（`infra/terraform/README.md` のブートストラップ節）。
 
-| サービス                                          | plan 用                                     | apply 用                                  | 権限の一覧                                                |
-| ------------------------------------------------- | ------------------------------------------- | ----------------------------------------- | --------------------------------------------------------- |
-| HCP Terraform                                     | `TF_PLAN_API_TOKEN`                         | `TF_APPLY_API_TOKEN`                      | `infra/terraform/README.md` §1。両 workspace に触れること |
-| Cloudflare                                        | `TF_PLAN_CLOUDFLARE_API_TOKEN`（Read のみ） | `TF_APPLY_CLOUDFLARE_API_TOKEN`（Edit）   | `infra/terraform/README.md` §2                            |
-| GitHub（fine-grained PAT、対象は rimltools だけ） | `TF_PLAN_GITHUB_TOKEN`（Read-only）         | `TF_APPLY_GITHUB_TOKEN`（Read and write） | `infra/terraform/README.md` §3                            |
-| Grafana Cloud（access policy）                    | `TF_PLAN_GRAFANA_CLOUD_TOKEN`               | `TF_APPLY_GRAFANA_CLOUD_TOKEN`            | `infra/grafana/README.md` §1                              |
+| サービス                                          | plan 用（`plan.sops.yaml`）                                     | apply 用（`apply.sops.yaml`）                                                 | 権限の一覧                     |
+| ------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------ |
+| tfstate Worker                                    | 読み取り用の資格情報（`TF_HTTP_USERNAME` / `TF_HTTP_PASSWORD`） | 書き込み用の資格情報                                                          | §1-3 で作ったもの              |
+| state の暗号化                                    | `TF_VAR_state_passphrase`（§1-2）                               | 同じ値                                                                        | —                              |
+| Cloudflare                                        | 読み取り専用トークン                                            | 書き込みトークン                                                              | `infra/terraform/README.md` §3 |
+| GitHub（fine-grained PAT、対象は rimltools だけ） | Read-only                                                       | Read and write                                                                | `infra/terraform/README.md` §3 |
+| Grafana Cloud（access policy）                    | plan 用                                                         | apply 用                                                                      | `infra/grafana/README.md` §1   |
+| Google OAuth（staging）                           | —                                                               | `TF_VAR_google_oauth_staging_json`（`{"client_id":"…","client_secret":"…"}`） | 既存のクライアントを使う       |
 
-Google OAuth は新しく作らず、既存のクライアントを staging でも使う。次の JSON を用意しておく:
-
-```json
-{ "client_id": "<GOOGLE_CLIENT_ID>", "client_secret": "<GOOGLE_CLIENT_SECRET>" }
+```bash
+cp infra/secrets/plan.example.yaml  infra/secrets/plan.sops.yaml
+cp infra/secrets/apply.example.yaml infra/secrets/apply.sops.yaml
+# 値を入れたら、すぐに暗号化する（平文のままコミットしようとすると pre-commit が止める）
+sops encrypt -i infra/secrets/plan.sops.yaml
+sops encrypt -i infra/secrets/apply.sops.yaml
+bun scripts/check-secrets.ts   # 平文が混ざっていないこと
 ```
+
+暗号化した 2 ファイルと `.sops.yaml` を PR でコミットする。以後の編集は `sops infra/secrets/apply.sops.yaml`（保存時に暗号化される）。
 
 ## 3. GitHub に登録する
 
-値をクリップボードにコピーした直後に 1 行ずつ実行する。
+**GitHub に置く secret は age の秘密鍵 2 本だけ。** 値をクリップボードにコピーした直後に 1 行ずつ実行する。
 
 ```bash
-# plan 用（repository secret。PR の plan が使う）
-pbpaste | gh secret set TF_PLAN_API_TOKEN -R RimlTempest/rimltools
-pbpaste | gh secret set TF_PLAN_CLOUDFLARE_API_TOKEN -R RimlTempest/rimltools
-pbpaste | gh secret set TF_PLAN_GITHUB_TOKEN -R RimlTempest/rimltools
-pbpaste | gh secret set TF_PLAN_GRAFANA_CLOUD_TOKEN -R RimlTempest/rimltools
-
-# apply 用（production environment の secret。main からの apply だけが読める）
-pbpaste | gh secret set TF_APPLY_API_TOKEN -R RimlTempest/rimltools -e production
-pbpaste | gh secret set TF_APPLY_CLOUDFLARE_API_TOKEN -R RimlTempest/rimltools -e production
-pbpaste | gh secret set TF_APPLY_GITHUB_TOKEN -R RimlTempest/rimltools -e production
-pbpaste | gh secret set TF_APPLY_GRAFANA_CLOUD_TOKEN -R RimlTempest/rimltools -e production
-pbpaste | gh secret set TF_APPLY_GOOGLE_OAUTH_STAGING -R RimlTempest/rimltools -e production   # 上の JSON
+# plan 鍵（repository secret。PR の plan が使う）
+pbpaste | gh secret set SOPS_AGE_KEY_PLAN -R RimlTempest/rimltools
+# apply 鍵（production environment の secret。main からの apply だけが読める）
+pbpaste | gh secret set SOPS_AGE_KEY_APPLY -R RimlTempest/rimltools -e production
 
 # 秘密ではない値（repository variable）
-gh variable set TF_CLOUD_ORGANIZATION -R RimlTempest/rimltools --body '<org>'
 gh variable set CLOUDFLARE_ACCOUNT_ID -R RimlTempest/rimltools --body '<account id>'
 gh variable set TF_VAR_ACCESS_EMAILS -R RimlTempest/rimltools --body '["<あなたのメールアドレス>"]'
 gh variable set GRAFANA_ALERT_EMAILS -R RimlTempest/rimltools --body '["<あなたのメールアドレス>"]'
@@ -88,20 +101,22 @@ Settings → Environments → production → Deployment branches → Selected br
 
 **確認**
 
-- [ ] `gh secret list -R RimlTempest/rimltools` に `TF_PLAN_*` が 4 件
-- [ ] `gh secret list -R RimlTempest/rimltools -e production` に `TF_APPLY_*` が 5 件
-- [ ] どの secret も更新日時が今日（空の値で登録されていない）
+- [ ] `gh secret list -R RimlTempest/rimltools` に `SOPS_AGE_KEY_PLAN` がある
+- [ ] `gh secret list -R RimlTempest/rimltools -e production` に `SOPS_AGE_KEY_APPLY` がある
+- [ ] どちらも更新日時が今日（空の値で登録されていない）
+- [ ] 旧方式（HCP Terraform）の secret（`TF_PLAN_*` / `TF_APPLY_*`）が残っていない
 
 ## 4. 初回 plan を確認する
 
 Actions → Terraform → Run workflow（`develop`）で plan を出す。PR に出す場合は `infra/**` を触る小さな PR でもよい。
-**apply する前に `infra/terraform/README.md` §5 のチェックリストをすべて確認する。** 特に次の 3 つ。
+**apply する前に `infra/terraform/README.md` §6 のチェックリストをすべて確認する。** 特に次の 3 つ。
 
 - [ ] 既存の本番リソース（Worker 4 つ、D1 2 つ、Custom Domain 2 つ、GitHub の ruleset 2 つ）が **import** になっていて、`destroy` / `must be replaced` が無い
 - [ ] zone の ruleset を取り込むことで、ダッシュボードで作ったルールが消えない
 - [ ] Grafana の plan で `grafana_cloud_stack` を作ろうとしていない、notification policy の置き換えで消えるルートが無い
 
 plan が 403 で落ちたら、plan 用トークンに足りない **Read** 権限だけを足す（Edit は足さない）。
+plan が「SOPS age key ... is not set up yet」で飛ばされたら、§2 のファイルと §3 の鍵を確かめる。
 
 ## 5. 初回 apply（staging だけ有効）
 
@@ -114,6 +129,7 @@ plan が 403 で落ちたら、plan 用トークンに足りない **Read** 権�
 **確認**
 
 - [ ] Actions の Terraform（`apply` → `apply-grafana`）が成功している
+- [ ] tfstate に state が入った: `curl -s -o /dev/null -w '%{http_code}' -u '<READ_USER>:<READ_PASSWORD>' https://tfstate.tools.riml4i.com/states/rimltools-production` が 200
 - [ ] `gh variable list -R RimlTempest/rimltools` に `RELEASE_ENVIRONMENTS = ["staging"]` がある
 - [ ] Deploy production は、マージのたびに「スキップ」で終わっている（本番は触られていない）
 
