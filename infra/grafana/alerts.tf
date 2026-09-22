@@ -157,3 +157,82 @@ resource "grafana_rule_group" "rimltools" {
     }
   }
 }
+
+# --- ログ（Loki）から作るアラート -------------------------------------------------------
+#
+# tfstate Worker（infra/tfstate）の認証失敗。Free の rate limiting は /api/auth/ に使っているので
+# tfstate には掛かっていない。総当たりを資格情報の長さ（32 文字以上）で防ぎつつ、試行を検知する。
+# ログは @rimltools/telemetry が OTLP で送る（全件。service_name = rimltools-tfstate）。
+# 失敗が続くなら docs/runbooks/secret-leak.md §2-3 で資格情報を替える。
+
+locals {
+  log_alert_rules = [
+    {
+      uid      = "rimltools-tfstate-auth-failures"
+      name     = "tfstate への認証失敗が多い（総当たりの疑い）"
+      severity = "critical"
+      pending  = "0m"
+      summary  = "tfstate.tools.riml4i.com への認証失敗が 10 分で 20 回を超えた。資格情報の総当たりの疑い（docs/runbooks/secret-leak.md §2-3）"
+      expr     = "sum(count_over_time({service_namespace=\"rimltools\", service_name=\"rimltools-tfstate\"} | event = `tfstate_auth_failed` [10m])) > 20"
+    },
+  ]
+}
+
+resource "grafana_rule_group" "rimltools_logs" {
+  name             = "rimltools-logs"
+  folder_uid       = grafana_folder.rimltools.uid
+  interval_seconds = 60
+
+  dynamic "rule" {
+    for_each = local.log_alert_rules
+    content {
+      uid            = rule.value.uid
+      name           = rule.value.name
+      condition      = "B"
+      for            = rule.value.pending
+      is_paused      = false
+      no_data_state  = "OK"
+      exec_err_state = "Error"
+
+      labels = {
+        severity = rule.value.severity
+        team     = "rimltools"
+      }
+
+      annotations = {
+        summary     = rule.value.summary
+        runbook_url = "https://github.com/${var.github_owner}/${var.github_repository}/tree/develop/docs/runbooks/secret-leak.md"
+      }
+
+      data {
+        ref_id         = "A"
+        datasource_uid = grafana_data_source.loki.uid
+        relative_time_range {
+          from = 600
+          to   = 0
+        }
+        model = jsonencode({
+          refId     = "A"
+          expr      = rule.value.expr
+          queryType = "instant"
+        })
+      }
+
+      data {
+        ref_id         = "B"
+        datasource_uid = "-100"
+        relative_time_range {
+          from = 0
+          to   = 0
+        }
+        model = jsonencode({
+          refId      = "B"
+          type       = "threshold"
+          expression = "A"
+          datasource = { type = "__expr__", uid = "-100" }
+          conditions = [{ evaluator = { type = "gt", params = [0] } }]
+        })
+      }
+    }
+  }
+}
