@@ -46,6 +46,8 @@ bun run --cwd products/qrcc <script>   # 個別のスクリプト
 
 ## CI / デプロイ
 
+本番の立ち上げ（Terraform のブートストラップから最初のリリースまで）は `docs/bootstrap.md`。
+
 `.github/workflows/<product>-{ci,deploy}.yml`。`paths` で絞っているので、
 そのプロダクト（とルートの共通設定）が変わったときだけ走る。
 main への push = そのプロダクトの本番デプロイ。
