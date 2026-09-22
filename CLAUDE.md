@@ -3,14 +3,14 @@
 小さな Web ツール群（RimlTools）の monorepo。入口は `https://tools.riml4i.com`。
 各ツールは独立した Cloudflare Worker としてサブドメインで公開する。
 
-| ツール | 場所              | 内容                                          |
-| ------ | ----------------- | --------------------------------------------- |
-| qrcc   | `products/qrcc/`  | QR・バーコードの生成 / 読み取り / 管理 / 印刷 |
-| noter  | `products/noter/` | リアルタイム共同編集エディタ                  |
+| ツール | 場所          | 内容                                          |
+| ------ | ------------- | --------------------------------------------- |
+| qrcc   | `apps/qrcc/`  | QR・バーコードの生成 / 読み取り / 管理 / 印刷 |
+| noter  | `apps/noter/` | リアルタイム共同編集エディタ                  |
 
 ## 作業を始める前に
 
-**触るプロダクトの `products/<name>/CLAUDE.md` を必ず読むこと。** 設計ルール・ADR は
+**触るプロダクトの `apps/<name>/CLAUDE.md` を必ず読むこと。** 設計ルール・ADR は
 プロダクトごとに持っている。プロダクトをまたぐ変更（ルートの設定・CI）はこのファイルの規約に従う。
 
 スキルは 2 か所にある。プロダクト配下で作業していても、リポジトリ直下の `.claude/skills` は読める。
@@ -18,7 +18,7 @@
 | 置き場所                                 | 中身                                                                                                                                                         |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `.claude/skills/`（→ `.agents/skills/`） | 全プロダクト共通: `rimltools-typescript` / `rimltools-html-a11y` / `rimltools-tdd` / `rimltools-worktree` と、外部から取り込んだ skill（`skills-lock.json`） |
-| `products/<name>/.claude/skills/`        | プロダクト固有: `<name>-architecture`（構成・拡張レシピ）/ `<name>-conventions`（共通規約との差分）                                                          |
+| `apps/<name>/.claude/skills/`            | プロダクト固有: `<name>-architecture`（構成・拡張レシピ）/ `<name>-conventions`（共通規約との差分）                                                          |
 
 共通の規約とプロダクト固有の差分は必ず両方読む。食い違ったらプロダクト固有を優先する。
 
@@ -39,7 +39,7 @@ bun run check               # 全プロダクトの check
 bun run test                # 全プロダクトの test
 bun run dev:qrcc            # qrcc の開発サーバ
 bun run dev:noter           # noter の開発サーバ
-bun run --cwd products/qrcc <script>   # 個別のスクリプト
+bun run --cwd apps/qrcc <script>   # 個別のスクリプト
 ```
 
 新しい環境では `mise install && bun install`（`prepare` で lefthook も入る）。

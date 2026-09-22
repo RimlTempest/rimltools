@@ -1,5 +1,5 @@
 /**
- * Workers 用の計装（docs/observability.md）。
+ * Workers 用の計装（docs/ops/telemetry.md）。
  *
  * Workers の OTLP 自動エクスポートは Workers Paid 限定なので、Free では Worker 自身が
  * OTLP/HTTP JSON を組み立てて送る。OpenTelemetry JS SDK は CPU とバンドルが重いので使わない。

@@ -29,7 +29,7 @@
 - `tofu apply -replace=...` を手元で行うときは `sops exec-env infra/secrets/apply.sops.yaml '...'` で包む（apply 鍵が要る）。
   手元に apply 鍵を出したくなければ、`-replace` 相当の変更を PR にして Release PR で apply する。
 - `wrangler secret put` は対話入力なので、自分の端末で実行する（`!` シェルは非対話で空の値が入る）。
-- 再発行後は、該当ツールの smoke（`bun run --cwd products/<tool> smoke`）とログインを確認する。
+- 再発行後は、該当ツールの smoke（`bun run --cwd apps/<tool> smoke`）とログインを確認する。
 
 ## 2. SOPS の鍵・state のパスフレーズ・tfstate の資格情報
 

@@ -17,8 +17,8 @@ const straight: Strategy = { kind: 'canary', steps: [100], bakeMinutes: 0 }
 /** 下流（internal）から順に出す。上流の新版は下流の旧版とも動く前提（ADR-0003） */
 export const planRollout = (tool: Tool, env: EnvName): WorkerPlan[] => {
   const ordered = [
-    ...tool.workers.filter((w) => w.role === 'internal'),
-    ...tool.workers.filter((w) => w.role === 'public'),
+    ...tool.services.filter((w) => w.role === 'internal'),
+    ...tool.services.filter((w) => w.role === 'public'),
   ]
   return ordered.map((worker) => {
     if (worker.durableObjects) return { worker, strategy: { kind: 'direct' } }

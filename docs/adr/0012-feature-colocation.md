@@ -19,14 +19,14 @@ qrcc を機能別に組み替えて「1 機能 = 1 ディレクトリ = 1 並行
 **各プロダクトのトップレベルを機能で割り、1 機能に必要なものを 1 ディレクトリへ集める。**
 
 ```
-products/<tool>/
+apps/<tool>/
 ├─ features/<name>/
 │  ├─ contract/   型・API 契約（I/O なし、throw しない）
 │  ├─ core/       純粋ロジック（I/O なし、throw しない）
 │  ├─ ui/         React・CSS・テスト・<name>.route.tsx
 │  └─ server/     TanStack server functions / server routes
 ├─ shared/        プロダクト内の共有物（プロダクト固有の型・UI）
-└─ apps/          薄いシェル（Vite / Wrangler 設定、router、URL 構成）
+└─ services/      薄いシェル（Vite / Wrangler 設定、router、URL 構成）
 packages/         プロダクト横断の共有物（@rimltools/*）
 ```
 
@@ -38,13 +38,13 @@ packages/         プロダクト横断の共有物（@rimltools/*）
 
 TanStack Router の **virtual file routes** を使い、ルートの実体を feature 内に置く。
 
-- `apps/web/tsr.config.json` … `routesDirectory` をプロダクトの `features/` に向ける
-- `apps/web/src/routes.ts` … URL 構造だけを宣言する唯一の横断ファイル
+- `services/web/tsr.config.json` … `routesDirectory` をプロダクトの `features/` に向ける
+- `services/web/src/routes.ts` … URL 構造だけを宣言する唯一の横断ファイル
 - `features/<name>/ui/<name>.route.tsx` … ルート定義（`createFileRoute`）
 - `features/<name>/ui/<name>-screen.tsx` … 画面コンポーネント（feature 所有・テスト対象）
 
-`*.route.tsx` は **apps/web の TypeScript プログラムに属する**（`routeTree.gen.ts` の `Register` 型拡張が必要なため）。
-feature 側の `tsconfig.json` は `*.route.tsx` を `exclude` し、apps/web が `../../features/*/ui/*.route.tsx` を `include` する。
+`*.route.tsx` は **services/web の TypeScript プログラムに属する**（`routeTree.gen.ts` の `Register` 型拡張が必要なため）。
+feature 側の `tsconfig.json` は `*.route.tsx` を `exclude` し、services/web が `../../features/*/ui/*.route.tsx` を `include` する。
 物理配置は feature の中、型の所有はアプリ側、という分担になる。
 
 ## 理由
@@ -56,7 +56,7 @@ feature 側の `tsconfig.json` は `*.route.tsx` を `exclude` し、apps/web �
 
 ## 帰結
 
-- feature を足す = ディレクトリを足す + `apps/web/src/routes.ts` に 1 行。消すときはその逆
+- feature を足す = ディレクトリを足す + `services/web/src/routes.ts` に 1 行。消すときはその逆
 - 共有したくなったものは、プロダクト内なら `shared/`、プロダクト横断なら `packages/` に上げる。**上げる前に 2 回重複させる**
 - `routesDirectory` の相対パス基準が Vite プラグイン（`srcDirectory` 基準）と `tsr generate` CLI（プロジェクトルート基準）で
   異なるため、`vite.config.ts` では絶対パスに解決して渡す。定義元は `tsr.config.json` 1 つ

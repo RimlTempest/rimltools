@@ -15,7 +15,7 @@ export type RewriteContext = {
   env: Pick<DeployEnv, 'name' | 'suffix' | 'd1Id'>
   /** この環境で public Worker が受けるホスト名 */
   host: string
-  /** テレメトリの値（docs/observability.md）。未設定のものは空のまま（= 無効） */
+  /** テレメトリの値（docs/ops/telemetry.md）。未設定のものは空のまま（= 無効） */
   telemetry?: { otlpEndpoint: string | undefined; faroUrl: string | undefined; gitSha: string }
 }
 
@@ -74,7 +74,7 @@ const withFields = (base: Json, fields: Json): Json => ({ ...base, ...fields })
 export const rewriteConfig = (config: unknown, ctx: RewriteContext): Result<Json, string> => {
   if (!isRecord(config)) return { ok: false, error: 'wrangler.json is not an object' }
   const { tool, env, host } = ctx
-  const ownWorkers = new Set(tool.workers.map((w) => w.name))
+  const ownWorkers = new Set(tool.services.map((w) => w.name))
   const withSuffix = (name: string) => (ownWorkers.has(name) ? `${name}${env.suffix}` : name)
 
   const name = config['name']
@@ -84,7 +84,7 @@ export const rewriteConfig = (config: unknown, ctx: RewriteContext): Result<Json
       error: `wrangler.json names "${String(name)}", which ${tool.name} does not own`,
     }
   }
-  const worker = tool.workers.find((w) => w.name === name)
+  const worker = tool.services.find((w) => w.name === name)
   const isPublic = worker?.role === 'public'
 
   const errors: string[] = []

@@ -18,7 +18,7 @@ v1 初期まで experimental のまま据え置かれると明記されている
 
 ## 決定
 
-**RSC を有効にしない。** 各プロダクトの `apps/web/vite.config.ts` で `@vitejs/plugin-rsc` を登録せず、
+**RSC を有効にしない。** 各プロダクトの `services/web/vite.config.ts` で `@vitejs/plugin-rsc` を登録せず、
 `tanstackStart()` に `rsc` を指定しない。
 
 再検討する条件:

@@ -1,6 +1,6 @@
 # ダッシュボードとアラートが使う data source。Grafana Cloud が自動で作る data source は
 # 編集できない（provisioned）ことがあるため、相関の設定を持たせた自前の 3 つを作る。
-# UID は固定（observability/dashboards/*.json と scripts/observability/dashboards.ts の契約）。
+# UID は固定（ops/dashboards/*.json と scripts/ops/dashboards.ts の契約）。
 #
 # 相関（ADR-0008）:
 #   Mimir の exemplar（trace_id）→ Tempo

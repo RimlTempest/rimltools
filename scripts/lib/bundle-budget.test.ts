@@ -10,7 +10,7 @@ describe('parseBudgetFile', () => {
       budgets: [
         {
           name: 'worker',
-          dir: 'apps/web/dist/server',
+          dir: 'services/web/dist/server',
           extensions: ['.js', '.mjs', '.wasm'],
           maxGzipBytes: 2_000_000,
           reason: 'Workers Free の上限 3 MiB の 2/3',

@@ -20,7 +20,7 @@ hotfix/*   ──PR──▶  main（develop へも取り込み直す）
 
 | 層                   | 道具                                                            | 何を持つか                                                           |
 | -------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------- |
-| コード・ビルド       | bun workspaces / cargo                                          | `products/<tool>/`                                                   |
+| コード・ビルド       | bun workspaces / cargo                                          | `apps/<tool>/`                                                       |
 | バージョン・デプロイ | wrangler（`versions upload` / `versions deploy`）               | Worker のコードと bindings                                           |
 | インフラ             | OpenTofu（state は自前 backend で暗号化、秘密は SOPS）          | ドメイン・DNS・D1・Worker の枠・ルールセット・GitHub の設定と secret |
 | 機能の出し分け       | `@rimltools/flags`（OpenFeature 互換、D1 に定義）               | dark launch・A/B・機能単位のカナリア・kill switch                    |
@@ -118,7 +118,7 @@ OpenTofu が暗号化してから送る。秘密の入力値は SOPS（age）で
 bun run new-tool <name>
 ```
 
-1. `products/<name>/` をテンプレートから作る（qrcc / noter と同じ構成）
+1. `apps/<name>/` をテンプレートから作る（qrcc / noter と同じ構成）
 2. `infra/terraform/tools.tf` にツールを 1 行足す（ドメイン・D1・Access・リダイレクトはモジュールが作る）
 3. `.github/workflows` はツール一覧（`tools.json`）から生成されるので、手で書かない
 

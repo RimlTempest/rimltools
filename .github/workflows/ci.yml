@@ -51,13 +51,13 @@ jobs:
               - '.oxfmtrc.json'
             qrcc:
               - *root
-              - 'products/qrcc/**'
+              - 'apps/qrcc/**'
             noter:
               - *root
-              - 'products/noter/**'
+              - 'apps/noter/**'
             portal:
               - *root
-              - 'products/portal/**'
+              - 'apps/portal/**'
 
   # scripts/・packages/・tools.json などプロダクト外のコード。軽いので毎回走らせる
   root:

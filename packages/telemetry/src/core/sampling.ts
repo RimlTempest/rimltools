@@ -1,5 +1,5 @@
 /**
- * サンプリング判定（docs/observability.md §サンプリング）。
+ * サンプリング判定（docs/ops/telemetry.md §サンプリング）。
  *
  * - head: リクエストの最初に決める。上流が sampled なら従う。それ以外は ratio の確率。
  * - tail: 応答後に決め直す。エラー（5xx / 例外）と遅いリクエストは head に関係なく送る。

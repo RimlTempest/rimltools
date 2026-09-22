@@ -10,7 +10,7 @@ locals {
     # tfstate Worker（infra/tfstate）が認証失敗などのログと trace を送る。tfstate は wrangler で
     # 直接デプロイするので、アプリの Worker とは別のトークンにして単独で失効できるようにする
     "otlp-write-tfstate" = ["logs:write", "traces:write"]
-    # GitHub Actions（observability.yml）が Cloudflare の指標を送る
+    # GitHub Actions（ops-metrics.yml）が Cloudflare の指標を送る
     "metrics-push" = ["metrics:write"]
     # Terraform が作る data source（rt-mimir / rt-loki / rt-tempo）が読む
     "datasource-read" = ["metrics:read", "logs:read", "traces:read"]

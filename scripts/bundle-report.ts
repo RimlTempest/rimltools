@@ -1,8 +1,8 @@
 /**
  * バンドルの内訳をパッケージ単位で出す（docs/bundle.md の表を作るための道具）。
  *
- *   NOTER_BUNDLE_ANALYZE=1 bun run --cwd products/noter build
- *   bun scripts/bundle-report.ts products/noter/apps/web/dist/server [上位件数]
+ *   NOTER_BUNDLE_ANALYZE=1 bun run --cwd apps/noter build
+ *   bun scripts/bundle-report.ts apps/noter/services/web/dist/server [上位件数]
  *
  * チャンクごとに gzip サイズを測り、sourcemap で文字数を各ソースに割り当て、
  * その比率で gzip サイズを按分する（推定値。圧縮率はソースごとに違うので目安）。

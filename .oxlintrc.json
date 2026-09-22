@@ -103,21 +103,21 @@
       "files": [
         "packages/contract/src/**/*.ts",
         "packages/*/src/core/**/*.ts",
-        "products/*/shared/contract/src/**/*.ts",
-        "products/qrcc/shared/kernel/conformance/**/*.ts",
-        "products/*/features/*/contract/**/*.ts",
-        "products/*/features/*/core/**/*.ts"
+        "apps/*/shared/contract/src/**/*.ts",
+        "apps/qrcc/shared/kernel/conformance/**/*.ts",
+        "apps/*/features/*/contract/**/*.ts",
+        "apps/*/features/*/core/**/*.ts"
       ],
       "rules": { "rimltools/no-throw-in-domain": "error" }
     },
     {
       // Durable Object は class でしか書けない。ここだけが例外（noter ADR-0004）。
-      "files": ["products/noter/features/sync/worker/document-room.ts"],
+      "files": ["apps/noter/features/sync/worker/document-room.ts"],
       "rules": { "rimltools/no-class": "off" }
     },
     {
       // Worker のエントリは default export が必須
-      "files": ["products/noter/apps/sync/src/index.ts", "infra/tfstate/src/index.ts"],
+      "files": ["apps/noter/services/sync/src/index.ts", "infra/tfstate/src/index.ts"],
       "rules": { "import/no-default-export": "off" }
     },
     {
@@ -132,7 +132,7 @@
     {
       "files": [
         "tools/**/*.ts",
-        "products/*/tools/**/*.js",
+        "apps/*/tools/**/*.js",
         "**/*.config.ts",
         "**/*.config.js",
         "**/vite.config.ts",
@@ -142,7 +142,7 @@
       "rules": { "import/no-default-export": "off" }
     },
     {
-      "files": ["scripts/**/*.ts", "products/*/scripts/**/*.ts", "infra/tfstate/src/index.ts"],
+      "files": ["scripts/**/*.ts", "apps/*/scripts/**/*.ts", "infra/tfstate/src/index.ts"],
       "rules": { "eslint/no-console": "off" }
     }
   ],

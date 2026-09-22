@@ -53,7 +53,7 @@ variable "otlp_environments" {
 }
 
 variable "ops_environment" {
-  description = "メトリクス転送（observability.yml）が使う GitHub environment（infra/terraform/ops.tf が作る）。"
+  description = "メトリクス転送（ops-metrics.yml）が使う GitHub environment（infra/terraform/ops.tf が作る）。"
   type        = string
   default     = "ops"
 }
@@ -61,7 +61,7 @@ variable "ops_environment" {
 # --- 監視・アラート --------------------------------------------------------------------
 
 variable "latency_p99_ms" {
-  description = "ツールごとの wall time p99 の目標（ms）。SLO とアラートに使う。統合時に tools.json の slo.latencyP99Ms へ移す（docs/observability-grafana.md）。"
+  description = "ツールごとの wall time p99 の目標（ms）。SLO とアラートに使う。統合時に tools.json の slo.latencyP99Ms へ移す（docs/ops/grafana.md）。"
   type        = map(number)
   default = {
     qrcc  = 1500
@@ -70,7 +70,7 @@ variable "latency_p99_ms" {
 }
 
 variable "metrics_push_enabled" {
-  description = "observability.yml のメトリクス転送が動いているか。false の間は「転送が止まった」アラートを止めておく。"
+  description = "ops-metrics.yml のメトリクス転送が動いているか。false の間は「転送が止まった」アラートを止めておく。"
   type        = bool
   default     = false
 }

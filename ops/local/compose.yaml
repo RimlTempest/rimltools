@@ -1,0 +1,66 @@
+# Grafana LGTM（Loki / Grafana / Tempo / Mimir 相当の Prometheus + OTel Collector）と
+# Faro の受け口（Alloy）をローカルで起動する。使い方は README.md。
+#
+#   docker compose -f ops/local/compose.yaml up -d
+#
+# イメージはタグ + digest で固定する（公開から 7 日以上経った版。docs/security.md）。
+# otel-lgtm を上げるときは、prometheus/prometheus.yaml を新しいイメージの
+# /otel-lgtm/prometheus.yaml と見比べて写し直す（rule_files 以外は上流のまま）。
+#
+# ポートはすべて 127.0.0.1 にだけ公開する（外から触れない）。
+
+name: rimltools-lgtm
+
+services:
+  lgtm:
+    image: grafana/otel-lgtm:0.33.0@sha256:475319e883b66594d1a2f22ef168c2459802bb94548e6f25d9782bd5f5c19a3a
+    ports:
+      - '127.0.0.1:3000:3000' # Grafana
+      - '127.0.0.1:4317:4317' # OTLP gRPC
+      - '127.0.0.1:4318:4318' # OTLP HTTP（Worker の OTEL_EXPORTER_OTLP_ENDPOINT）
+    environment:
+      # 匿名でも閲覧と Explore はできるが、ダッシュボードの保存や設定の変更はできない
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_VIEWERS_CAN_EDIT: 'true'
+      GF_AUTH_DISABLE_LOGIN_FORM: 'false'
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+    volumes:
+      - ./grafana/datasources.yaml:/otel-lgtm/grafana/conf/provisioning/datasources/rimltools.yaml:ro
+      - ./grafana/dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/rimltools.yaml:ro
+      - ../dashboards:/otel-lgtm/rimltools/dashboards:ro
+      - ./prometheus/prometheus.yaml:/otel-lgtm/prometheus.yaml:ro
+      - ./prometheus/recording-rules.yaml:/otel-lgtm/rimltools/recording-rules.yaml:ro
+      - lgtm-data:/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'curl -fsS http://127.0.0.1:3000/api/health && curl -fsS http://127.0.0.1:13133/ready',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+
+  faro:
+    image: grafana/alloy:v1.19.2@sha256:b8ec653c44235fbe910879145dac3597d66b0aaecf60bcbbe82580767771a839
+    command:
+      [
+        'run',
+        '--server.http.listen-addr=0.0.0.0:12345',
+        '--storage.path=/var/lib/alloy/data',
+        '/etc/alloy/config.alloy',
+      ]
+    ports:
+      - '127.0.0.1:12347:12347' # Faro（ブラウザの FARO_URL）
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+    depends_on:
+      lgtm:
+        condition: service_healthy
+
+volumes:
+  lgtm-data:

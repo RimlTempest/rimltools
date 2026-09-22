@@ -1,7 +1,7 @@
 # Grafana の書き込み先と資格情報を GitHub Actions に渡す（リリース・メトリクス転送との契約）。
 # environment（production / staging / ops）は infra/terraform が作る。先にあちらを apply する。
 #
-# 契約（docs/observability-grafana.md §契約）:
+# 契約（docs/ops/grafana.md §契約）:
 #   environment production / staging:
 #     secret   GRAFANA_OTLP_HEADERS   "Authorization=Basic%20<base64(stack id:token)>"
 #              （OTEL_EXPORTER_OTLP_HEADERS の形。OTel の仕様どおり値は URL エンコード済み = 空白は %20）
@@ -18,7 +18,7 @@ resource "github_actions_environment_secret" "otlp_headers" {
   environment = each.key
   secret_name = "GRAFANA_OTLP_HEADERS"
   # Worker（@rimltools/telemetry）はこの値を OTEL_EXPORTER_OTLP_HEADERS としてそのまま受け取り、
-  # URL デコードしてからヘッダにする。空白は %20 で書く（docs/observability-grafana.md §Worker への受け渡し）。
+  # URL デコードしてからヘッダにする。空白は %20 で書く（docs/ops/grafana.md §Worker への受け渡し）。
   value = "Authorization=Basic%20${base64encode(
     "${local.stack.id}:${grafana_cloud_access_policy_token.this["otlp-write-${each.key}"].token}"
   )}"

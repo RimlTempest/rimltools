@@ -1,5 +1,5 @@
 /**
- * 計装のオーバーヘッド計測（docs/observability.md §CPU 予算）。
+ * 計装のオーバーヘッド計測（docs/ops/telemetry.md §CPU 予算）。
  *   bun packages/telemetry/bench.ts
  * Bun（JavaScriptCore）での値なので Workers（V8）とは一致しないが、桁の確認に使う。
  */

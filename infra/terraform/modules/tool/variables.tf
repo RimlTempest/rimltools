@@ -15,7 +15,7 @@ variable "tool" {
     subdomain   = string
     apex        = optional(bool, false)
     legacyHosts = list(string)
-    workers = list(object({
+    services = list(object({
       name = string
       role = string
     }))

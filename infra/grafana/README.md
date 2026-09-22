@@ -1,6 +1,6 @@
 # infra/grafana — Grafana Cloud（LGTM + IRM + Synthetic + Faro）を Terraform で管理する
 
-設計は `docs/adr/0008-observability.md`、使い方は `docs/observability-grafana.md`。
+設計は `docs/adr/0008-observability.md`、使い方は `docs/ops/grafana.md`。
 state は自前の http backend（`infra/tfstate`）の `/states/rimltools-observability`。OpenTofu が暗号化してから送る（ADR-0009）。
 
 ## 管理しているもの
@@ -10,7 +10,7 @@ state は自前の http backend（`infra/tfstate`）の `/states/rimltools-obser
 | `stack.tf`       | スタック（`create_stack = false` なら既存スタックを参照だけ）、Terraform 用 service account                                   |
 | `access.tf`      | 用途別の access policy とトークン（OTLP 書き込み ×2 環境、metrics push、data source 読み取り、Faro 管理、Synthetic 書き込み） |
 | `datasources.tf` | `rt-mimir` / `rt-loki` / `rt-tempo`（exemplar・trace ↔ log・service graph の相関つき）                                        |
-| `dashboards.tf`  | フォルダ `RimlTools` と `observability/dashboards/*.json`                                                                     |
+| `dashboards.tf`  | フォルダ `RimlTools` と `ops/dashboards/*.json`                                                                               |
 | `alerts.tf`      | アラートルール（エラー率・カナリア・CPU・無料枠・外形監視・転送停止・レイテンシ）                                             |
 | `slo.tf`         | ツールごとの可用性 SLO とレイテンシ SLO（burn rate アラートは Grafana が生成）                                                |
 | `oncall.tf`      | IRM（週替わりのローテーション・escalation・Grafana Alerting 連携）、contact point、notification policy                        |
@@ -55,13 +55,13 @@ state は自前の http backend（`infra/tfstate`）の `/states/rimltools-obser
 
 ## 2. 契約（他のレーンとの受け渡し）
 
-| 置き場所                                       | 名前                                            | 中身                                                                   | 使う側                                                                                                              |
-| ---------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| environment `production` / `staging` の secret | `GRAFANA_OTLP_HEADERS`                          | `Authorization=Basic%20<base64(stack id:token)>`（URL エンコード済み） | Worker secret `OTEL_EXPORTER_OTLP_HEADERS` にそのまま注入（リリースレーン、docs/observability-grafana.md の対応表） |
-| 同 variable                                    | `GRAFANA_OTLP_ENDPOINT`                         | スタックの OTLP gateway（`…/otlp`）                                    | 同上。Worker 側は `/v1/traces` `/v1/logs` を足す                                                                    |
-| environment `ops` の secret                    | `GRAFANA_METRICS_PUSH_URL` / `_USER` / `_TOKEN` | OTLP gateway、スタック ID、`metrics:write` のトークン                  | `.github/workflows/observability.yml`                                                                               |
-| repository variable                            | `FARO_URL_<TOOL>`                               | Faro の collector URL                                                  | 各プロダクトのビルド（Faro SDK の `url`）                                                                           |
-| repository variable                            | `GRAFANA_METRICS_PUSH_ENABLED`                  | `true` / `false`                                                       | `observability.yml` の実行可否                                                                                      |
+| 置き場所                                       | 名前                                            | 中身                                                                   | 使う側                                                                                                    |
+| ---------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| environment `production` / `staging` の secret | `GRAFANA_OTLP_HEADERS`                          | `Authorization=Basic%20<base64(stack id:token)>`（URL エンコード済み） | Worker secret `OTEL_EXPORTER_OTLP_HEADERS` にそのまま注入（リリースレーン、docs/ops/grafana.md の対応表） |
+| 同 variable                                    | `GRAFANA_OTLP_ENDPOINT`                         | スタックの OTLP gateway（`…/otlp`）                                    | 同上。Worker 側は `/v1/traces` `/v1/logs` を足す                                                          |
+| environment `ops` の secret                    | `GRAFANA_METRICS_PUSH_URL` / `_USER` / `_TOKEN` | OTLP gateway、スタック ID、`metrics:write` のトークン                  | `.github/workflows/ops-metrics.yml`                                                                       |
+| repository variable                            | `FARO_URL_<TOOL>`                               | Faro の collector URL                                                  | 各プロダクトのビルド（Faro SDK の `url`）                                                                 |
+| repository variable                            | `GRAFANA_METRICS_PUSH_ENABLED`                  | `true` / `false`                                                       | `ops-metrics.yml` の実行可否                                                                              |
 
 テレメトリの属性（F1 `@rimltools/telemetry` と共有、変えない）:
 

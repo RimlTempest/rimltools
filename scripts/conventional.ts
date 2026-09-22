@@ -10,6 +10,7 @@ import { $ } from 'bun'
 
 import {
   checkCommitMessage,
+  maxHeaderFor,
   parseReviewItems,
   reviewFindings,
   type Finding,
@@ -35,7 +36,9 @@ const commitMsg = async (file: string | undefined): Promise<number> => {
 
 const pr = async (): Promise<number> => {
   const failures: string[] = []
-  const title = checkCommitMessage(env('PR_TITLE'))
+  // Dependabot の PR だけは件名の上限が長い（scripts/lib/conventional.ts の maxHeaderFor）
+  const options = { maxHeader: maxHeaderFor(env('PR_AUTHOR')) }
+  const title = checkCommitMessage(env('PR_TITLE'), options)
   if (!title.ok) failures.push(`PR title (becomes the merge commit): ${title.error}`)
 
   const base = env('BASE_SHA')
@@ -46,7 +49,7 @@ const pr = async (): Promise<number> => {
     for (const entry of log.split('\x1e')) {
       const [sha = '', body = ''] = entry.trim().split('\x1f')
       if (sha === '') continue
-      const result = checkCommitMessage(body)
+      const result = checkCommitMessage(body, options)
       if (!result.ok) failures.push(`commit ${sha.slice(0, 8)}: ${result.error}`)
     }
   }

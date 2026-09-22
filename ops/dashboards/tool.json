@@ -1,0 +1,758 @@
+{
+  "uid": "rimltools-tool",
+  "title": "RimlTools / ツール詳細",
+  "description": "ツールごとの RED・エンドポイント別 p99・遅い trace・エラーログ・Web Vitals（ADR-0008）",
+  "tags": ["rimltools"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "graphTooltip": 1,
+  "refresh": "5m",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        }
+      },
+      {
+        "builtIn": 0,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "iconColor": "#8F3BB8",
+        "name": "Deploys",
+        "target": {
+          "limit": 100,
+          "matchAny": true,
+          "tags": ["deploy"],
+          "type": "tags"
+        }
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "env",
+        "label": "環境",
+        "type": "custom",
+        "query": "production,staging,local",
+        "current": {
+          "text": "production",
+          "value": "production"
+        },
+        "options": [
+          {
+            "text": "production",
+            "value": "production",
+            "selected": true
+          },
+          {
+            "text": "staging",
+            "value": "staging",
+            "selected": false
+          },
+          {
+            "selected": false,
+            "text": "local",
+            "value": "local"
+          }
+        ]
+      },
+      {
+        "name": "tool",
+        "label": "ツール",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "rt-mimir"
+        },
+        "query": {
+          "query": "label_values(rimltools_worker_requests{tool!=\"unknown\"}, tool)",
+          "refId": "tool"
+        },
+        "definition": "label_values(rimltools_worker_requests{tool!=\"unknown\"}, tool)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": false,
+        "multi": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "RED",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "リクエスト数 / 分",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "sum(rimltools_worker_requests{tool=\"$tool\", environment=\"$env\"}) / 5",
+          "range": true,
+          "exemplar": false,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqpm"
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "エラー率",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "sum(rimltools_worker_requests{tool=\"$tool\", environment=\"$env\", status_class=\"error\"}) / sum(rimltools_worker_requests{tool=\"$tool\", environment=\"$env\"})",
+          "range": true,
+          "exemplar": false,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.005
+              },
+              {
+                "color": "red",
+                "value": 0.02
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "wall time p99",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "max(rimltools_worker_wall_time_ms{tool=\"$tool\", environment=\"$env\", quantile=\"0.99\"})",
+          "range": true,
+          "exemplar": false,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "CPU time p99",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "max(rimltools_worker_cpu_time_ms{tool=\"$tool\", environment=\"$env\", quantile=\"0.99\"})",
+          "range": true,
+          "exemplar": false,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 7
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Worker 別 wall time p50 / p90 / p99",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "max by (script, quantile) (rimltools_worker_wall_time_ms{tool=\"$tool\", environment=\"$env\"})",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{script}} p{{quantile}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "エンドポイント別 p99（trace 由来）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, service, span_name) (rate(traces_spanmetrics_latency_bucket{service=~\"$tool-.*\", deployment_environment=\"$env\"}[$__rate_interval])))",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{service}} {{span_name}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "description": "点（exemplar）をクリックすると、その時間帯の trace を Tempo で開ける",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "エンドポイント別のエラー率（trace 由来）",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "rt-mimir"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "targets": [
+        {
+          "expr": "sum by (service, span_name) (rate(traces_spanmetrics_calls_total{service=~\"$tool-.*\", deployment_environment=\"$env\", status_code=\"STATUS_CODE_ERROR\"}[$__rate_interval])) / sum by (service, span_name) (rate(traces_spanmetrics_calls_total{service=~\"$tool-.*\", deployment_environment=\"$env\"}[$__rate_interval]))",
+          "range": true,
+          "exemplar": true,
+          "legendFormat": "{{service}} {{span_name}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "rt-mimir"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "row",
+      "title": "トレース（Tempo）",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "panels": []
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "遅いリクエスト（> 500ms）",
+      "datasource": {
+        "type": "tempo",
+        "uid": "rt-tempo"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 23
+      },
+      "targets": [
+        {
+          "queryType": "traceql",
+          "query": "{ resource.service.namespace = \"rimltools\" && resource.service.name =~ \"$tool-.*\" && resource.deployment.environment.name = \"$env\" && duration > 500ms }",
+          "limit": 20,
+          "tableType": "traces",
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "rt-tempo"
+          }
+        }
+      ],
+      "description": "行をクリックすると trace を開く。trace から同じ trace_id のログへ飛べる",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "エラーになったリクエスト",
+      "datasource": {
+        "type": "tempo",
+        "uid": "rt-tempo"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
+      "targets": [
+        {
+          "queryType": "traceql",
+          "query": "{ resource.service.namespace = \"rimltools\" && resource.service.name =~ \"$tool-.*\" && resource.deployment.environment.name = \"$env\" && status = error }",
+          "limit": 20,
+          "tableType": "traces",
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "rt-tempo"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "nodeGraph",
+      "title": "サービスグラフ",
+      "datasource": {
+        "type": "tempo",
+        "uid": "rt-tempo"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "targets": [
+        {
+          "queryType": "serviceMap",
+          "serviceMapQuery": "{service=~\"$tool-.*\"}",
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "rt-tempo"
+          }
+        }
+      ],
+      "description": "Worker 間（web → api / sync）の呼び出しとエラー。metrics-generator の service graph が必要",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "row",
+      "title": "ログ（Loki）",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "panels": []
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "ログ量（レベル別）",
+      "datasource": {
+        "type": "loki",
+        "uid": "rt-loki"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 43
+      },
+      "targets": [
+        {
+          "expr": "sum by (detected_level) (count_over_time({service_namespace=\"rimltools\", service_name=~\"$tool-.*\", deployment_environment_name=\"$env\"} [$__auto]))",
+          "legendFormat": "{{detected_level}}",
+          "queryType": "range",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "rt-loki"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "logs",
+      "title": "エラーログ",
+      "datasource": {
+        "type": "loki",
+        "uid": "rt-loki"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 43
+      },
+      "targets": [
+        {
+          "expr": "{service_namespace=\"rimltools\", service_name=~\"$tool-.*\", deployment_environment_name=\"$env\"} | detected_level=~\"error|fatal|critical\"",
+          "queryType": "range",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "rt-loki"
+          }
+        }
+      ],
+      "description": "trace_id を持つ行は、詳細から trace に飛べる（derived field）",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 16,
+      "type": "row",
+      "title": "フロントエンド（Faro / Web Vitals）",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 50
+      },
+      "panels": []
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "LCP p75 / p99",
+      "datasource": {
+        "type": "loki",
+        "uid": "rt-loki"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 51
+      },
+      "targets": [
+        {
+          "expr": "quantile_over_time(0.75, {app_name=\"$tool\", kind=\"measurement\"} | logfmt | type=\"web-vitals\" | unwrap lcp [$__auto]) by (app_name)",
+          "legendFormat": "p75",
+          "queryType": "range",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "rt-loki"
+          }
+        },
+        {
+          "expr": "quantile_over_time(0.99, {app_name=\"$tool\", kind=\"measurement\"} | logfmt | type=\"web-vitals\" | unwrap lcp [$__auto]) by (app_name)",
+          "legendFormat": "p99",
+          "queryType": "range",
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "rt-loki"
+          }
+        }
+      ],
+      "description": "Grafana Faro Web SDK の計測（実利用者）。クエリの形は初回データで要確認（docs/ops/grafana.md）",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "INP p75 / p99",
+      "datasource": {
+        "type": "loki",
+        "uid": "rt-loki"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 51
+      },
+      "targets": [
+        {
+          "expr": "quantile_over_time(0.75, {app_name=\"$tool\", kind=\"measurement\"} | logfmt | type=\"web-vitals\" | unwrap inp [$__auto]) by (app_name)",
+          "legendFormat": "p75",
+          "queryType": "range",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "rt-loki"
+          }
+        },
+        {
+          "expr": "quantile_over_time(0.99, {app_name=\"$tool\", kind=\"measurement\"} | logfmt | type=\"web-vitals\" | unwrap inp [$__auto]) by (app_name)",
+          "legendFormat": "p99",
+          "queryType": "range",
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "rt-loki"
+          }
+        }
+      ],
+      "description": "Grafana Faro Web SDK の計測（実利用者）。クエリの形は初回データで要確認（docs/ops/grafana.md）",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "CLS p75 / p99",
+      "datasource": {
+        "type": "loki",
+        "uid": "rt-loki"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 51
+      },
+      "targets": [
+        {
+          "expr": "quantile_over_time(0.75, {app_name=\"$tool\", kind=\"measurement\"} | logfmt | type=\"web-vitals\" | unwrap cls [$__auto]) by (app_name)",
+          "legendFormat": "p75",
+          "queryType": "range",
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "rt-loki"
+          }
+        },
+        {
+          "expr": "quantile_over_time(0.99, {app_name=\"$tool\", kind=\"measurement\"} | logfmt | type=\"web-vitals\" | unwrap cls [$__auto]) by (app_name)",
+          "legendFormat": "p99",
+          "queryType": "range",
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "rt-loki"
+          }
+        }
+      ],
+      "description": "Grafana Faro Web SDK の計測（実利用者）。クエリの形は初回データで要確認（docs/ops/grafana.md）",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "links": [
+    {
+      "title": "RimlTools",
+      "type": "dashboards",
+      "tags": ["rimltools"],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true
+    }
+  ]
+}

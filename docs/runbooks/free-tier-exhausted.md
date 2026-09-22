@@ -14,11 +14,11 @@ Workers Free の上限は**アカウント全体**で共有し、00:00 UTC（09:
 
 各プロダクトは上限に近づいたときの縮退動作を持っている。**既に開いている人の作業を止めない**のが共通の原則。
 
-| ツール | 縮退の設計                                                                                                                                                       |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| qrcc   | [products/qrcc/docs/free-tier-budget.md §3](../../products/qrcc/docs/free-tier-budget.md)（未ログインの保存 API 停止、履歴記録の停止を feature flag で切り替え） |
-| noter  | [products/noter/docs/free-tier-budget.md §4](../../products/noter/docs/free-tier-budget.md)（同期上限の表示、ローカル保存への誘導）                              |
-| portal | 対応不要（Static Assets のみ。無料・無制限）                                                                                                                     |
+| ツール | 縮退の設計                                                                                                                                               |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| qrcc   | [apps/qrcc/docs/free-tier-budget.md §3](../../apps/qrcc/docs/free-tier-budget.md)（未ログインの保存 API 停止、履歴記録の停止を feature flag で切り替え） |
+| noter  | [apps/noter/docs/free-tier-budget.md §4](../../apps/noter/docs/free-tier-budget.md)（同期上限の表示、ローカル保存への誘導）                              |
+| portal | 対応不要（Static Assets のみ。無料・無制限）                                                                                                             |
 
 feature flag の切り替えは `flags/<tool>.json` の PR、急ぐときは flags の kill switch ワークフロー（ADR-0004）。
 

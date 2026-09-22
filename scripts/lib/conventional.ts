@@ -44,6 +44,18 @@ export const COMMENT_DECORATIONS = [
 
 const MAX_HEADER = 100
 
+// Dependabot のグループ PR の件名（`chore(deps): bump <依存> from <版> to <版> in the <グループ> group`）は
+// 依存名と版の長さで 100 文字を超えることがある（#36）。件名を短くする手段が無いので、
+// Dependabot が作った PR だけ上限を緩める。人が書く件名の上限は変えない。
+const DEPENDABOT_LOGIN = 'dependabot[bot]'
+const DEPENDABOT_MAX_HEADER = 120
+
+/** PR を作ったアカウントに応じた件名の上限 */
+export const maxHeaderFor = (author: string): number =>
+  author === DEPENDABOT_LOGIN ? DEPENDABOT_MAX_HEADER : MAX_HEADER
+
+export type CommitCheckOptions = { maxHeader?: number }
+
 const ok: Result<void, string> = { ok: true, value: undefined }
 const fail = (error: string): Result<void, string> => ({ ok: false, error })
 
@@ -54,7 +66,11 @@ const includes = <T extends string>(list: readonly T[], value: string): value is
 const HEADER = /^(?<type>[^(!:\s]+)(?:\((?<scope>[^)]*)\))?(?<breaking>!)?:(?<rest>.*)$/
 const SCOPE = /^[a-z0-9][a-z0-9/-]*$/
 
-export const checkCommitMessage = (message: string): Result<void, string> => {
+export const checkCommitMessage = (
+  message: string,
+  options: CommitCheckOptions = {},
+): Result<void, string> => {
+  const maxHeader = options.maxHeader ?? MAX_HEADER
   const lines = message
     .split('\n')
     .filter((line) => !line.startsWith('#'))
@@ -79,8 +95,8 @@ export const checkCommitMessage = (message: string): Result<void, string> => {
   if (!rest.startsWith(' ') || rest.trim() === '') {
     return fail('description: put one space after ":" and write a description')
   }
-  if (header.length > MAX_HEADER) {
-    return fail(`header: keep it within ${MAX_HEADER} characters (got ${header.length})`)
+  if (header.length > maxHeader) {
+    return fail(`header: keep it within ${maxHeader} characters (got ${header.length})`)
   }
   if (lines.length > 1 && lines[1] !== '') {
     return fail('blank line: separate the header and the body with a blank line')

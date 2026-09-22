@@ -2,9 +2,9 @@
 # 構成図（docs/architecture/*.<type>.json）を archify で作り直す。
 #
 #   bun run archify <target>        （リポジトリ直下から）
-#   bun run archify                 （products/<tool> の中から）
+#   bun run archify                 （apps/<tool> の中から）
 #
-# target はツール名（products/<tool>/docs/architecture）か、`platform`（リポジトリ直下の
+# target はツール名（apps/<tool>/docs/architecture）か、`platform`（リポジトリ直下の
 # docs/architecture。RimlTools 全体の図）。1 つの target に仕様がいくつあってもよい。
 #
 # 前提: archify スキルが入っていること（`bunx skills add tt-a1i/archify -g`）。
@@ -16,13 +16,13 @@ GIT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TARGET="${1:-}"
 if [ -z "$TARGET" ]; then
   case "${PWD#"$GIT_ROOT"/}" in
-    products/*) TARGET="${PWD#"$GIT_ROOT"/products/}"; TARGET="${TARGET%%/*}" ;;
+    apps/*) TARGET="${PWD#"$GIT_ROOT"/apps/}"; TARGET="${TARGET%%/*}" ;;
   esac
 fi
 case "$TARGET" in
   platform) DIR="$GIT_ROOT" ;;
   "") echo "usage: archify <tool|platform>" >&2; exit 1 ;;
-  *) DIR="$GIT_ROOT/products/$TARGET" ;;
+  *) DIR="$GIT_ROOT/apps/$TARGET" ;;
 esac
 if [ ! -d "$DIR/docs/architecture" ]; then
   echo "構成図の置き場所がありません: $DIR/docs/architecture" >&2

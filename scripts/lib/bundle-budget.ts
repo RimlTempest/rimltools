@@ -1,5 +1,5 @@
 /**
- * ビルド成果物のサイズ予算（products/<tool>/bundle-budget.json）の判定。
+ * ビルド成果物のサイズ予算（apps/<tool>/bundle-budget.json）の判定。
  * I/O（ファイル一覧と gzip）は scripts/bundle-budget.ts が行い、ここは純関数だけ。
  */
 

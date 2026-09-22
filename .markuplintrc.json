@@ -86,7 +86,7 @@
     "**/docs/architecture/*.html"
   ],
   "overrides": {
-    "./{products/*/shared/ui/src,products/*/features/*/ui,packages/*/src}/**/*.tsx": {
+    "./{apps/*/shared/ui/src,apps/*/features/*/ui,packages/*/src}/**/*.tsx": {
       "$comment": "コンポーネントは中身を props で受け取るため、静的解析からは常に空に見える。実際に空になっていないかは、描画後の DOM を見る e2e の axe チェックが担保する。",
       "rules": {
         "no-empty-palpable-content": false

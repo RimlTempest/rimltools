@@ -7,13 +7,11 @@ const tools = [qrcc, noter, portal]
 
 describe('changedTools', () => {
   test('selects tools whose directory changed', () => {
-    expect(changedTools(['products/qrcc/apps/web/src/x.ts'], tools)).toEqual(['qrcc'])
+    expect(changedTools(['apps/qrcc/services/web/src/x.ts'], tools)).toEqual(['qrcc'])
   })
 
   test('ignores docs-only changes inside a product', () => {
-    expect(
-      changedTools(['products/qrcc/docs/adr/1.md', 'products/noter/README.md'], tools),
-    ).toEqual([])
+    expect(changedTools(['apps/qrcc/docs/adr/1.md', 'apps/noter/README.md'], tools)).toEqual([])
   })
 
   test('shared root files release everything', () => {
@@ -30,6 +28,6 @@ describe('changedTools', () => {
   })
 
   test('the portal is released when its own files change', () => {
-    expect(changedTools(['products/portal/src/index.html'], tools)).toEqual(['portal'])
+    expect(changedTools(['apps/portal/src/index.html'], tools)).toEqual(['portal'])
   })
 })
