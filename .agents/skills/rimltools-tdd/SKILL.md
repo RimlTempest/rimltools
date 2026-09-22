@@ -104,7 +104,7 @@ flaky を見つけたら **skip せずその日のうちに直す**。skip し�
 
 ```
 bun run test                        # ルートから: 全プロダクト + scripts/packages の Small/Medium
-bun run --cwd products/<tool> test  # 1 プロダクトだけ
+bun run --cwd apps/<tool> test  # 1 プロダクトだけ
 bun test features/<name>/core       # （プロダクト直下で）Small だけ高速に回す
 bun run a11y                        # Large (axe-core, AAA)
 ```
