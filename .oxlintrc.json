@@ -117,7 +117,7 @@
     },
     {
       // Worker のエントリは default export が必須
-      "files": ["products/noter/apps/sync/src/index.ts"],
+      "files": ["products/noter/apps/sync/src/index.ts", "infra/tfstate/src/index.ts"],
       "rules": { "import/no-default-export": "off" }
     },
     {
@@ -142,7 +142,7 @@
       "rules": { "import/no-default-export": "off" }
     },
     {
-      "files": ["scripts/**/*.ts", "products/*/scripts/**/*.ts"],
+      "files": ["scripts/**/*.ts", "products/*/scripts/**/*.ts", "infra/tfstate/src/index.ts"],
       "rules": { "eslint/no-console": "off" }
     }
   ],
@@ -156,6 +156,7 @@
     "**/worker-configuration.d.ts",
     ".agents/**",
     ".claude/**",
-    "infra/**"
+    "infra/terraform/**",
+    "infra/grafana/**"
   ]
 }
