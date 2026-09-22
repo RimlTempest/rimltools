@@ -32,6 +32,8 @@
     "dev:noter": "cd apps/noter/services/web && portless",
     "dev:noter:oauth": "bun scripts/dev/oauth.ts noter",
     "dev:portal": "cd apps/portal && portless",
+    "ops:local:aliases": "portless alias grafana.rimltools 3000 && portless alias faro.rimltools 12347",
+    "ops:local:aliases:remove": "portless alias --remove grafana.rimltools && portless alias --remove faro.rimltools",
     "audit": "bun audit --audit-level=high",
     "wt": "./scripts/wt.sh",
     "archify": "./scripts/archify.sh",

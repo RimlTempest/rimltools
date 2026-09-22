@@ -6,10 +6,15 @@ faro.receiver "rimltools" {
   server {
     listen_address = "0.0.0.0"
     listen_port    = 12347
-    // ローカルの dev サーバ（vite）と e2e のオリジンだけを許可する
+    // ローカルの dev サーバのオリジンだけを許可する（docs/local-dev.md）。
+    // - portless の名前付き URL。worktree ではブランチ名が前に付くのでワイルドカード
+    // - Google ログインを試すときの固定ポート（tools.json の localOAuthPort）と vite preview
+    // 受け口は 127.0.0.1 にしか公開していない（compose.yaml）
     cors_allowed_origins = [
+      "https://*.rimltools.localhost",
+      "https://*.rimltools.local.riml4i.com",
       "http://localhost:5173",
-      "http://127.0.0.1:5173",
+      "http://localhost:5174",
       "http://localhost:4173",
       "http://127.0.0.1:4173",
     ]
