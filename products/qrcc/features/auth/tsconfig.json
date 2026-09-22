@@ -13,6 +13,9 @@
     },
     {
       "path": "../../shared/ui"
+    },
+    {
+      "path": "../../../../packages/auth"
     }
   ],
   "exclude": ["**/*.route.*", "dist"]

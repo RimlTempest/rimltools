@@ -74,6 +74,13 @@ describe('Better Auth の設定（ADR-0010 のセキュリティ上の決め事�
     expect(GUEST_EMAIL_DOMAIN).toBe('guest.noter.invalid')
   })
 
+  // 共通化（@rimltools/auth）の前後で、ゲストのメールドメインが実際にプラグインへ渡っていること
+  test('ゲストのメールドメインは anonymous プラグインに渡る', () => {
+    const anonymousPlugin = options.plugins[0]
+    expect(anonymousPlugin?.id).toBe('anonymous')
+    expect(anonymousPlugin?.options?.emailDomainName).toBe(GUEST_EMAIL_DOMAIN)
+  })
+
   test('ユーザー ID は noter の UserId 形式で発行する', () => {
     const generateId = options.advanced.database.generateId
     const id = generateId({ model: 'user' })

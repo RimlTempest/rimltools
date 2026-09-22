@@ -15,6 +15,16 @@
         "wrangler": "4.127.1",
       },
     },
+    "packages/auth": {
+      "name": "@rimltools/auth",
+      "version": "0.1.0",
+      "dependencies": {
+        "@rimltools/contract": "workspace:*",
+      },
+      "devDependencies": {
+        "better-auth": "1.7.3",
+      },
+    },
     "packages/contract": {
       "name": "@rimltools/contract",
       "version": "0.1.0",
@@ -154,6 +164,7 @@
         "@noter/contract": "workspace:*",
         "@noter/shell": "workspace:*",
         "@noter/ui": "workspace:*",
+        "@rimltools/auth": "workspace:*",
         "better-auth": "1.7.3",
         "drizzle-orm": "0.45.2",
       },
@@ -386,6 +397,7 @@
         "@better-auth/drizzle-adapter": "1.7.2",
         "@qrcc/contract": "workspace:*",
         "@qrcc/ui": "workspace:*",
+        "@rimltools/auth": "workspace:*",
         "better-auth": "1.7.2",
         "drizzle-orm": "0.45.2",
       },
@@ -981,6 +993,8 @@
     "@rimltempest/riml-ds-css": ["@rimltempest/riml-ds-css@0.2.0", "", { "peerDependencies": { "@rimltempest/riml-ds-tokens": "workspace:*" }, "optionalPeers": ["@rimltempest/riml-ds-tokens"] }, "sha512-eydDKAL1rMPD/upLW38828waiGkRO+Gpe56iQM4mnH9s1I3ziy3OF8A+8lXmm8ghbqxTGGnaBgPZhXqSZtwu0w=="],
 
     "@rimltempest/riml-ds-tokens": ["@rimltempest/riml-ds-tokens@0.2.0", "", {}, "sha512-pzKoaGPahF8/BDNhwqzPBjw8QYmuaajHJelz4bIP9GtZhis2yG+VHhd8GiAzlOjwUSrC/3odniKCsLFQAX+hOw=="],
+
+    "@rimltools/auth": ["@rimltools/auth@workspace:packages/auth"],
 
     "@rimltools/contract": ["@rimltools/contract@workspace:packages/contract"],
 
