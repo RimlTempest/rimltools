@@ -47,3 +47,9 @@ Web Components + 各フレームワークのラッパー）に集め、アプリ
 - `shared/ui/src/styles/tokens.test.ts` が「tokens.css に色のリテラルが無い」「参照する `--rd-*` が実在する」
   「生の値は `KEPT_LOCAL` だけ」を固定する。`--qrcc-*` を足すことはもうしない
 - 段階 2（riml-ds の reset / base に切り替え）、段階 3（`rd-button` などの部品）は別 plan
+
+## 追記（2026-09-22）
+
+- `scripts/vendor-riml-ds.sh` を削除した（`vendor/` は 0.2.0 の npm 公開時に消えており、スクリプトだけが残っていた）。
+- riml-ds 0.3.0 に上げた。npm の `riml-ds-tokens` / `riml-ds-css` 0.3.0 は 0.2.0 と中身が同じ（CSS 先頭の版コメントだけ違う）で、見た目は変わらない。
+- 段階 3（部品を `riml-ds-react` に置き換える）は、riml-ds の公開パッケージの不具合で今は入れられない。経緯と対応表はルートの ADR-0013 と `docs/riml-ds-feedback.md`。

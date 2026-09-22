@@ -70,7 +70,7 @@ AAA は崩していない。色だけで状態を表さない決まりは残し�
 
 ## 影響
 
-- `@rimltempest/riml-ds-css` が `shared/ui` の依存に増える（`vendor/riml-ds/*.tgz`、ADR-0011 §3 のまま）。
+- `@rimltempest/riml-ds-css` が `shared/ui` の依存に増える（当時は `vendor/riml-ds/*.tgz`。2026-09-21 から npm、ADR-0011 の追記）。
   この tgz は tokens を `peerDependencies` に持ち、`bun pm pack` が `workspace:*` を実バージョンに固定する。
   tokens はまだ未公開なので、そのままだと `bun install` が npm を見にいって 404 で止まる。
   `scripts/vendor-riml-ds.sh` が vendor する tgz の中でその peer を optional にして自動取得を止めている
