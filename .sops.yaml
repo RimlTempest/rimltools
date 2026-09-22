@@ -1,0 +1,15 @@
+# SOPS の暗号化ルール（ADR-0009、infra/secrets/README.md）。
+#
+# - plan.sops.yaml : PR の plan が使う読み取り専用の資格情報。plan 鍵と apply 鍵の両方で開ける
+# - apply.sops.yaml: main の apply が使う書き込み用の資格情報。apply 鍵でしか開けない
+#
+# 公開鍵（age1...）はブートストラップで `age-keygen` した値に置き換える。秘密鍵は絶対にコミットしない
+# （GitHub の SOPS_AGE_KEY_PLAN / SOPS_AGE_KEY_APPLY と、手元のパスワードマネージャーにだけ置く）。
+# 鍵を替えたら `sops updatekeys infra/secrets/<file>.sops.yaml` で受信者を更新する。
+creation_rules:
+  - path_regex: ^infra/secrets/plan\.sops\.yaml$
+    age: >-
+      age1replacewithplanpublickey000000000000000000000000000000000,
+      age1replacewithapplypublickey00000000000000000000000000000000
+  - path_regex: ^infra/secrets/apply\.sops\.yaml$
+    age: age1replacewithapplypublickey00000000000000000000000000000000
