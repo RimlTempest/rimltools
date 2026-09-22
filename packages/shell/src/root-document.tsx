@@ -1,5 +1,7 @@
 import type { ComponentType, ReactNode } from 'react'
 
+import { HydrationMarker } from './hydration-marker.tsx'
+
 export type DocumentConfig = {
   /** `<head>` に同期実行で差し込むテーマ初期化スクリプト（プロダクトの `@<tool>/ui` から渡す） */
   readonly themeInitScript: string
@@ -36,6 +38,8 @@ export const makeRootDocument = ({ themeInitScript, SkipLink, themeColor }: Docu
       <body>
         <SkipLink targetId="main" />
         {children}
+        {/* 末尾に置く。本文のエフェクトが走った後に「つながった」目印を立てる */}
+        <HydrationMarker />
       </body>
     </html>
   )

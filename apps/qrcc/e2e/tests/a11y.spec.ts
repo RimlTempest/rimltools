@@ -1,5 +1,5 @@
 import { AxeBuilder } from '@axe-core/playwright'
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../support/test.ts'
 
 /**
  * 自動チェックは WCAG 違反の 3 割程度しか見つけない。

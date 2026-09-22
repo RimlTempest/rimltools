@@ -359,9 +359,7 @@ export const ScanScreen = ({
     dispatch({ kind: 'camera_stopped' })
   }
 
-  const readFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file === undefined) return
+  const readSelected = async (file: File) => {
     dispatch({ kind: 'file_selected' })
     const outcome = await decodeImageFile(file)
     dispatch(
@@ -370,6 +368,23 @@ export const ScanScreen = ({
         : { kind: 'failed', failure: outcome.error },
     )
   }
+
+  const readFile = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file !== undefined) void readSelected(file)
+  }
+
+  // サーバが描いた HTML は React がつながる前から操作できる。遅い端末では、その間に
+  // 選んだ画像の change イベントが React に届かず、何も起きなかった。つながった時点で
+  // 入力に残っている画像を拾って読み取る（1 回だけ。以後は onChange が受け持つ）。
+  const imagePanelRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const input = imagePanelRef.current?.querySelector('input[type="file"]')
+    const file = input instanceof HTMLInputElement ? input.files?.[0] : undefined
+    if (file !== undefined) void readSelected(file)
+    // マウント時の 1 回だけ。readSelected は描画ごとに作り直されるが、ここでは初回のものでよい
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
@@ -421,13 +436,13 @@ export const ScanScreen = ({
       </Window>
 
       <Window title="画像から読み取る" headingLevel={sectionLevel}>
-        <div className="qrcc-scan__panel">
+        <div className="qrcc-scan__panel" ref={imagePanelRef}>
           <Field
             label="コードが写っている画像"
             type="file"
             accept="image/*"
             hint="PNG・JPEG・WebP に対応しています。画像はこの端末の中だけで処理され、サーバへは送信されません。"
-            onChange={(event) => void readFile(event)}
+            onChange={readFile}
           />
           {state.reading ? <p>読み取っています…</p> : undefined}
         </div>

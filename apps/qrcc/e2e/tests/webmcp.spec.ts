@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../support/test.ts'
 
 /**
  * WebMCP（`document.modelContext`）は 2026-09 時点で Origin Trial 段階
