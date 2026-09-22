@@ -22,12 +22,18 @@
    * 構文色はどれも `--noter-surface-editor` に対して 7:1 で選んであるので、
    * 行の塗りを hover 面（0.93）まで濃くすると、カーソルのある行だけ
    * AAA（1.4.6）を割る（JSON のキーで実際に 6.4:1 まで落ちた）。
-   * ダークは元の hover 面のままで 7:1 を保てている。
+   * ダークも riml-ds（themes/noter）の danger は明度 0.765 なので、明度 0.3 の行では
+   * 壊れた記述が 6.1:1 まで落ちる。0.25 にして全色 7:1 以上に戻した
+   * （syntax-contrast.test.ts が色の定義から計算して確かめる）。
+   * 色相は riml-ds の noter テーマの neutral（200）に揃える。
    */
-  --noter-editor-active-line: light-dark(oklch(0.97 0.006 265), oklch(0.3 0.016 265));
+  --noter-editor-active-line: light-dark(oklch(0.97 0.006 200), oklch(0.25 0.016 200));
 
-  /* 選択範囲。文字（--noter-text）との差を保つため彩度を落とす */
-  --noter-editor-selection: light-dark(oklch(0.86 0.05 255), oklch(0.36 0.06 255));
+  /*
+   * 選択範囲。文字（--noter-text）との差を保つため彩度を落とす。
+   * 色相は riml-ds の noter テーマの accent（175）に揃える。
+   */
+  --noter-editor-selection: light-dark(oklch(0.86 0.05 175), oklch(0.36 0.06 175));
 }
 
 /* --- ヘッダー ------------------------------------------------------------ */
