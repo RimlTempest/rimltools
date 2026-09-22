@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/RimlTempest/rimltools",
-      "revision": "52a17ad45ed4a4d49a0a1be74cfbf38525d3c6f6"
+      "revision": "5018815e76c11e1c5df468994b3fede3f058a2de"
     },
     "views": [
       {
@@ -44,8 +44,12 @@
           "label": "router"
         },
         {
-          "path": "products/qrcc/apps/web/src/routes.ts",
-          "label": "URL 構造"
+          "path": "packages/shell/src/app-shell.tsx",
+          "label": "@rimltools/shell"
+        },
+        {
+          "path": "packages/telemetry/src/browser/index.ts",
+          "label": "Faro"
         }
       ]
     },
@@ -73,8 +77,12 @@
       "size": [170, 64],
       "sources": [
         {
+          "path": "packages/auth/src/server/auth-options.ts",
+          "label": "@rimltools/auth"
+        },
+        {
           "path": "products/qrcc/features/auth/server/auth-options.ts",
-          "label": "Better Auth の設定"
+          "label": "qrcc の設定"
         }
       ]
     },
@@ -82,7 +90,7 @@
       "id": "web",
       "type": "backend",
       "label": "Worker: qrcc-web",
-      "sublabel": "SSR / RSC・Better Auth・認可",
+      "sublabel": "SSR・Better Auth・OTLP 送信",
       "pos": [620, 284],
       "size": [170, 64],
       "tag": "entry",
@@ -92,8 +100,12 @@
           "label": "wrangler"
         },
         {
+          "path": "products/qrcc/apps/web/src/server.ts",
+          "label": "entry（計装）"
+        },
+        {
           "path": "products/qrcc/apps/web/src/server/api-client.ts",
-          "label": "service binding"
+          "label": "api client"
         }
       ]
     },

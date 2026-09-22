@@ -1,61 +1,71 @@
 #!/usr/bin/env bash
-# プロダクトの構成図（products/<tool>/docs/architecture/）を archify で作り直す。
+# 構成図（docs/architecture/*.<type>.json）を archify で作り直す。
 #
-#   bun run archify <tool>          （リポジトリ直下から）
+#   bun run archify <target>        （リポジトリ直下から）
 #   bun run archify                 （products/<tool> の中から）
 #
+# target はツール名（products/<tool>/docs/architecture）か、`platform`（リポジトリ直下の
+# docs/architecture。RimlTools 全体の図）。1 つの target に仕様がいくつあってもよい。
+#
 # 前提: archify スキルが入っていること（`bunx skills add tt-a1i/archify -g`）。
-# 手順は「仕様 JSON を showcase 品質で検証 → ビューア HTML を deliver →
-# README 用 PNG を light / dark で書き出す」。仕様を直したら必ずこれを回し、
-# 生成物（HTML / PNG）は手で編集しない。
+# 手順は仕様ごとに「showcase 品質で検証 → ビューア HTML を deliver → README 用 PNG を
+# light / dark で書き出す」。仕様を直したら必ずこれを回し、生成物（HTML / PNG）は手で編集しない。
 set -euo pipefail
 
 GIT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-TOOL="${1:-}"
-if [ -z "$TOOL" ]; then
+TARGET="${1:-}"
+if [ -z "$TARGET" ]; then
   case "${PWD#"$GIT_ROOT"/}" in
-    products/*) TOOL="${PWD#"$GIT_ROOT"/products/}"; TOOL="${TOOL%%/*}" ;;
+    products/*) TARGET="${PWD#"$GIT_ROOT"/products/}"; TARGET="${TARGET%%/*}" ;;
   esac
 fi
-if [ -z "$TOOL" ] || [ ! -d "$GIT_ROOT/products/$TOOL" ]; then
-  echo "usage: archify <tool>" >&2
+case "$TARGET" in
+  platform) DIR="$GIT_ROOT" ;;
+  "") echo "usage: archify <tool|platform>" >&2; exit 1 ;;
+  *) DIR="$GIT_ROOT/products/$TARGET" ;;
+esac
+if [ ! -d "$DIR/docs/architecture" ]; then
+  echo "構成図の置き場所がありません: $DIR/docs/architecture" >&2
   exit 1
 fi
-cd "$GIT_ROOT/products/$TOOL"
+cd "$DIR"
 
 ARCHIFY="${ARCHIFY:-$HOME/.claude/skills/archify/bin/archify.mjs}"
-# 仕様はプロダクトごとに 1 つ（例: qrcc2.architecture.json / noter.architecture.json）
-shopt -s nullglob
-specs=(docs/architecture/*.architecture.json)
-if [ "${#specs[@]}" -ne 1 ]; then
-  echo "docs/architecture/*.architecture.json が 1 つではありません（${#specs[@]} 個）" >&2
-  exit 1
-fi
-SPEC="${specs[0]}"
-NAME="$(basename "$SPEC" .architecture.json)"
-HTML="docs/architecture/$NAME-architecture.html"
-PNG_BASE="docs/architecture/$NAME-architecture"
-
 if [ ! -f "$ARCHIFY" ]; then
   echo "archify が見つかりません: $ARCHIFY" >&2
   echo "  bunx skills add tt-a1i/archify -g   で導入するか、ARCHIFY=<path> を指定してください" >&2
   exit 1
 fi
 
+# 仕様は <name>.<type>.json（例: qrcc2.architecture.json、release.workflow.json）
+shopt -s nullglob
+specs=(docs/architecture/*.architecture.json docs/architecture/*.workflow.json docs/architecture/*.sequence.json docs/architecture/*.dataflow.json docs/architecture/*.lifecycle.json)
+if [ "${#specs[@]}" -eq 0 ]; then
+  echo "docs/architecture に仕様（*.<type>.json）がありません" >&2
+  exit 1
+fi
+
 # 仕様の revision を現在の HEAD に揃える（source の実在チェックはこの revision で行われる）
 HEAD_SHA="$(git rev-parse HEAD)"
-bun -e "
-  const p = '$SPEC'
-  const spec = JSON.parse(await Bun.file(p).text())
-  spec.meta.repository.revision = '$HEAD_SHA'
-  await Bun.write(p, JSON.stringify(spec, null, 2) + '\n')
-"
-bunx oxfmt --no-error-on-unmatched-pattern "$SPEC"
 
-# archify は --repo-root に git のトップを要求する。仕様の sources[].path もリポジトリ直下基準
-# （products/<tool>/...）で書く（モノレポ化で、プロダクト直下と git のトップがずれたため）
-node "$ARCHIFY" validate architecture "$SPEC" --quality showcase --repo-root "$GIT_ROOT"
-node "$ARCHIFY" deliver architecture "$SPEC" "$HTML" --quality showcase --repo-root "$GIT_ROOT"
-bun e2e/archify-png.ts "$HTML" "$PNG_BASE"
+for SPEC in "${specs[@]}"; do
+  FILE="$(basename "$SPEC" .json)"
+  TYPE="${FILE##*.}"
+  NAME="${FILE%.*}"
+  HTML="docs/architecture/$NAME-$TYPE.html"
+  PNG_BASE="docs/architecture/$NAME-$TYPE"
 
-echo "done: $HTML / $PNG_BASE.{light,dark}.png"
+  bun -e "
+    const p = '$SPEC'
+    const spec = JSON.parse(await Bun.file(p).text())
+    if (spec.meta.repository !== undefined) spec.meta.repository.revision = '$HEAD_SHA'
+    await Bun.write(p, JSON.stringify(spec, null, 2) + '\n')
+  "
+  bunx oxfmt --no-error-on-unmatched-pattern "$SPEC"
+
+  # archify は --repo-root に git のトップを要求する。仕様の sources[].path もリポジトリ直下基準で書く
+  node "$ARCHIFY" validate "$TYPE" "$SPEC" --quality showcase --repo-root "$GIT_ROOT"
+  node "$ARCHIFY" deliver "$TYPE" "$SPEC" "$HTML" --quality showcase --repo-root "$GIT_ROOT"
+  bun "$GIT_ROOT/scripts/archify-png.ts" "$HTML" "$PNG_BASE"
+  echo "done: $DIR/$HTML / $PNG_BASE.{light,dark}.png"
+done
