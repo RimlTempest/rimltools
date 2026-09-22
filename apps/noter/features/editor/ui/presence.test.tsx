@@ -19,7 +19,7 @@ const NOBODY: readonly Peer[] = []
 describe('Presence', () => {
   test('4 人いるとアバターは 3 つで残りは +1 になる', () => {
     const { container } = render(<Presence peers={FOUR} />)
-    expect(container.querySelectorAll('.noter-presence__avatars .noter-avatar')).toHaveLength(3)
+    expect(container.querySelectorAll('.noter-presence__avatars .rd-avatar')).toHaveLength(3)
     expect(screen.getByText('+1')).toBeDefined()
   })
 
