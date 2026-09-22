@@ -93,17 +93,18 @@
 
 7. state の中の値（CI トークンなど）も漏れたとみなし、§1 の手順で作り直す
 
-### 2-3. tfstate の資格情報が漏れた
+### 2-3. tfstate の資格情報が漏れた（または `tfstate-auth-failures` アラートが鳴った）
 
 - **読み取り用**: 暗号化された state が読まれる（パスフレーズが無ければ中身は読めない）。資格情報を替える
-- **書き込み用**: state を上書き・削除され得る。資格情報を替えたうえで、`docs/runbooks/tfstate-restore.md` で
-  `state_versions` に見覚えの無い版が無いか確かめ、あれば直前の正しい版に戻す
+- **書き込み用**: state を上書きされ得る（DELETE は受け付けないので削除はできない）。資格情報を替えたうえで、`docs/runbooks/tfstate-restore.md` で
+  `state_versions` に見覚えの無い版が無いか確かめ、あれば直前の正しい版に戻す。
+  20 版を超えて押し出されていたら、同じ runbook の §6（D1 Time Travel、過去 7 日）で戻す
 
 資格情報の替え方:
 
 ```bash
 cd infra/tfstate
-openssl rand -base64 36 | tr -d '\n' | bunx wrangler secret put WRITE_PASSWORD   # READ_* / WRITE_USER も同様
+openssl rand -base64 48 | tr -d '\n' | bunx wrangler secret put WRITE_PASSWORD   # READ_* / WRITE_USER も同様
 ```
 
 新しい値を `sops infra/secrets/<file>.sops.yaml` の `TF_HTTP_USERNAME` / `TF_HTTP_PASSWORD` に入れて PR にする。

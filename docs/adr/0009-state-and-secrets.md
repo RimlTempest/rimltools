@@ -17,7 +17,10 @@
 3. **backend は自前の http backend**（`infra/tfstate`、Worker `rimltools-tfstate` + D1）。
    R2 と KV は使わない（各プロダクトの ADR-0009）。この Worker だけは wrangler で直接デプロイする（state で state を管理しない）
    - Worker は暗号文を保存するだけで復号しない。平文らしい state は 422 で拒否する（多重防御）
-   - 資格情報は読み取り用（GET のみ）と書き込み用の 2 組。書き込みはロックの持ち主だけ
+   - 資格情報は読み取り用（GET のみ）と書き込み用の 2 組（どちらも 32 文字以上）。書き込みはロックの持ち主だけ
+   - DELETE は受け付けない（405）。書き込み用の資格情報が漏れても state と履歴は消せない
+   - 認証の失敗は `tfstate_auth_failed` として Grafana（Loki）に送り、10 分に 20 回を超えたらアラート。
+     Free の rate limiting はこの Worker に掛けられない（1 本を `/api/auth/` に使っている）ため、長さと検知で守る
 4. **秘密の入力値は SOPS（age）でリポジトリに暗号化して置く**（`infra/secrets/{plan,apply}.sops.yaml`）
    - `plan.sops.yaml`（読み取り専用の資格情報）は plan 鍵と apply 鍵の両方で、`apply.sops.yaml`（書き込み用）は apply 鍵だけで開ける
    - GitHub に登録するのは age の秘密鍵 2 本だけ: `SOPS_AGE_KEY_PLAN`（repository secret）と `SOPS_AGE_KEY_APPLY`（production environment）

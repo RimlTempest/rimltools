@@ -40,6 +40,7 @@
 
 3. **state の置き場所（tfstate Worker）を作る**: `infra/tfstate/README.md` のブートストラップ
    （D1 の作成 → migration → 資格情報 4 つを `wrangler secret put` → `wrangler deploy`）。
+   パスワードは `openssl rand -base64 48` で作る（32 文字未満だと Worker が全リクエストを拒否する）。
    D1 の database_id を `infra/tfstate/wrangler.jsonc` に書いて PR でコミットする
 
 4. **Grafana Cloud**（Free、カード不要）
@@ -192,7 +193,8 @@ plan が「SOPS age key ... is not set up yet」で飛ばされたら、§2 の�
 2. `infra/grafana/terraform.tfvars` で `metrics_push_enabled = true` → Release PR → apply（5 分ごとの転送と「転送停止」アラートが有効になる）
 3. オンコールを使うなら `oncall_usernames = ["<Grafana のユーザー名>"]`。Grafana IRM のモバイルアプリを入れて通知を受け取れるか試す
 4. `infra/terraform/terraform.tfvars` で `ops_issues_enabled = true`（障害・無料枠・エラーバジェットの Issue を自動で起票する）
-5. ドメイン移行を終えたら、`infra/grafana/terraform.tfvars` の `synthetic_host_overrides` を空にする（新ドメインを監視する）
+5. tfstate Worker に Grafana の送り先を入れる（`infra/tfstate/README.md`「監視」）。tfstate への認証失敗の総当たりを検知できるようになる
+6. ドメイン移行を終えたら、`infra/grafana/terraform.tfvars` の `synthetic_host_overrides` を空にする（新ドメインを監視する）
 
 ## 11. 後片付け
 
