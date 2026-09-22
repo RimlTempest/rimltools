@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@qrcc/contract": "workspace:*",
-    "@rimltempest/riml-ds-css": "^0.2.0",
-    "@rimltempest/riml-ds-tokens": "^0.2.0",
+    "@rimltempest/riml-ds-css": "^0.3.0",
+    "@rimltempest/riml-ds-tokens": "^0.3.0",
     "@rimltools/ui": "workspace:*"
   },
   "devDependencies": {
