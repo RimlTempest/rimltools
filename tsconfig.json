@@ -1,7 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./tsconfig.base.json",
-  "include": ["scripts/**/*.ts", "packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"],
+  "include": [
+    "scripts/**/*.ts",
+    "tools/oxlint-plugin-rimltools/**/*.ts",
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx"
+  ],
   "compilerOptions": {
     "noEmit": true,
     "emitDeclarationOnly": false,
@@ -11,5 +16,5 @@
     "composite": false,
     "incremental": false
   },
-  "exclude": ["packages/ui/**", "packages/shell/**"]
+  "exclude": ["packages/shell/**", "packages/sw/**", "packages/ui/**"]
 }

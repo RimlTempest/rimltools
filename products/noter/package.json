@@ -6,7 +6,7 @@
     "dev": "bun run --filter '@noter/web' dev",
     "build": "bun run --filter '@noter/web' build",
     "test": "bun test shared/ features/ apps/ scripts/",
-    "typecheck": "bun run --filter '@noter/web' gen && tsc --build && bun run --filter '@noter/sync-worker' typecheck && tsc -p apps/web --noEmit",
+    "typecheck": "bun run --filter '@noter/web' gen && tsc --build && bun run --filter '@noter/sync-worker' typecheck && tsc -p apps/web --noEmit && tsc -p apps/web/tsconfig.sw.json",
     "lint": "oxlint --type-aware",
     "lint:fix": "oxlint --type-aware --fix",
     "fmt": "oxfmt .",

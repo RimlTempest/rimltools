@@ -6,13 +6,25 @@
  * `.claude/skills/rimltools-typescript/SKILL.md` for the rationale.
  */
 
-/** @param {import('estree').Node} node */
-const isAsConst = (node) =>
-  node.typeAnnotation?.type === 'TSTypeReference'
+import type { RuleTester } from 'oxlint/plugins-dev'
+
+/**
+ * oxlint の規則の型。公開されている `RuleTester#run` の引数から取る（型だけを import するので
+ * 実行時の依存は増えない。Node 26 はこのファイルを型を除いてそのまま読み込む）。
+ */
+type Rule = Parameters<RuleTester['run']>[1]
+
+type TypeAnnotationLike = {
+  readonly type: string
+  readonly typeName?: { readonly type: string; readonly name?: string }
+}
+
+const isAsConst = (node: { readonly typeAnnotation: TypeAnnotationLike }): boolean =>
+  node.typeAnnotation.type === 'TSTypeReference'
   && node.typeAnnotation.typeName?.type === 'Identifier'
   && node.typeAnnotation.typeName.name === 'const'
 
-const noClass = {
+const noClass: Rule = {
   meta: {
     type: 'problem',
     docs: {
@@ -25,16 +37,21 @@ const noClass = {
     },
   },
   create(context) {
-    const report = (node) => context.report({ node, messageId: 'noClass' })
     return {
-      ClassDeclaration: report,
-      ClassExpression: report,
-      TSAbstractClassDeclaration: report,
+      ClassDeclaration(node) {
+        context.report({ node, messageId: 'noClass' })
+      },
+      ClassExpression(node) {
+        context.report({ node, messageId: 'noClass' })
+      },
+      TSAbstractClassDeclaration(node) {
+        context.report({ node, messageId: 'noClass' })
+      },
     }
   },
 }
 
-const noTypeAssertion = {
+const noTypeAssertion: Rule = {
   meta: {
     type: 'problem',
     docs: {
@@ -63,7 +80,7 @@ const noTypeAssertion = {
   },
 }
 
-const noEnum = {
+const noEnum: Rule = {
   meta: {
     type: 'problem',
     docs: {
@@ -84,7 +101,7 @@ const noEnum = {
   },
 }
 
-const noThrowInDomain = {
+const noThrowInDomain: Rule = {
   meta: {
     type: 'problem',
     docs: {
@@ -105,12 +122,14 @@ const noThrowInDomain = {
   },
 }
 
+const rules: Readonly<Record<string, Rule>> = {
+  'no-class': noClass,
+  'no-type-assertion': noTypeAssertion,
+  'no-enum': noEnum,
+  'no-throw-in-domain': noThrowInDomain,
+}
+
 export default {
   meta: { name: 'rimltools' },
-  rules: {
-    'no-class': noClass,
-    'no-type-assertion': noTypeAssertion,
-    'no-enum': noEnum,
-    'no-throw-in-domain': noThrowInDomain,
-  },
+  rules,
 }

@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "gen": "wrangler types --env-interface CloudflareEnv ./src/worker-configuration.d.ts && tsr generate",
-    "dev": "vite dev",
-    "build": "vite build",
+    "dev": "bun run sw && vite dev",
+    "build": "bun run sw && vite build",
     "preview": "vite preview",
     "deploy": "bun run build && wrangler deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv ./src/worker-configuration.d.ts",
@@ -14,7 +14,8 @@
     "e2e": "playwright test",
     "a11y": "playwright test --grep @a11y",
     "typecheck": "bun run gen && tsc --build",
-    "db:local": "wrangler d1 migrations apply noter --local"
+    "db:local": "wrangler d1 migrations apply noter --local",
+    "sw": "bun ../../../../scripts/build-sw.ts src/sw/sw.ts public/sw.js"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.5",
@@ -27,6 +28,7 @@
     "@noter/sync": "workspace:*",
     "@noter/ui": "workspace:*",
     "@noter/webmcp": "workspace:*",
+    "@rimltools/sw": "workspace:*",
     "@rimltools/telemetry": "workspace:*",
     "@tanstack/react-router": "1.170.32",
     "@tanstack/react-start": "1.168.49",
