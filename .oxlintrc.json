@@ -148,6 +148,8 @@
   ],
   "ignorePatterns": [
     "**/dist/**",
+    // Service Worker の生成物（scripts/build-sw.ts）
+    "**/public/sw.js",
     "**/*.d.ts",
     "**/.output/**",
     "**/target/**",

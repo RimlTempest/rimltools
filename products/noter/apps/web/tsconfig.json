@@ -40,5 +40,6 @@
     {
       "path": "../../features/formats"
     }
-  ]
+  ],
+  "exclude": ["src/sw/sw.ts"]
 }
