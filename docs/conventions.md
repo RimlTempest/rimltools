@@ -23,6 +23,7 @@
   例: `feat(qrcc/render): ...` `fix(noter/sync): ...` `ci(release): ...` `docs(adr): ...`
 - **`!`** と `BREAKING CHANGE: <説明>` フッターで破壊的変更を示す。
 - 件名は 100 文字以内、`:` のあとに半角スペース 1 つ。本文との間は空行。
+  例外は Dependabot が作った PR（`dependabot[bot]`）だけで、上限 120 文字（依存名と版で長くなり、短くする手段が無いため）。
 - `Refs: #12` `Co-Authored-By: ...` などは footer に置く。
 
 GitHub のマージ設定は「タイトル = PR タイトル、本文 = PR 本文」にしてあるので、
