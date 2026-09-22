@@ -1,0 +1,12 @@
+{
+  "$comment": "サイズ予算（scripts/check-bundle.sh → bun ../../scripts/bundle-budget.ts）。wasm の上限は ADR-0003 で、check-bundle.sh が別に検査する。",
+  "budgets": [
+    {
+      "name": "worker (qrcc-web, server)",
+      "dir": "apps/web/dist/server",
+      "extensions": [".js", ".mjs", ".wasm"],
+      "maxGzipBytes": 2097152,
+      "reason": "Workers Free の上限 3 MiB（gzip）の 2/3。2026-09 の実測 1.51 MiB から約 0.5 MiB の伸びしろ。noter より大きいので、削減は別途（products/noter/docs/bundle.md の手法が使える）"
+    }
+  ]
+}

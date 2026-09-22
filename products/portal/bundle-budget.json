@@ -1,0 +1,12 @@
+{
+  "$comment": "サイズ予算（scripts/check-bundle.sh → bun ../../scripts/bundle-budget.ts）。",
+  "budgets": [
+    {
+      "name": "static assets (portal)",
+      "dir": "dist",
+      "extensions": [".html", ".css", ".svg"],
+      "maxGzipBytes": 32768,
+      "reason": "ポータルは script を持たない静的な一覧（2026-09 の実測 2.8 KiB）。大きな画像や JS が紛れ込んだら気づけるよう小さく取る"
+    }
+  ]
+}

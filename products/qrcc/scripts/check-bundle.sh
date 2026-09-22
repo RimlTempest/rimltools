@@ -29,3 +29,6 @@ if [ "$decode" -gt 819200 ]; then
   echo "::error::Decoding wasm exceeded 800KB gzip. See ADR-0003."
   exit 1
 fi
+
+# Worker（qrcc-web）の JS 全体の予算（bundle-budget.json）。上の wasm の検査とは別に見る。
+bun ../../scripts/bundle-budget.ts .
