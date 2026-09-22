@@ -1,6 +1,6 @@
 # plan 001: qrcc と noter の共通部分をルートへ抜き出す
 
-- 状態: 段階 1 完了（#10）。段階 2 は contract・ui・lint/fmt 一本化・CI の再利用ワークフロー化を実施（`refactor/root-extraction-2`）、shell は段階 2b、smoke・markuplint 設定・archify は未着手。段階 3 は未着手
+- 状態: 段階 1 完了（#10）。段階 2 完了（#20 に #18 を含む。shell は 2b として #20、markuplint 設定の一本化は #22）。段階 2 の残り（smoke・archify・tools.d.ts）と段階 3（auth・ADR）は #26 / #28 / 段階 3c の PR。残課題は末尾
 - 目的: 2 つのプロダクトで同じもの・ほぼ同じものを 1 か所にし、3 つ目以降のツールが
   「products/<tool> を足すだけ」で同じ規約・道具に乗れるようにする（ADR-0001）
 - 原則: **挙動を変えないリファクタ**。各段階で `bun run check` と `bun run test`
@@ -47,11 +47,17 @@
      React spec の解決が設定ファイルの位置基準で変わるため。原因を切り分けてから一本化する。
 5. **CI を tools.json 駆動の再利用ワークフロー 1 本に** — `qrcc-ci.yml` / `noter-ci.yml` の差分は
    guard（不変条件）と Rust ジョブだけ。`tools.json` に `rust` / guard の定義を持たせ、matrix で回す。
-6. **smoke スクリプトの共通化** — `scripts/smoke*.ts`（smoke-cli は同一、smoke は 0.86）をルートの
-   リリーススクリプト（PR #7）の汎用 smoke と統合する。
-7. **archify** — モノレポ化後、archify は `--repo-root` に git のトップを要求するが、仕様 JSON の
-   `source` はプロダクト相対。仕様のパスを `products/<tool>/...` に書き換えるか、archify に
-   サブディレクトリ用の指定があるか確認して直す（現状 `bun run archify` は失敗する）。
+6. **smoke スクリプトの共通化** — ✅ 段階 3c。ページと `/assets/` の確認・表示・CLI を `scripts/smoke/`（`page.ts` / `cli.ts`）に集め、
+   noter は WebSocket の入口（426）の確認をその上に足す。両プロダクトの `smoke.test.ts` は無変更で通り、本番に向けた実行の出力も
+   共通化の前後で一致。**release（`scripts/release/smoke.ts`）と ops（`scripts/ops/synthetic.ts`）の資産抽出とは寄せていない**:
+   release はデプロイ時にアイコン・manifest・画像まで確かめ、ops は 30 分ごとなので最小限に絞っている。1 つにすると
+   どちらかの挙動が変わる。
+7. **archify** — ✅ 段階 3c。`--repo-root` に git のトップを渡し、仕様の `sources[].path` を `products/<tool>/...` に書き換えた
+   （仕様の `repository.url` も rimltools に）。両プロダクトで validate / deliver / PNG 書き出しまで通る。
+   あわせて lefthook の markuplint ジョブが archify の生成 HTML を拾って空振り防止のガード（#22）に落とされていたのを直した。
+8. **`scripts/lib/tools.d.ts` の二重管理** — ✅ 段階 3c。`tsconfig.base.json` が `emitDeclarationOnly` なので、outDir の無い
+   型検査が `.ts` の隣に出した `.d.ts` がコミットされていた（portal の 6 ファイルも同じ）。どこからも読まれていないので削除し、
+   `.gitignore` で再発を防いだ。
 
 ## 段階 3（前提: 段階 2）
 
@@ -72,3 +78,21 @@
 - ドメイン（`features/*` のうち auth / shell 以外）、`docs/architecture.md`・`domain-model.md`
 - PWA のアイコン・manifest（`apps/web/public`、0.23）
 - `lanes.tsv`・`parallel-lanes.md`（プロダクトごとのレーン定義）
+
+## 段階 3 の結果と残課題（2026-09-22）
+
+| 項目                              | PR      | 結果                                                                                                                                                                                |
+| --------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `features/auth` → `packages/auth` | #26     | Actor・actor-wire・Better Auth の設定・session → Actor・連携フック・D1 の入口・ブラウザの操作を共通化。schema（qrcc の `account.issuer`）と auth.ts（移譲の依存）はプロダクトに残す |
+| ADR の重複                        | #28     | ルート ADR-0010（TS 7 + oxc）・0011（RSC）・0012（co-location）。プロダクトの 0006〜0008 は参照＋固有の補足                                                                         |
+| smoke・archify・tools.d.ts        | 段階 3c | 上の段階 2 の 6〜8                                                                                                                                                                  |
+
+残課題:
+
+- `docs/free-tier-budget.md` / `docs/deployment.md`（プロダクト）の共通部分を `docs/platform.md` / `docs/release.md` に寄せる。
+  `deployment.md` は `wrangler deploy` 時代の手順が残っており、`docs/release.md` と食い違う
+- qrcc ADR-0004 / noter ADR-0010（認証）、qrcc ADR-0009 / noter ADR-0009（Workers Free）、qrcc ADR-0010 / noter ADR-0012（WebMCP）は
+  方針が近いが対象が違うので統合していない。3 つ目のツールで同じ判断が出たらルートに上げる
+- better-auth の版が qrcc（1.7.2）と noter（1.7.3）でずれている。`@rimltools/auth` は版に依存しない形にしたので急がないが、
+  揃えるなら Dependabot の PR で
+- `scripts/release/smoke.ts` と `scripts/ops/synthetic.ts` の資産抽出（上の 6）

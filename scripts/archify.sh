@@ -52,8 +52,10 @@ bun -e "
 "
 bunx oxfmt --no-error-on-unmatched-pattern "$SPEC"
 
-node "$ARCHIFY" validate architecture "$SPEC" --quality showcase --repo-root .
-node "$ARCHIFY" deliver architecture "$SPEC" "$HTML" --quality showcase --repo-root .
+# archify は --repo-root に git のトップを要求する。仕様の sources[].path もリポジトリ直下基準
+# （products/<tool>/...）で書く（モノレポ化で、プロダクト直下と git のトップがずれたため）
+node "$ARCHIFY" validate architecture "$SPEC" --quality showcase --repo-root "$GIT_ROOT"
+node "$ARCHIFY" deliver architecture "$SPEC" "$HTML" --quality showcase --repo-root "$GIT_ROOT"
 bun e2e/archify-png.ts "$HTML" "$PNG_BASE"
 
 echo "done: $HTML / $PNG_BASE.{light,dark}.png"

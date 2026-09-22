@@ -21,3 +21,9 @@ infra/terraform/tfplan
 infra/terraform/plan.txt
 infra/grafana/tfplan
 infra/grafana/plan.txt
+
+# tsconfig.base.json は emitDeclarationOnly なので、outDir の無い型検査が .ts の隣に .d.ts を出すことがある。
+# 手書きの型宣言（*/css.d.ts・wasm-url.d.ts など）以外の .d.ts はコミットしない（plan 001 段階 3）
+scripts/**/*.d.ts
+products/portal/scripts/*.d.ts
+products/portal/src/*.d.ts

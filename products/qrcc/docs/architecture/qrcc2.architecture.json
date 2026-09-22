@@ -6,8 +6,8 @@
     "output": "qrcc2-architecture.html",
     "quality_profile": "showcase",
     "repository": {
-      "url": "https://github.com/RimlTempest/qrcc2",
-      "revision": "b52727bcc6419091846a46f994fa12f7fb481eb9"
+      "url": "https://github.com/RimlTempest/rimltools",
+      "revision": "52a17ad45ed4a4d49a0a1be74cfbf38525d3c6f6"
     },
     "views": [
       {
@@ -40,11 +40,11 @@
       "size": [170, 64],
       "sources": [
         {
-          "path": "apps/web/src/router.tsx",
+          "path": "products/qrcc/apps/web/src/router.tsx",
           "label": "router"
         },
         {
-          "path": "apps/web/src/routes.ts",
+          "path": "products/qrcc/apps/web/src/routes.ts",
           "label": "URL 構造"
         }
       ]
@@ -59,7 +59,7 @@
       "tag": "Worker を消費しない",
       "sources": [
         {
-          "path": "shared/wasm/package.json",
+          "path": "products/qrcc/shared/wasm/package.json",
           "label": "@qrcc/wasm"
         }
       ]
@@ -73,7 +73,7 @@
       "size": [170, 64],
       "sources": [
         {
-          "path": "features/auth/server/auth-options.ts",
+          "path": "products/qrcc/features/auth/server/auth-options.ts",
           "label": "Better Auth の設定"
         }
       ]
@@ -88,11 +88,11 @@
       "tag": "entry",
       "sources": [
         {
-          "path": "apps/web/wrangler.jsonc",
+          "path": "products/qrcc/apps/web/wrangler.jsonc",
           "label": "wrangler"
         },
         {
-          "path": "apps/web/src/server/api-client.ts",
+          "path": "products/qrcc/apps/web/src/server/api-client.ts",
           "label": "service binding"
         }
       ]
@@ -107,11 +107,11 @@
       "tag": "routes なし",
       "sources": [
         {
-          "path": "apps/api/wrangler.jsonc",
+          "path": "products/qrcc/apps/api/wrangler.jsonc",
           "label": "wrangler（routes なし）"
         },
         {
-          "path": "apps/api/src/lib.rs",
+          "path": "products/qrcc/apps/api/src/lib.rs",
           "label": "entry"
         }
       ]
@@ -125,15 +125,15 @@
       "size": [170, 64],
       "sources": [
         {
-          "path": "features/generate/engine/Cargo.toml",
+          "path": "products/qrcc/features/generate/engine/Cargo.toml",
           "label": "qrcc-generate"
         },
         {
-          "path": "features/scan/engine/Cargo.toml",
+          "path": "products/qrcc/features/scan/engine/Cargo.toml",
           "label": "qrcc-scan"
         },
         {
-          "path": "shared/kernel/engine/src/lib.rs",
+          "path": "products/qrcc/shared/kernel/engine/src/lib.rs",
           "label": "qrcc-kernel"
         }
       ]
@@ -148,7 +148,7 @@
       "tag": "KV / R2 は使わない",
       "sources": [
         {
-          "path": "apps/api/wrangler.jsonc",
+          "path": "products/qrcc/apps/api/wrangler.jsonc",
           "label": "d1_databases"
         }
       ]
