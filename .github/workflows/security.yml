@@ -171,10 +171,35 @@ jobs:
       # 一時除外は .github/zizmor.yml と同じ（段階リリースの workflow に置き換えたら消す）
       - run: bun scripts/security/pinned-actions.ts --exempt qrcc-deploy.yml --exempt noter-deploy.yml .github
 
+  # infra/secrets に平文の秘密が無いこと（ADR-0009。lefthook の pre-commit と同じ検査）
+  sops-secrets:
+    name: infra/secrets は暗号化済み
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          cache: true
+          install_args: bun
+      - run: bun scripts/check-secrets.ts
+
   # required check はこれ 1 本。スキップ（dependency-review の push 時など）は合格、失敗・取消は不合格。
   security-gate:
     if: always()
-    needs: [bun-audit, osv-scanner, dependency-review, gitleaks, actionlint, zizmor, pinned-actions]
+    needs:
+      [
+        bun-audit,
+        osv-scanner,
+        dependency-review,
+        gitleaks,
+        actionlint,
+        zizmor,
+        pinned-actions,
+        sops-secrets,
+      ]
     runs-on: ubuntu-latest
     permissions: {}
     steps:
