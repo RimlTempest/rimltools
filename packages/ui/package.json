@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc --build",
     "test": "bun test",
-    "lint:html": "node ../../tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json 'src/**/*.tsx'"
+    "lint:html": "node ../../tools/markuplint/run.ts --config ../../.markuplintrc.json 'src/**/*.tsx'"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "20.12.0",

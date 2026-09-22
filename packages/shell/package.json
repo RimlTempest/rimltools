@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "tsc --build",
-    "test": "bun test"
+    "test": "bun test",
+    "lint:html": "node ../../tools/markuplint/run.ts --config ../../.markuplintrc.json 'src/**/*.tsx'"
   },
   "dependencies": {
     "@rimltools/telemetry": "workspace:*"

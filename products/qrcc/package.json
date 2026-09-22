@@ -11,7 +11,7 @@
     "lint:fix": "oxlint --type-aware --fix",
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
-    "lint:html": "node ../../tools/markuplint/node_modules/markuplint/bin/markuplint.mjs --config .markuplintrc.json 'features/**/ui/**/*.tsx' 'shared/ui/src/**/*.tsx'",
+    "lint:html": "node ../../tools/markuplint/run.ts --config ../../.markuplintrc.json 'features/**/ui/**/*.tsx' 'shared/ui/src/**/*.tsx'",
     "a11y": "bun run --filter '@qrcc/e2e' a11y",
     "rust:fmt": "cargo fmt --all",
     "rust:fmt:check": "cargo fmt --all -- --check",
