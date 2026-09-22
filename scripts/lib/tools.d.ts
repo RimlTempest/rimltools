@@ -44,6 +44,8 @@ export type Tool = {
   /** staging のホスト名（`<subdomain>-staging.<domain>`、apex なら `staging.<domain>`） */
   stagingHost: string
   legacyHosts: string[]
+  /** public Worker が必要とするアプリの secret の名前（staging / preview だけ Terraform が値を入れる） */
+  appSecrets: string[]
   rust: boolean
   workers: WorkerSpec[]
   d1: D1Spec[]

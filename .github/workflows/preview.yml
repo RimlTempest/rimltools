@@ -106,6 +106,9 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           GRAFANA_OTLP_HEADERS: ${{ secrets.GRAFANA_OTLP_HEADERS }}
+          # staging / preview のアプリ secret（Terraform が書く。本番の environment には無い）。
+          # public Worker の版に --secrets-file で載せる（scripts/release/secrets.ts）
+          APP_SECRETS: ${{ secrets.APP_SECRETS }}
       - if: steps.ready.outputs.ok == 'true'
         name: PR に URL をコメント（同じコメントを更新）
         run: |

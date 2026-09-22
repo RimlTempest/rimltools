@@ -136,6 +136,9 @@ jobs:
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
           # テレメトリの OTLP ヘッダ。送り先がある版にだけ --secrets-file で載せる（docs/observability.md）
           GRAFANA_OTLP_HEADERS: ${{ secrets.GRAFANA_OTLP_HEADERS }}
+          # staging / preview のアプリ secret（Terraform が書く。本番の environment には無い）。
+          # public Worker の版に --secrets-file で載せる（scripts/release/secrets.ts）
+          APP_SECRETS: ${{ secrets.APP_SECRETS }}
 
       # 100% になったあと、プロダクト自身の smoke で「配信」と「実ブラウザで動くこと」を見る。
       # staging は Cloudflare Access の内側なので、ここは本番だけ（staging は release.ts の smoke が

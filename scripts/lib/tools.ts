@@ -35,6 +35,12 @@ export type Tool = {
   /** staging のホスト名（`<subdomain>-staging.<domain>`、apex なら `staging.<domain>`） */
   stagingHost: string
   legacyHosts: string[]
+  /**
+   * public Worker が必要とするアプリの secret の名前（例 BETTER_AUTH_SECRET）。
+   * staging / preview の値は Terraform が作って environment secret `APP_SECRETS` に書く。
+   * 本番の Worker は自分の secret を持っているので、ここからは入れない（docs/release.md）
+   */
+  appSecrets: string[]
   rust: boolean
   workers: WorkerSpec[]
   d1: D1Spec[]
@@ -46,6 +52,8 @@ export type Tool = {
 export type Registry = { domain: string; zone: string; tools: Tool[] }
 
 type Reader = { path: string; errors: string[] }
+
+const SECRET_NAME = /^[A-Z][A-Z0-9_]*$/
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -139,6 +147,14 @@ const parseTool = (
     errors.push(`${name}: release.steps must be ascending percentages ending at 100`)
   }
 
+  const appSecrets =
+    raw['appSecrets'] === undefined
+      ? []
+      : list(r, raw, 'appSecrets').filter((s): s is string => typeof s === 'string')
+  if (appSecrets.some((s) => !SECRET_NAME.test(s))) {
+    errors.push(`${name}: appSecrets must be names like BETTER_AUTH_SECRET (A-Z, 0-9, _)`)
+  }
+
   const slo = child(r, raw, 'slo')
   const smoke = child(r, raw, 'smoke')
 
@@ -153,6 +169,7 @@ const parseTool = (
     host: apex ? domain : `${subdomain}.${domain}`,
     stagingHost: apex ? `staging.${domain}` : `${subdomain}-staging.${domain}`,
     legacyHosts: list(r, raw, 'legacyHosts').filter((h): h is string => typeof h === 'string'),
+    appSecrets,
     rust: bool(r, raw, 'rust'),
     workers,
     d1: records(r, raw, 'd1').map((d) => ({

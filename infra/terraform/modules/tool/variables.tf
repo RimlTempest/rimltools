@@ -46,8 +46,8 @@ variable "legacy_hosts_attached" {
   type        = bool
 }
 
-variable "access_policy_id" {
-  description = "Cloudflare Access policy that guards staging hosts. null disables Access."
-  type        = string
-  default     = null
+variable "access_policy_ids" {
+  description = "Cloudflare Access policies that guard staging hosts, in precedence order. Empty disables Access."
+  type        = list(string)
+  default     = []
 }

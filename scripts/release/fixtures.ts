@@ -11,6 +11,7 @@ export const qrcc: Tool = {
   host: 'qrcc.tools.example.com',
   stagingHost: 'qrcc-staging.tools.example.com',
   legacyHosts: ['qrcc.example.com'],
+  appSecrets: [],
   rust: true,
   workers: [
     {

@@ -118,6 +118,22 @@ gh variable set TF_VAR_ACCESS_EMAILS -R RimlTempest/rimltools --body '["you@exam
 登録後、`gh secret list -R RimlTempest/rimltools` で 3 件、`gh secret list -R RimlTempest/rimltools -e production` で 3 件が見えること
 （値が空で登録されていないか、更新日時で確認）。
 
+**staging の Google ログイン**（staging を使う場合。Terraform の外で人が用意する）:
+
+1. Google Cloud Console の OAuth クライアント（本番と同じクライアントでよい）に、承認済みのリダイレクト URI
+   `https://<tool>-staging.tools.riml4i.com/api/auth/callback/google` を**追加**する（qrcc と noter の 2 つ）
+2. クライアントの ID とシークレットを JSON にしてクリップボードに入れ、`production` environment に登録する
+   （apply にだけ渡る。plan には渡らない）:
+
+   ```bash
+   # 例: {"client_id":"xxx.apps.googleusercontent.com","client_secret":"GOCSPX-..."}
+   pbpaste | gh secret set TF_APPLY_GOOGLE_OAUTH_STAGING -R RimlTempest/rimltools -e production
+   ```
+
+登録しなくても apply は通る（staging の `APP_SECRETS` から Google のキーが抜けるだけ。`BETTER_AUTH_SECRET` は
+Terraform が生成する）。値は staging / preview の environment secret `APP_SECRETS` に入り、リリースが
+staging の public Worker の版に載せる。本番の Worker の secret には触らない（`docs/release.md`「アプリの secret」）。
+
 **旧名の secret が残っていたら消す**（書き込みトークンが repository secret に残らないように）:
 
 ```bash
@@ -179,7 +195,24 @@ terraform init && terraform plan -lock=false
 | `ops_issues_enabled`            | `false`      | ops ワークフローに Issue の起票を許すとき（repo variable `OPS_ISSUES`）                |
 | `manage_zone_security_settings` | `true`       | ゾーン内に HTTP しか話せないホストがある場合だけ `false`                               |
 
+## service token の更新（staging の smoke）
+
+`TF_VAR_ACCESS_EMAILS` を設定して staging を Access で守ると、Terraform は CI 用の service token
+（`rimltools-ci-staging-smoke`、有効期限 1 年）と、それだけを通す `non_identity` の policy を作り、
+値を staging / preview の `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET` に書く。
+期限が近づいたら（または漏洩時は）作り直す:
+
+```bash
+terraform apply -replace='cloudflare_zero_trust_access_service_token.ci[0]'
+```
+
+（Release PR 経由の apply でよい。`-replace` は手元で plan を確認してから、または `terraform.tfvars` を触らない
+一時的な変更として PR にする）
+
 ## 制約・既知の限界
+
+- PR の plan には Google OAuth の JSON を渡さないので、`APP_SECRETS` は plan のたびに
+  「変更あり」（sensitive）と表示される。apply では正しい値が入る
 
 - CI 用トークン（`cloudflare_account_token`）の account 権限はアカウント単位までしか絞れない。production / staging で分けているのは、漏洩時に片方だけ失効させるため。
   zone 権限（`ci_token_zone_permission_groups`、既定は `Workers Routes Read`）は別のポリシーにして、ツールのゾーンだけに絞っている

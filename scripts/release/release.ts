@@ -43,9 +43,10 @@ import type { WorkerPlan } from './plan.ts'
 import { planRollout } from './plan.ts'
 import type { PreparedConfig } from './prepare.ts'
 import { migrationConfigFor, preparedPath } from './prepare.ts'
-import { needsOtlpSecret, parseJsonc, rewriteConfig } from './rewrite.ts'
+import { parseJsonc, rewriteConfig } from './rewrite.ts'
 import type { RolloutDeps, RolloutOutcome } from './rollout.ts'
 import { rolloutWorker } from './rollout.ts'
+import { versionSecrets } from './secrets.ts'
 import { runSmoke } from './smoke.ts'
 import type { StatsSource } from './sources.ts'
 import {
@@ -95,28 +96,40 @@ const env = readReleaseConfig({
 const cloudflareToken = (): string => process.env['CLOUDFLARE_API_TOKEN'] ?? ''
 
 /**
- * OTLP のヘッダ（secret）を、この版に載せるための一時ファイル。送り先が入っている Worker で、
- * secret が設定されているときだけ作る。wrangler に渡したらすぐ消す。
+ * この版に載せる secret（OTLP のヘッダ、staging のアプリ secret）を一時ファイルにして
+ * `--secrets-file` で渡す。何も載せないときはファイルを作らない。wrangler に渡したらすぐ消す。
+ * 値は process.env から直接読み、ログやエラー文字列には入れない（secrets.ts）。
  */
-const withTelemetrySecret = async <T>(
+const withVersionSecrets = async <T>(
+  tool: Tool,
+  deployEnv: DeployEnv,
   configPath: string,
   run: (extraArgs: string[]) => Promise<T>,
-): Promise<T> => {
-  const headers = process.env['GRAFANA_OTLP_HEADERS'] ?? ''
+): Promise<Result<T, string>> => {
   const parsed = parseJsonc(await Bun.file(configPath).text())
-  const wanted =
-    headers !== ''
-    && parsed.ok
+  const config =
+    parsed.ok
     && typeof parsed.value === 'object'
     && parsed.value !== null
     && !Array.isArray(parsed.value)
-    && needsOtlpSecret(Object.fromEntries(Object.entries(parsed.value)))
-  if (!wanted) return run([])
-  const file = join(tmpdir(), `otlp-${crypto.randomUUID()}.json`)
-  await Bun.write(file, JSON.stringify({ OTEL_EXPORTER_OTLP_HEADERS: headers }))
+      ? Object.fromEntries(Object.entries(parsed.value))
+      : {}
+  const publicWorker = tool.workers.find((w) => w.role === 'public')
+  const secrets = versionSecrets({
+    env: deployEnv.name,
+    tool: tool.name,
+    publicWorkerName: `${publicWorker?.name ?? ''}${deployEnv.suffix}`,
+    config,
+    otlpHeaders: process.env['GRAFANA_OTLP_HEADERS'] ?? '',
+    appSecretsJson: process.env['APP_SECRETS'] ?? '',
+  })
+  if (!secrets.ok) return secrets
+  if (Object.keys(secrets.value).length === 0) return { ok: true, value: await run([]) }
+  const file = join(tmpdir(), `secrets-${crypto.randomUUID()}.json`)
+  await Bun.write(file, JSON.stringify(secrets.value))
   await chmod(file, 0o600)
   try {
-    return await run(['--secrets-file', file])
+    return { ok: true, value: await run(['--secrets-file', file]) }
   } finally {
     await rm(file, { force: true })
   }
@@ -327,7 +340,7 @@ const resolveStats = async (
   return source?.stats
 }
 
-const makeDeps = (deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDeps => {
+const makeDeps = (tool: Tool, deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDeps => {
   const cf = createCloudflare({
     apiToken: cloudflareToken(),
     fetch: (input, init) => fetch(input, init),
@@ -335,7 +348,7 @@ const makeDeps = (deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDe
   return {
     log: say,
     upload: async (configPath, meta) => {
-      const run = await withTelemetrySecret(configPath, (extra) =>
+      const attached = await withVersionSecrets(tool, deployEnv, configPath, (extra) =>
         wrangler(
           [
             'versions',
@@ -351,6 +364,8 @@ const makeDeps = (deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDe
           deployEnv,
         ),
       )
+      if (!attached.ok) return attached
+      const run = attached.value
       const ok = wranglerResult(run, 'versions upload')
       if (!ok.ok) return ok
       const entry = parseWranglerOutput(run.output, 'version-upload')
@@ -373,9 +388,11 @@ const makeDeps = (deployEnv: DeployEnv, stats?: RolloutDeps['stats']): RolloutDe
         `versions deploy ${specs.join(' ')}`,
       ),
     deployDirect: async (configPath, message) => {
-      const run = await withTelemetrySecret(configPath, (extra) =>
+      const attached = await withVersionSecrets(tool, deployEnv, configPath, (extra) =>
         wrangler(['deploy', '-c', configPath, '--message', message, ...extra], deployEnv),
       )
+      if (!attached.ok) return attached
+      const run = attached.value
       const ok = wranglerResult(run, 'deploy')
       if (!ok.ok) return ok
       const entry = parseWranglerOutput(run.output, 'deploy')
@@ -573,7 +590,7 @@ const runPlans = async (
   const needsAnalytics = plans.some(
     (p) => p.strategy.kind === 'canary' && p.strategy.steps.some((step) => step < 100),
   )
-  const deps = makeDeps(deployEnv, needsAnalytics ? await resolveStats(deployEnv) : undefined)
+  const deps = makeDeps(tool, deployEnv, needsAnalytics ? await resolveStats(deployEnv) : undefined)
   const state = await readState(tool, deployEnv)
   const results: { plan: WorkerPlan; outcome: RolloutOutcome }[] = []
 
@@ -650,7 +667,7 @@ const stepPromote = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promis
   if (args.version === undefined) return fail('promote needs --version')
   const target = args.worker ?? tool.workers.find((w) => w.role === 'public')?.name
   if (target === undefined) return fail(`${tool.name} has no public worker`)
-  const deps = makeDeps(deployEnv)
+  const deps = makeDeps(tool, deployEnv)
   const res = await deps.deploy(
     `${target}${deployEnv.suffix}`,
     [`${args.version}@100%`],
@@ -663,7 +680,7 @@ const stepPromote = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promis
 }
 
 const stepRollback = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promise<number> => {
-  const deps = makeDeps(deployEnv)
+  const deps = makeDeps(tool, deployEnv)
   const state = await readState(tool, deployEnv)
   // 上流（public）から戻す。下流を先に戻すと、新しい上流が古い下流を呼ぶ時間ができる
   const targets = [...workersFor(tool, args.worker)].toSorted((a, b) =>
@@ -695,7 +712,7 @@ const stepPreview = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promis
   const worker = tool.workers.find((w) => w.role === 'public')
   if (worker === undefined) return fail(`${tool.name} has no public worker`)
   const config = preparedPath(tool.path, worker.buildConfig, deployEnv.name)
-  const run = await withTelemetrySecret(config, (extra) =>
+  const attached = await withVersionSecrets(tool, deployEnv, config, (extra) =>
     wrangler(
       [
         'versions',
@@ -711,6 +728,8 @@ const stepPreview = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promis
       deployEnv,
     ),
   )
+  if (!attached.ok) return fail(attached.error)
+  const run = attached.value
   const ok = wranglerResult(run, 'preview upload')
   if (!ok.ok) return fail(ok.error)
   const entry = parseWranglerOutput(run.output, 'version-upload')
