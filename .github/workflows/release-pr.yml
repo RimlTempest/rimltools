@@ -55,13 +55,14 @@ jobs:
             echo
             echo "マージ方法は **merge commit**（squash しない。develop との履歴を保つ）。"
           } > body.md
+          # タイトルは main のマージコミットの件名になるので Conventional Commits にする（docs/conventions.md）
+          title="chore(release): $(date -u +%Y-%m-%d) (${tools:-no deployable changes})"
           number=$(gh pr list --repo "$REPO" --base main --head develop --state open --json number --jq '.[0].number // empty')
           if [ -n "$number" ]; then
-            gh pr edit "$number" --repo "$REPO" --body-file body.md
+            gh pr edit "$number" --repo "$REPO" --title "$title" --body-file body.md
             echo "updated #$number"
           else
-            gh pr create --repo "$REPO" --base main --head develop \
-              --title "release: $(date -u +%Y-%m-%d) (${tools:-no deployable changes})" --body-file body.md
+            gh pr create --repo "$REPO" --base main --head develop --title "$title" --body-file body.md
           fi
           if [ -z "$USING_BOT" ]; then
             echo "::warning::RELEASE_BOT_TOKEN is not set. Checks that run on pull_request (release-guard) do not start for PRs opened by GITHUB_TOKEN. Close and reopen the Release PR once to trigger them (docs/release.md)."
