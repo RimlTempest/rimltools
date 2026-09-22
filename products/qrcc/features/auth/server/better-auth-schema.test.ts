@@ -63,11 +63,11 @@ describe('better-auth と D1 のスキーマ（account.issuer の廃止後）', 
     const sqlite = migratedDatabase()
     const auth = makeTestAuth(sqlite)
     const context = await auth.$context
-    const user = await context.internalAdapter.createUser({
-      email: 'me@example.com',
-      name: 'me',
-      emailVerified: true,
-    })
+    // ゲストの作成と同じ入口（anonymous プラグインも { method: 'anonymous' } で呼ぶ）
+    const user = await context.internalAdapter.createUser(
+      { email: 'me@example.com', name: 'me', emailVerified: true },
+      { method: 'anonymous' },
+    )
     await context.internalAdapter.linkAccount({
       userId: user.id,
       providerId: 'google',
