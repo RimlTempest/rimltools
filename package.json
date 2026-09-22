@@ -55,5 +55,5 @@
     "bun": ">=1.4.0",
     "node": ">=26"
   },
-  "packageManager": "bun@1.4.0"
+  "packageManager": "bun@1.4.2"
 }
