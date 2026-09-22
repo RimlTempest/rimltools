@@ -105,6 +105,31 @@ describe('run', () => {
     expect(JSON.stringify(names)).toContain('rimltools_metrics_push_last_success_timestamp_seconds')
   })
 
+  // 旧実装はステータスを見ずに本文を読んでいた。400 で返るスキーマエラーでも取り直すこと
+  test('falls back even when the schema error comes with a non-2xx status', async () => {
+    const { deps, logs } = fakeDeps((call) => {
+      if (call.url.endsWith('/v1/metrics')) return new Response('', { status: 200 })
+      if (call.body.includes('d1AnalyticsAdaptiveGroups')) return d1()
+      if (call.body.includes('scriptVersion')) {
+        return Response.json(
+          { errors: [{ message: 'unknown field "scriptVersion"' }] },
+          { status: 400 },
+        )
+      }
+      return workers(false)
+    })
+    expect(await run(deps, false)).toBe(0)
+    expect(logs.some((l) => l.includes('using the basic set'))).toBe(true)
+  })
+
+  test('a Cloudflare network failure fails the run instead of throwing', async () => {
+    const { deps } = fakeDeps((call) => {
+      if (call.url.endsWith('/v1/metrics')) return new Response('', { status: 200 })
+      throw new Error('socket hang up')
+    })
+    expect(await run(deps, false)).toBe(1)
+  })
+
   test('treats duplicate-sample rejections as success (windows are re-sent on purpose)', async () => {
     const { deps } = fakeDeps((call) => {
       if (call.url.endsWith('/v1/metrics')) {

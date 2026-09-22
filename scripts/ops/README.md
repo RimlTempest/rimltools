@@ -21,8 +21,12 @@ OPS_HOST_OVERRIDES='{"qrcc":"qrcc.riml4i.com","noter":"noter.riml4i.com","portal
 CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... bun run scripts/ops/report-cli.ts
 ```
 
-## TODO（統合）
+## 共通の部品
 
-- `lib/graphql.ts` は、リリース側（canary 判定）が使う `scripts/lib/cloudflare.ts` と同じ GraphQL を叩く。
-  両方が develop に入ったら `scripts/lib/` に寄せて 1 つにする。
+- Cloudflare の API は `scripts/lib/cloudflare.ts` だけを使う（リリースと共通）。GraphQL のエラー本文を
+  自分で解釈したい転送（`push-metrics.ts`）は `graphqlBody`、それ以外は `graphql`。
+- HTML から資産を拾うのは `scripts/lib/html-assets.ts`（範囲は `ASSET_SCOPES.synthetic`）。
+
+## TODO
+
 - Durable Objects の使用量（`durableObjectsInvocationsAdaptiveGroups`）を無料枠の表に足す。
