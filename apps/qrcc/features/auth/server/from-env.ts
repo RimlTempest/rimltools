@@ -8,6 +8,7 @@
  */
 import type { DB } from '@better-auth/drizzle-adapter'
 import type { RandomBytes } from '@qrcc/contract'
+import { resolvePublicOriginFromEnv } from '@qrcc/contract'
 import type { Auth } from './auth.ts'
 import { makeAuth } from './auth.ts'
 import { readEnvString } from './api-actor.ts'
@@ -32,11 +33,19 @@ const browserRandomBytes: RandomBytes = (byteLength) =>
 export const isGoogleConfigured = (env: unknown): boolean =>
   readEnvString(env, 'GOOGLE_CLIENT_ID') !== '' && readEnvString(env, 'GOOGLE_CLIENT_SECRET') !== ''
 
+/**
+ * Better Auth の `baseURL`（Cookie のスコープと Google のリダイレクト先）。
+ * portless の dev では、プロキシの後ろの Worker は http を受けるので、ブラウザが見ている
+ * https のオリジン（`DEV_PUBLIC_ORIGIN`、`.localhost` に限る）を使う（docs/local-dev.md）。
+ */
+export const authBaseURL = (env: unknown, requestOrigin: string): string =>
+  resolvePublicOriginFromEnv(env, requestOrigin)
+
 export const makeAuthFromEnv = (env: unknown, deps: AuthFromEnvDeps): Auth =>
   makeAuth({
     db: deps.makeDb(),
     sql: deps.sql,
-    baseURL: deps.origin,
+    baseURL: authBaseURL(env, deps.origin),
     secret: readEnvString(env, 'BETTER_AUTH_SECRET'),
     google: isGoogleConfigured(env)
       ? {
