@@ -58,7 +58,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with: { cache: true }
-      - run: bun install --frozen-lockfile
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - run: bun scripts/flags/cli.ts validate
       - run: bun test ./packages/flags ./scripts/flags
       - name: 同期対象のツール（flags/<tool>.json があるもの）
@@ -91,7 +91,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with: { cache: true }
-      - run: bun install --frozen-lockfile
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - name: 同期先 D1 の wrangler 設定と SQL を作る
         env:
           TOOL: ${{ matrix.tool }}
@@ -128,7 +128,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with: { cache: true }
-      - run: bun install --frozen-lockfile
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - name: 無効化する SQL を作る
         env:
           TOOL: ${{ inputs.tool }}

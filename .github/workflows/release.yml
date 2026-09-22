@@ -95,7 +95,7 @@ jobs:
           cargo install worker-build --locked
           cargo install wasm-pack --locked
 
-      - run: bun install --frozen-lockfile
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
 
       - name: 公開ホストを決める（tools.ts の規則。apex のポータルを含む）
         id: host

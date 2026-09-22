@@ -90,7 +90,7 @@ jobs:
           cargo install worker-build --locked
           cargo install wasm-pack --locked
       - if: steps.ready.outputs.ok == 'true'
-        run: bun install --frozen-lockfile
+        run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - if: steps.ready.outputs.ok == 'true'
         run: bun run --cwd "$TOOL_PATH" build
         env:

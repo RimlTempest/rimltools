@@ -121,7 +121,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with: { cache: true }
-      - run: bun install --frozen-lockfile
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - run: bun run fmt:check
       - run: bun run lint
 
@@ -146,7 +146,7 @@ jobs:
       # wasm-bindgen が生成する .d.ts は型検査の入力。git 管理外なのでここで作る
       - if: needs.meta.outputs.rust == 'true'
         run: cargo install wasm-pack --locked
-      - run: bun install --frozen-lockfile
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - run: bun run typecheck
 
   test-ts:
@@ -164,7 +164,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with: { cache: true }
-      - run: bun install --frozen-lockfile
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - run: bun run test
 
   markuplint:
@@ -182,7 +182,7 @@ jobs:
         with: { persist-credentials: false }
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with: { cache: true }
-      - run: bun install --frozen-lockfile
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - run: bun run lint:html
 
   rust:
@@ -222,7 +222,7 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         if: needs.meta.outputs.rust == 'true'
         with: { workspaces: 'products/${{ inputs.tool }}' }
-      - run: bun install --frozen-lockfile
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - if: needs.meta.outputs.rust == 'true'
         run: |
           cargo install worker-build --locked

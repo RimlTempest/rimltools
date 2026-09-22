@@ -41,7 +41,7 @@ jobs:
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with: { cache: true }
       # install 自体も防御層: minimumReleaseAge と Socket scanner が bunfig.toml で効く
-      - run: bun install --frozen-lockfile
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
       - run: bun run audit
 
   osv-scanner:
