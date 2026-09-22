@@ -112,14 +112,15 @@ bunx wrangler deployments list --name qrcc-web                  # 配信割合�
 
 GitHub environment `staging` / `production` / `preview` ごとに:
 
-| 種類                        | 名前                                             | 例                                   |
-| --------------------------- | ------------------------------------------------ | ------------------------------------ |
-| secret                      | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`  | 最小権限のトークン                   |
-| secret（staging / preview） | `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET` | Access の service token              |
-| variable                    | `RIMLTOOLS_ENV`                                  | `staging` / `production` / `preview` |
-| variable                    | `BASE_DOMAIN`, `CF_ZONE_ID`                      | `tools.riml4i.com`                   |
-| variable                    | `WORKER_SUFFIX`                                  | production は空、ほかは `-staging`   |
-| variable                    | `D1_<TOOL>_ID`                                   | `D1_QRCC_ID`                         |
+| 種類                        | 名前                                             | 例                                    |
+| --------------------------- | ------------------------------------------------ | ------------------------------------- |
+| secret                      | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`  | 最小権限のトークン                    |
+| secret（staging / preview） | `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET` | Access の service token               |
+| secret（staging / preview） | `APP_SECRETS`                                    | `{"qrcc": {"BETTER_AUTH_SECRET": …}}` |
+| variable                    | `RIMLTOOLS_ENV`                                  | `staging` / `production` / `preview`  |
+| variable                    | `BASE_DOMAIN`, `CF_ZONE_ID`                      | `tools.riml4i.com`                    |
+| variable                    | `WORKER_SUFFIX`                                  | production は空、ほかは `-staging`    |
+| variable                    | `D1_<TOOL>_ID`                                   | `D1_QRCC_ID`                          |
 
 ### CI 用 Cloudflare API トークンの権限
 
@@ -146,6 +147,24 @@ invocation log は `observability.enabled: true` で既定有効。`invocation_l
 
 `DEPLOYMENT_ENV`（環境名）と `GIT_SHA`（コミット）は prepare が常に入れる。未設定の値は空のまま（テレメトリ無効）。
 `wrangler versions secret put` は使わない（最新版から別の版を作るので、upload した版と食い違う）。
+
+### アプリの secret（`BETTER_AUTH_SECRET` など）
+
+どの secret が要るかは `tools.json` の `appSecrets`（public Worker が読むもの）。
+
+- **staging / preview**: Terraform が値を作り（`BETTER_AUTH_SECRET` は生成、Google OAuth は人が用意した
+  クライアント）、environment secret `APP_SECRETS` に書く。リリースは public Worker の版に
+  `versions upload --secrets-file` で載せる（`scripts/release/secrets.ts`）
+- **production**: 何も入れない。本番の Worker は自分の secret を持っていて、新しい版に引き継がれる。
+  本番で `APP_SECRETS` が渡されたら、リリースは上書きせず失敗する
+
+**`--secrets-file` と既存 secret の引き継ぎ**: `wrangler versions upload`（wrangler 4.127 の
+`uploadWorkerVersion`）は常に `keepSecrets: true` で upload する。ソースのコメントは
+"we never delete secret bindings when uploading, even if we are setting secrets from a file / so inherit
+all unchanged secrets from the previous Worker Version"。つまり secrets-file に書いた名前だけが
+追加・更新され、書いていない secret（本番の `BETTER_AUTH_SECRET` など）は前の版から引き継がれる。
+wrangler を上げるときは、この挙動が変わっていないか `node_modules/wrangler/wrangler-dist/cli.js` の
+`uploadWorkerVersion` を確認する。
 
 リポジトリ secret（任意）: `RELEASE_BOT_TOKEN` — Release PR / back-merge PR を作るトークン。
 `GITHUB_TOKEN` で作った PR には `pull_request` のワークフロー（`release-guard`）が走らないため。
