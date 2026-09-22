@@ -103,3 +103,13 @@ Worker への注入はリリース（`scripts/release/`）の後続作業。値�
 - リリース（段階リリース）で Grafana に annotation（tag `deploy`、`tool`、`version`）を打つ。
   ダッシュボードは既に `deploy` タグの annotation を表示する。
 - Faro のクエリ（Web Vitals パネル）は、初回データが入ったら LogQL の形を確認する。
+
+## ローカルで試す
+
+本番と同じダッシュボード・データソース（uid）・相関の設定を、手元の Grafana LGTM（docker compose）で
+動かせる。起動・アプリの接続・本番との違いは `observability/local/README.md`。
+
+```bash
+docker compose -f observability/local/compose.yaml up -d
+bun scripts/observability/local-smoke.ts
+```
