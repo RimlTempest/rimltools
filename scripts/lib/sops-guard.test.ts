@@ -60,7 +60,8 @@ describe('checkSecretsDirectory', () => {
   test('allows only *.sops.yaml, *.example.yaml and README.md', () => {
     const files = {
       'infra/secrets/apply.sops.yaml': encrypted,
-      'infra/secrets/apply.example.yaml': 'TF_VAR_github_token: ""\n',
+      'infra/secrets/apply.example.yaml':
+        'TF_VAR_github_token: ""\nTF_HTTP_USERNAME: \'\'\nTF_HTTP_PASSWORD:\n',
       'infra/secrets/README.md': '# secrets',
     }
     expect(checkSecretsDirectory(Object.keys(files), read(files))).toEqual({ ok: true, value: 1 })

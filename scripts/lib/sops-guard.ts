@@ -8,6 +8,8 @@
 import type { Result } from './tools.ts'
 
 const ENCRYPTED = /^ENC\[AES256_GCM,data:[^,]*,iv:[^,]+,tag:[^,]+,type:[a-z]+\]$/
+// ひな形の空値。整形（oxfmt）が "" を '' に書き換えることがあるので両方を空とみなす
+const EMPTY_VALUES = new Set(['', '""', "''"])
 const TOP_LEVEL = /^([A-Za-z_][A-Za-z0-9_]*):(?:\s+(.*))?$/
 
 const fail = <T>(error: string): Result<T, string> => ({ ok: false, error })
@@ -67,7 +69,7 @@ export const checkSecretsDirectory = (
       const filled = read(path)
         .split('\n')
         .map((line) => TOP_LEVEL.exec(line))
-        .filter((m) => m !== null && (m[2] ?? '').trim() !== '' && (m[2] ?? '').trim() !== '""')
+        .filter((m) => m !== null && !EMPTY_VALUES.has((m[2] ?? '').trim()))
       if (filled.length > 0)
         problems.push(`${path}: example files must leave every value empty ("")`)
     }
