@@ -1,0 +1,365 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "RimlTools の全体構成",
+    "output": "rimltools-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/RimlTempest/rimltools",
+      "revision": "ebb4a1952c6a19f52fe3fbcfb0e2edbc68e3d56d"
+    },
+    "views": [
+      {
+        "id": "release",
+        "label": "main へのマージ = リリース",
+        "focus": ["github", "ci", "release", "tools"],
+        "note": "PR は gate・security-gate・conventional・CodeQL を通ってから develop へ。develop → main の Release PR が入ると、段階リリースが本番へ出す。"
+      },
+      {
+        "id": "runtime",
+        "label": "実行と監視",
+        "focus": ["browser", "edge", "tools", "d1", "grafana"],
+        "note": "ツールはすべて Workers Free で動く。Worker は OTLP で trace とログを、ブラウザは Faro で Web Vitals を Grafana Cloud に送る。"
+      },
+      {
+        "id": "iac",
+        "label": "IaC と秘密",
+        "focus": ["sops", "tofu", "tfstate"],
+        "note": "OpenTofu は state を手元で暗号化してから自前の backend に置く。秘密の入力値は SOPS（age）でリポジトリに暗号化して持つ。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "github",
+      "type": "external",
+      "label": "GitHub: rimltools",
+      "sublabel": "feature → develop → main",
+      "tag": "rulesets",
+      "pos": [40, 100],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": "tools.json",
+          "label": "ツール台帳"
+        },
+        {
+          "path": ".github/workflows/release-pr.yml",
+          "label": "Release PR"
+        }
+      ]
+    },
+    {
+      "id": "ci",
+      "type": "security",
+      "label": "CI の必須チェック",
+      "sublabel": "gate・security・CodeQL",
+      "pos": [340, 100],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "label": "gate"
+        },
+        {
+          "path": ".github/workflows/security.yml",
+          "label": "security-gate"
+        },
+        {
+          "path": ".github/workflows/codeql.yml",
+          "label": "CodeQL"
+        }
+      ]
+    },
+    {
+      "id": "release",
+      "type": "backend",
+      "label": "段階リリース",
+      "sublabel": "blue/green・canary",
+      "tag": "自動ロールバック",
+      "pos": [640, 100],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": ".github/workflows/deploy-production.yml",
+          "label": "production"
+        },
+        {
+          "path": "scripts/release/rollout.ts",
+          "label": "rollout"
+        },
+        {
+          "path": "scripts/release/analysis.ts",
+          "label": "canary 判定"
+        }
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "cloud",
+      "label": "Grafana Cloud",
+      "sublabel": "Tempo・Loki・Mimir",
+      "tag": "SLO・IRM",
+      "pos": [940, 100],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": "infra/grafana/datasources.tf",
+          "label": "相関"
+        },
+        {
+          "path": "infra/grafana/alerts.tf",
+          "label": "アラート"
+        },
+        {
+          "path": "infra/grafana/oncall.tf",
+          "label": "オンコール"
+        }
+      ]
+    },
+    {
+      "id": "browser",
+      "type": "frontend",
+      "label": "ブラウザ / PWA",
+      "sublabel": "wasm・Faro",
+      "pos": [40, 284],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": "packages/telemetry/src/browser/index.ts",
+          "label": "Faro"
+        }
+      ]
+    },
+    {
+      "id": "edge",
+      "type": "security",
+      "label": "Cloudflare エッジ",
+      "sublabel": "WAF・Access・rate limit",
+      "pos": [340, 284],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": "infra/terraform/zone.tf",
+          "label": "zone"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "type": "backend",
+      "label": "ツールの Worker",
+      "sublabel": "qrcc・noter・portal",
+      "tag": "Workers Free",
+      "pos": [640, 284],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": "infra/terraform/modules/tool/main.tf",
+          "label": "Worker の枠"
+        },
+        {
+          "path": "packages/telemetry/src/worker/index.ts",
+          "label": "OTLP"
+        }
+      ]
+    },
+    {
+      "id": "d1",
+      "type": "database",
+      "label": "D1",
+      "sublabel": "ツールごと・feature flag",
+      "pos": [640, 468],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": "infra/terraform/tools.tf",
+          "label": "D1"
+        },
+        {
+          "path": "packages/flags/src/index.ts",
+          "label": "flags"
+        }
+      ]
+    },
+    {
+      "id": "tfstate",
+      "type": "database",
+      "label": "tfstate Worker + D1",
+      "sublabel": "暗号文だけを保存",
+      "pos": [340, 468],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": "infra/tfstate/src/handler.ts",
+          "label": "http backend"
+        },
+        {
+          "path": "infra/tfstate/src/core/retention.ts",
+          "label": "版の保持"
+        },
+        {
+          "path": "infra/tfstate/src/core/guard.ts",
+          "label": "平文の拒否"
+        }
+      ]
+    },
+    {
+      "id": "tofu",
+      "type": "backend",
+      "label": "OpenTofu",
+      "sublabel": "Cloudflare・GitHub・Grafana",
+      "pos": [340, 652],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": "infra/terraform/versions.tf",
+          "label": "backend・暗号化"
+        },
+        {
+          "path": "docs/adr/0009-state-and-secrets.md",
+          "label": "ADR-0009"
+        }
+      ]
+    },
+    {
+      "id": "sops",
+      "type": "security",
+      "label": "SOPS / age",
+      "sublabel": "plan 鍵・apply 鍵",
+      "pos": [40, 652],
+      "size": [180, 64],
+      "sources": [
+        {
+          "path": ".sops.yaml",
+          "label": "鍵の割り当て"
+        },
+        {
+          "path": "infra/secrets/apply.example.yaml",
+          "label": "apply 用"
+        },
+        {
+          "path": "infra/secrets/plan.example.yaml",
+          "label": "plan 用"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "GitHub",
+      "wraps": ["github", "ci", "release"]
+    },
+    {
+      "kind": "region",
+      "label": "Cloudflare Workers Free",
+      "wraps": ["edge", "tools", "d1", "tfstate"]
+    },
+    {
+      "kind": "security-group",
+      "label": "IaC の実行（main からの apply だけが書ける）",
+      "wraps": ["sops", "tofu"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "github-ci",
+      "from": "github",
+      "to": "ci",
+      "label": "PR / push"
+    },
+    {
+      "id": "ci-release",
+      "from": "ci",
+      "to": "release",
+      "label": "green でマージ",
+      "variant": "emphasis"
+    },
+    {
+      "id": "release-tools",
+      "from": "release",
+      "to": "tools",
+      "label": "0% → 10 / 50 / 100%",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "browser-edge",
+      "from": "browser",
+      "to": "edge",
+      "label": "HTTPS / WSS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "edge-tools",
+      "from": "edge",
+      "to": "tools",
+      "label": "版の固定",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tools-d1",
+      "from": "tools",
+      "to": "d1",
+      "label": "SQL",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "tools-grafana",
+      "from": "tools",
+      "to": "grafana",
+      "label": "OTLP",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "tofu-tfstate",
+      "from": "tofu",
+      "to": "tfstate",
+      "label": "暗号化 state",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "sops-tofu",
+      "from": "sops",
+      "to": "tofu",
+      "label": "sops exec-env",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "無料枠で運用しきる",
+      "items": [
+        "Workers Free・D1・Grafana Cloud Free・GitHub（public）だけ",
+        "R2 と KV は使わない。生成・読み取りはブラウザの wasm"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "事故を止めるのは 2 か所",
+      "items": [
+        "マージ前: rulesets の必須チェック（gate・security-gate・conventional・CodeQL）",
+        "マージ後: 0% で検証し、canary で版ごとのエラー率を比べ、悪化すれば戻す"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "秘密は暗号文だけ外に出す",
+      "items": [
+        "state は OpenTofu が手元で暗号化してから tfstate Worker に送る",
+        "GitHub に置くのは age の鍵 2 本だけ（plan 用と apply 用）"
+      ]
+    }
+  ]
+}
