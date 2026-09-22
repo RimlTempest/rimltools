@@ -12,6 +12,9 @@ pre-commit:
         jobs:
           - name: qrcc-markuplint
             glob: '*.{tsx,html}'
+            # archify の生成物（手で編集しない）は markuplint の対象外（.markuplintrc.json の excludeFiles と揃える）
+            exclude:
+              - 'products/qrcc/docs/architecture/**'
             # TypeScript 6 に固定した隔離インストール（ADR-0006）を tools/markuplint/run.ts 経由で。
             # 対象が 1 つでも検査されなければ失敗する（空振り防止）
             run: node ../../tools/markuplint/run.ts --config ../../.markuplintrc.json {staged_files}
@@ -31,6 +34,9 @@ pre-commit:
         jobs:
           - name: noter-markuplint
             glob: '*.{tsx,html}'
+            # archify の生成物（手で編集しない）は markuplint の対象外（.markuplintrc.json の excludeFiles と揃える）
+            exclude:
+              - 'products/noter/docs/architecture/**'
             # TypeScript 6 に固定した隔離インストール（ADR-0006）を tools/markuplint/run.ts 経由で。
             # 対象が 1 つでも検査されなければ失敗する（空振り防止）
             run: node ../../tools/markuplint/run.ts --config ../../.markuplintrc.json {staged_files}
