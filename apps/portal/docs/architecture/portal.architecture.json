@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/RimlTempest/rimltools",
-      "revision": "5018815e76c11e1c5df468994b3fede3f058a2de"
+      "revision": "8c4e378e5be3f463dbfafcec94f129344d2e4552"
     }
   },
   "components": [
@@ -34,11 +34,11 @@
       "size": [180, 64],
       "sources": [
         {
-          "path": "products/portal/scripts/build.ts",
+          "path": "apps/portal/scripts/build.ts",
           "label": "build"
         },
         {
-          "path": "products/portal/src/render.ts",
+          "path": "apps/portal/src/render.ts",
           "label": "render"
         }
       ]
@@ -53,11 +53,11 @@
       "size": [200, 64],
       "sources": [
         {
-          "path": "products/portal/wrangler.jsonc",
+          "path": "apps/portal/wrangler.jsonc",
           "label": "wrangler"
         },
         {
-          "path": "products/portal/public/_headers",
+          "path": "apps/portal/public/_headers",
           "label": "CSP・HSTS"
         }
       ]

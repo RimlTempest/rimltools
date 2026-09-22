@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/RimlTempest/rimltools",
-      "revision": "5018815e76c11e1c5df468994b3fede3f058a2de"
+      "revision": "8c4e378e5be3f463dbfafcec94f129344d2e4552"
     },
     "views": [
       {
@@ -40,7 +40,7 @@
       "size": [170, 64],
       "sources": [
         {
-          "path": "products/noter/shared/webmcp/src/index.ts",
+          "path": "apps/noter/shared/webmcp/src/index.ts",
           "label": "WebMCP"
         }
       ]
@@ -55,15 +55,15 @@
       "size": [170, 64],
       "sources": [
         {
-          "path": "products/noter/features/editor/ui/code-editor-view.ts",
+          "path": "apps/noter/features/editor/ui/code-editor-view.ts",
           "label": "CodeMirror（遅延）"
         },
         {
-          "path": "products/noter/features/formats/ui/mermaid-block.tsx",
+          "path": "apps/noter/features/formats/ui/mermaid-block.tsx",
           "label": "Mermaid（遅延）"
         },
         {
-          "path": "products/noter/features/sync/client/src/provider.ts",
+          "path": "apps/noter/features/sync/client/src/provider.ts",
           "label": "Yjs provider"
         }
       ]
@@ -81,7 +81,7 @@
           "label": "@rimltools/auth"
         },
         {
-          "path": "products/noter/features/auth/server/auth-options.ts",
+          "path": "apps/noter/features/auth/server/auth-options.ts",
           "label": "noter の設定"
         }
       ]
@@ -95,7 +95,7 @@
       "size": [170, 64],
       "sources": [
         {
-          "path": "products/noter/apps/web/src/router.tsx",
+          "path": "apps/noter/services/web/src/router.tsx",
           "label": "router"
         },
         {
@@ -118,15 +118,15 @@
       "size": [170, 64],
       "sources": [
         {
-          "path": "products/noter/apps/web/wrangler.jsonc",
+          "path": "apps/noter/services/web/wrangler.jsonc",
           "label": "wrangler"
         },
         {
-          "path": "products/noter/apps/web/src/server/ws-authorize.ts",
+          "path": "apps/noter/services/web/src/server/ws-authorize.ts",
           "label": "/ws の認可"
         },
         {
-          "path": "products/noter/apps/web/src/server.ts",
+          "path": "apps/noter/services/web/src/server.ts",
           "label": "entry"
         }
       ]
@@ -141,11 +141,11 @@
       "size": [170, 64],
       "sources": [
         {
-          "path": "products/noter/apps/sync/wrangler.jsonc",
+          "path": "apps/noter/services/sync/wrangler.jsonc",
           "label": "routes なし"
         },
         {
-          "path": "products/noter/features/sync/worker/document-room.ts",
+          "path": "apps/noter/features/sync/worker/document-room.ts",
           "label": "DocumentRoom"
         }
       ]
@@ -159,11 +159,11 @@
       "size": [170, 64],
       "sources": [
         {
-          "path": "products/noter/features/auth/server/schema.ts",
+          "path": "apps/noter/features/auth/server/schema.ts",
           "label": "auth schema"
         },
         {
-          "path": "products/noter/features/documents/server/sql.ts",
+          "path": "apps/noter/features/documents/server/sql.ts",
           "label": "documents"
         }
       ]
@@ -178,7 +178,7 @@
       "size": [170, 64],
       "sources": [
         {
-          "path": "products/noter/features/sync/worker/storage.ts",
+          "path": "apps/noter/features/sync/worker/storage.ts",
           "label": "storage"
         }
       ]
