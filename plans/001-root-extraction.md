@@ -93,6 +93,9 @@
   `deployment.md` は `wrangler deploy` 時代の手順が残っており、`docs/release.md` と食い違う
 - qrcc ADR-0004 / noter ADR-0010（認証）、qrcc ADR-0009 / noter ADR-0009（Workers Free）、qrcc ADR-0010 / noter ADR-0012（WebMCP）は
   方針が近いが対象が違うので統合していない。3 つ目のツールで同じ判断が出たらルートに上げる
-- better-auth の版が qrcc（1.7.2）と noter（1.7.3）でずれている。`@rimltools/auth` は版に依存しない形にしたので急がないが、
-  揃えるなら Dependabot の PR で
+- ~~better-auth の版ずれ~~ → 1.7.5 に揃えた（`refactor/align-better-auth`）。`scripts/check-versions.ts` が以後のずれを CI で止める
+- **qrcc の account.issuer の contract（0006）**: 1.7.5 が本番の全版に行き渡ったあとの次のリリースで、`account.issuer` 列と
+  `account_issuer_account_id_unique` を消す（先頭に `-- contract:`、index を先に消してから列。
+  https://better-auth.com/docs/guides/1-7-upgrade-guide#account-identity-keeps-the-provider-key）。
+  消したら `schema.test.ts` の `PENDING_CONTRACT` から外す
 - `scripts/release/smoke.ts` と `scripts/ops/synthetic.ts` の資産抽出（上の 6）
