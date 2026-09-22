@@ -1,6 +1,4 @@
 export type {
-  AnonymousPlugin,
-  AnonymousSettings,
   AuthOptionsDeps,
   AuthProductSettings,
   GoogleCredentials,

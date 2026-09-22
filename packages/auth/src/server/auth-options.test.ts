@@ -1,17 +1,9 @@
 import { describe, expect, test } from 'bun:test'
-import { anonymous as realAnonymous } from 'better-auth/plugins'
 
 import { buildAuthOptions, GUEST_DISPLAY_NAME, GUEST_SESSION_DAYS } from './auth-options.ts'
-import type { AnonymousPlugin, AnonymousSettings, SharedAuthOptionsDeps } from './auth-options.ts'
+import type { SharedAuthOptionsDeps } from './auth-options.ts'
 
-const recorded: AnonymousSettings[] = []
-// 本物のプラグインを包み、渡された設定だけを記録する
-const anonymous: AnonymousPlugin<ReturnType<typeof realAnonymous>> = (settings) => {
-  recorded.push(settings)
-  return realAnonymous(settings)
-}
-
-const base: SharedAuthOptionsDeps<undefined, ReturnType<typeof realAnonymous>> = {
+const base: SharedAuthOptionsDeps = {
   appName: 'demo',
   baseURL: 'https://demo.example',
   secret: 's3cret',
@@ -19,7 +11,13 @@ const base: SharedAuthOptionsDeps<undefined, ReturnType<typeof realAnonymous>> =
   database: undefined,
   randomBytes: (n) => new Uint8Array(n),
   onLinkAccount: async () => {},
-  anonymous,
+}
+
+/** 設定に入った anonymous プラグインの options（better-auth が保持しているもの）。 */
+const anonymousOptions = (options: ReturnType<typeof buildAuthOptions>) => {
+  const plugin = options.plugins[0]
+  expect(plugin?.id).toBe('anonymous')
+  return plugin?.options
 }
 
 describe('buildAuthOptions', () => {
@@ -56,25 +54,24 @@ describe('buildAuthOptions', () => {
   })
 
   test('omits basePath and the guest email domain unless the product sets them', () => {
-    recorded.length = 0
     const options = buildAuthOptions(base)
     expect('basePath' in options).toBe(false)
-    expect(recorded[0]).not.toHaveProperty('emailDomainName')
-    const generateName = recorded[0]?.generateName
+    const plugin = anonymousOptions(options)
+    expect(plugin).not.toHaveProperty('emailDomainName')
+    const generateName = plugin?.generateName
     expect(
       generateName === undefined ? undefined : Reflect.apply(generateName, undefined, [{}]),
     ).toBe(GUEST_DISPLAY_NAME)
   })
 
   test('passes basePath and the guest email domain through when set', () => {
-    recorded.length = 0
     const options = buildAuthOptions({
       ...base,
       basePath: '/api/auth',
       guestEmailDomain: 'guest.demo.invalid',
     })
     expect(options.basePath).toBe('/api/auth')
-    expect(recorded[0]?.emailDomainName).toBe('guest.demo.invalid')
+    expect(anonymousOptions(options)?.emailDomainName).toBe('guest.demo.invalid')
   })
 
   test('issues UserIds for users and base32 ids for everything else', () => {
