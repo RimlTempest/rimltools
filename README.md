@@ -85,15 +85,21 @@ bun run --cwd apps/qrcc/services/web db:local
 bun run --cwd apps/noter/services/web db:local
 
 bun run --cwd apps/qrcc/services/api build   # qrcc だけ。Rust の api Worker を 1 回ビルドしておく
-bun run dev:qrcc                   # noter は bun run dev:noter。どちらも http://localhost:5173
+bun run dev:qrcc                   # → https://qrcc.rimltools.localhost（noter は dev:noter、portal は dev:portal）
 ```
+
+dev サーバは [portless](https://github.com/vercel-labs/portless) を通して名前付きの URL で開く。
+ポートはぶつからず、URL は変わらない。**初回はプロキシが 443 番で待ち受けるための管理者権限と、
+ローカルの CA を信頼ストアに登録する許可を求められる。** Google ログインを試すときの手順、
+worktree での同時起動、トラブル時の確認は [`docs/local-dev.md`](docs/local-dev.md)。
 
 ローカルの Grafana LGTM に trace・ログ・Web Vitals を送って見るとき:
 
 ```bash
 docker compose -f ops/local/compose.yaml up -d   # docker compose が無ければ docker-compose
 bun scripts/ops/local-smoke.ts   # 受け取れているかを確かめる
-open http://127.0.0.1:3000
+bun run ops:local:aliases        # 初回だけ。Grafana と Faro の受け口に名前を付ける
+open https://grafana.rimltools.localhost
 ```
 
 `.dev.vars` に書く送り先は [`ops/local/README.md`](ops/local/README.md) にある。
@@ -113,12 +119,14 @@ bun run --cwd apps/noter e2e
 
 ## 困ったとき
 
-| 症状                                      | 対処                                                                                                                                               |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 依存を上げたのに古い版の型や挙動のまま    | bun の hoisted 配置は、不要になった入れ子の `node_modules`（例: `apps/*/features/*/node_modules`）を消さない。`bun run clean` で全部消して入れ直す |
-| `bun install` が公開 7 日未満の版で止まる | 第三者のパッケージは 7 日待つ設定（`bunfig.toml` の `minimumReleaseAge`）。待つか、理由を書いて除外する                                            |
-| e2e が別のサーバに当たる・途中で落ちる    | ポートは実行ごとに空きを取る。起動済みのサーバを使うなら `QRCC_E2E_PORT` / `NOTER_E2E_PORT` を指定する                                             |
-| qrcc の `dev` が起動しない                | 先に `bun run --cwd apps/qrcc/services/api build`（Rust の api Worker）                                                                            |
+| 症状                                      | 対処                                                                                                                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 依存を上げたのに古い版の型や挙動のまま    | bun の hoisted 配置は、不要になった入れ子の `node_modules`（例: `apps/*/features/*/node_modules`）を消さない。`bun run clean` で全部消して入れ直す     |
+| `bun install` が公開 7 日未満の版で止まる | 第三者のパッケージは 7 日待つ設定（`bunfig.toml` の `minimumReleaseAge`）。待つか、理由を書いて除外する                                                |
+| e2e が別のサーバに当たる・途中で落ちる    | ポートは実行ごとに空きを取る。起動済みのサーバを使うなら `QRCC_E2E_PORT` / `NOTER_E2E_PORT` を指定する                                                 |
+| qrcc の `dev` が起動しない                | 先に `bun run --cwd apps/qrcc/services/api build`（Rust の api Worker）                                                                                |
+| `*.rimltools.localhost` が開けない        | `bunx portless doctor` で確かめる。Safari は `bunx portless hosts sync`。CA の警告は `bunx portless trust`（[`docs/local-dev.md`](docs/local-dev.md)） |
+| ローカルで Google ログインが失敗する      | Google は `*.localhost` を受け付けない。`PORTLESS_TLD=local.riml4i.com` か `bun run dev:<tool>:oauth`（[`docs/local-dev.md`](docs/local-dev.md)）      |
 
 ## 開発の流れ
 

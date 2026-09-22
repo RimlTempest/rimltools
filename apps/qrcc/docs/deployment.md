@@ -70,7 +70,9 @@ bunx wrangler secret put GOOGLE_CLIENT_SECRET --config services/web/wrangler.jso
 Google OAuth の設定（Google Cloud Console）:
 
 - 承認済みリダイレクト URI: `https://qrcc.riml4i.com/api/auth/callback/google`
-- ローカル用（`vite dev`）: `http://localhost:5173/api/auth/callback/google`
+- ローカル用: `http://localhost:5173/api/auth/callback/google`（リポジトリ直下で `bun run dev:qrcc:oauth`。
+  Google は `*.localhost` を受け付けないので、ログインを試すときだけ portless を外して
+  `tools.json` の `localOAuthPort` で起動する。ルートの `docs/local-dev.md`）
 - ローカル用（`vite preview` / e2e）: `e2e/playwright.config.ts` が決めるポート
 
 **Google の資格情報が未設定の環境では、Google のボタンを出さずゲストのみになる**
@@ -104,7 +106,7 @@ DNS は Cloudflare が自動で CNAME を作る。
 
 ```bash
 bun run smoke                      # 本番（既定）
-bun run smoke http://localhost:5173/   # 任意のオリジン
+NODE_EXTRA_CA_CERTS=~/.portless/ca.pem bun run smoke https://qrcc.rimltools.localhost/   # 任意のオリジン
 ```
 
 HTML を取得し、そこから参照されている `/assets/*` を**全数** GET して、
@@ -123,7 +125,7 @@ HTML を取得し、そこから参照されている `/assets/*` を**全数** 
 
 ```bash
 bun run smoke:browser                                    # 本番
-QRCC_SMOKE_URL=http://localhost:5173 bun run smoke:browser   # 任意のオリジン
+QRCC_SMOKE_URL=https://qrcc.rimltools.localhost bun run smoke:browser   # 任意のオリジン
 ```
 
 HTTP 版が「配信されているか」までなのに対し、こちらは**JavaScript が動いた

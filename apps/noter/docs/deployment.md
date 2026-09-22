@@ -75,7 +75,9 @@ bunx wrangler secret put GOOGLE_CLIENT_SECRET --config services/web/wrangler.jso
 Google OAuth の設定（Google Cloud Console）:
 
 - 承認済みリダイレクト URI: `https://noter.riml4i.com/api/auth/callback/google`
-- ローカル用（`vite dev`）: `http://localhost:5173/api/auth/callback/google`
+- ローカル用: `http://localhost:5174/api/auth/callback/google`（リポジトリ直下で `bun run dev:noter:oauth`。
+  Google は `*.localhost` を受け付けないので、ログインを試すときだけ portless を外して
+  `tools.json` の `localOAuthPort` で起動する。ルートの `docs/local-dev.md`）
 
 **Google の資格情報が未設定の環境では、Google のボタンを出さずゲストのみになる。**
 開発中はそのままで困らない。
@@ -106,7 +108,7 @@ Google OAuth の設定（Google Cloud Console）:
 
 ```bash
 bun run smoke                         # 本番（既定）
-bun run smoke http://localhost:5173/  # 任意のオリジン
+NODE_EXTRA_CA_CERTS=~/.portless/ca.pem bun run smoke https://noter.rimltools.localhost/  # 任意のオリジン
 ```
 
 HTML を取得し、参照されている `/assets/*` を**全数** GET して 1 本でも
@@ -123,7 +125,7 @@ HTML を取得し、参照されている `/assets/*` を**全数** GET して 1
 
 ```bash
 bun run smoke:browser                                       # 本番
-NOTER_SMOKE_URL=http://localhost:5173 bun run smoke:browser  # 任意のオリジン
+NOTER_SMOKE_URL=https://noter.rimltools.localhost bun run smoke:browser  # 任意のオリジン
 ```
 
 こちらは**JavaScript が動いた結果**を見る（トップのハイドレーション・

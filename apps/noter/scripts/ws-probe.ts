@@ -5,8 +5,12 @@
  * ところまでを確かめる。plan 002 のスパイクで一番壊れやすい経路
  * （auxiliary Worker 間の DO binding と Hibernation API）がここに出る。
  *
- *   bun run dev            # 別のシェルで
- *   bun run scripts/ws-probe.ts 'ws://localhost:5173/ws/doc_…' 'better-auth.session_token=…'
+ *   bun run dev:noter      # 別のシェルで（リポジトリ直下。portless の https://noter.rimltools.localhost）
+ *   NODE_EXTRA_CA_CERTS=~/.portless/ca.pem \
+ *     bun run scripts/ws-probe.ts 'wss://noter.rimltools.localhost/ws/doc_…' '__Secure-better-auth.session_token=…'
+ *
+ * portless の外で動くので、portless の CA を NODE_EXTRA_CA_CERTS で渡す（docs/local-dev.md）。
+ * portless を使わない dev なら、`bun run dev` が表示した URL（ws://localhost:<port>/ws/…）を渡す。
  *
  * `/ws/` は本物の認可を通る（plan 004）。第 2 引数にメンバーのセッション Cookie を
  * 渡さないと 401 で切られる。Cookie はブラウザの開発者ツールから取る。
@@ -15,7 +19,8 @@ import * as decoding from 'lib0/decoding'
 import * as encoding from 'lib0/encoding'
 import * as Y from 'yjs'
 
-const DEFAULT_URL = 'ws://localhost:5173/ws/doc_000000000000000000000000'
+// portless の既定の名前（ルートの portless.json）。ポート番号は書かない
+const DEFAULT_URL = 'wss://noter.rimltools.localhost/ws/doc_000000000000000000000000'
 const TIMEOUT_MS = 10_000
 const MESSAGE_SYNC = 0
 const SYNC_STEP1 = 0
