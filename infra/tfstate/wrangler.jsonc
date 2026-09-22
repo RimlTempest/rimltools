@@ -5,7 +5,7 @@
   // Terraform / OpenTofu ではなく wrangler で直接デプロイする（README のブートストラップ）。
   "name": "rimltools-tfstate",
   "main": "./src/index.ts",
-  "compatibility_date": "2026-09-22",
+  "compatibility_date": "2026-08-31",
   "observability": { "enabled": true, "logs": { "invocation_logs": true } },
   // 公開は Custom Domain だけ。workers.dev と preview URL は閉じる（資格情報付きでも入口を増やさない）
   "workers_dev": false,
