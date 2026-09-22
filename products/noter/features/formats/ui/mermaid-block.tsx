@@ -25,6 +25,16 @@ type RenderState =
   | { readonly kind: 'rendered' }
   | { readonly kind: 'failed'; readonly message: string }
 
+/**
+ * mermaid を読み込む。サーバでは読まない。
+ *
+ * 描画は effect の中（＝クライアント）でしか起きないが、`import('mermaid')` が
+ * そのままだと SSR ビルドにも mermaid と依存（cytoscape・KaTeX・各図の実装）が
+ * 同梱され、Worker のバンドル（Free は 3 MiB）の 4 割を占めていた（docs/bundle.md）。
+ * `import.meta.env.SSR` はビルド時の定数なので、サーバ側ではこの import ごと消える。
+ */
+const loadMermaid = import.meta.env.SSR ? null : () => import('mermaid')
+
 const SVG_SANITIZE_OPTIONS = {
   USE_PROFILES: { html: true, svg: true, svgFilters: true },
   RETURN_DOM_FRAGMENT: true,
@@ -59,7 +69,8 @@ export const MermaidBlock = ({ index, source }: MermaidBlockProps) => {
     setState({ kind: 'rendering' })
     const run = async (): Promise<void> => {
       try {
-        const { default: mermaid } = await import('mermaid')
+        if (loadMermaid === null) return
+        const { default: mermaid } = await loadMermaid()
         mermaid.initialize({
           startOnLoad: false,
           securityLevel: 'strict',
