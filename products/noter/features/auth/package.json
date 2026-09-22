@@ -16,12 +16,12 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "1.7.3",
+    "@better-auth/drizzle-adapter": "1.7.5",
     "@noter/contract": "workspace:*",
     "@noter/shell": "workspace:*",
     "@noter/ui": "workspace:*",
     "@rimltools/auth": "workspace:*",
-    "better-auth": "1.7.3",
+    "better-auth": "1.7.5",
     "drizzle-orm": "0.45.2"
   },
   "devDependencies": {
