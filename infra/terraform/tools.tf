@@ -9,7 +9,7 @@ resource "cloudflare_zero_trust_access_policy" "staging" {
 
 # リリースの smoke（CI）が staging を Access 越しに叩くための service token。
 # 値は staging / preview の environment secret（CF_ACCESS_CLIENT_ID / _SECRET）に書く（github.tf）。
-# 有効期限は 1 年。更新は `terraform apply -replace=cloudflare_zero_trust_access_service_token.ci[0]`
+# 有効期限は 1 年。更新は `tofu apply -replace=cloudflare_zero_trust_access_service_token.ci[0]`
 # （README「service token の更新」、docs/runbooks/secret-leak.md）。
 resource "cloudflare_zero_trust_access_service_token" "ci" {
   count = length(var.access_emails) > 0 ? 1 : 0

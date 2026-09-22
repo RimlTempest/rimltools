@@ -128,7 +128,7 @@ variable "release_environments" {
 }
 
 variable "google_oauth_staging_json" {
-  description = "Google OAuth client for staging as JSON ({\"client_id\": \"...\", \"client_secret\": \"...\"}). Passed only to apply (production environment secret TF_APPLY_GOOGLE_OAUTH_STAGING). Empty leaves the Google keys out of APP_SECRETS."
+  description = "Google OAuth client for staging as JSON ({\"client_id\": \"...\", \"client_secret\": \"...\"}). Passed only to apply, from the SOPS-encrypted infra/secrets/apply.sops.yaml (TF_VAR_google_oauth_staging_json). Empty in plan."
   type        = string
   default     = ""
   sensitive   = true

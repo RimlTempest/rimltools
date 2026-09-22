@@ -2,7 +2,7 @@
 #
 # - どの secret が要るかは tools.json の appSecrets（public Worker が読むもの）
 # - BETTER_AUTH_SECRET はここで生成する。Google OAuth のクライアントは人が作り、apply のときだけ
-#   `production` environment の secret TF_APPLY_GOOGLE_OAUTH_STAGING（JSON）から渡す
+#   SOPS の infra/secrets/apply.sops.yaml（TF_VAR_google_oauth_staging_json）から apply にだけ渡す
 # - 値は staging / preview の environment secret `APP_SECRETS`（`{ "<tool>": { "<NAME>": "..." } }`）に
 #   書き、リリースが public Worker の版に `--secrets-file` で載せる（scripts/release/secrets.ts）
 # - 本番の environment には書かない。本番の Worker は自分の secret を持っていて、versions upload は

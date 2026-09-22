@@ -1,7 +1,7 @@
 # infra/grafana — Grafana Cloud（LGTM + IRM + Synthetic + Faro）を Terraform で管理する
 
 設計は `docs/adr/0008-observability.md`、使い方は `docs/observability-grafana.md`。
-state は HCP Terraform の workspace `rimltools-observability`（execution mode: Local）。
+state は自前の http backend（`infra/tfstate`）の `/states/rimltools-observability`。OpenTofu が暗号化してから送る（ADR-0009）。
 
 ## 管理しているもの
 
@@ -25,26 +25,23 @@ state は HCP Terraform の workspace `rimltools-observability`（execution mode
    新しく作らせたいなら `create_stack = true`、`stack_region` を指定する。
 2. **Cloud access policy を 2 つ作る**（Grafana Cloud Portal → Access Policies、realm は組織全体）。
    - `rimltools-terraform-apply`: `stacks:read` `stacks:write` `accesspolicies:read` `accesspolicies:write`
-     `accesspolicies:delete` `stack-service-accounts:write`（provider docs の要件）。トークンを 1 本発行する。
-   - `rimltools-terraform-plan`: `stacks:read` `accesspolicies:read`。トークンを 1 本発行する。
-3. **HCP Terraform** に workspace `rimltools-observability` を作る（Execution Mode: **Local**）。
-   `infra/terraform` と同じ organization でよい。既存の `TF_PLAN_API_TOKEN` / `TF_APPLY_API_TOKEN`
-   （team token）がこの workspace にも触れるように権限を足す。
-4. **GitHub に登録する**（`!` シェルは非対話なので、値をクリップボードに入れてから `pbpaste` で渡す）:
+     `accesspolicies:delete` `stack-service-accounts:write`（provider docs の要件）。トークンを 1 本発行し、
+     `infra/secrets/apply.sops.yaml` の `TF_VAR_grafana_cloud_access_policy_token` に入れる。
+   - `rimltools-terraform-plan`: `stacks:read` `accesspolicies:read`。トークンを 1 本発行し、
+     `infra/secrets/plan.sops.yaml` の同じキーに入れる。
+3. **state**: `infra/terraform` と同じ tfstate Worker・同じ資格情報・同じ暗号化パスフレーズを使う（パスだけ違う）。
+   追加の作業は無い。
+4. **通知先を GitHub の repository variable に入れる**（秘密ではない）:
 
    ```bash
-   # plan 用（読み取り専用、repository secret）
-   pbpaste | gh secret set TF_PLAN_GRAFANA_CLOUD_TOKEN -R RimlTempest/rimltools
-   # apply 用（書き込み、production environment の secret。main からの apply だけが読める）
-   pbpaste | gh secret set TF_APPLY_GRAFANA_CLOUD_TOKEN -R RimlTempest/rimltools -e production
-   # 通知先（どちらか。IRM を使うなら Grafana のユーザー名、使わないならメール）
+   # どちらか。IRM を使うなら Grafana のユーザー名、使わないならメール
    gh variable set GRAFANA_ONCALL_USERNAMES -R RimlTempest/rimltools --body '["riml"]'
-   gh variable set GRAFANA_ALERT_EMAILS -R RimlTempest/rimltools --body '["you@example.com"]'
+   gh variable set GRAFANA_ALERT_EMAILS -R RimlTempest/rimltools --body '["<あなたのメールアドレス>"]'
    ```
 
-   GitHub のトークン（`TF_PLAN_GITHUB_TOKEN` / `TF_APPLY_GITHUB_TOKEN`）は `infra/terraform` と共用。
+   GitHub のトークンは `infra/terraform` と共用（secrets ファイルの `TF_VAR_github_token`）。
 
-5. **初回 plan を確認する**（PR の `terraform grafana plan` コメント）。見る点:
+5. **初回 plan を確認する**（PR の `tofu plan (infra/grafana)` コメント）。見る点:
    - `grafana_cloud_stack` を作ろうとしていない（`create_stack = false` のとき）
    - `grafana_notification_policy` が既存のポリシーを置き換えること（UI で作ったルートは消える）
 6. **Application Observability の metrics generation を有効にする**（Terraform では設定できない）:
@@ -76,9 +73,9 @@ state は HCP Terraform の workspace `rimltools-observability`（execution mode
 
 ## 3. 既知の制約
 
-- **plan 用トークンでも state は読める。** state には Terraform 用 service account のトークンと、
+- **plan 鍵でも state は読める**（plan は state を復号する必要があるため、plan.sops.yaml にも暗号化パスフレーズがある）。 state には Terraform 用 service account のトークンと、
   各 access policy のトークンが入る（`infra/terraform` と同じ構造上の限界）。緩和策は fork の PR に
-  secret が渡らないことと、漏洩時に `terraform apply -replace=...` で作り直すこと（docs/runbooks/secret-leak.md）。
+  secret が渡らないことと、漏洩時に `tofu apply -replace=...` で作り直すこと（docs/runbooks/secret-leak.md）。
 - **checkov は `alerts.tf` を読めない**（属性名 `for` を解析できず、黙ってスキップする）。
   アラート定義なのでセキュリティ上の検査対象は含まない。
 - **notification policy はスタックに 1 つ。** UI で足したルートは次の apply で消える。
