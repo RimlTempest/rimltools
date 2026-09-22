@@ -99,14 +99,13 @@ RimlTools のセキュリティ対策を、**攻撃が通る経路の順に並�
 
 除外は必ず **理由** と、可能なら **期限** を書く。期限が切れた除外は再び検出されるので、そのときに見直す。
 
-| 除外                                                    | 理由                                                                               | 期限                     | 場所                                 |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------ | ------------------------------------ |
-| RUSTSEC-2024-0436（paste）                              | unmaintained の情報扱い。image → exr → pulp 経由の proc-macro でビルド時のみ       | 2026-12-22               | `.github/osv-scanner.toml`           |
-| RUSTSEC-2026-0192（ttf-parser）                         | unmaintained の情報扱い。rxing → imageproc → ab_glyph 経由。フォント描画は使わない | 2026-12-22               | `.github/osv-scanner.toml`           |
-| gitleaks: `abcdefghjkmnpqrstvwxyz0123456789`            | qrcc の共有トークンのテスト用固定値                                                | —                        | `.gitleaks.toml`                     |
-| gitleaks: `.agents/skills/` `.claude/skills/`           | 取り込んだスキルの説明文にある架空の悪い例                                         | —                        | `.gitleaks.toml`                     |
-| zizmor / pin 検査: `qrcc-deploy.yml` `noter-deploy.yml` | 段階リリースの workflow（C レーン）に置き換える予定の旧デプロイ                    | 置き換え時に削除         | `.github/zizmor.yml`、`security.yml` |
-| `overrides.sharp = 0.35.4`                              | GHSA-rgj7-g3m4-5g8c。miniflare が 0.35.2 に完全固定しているため上書き              | miniflare の更新時に削除 | ルート `package.json`                |
+| 除外                                          | 理由                                                                               | 期限                     | 場所                       |
+| --------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------ | -------------------------- |
+| RUSTSEC-2024-0436（paste）                    | unmaintained の情報扱い。image → exr → pulp 経由の proc-macro でビルド時のみ       | 2026-12-22               | `.github/osv-scanner.toml` |
+| RUSTSEC-2026-0192（ttf-parser）               | unmaintained の情報扱い。rxing → imageproc → ab_glyph 経由。フォント描画は使わない | 2026-12-22               | `.github/osv-scanner.toml` |
+| gitleaks: `abcdefghjkmnpqrstvwxyz0123456789`  | qrcc の共有トークンのテスト用固定値                                                | —                        | `.gitleaks.toml`           |
+| gitleaks: `.agents/skills/` `.claude/skills/` | 取り込んだスキルの説明文にある架空の悪い例                                         | —                        | `.gitleaks.toml`           |
+| `overrides.sharp = 0.35.4`                    | GHSA-rgj7-g3m4-5g8c。miniflare が 0.35.2 に完全固定しているため上書き              | miniflare の更新時に削除 | ルート `package.json`      |
 
 ## 検査が空振りしていた件（2026-09、markuplint）
 
