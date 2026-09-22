@@ -2,18 +2,16 @@ import { describe, expect, test } from 'bun:test'
 import { anonymous as realAnonymous } from 'better-auth/plugins'
 
 import { buildAuthOptions, GUEST_DISPLAY_NAME, GUEST_SESSION_DAYS } from './auth-options.ts'
-import type { AnonymousPlugin, SharedAuthOptionsDeps } from './auth-options.ts'
+import type { AnonymousPlugin, AnonymousSettings, SharedAuthOptionsDeps } from './auth-options.ts'
 
-type AnonymousArgs = Parameters<AnonymousPlugin>[0]
-
-const recorded: AnonymousArgs[] = []
+const recorded: AnonymousSettings[] = []
 // 本物のプラグインを包み、渡された設定だけを記録する
-const anonymous: AnonymousPlugin = (options) => {
-  if (options !== undefined) recorded.push(options)
-  return realAnonymous(options)
+const anonymous: AnonymousPlugin<ReturnType<typeof realAnonymous>> = (settings) => {
+  recorded.push(settings)
+  return realAnonymous(settings)
 }
 
-const base: SharedAuthOptionsDeps = {
+const base: SharedAuthOptionsDeps<undefined, ReturnType<typeof realAnonymous>> = {
   appName: 'demo',
   baseURL: 'https://demo.example',
   secret: 's3cret',
