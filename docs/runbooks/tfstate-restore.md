@@ -1,7 +1,7 @@
 # state を前の版に戻す（tfstate）
 
 OpenTofu の state（`infra/terraform` / `infra/grafana`）が壊れた・誤って上書きされたときの手順。
-state の置き場所は Worker `rimltools-tfstate` の D1 で、**直近 20 版**を残している（`infra/tfstate/README.md`）。
+state の置き場所は Worker `rimltools-tfstate` の D1 で、**直近 20 版と、作成から 7 日以内の版（どちらかを満たせば残す）**を残している（`infra/tfstate/README.md`「版の保持」）。
 Worker には版の一覧や復元のエンドポイントを作っていない（入口を増やさないため）。wrangler で D1 を直接操作する。
 
 > 復元の前に、進行中の plan / apply が無いことを Actions で確かめる。apply の途中なら終わるのを待つ。
@@ -51,7 +51,7 @@ bunx wrangler d1 execute rimltools-tfstate --remote --command \
 ## 補足
 
 - 次に書き込まれた版は、戻した版の次の番号ではなく「いちばん大きい version + 1」になる（上書きされた版も履歴に残る）
-- 20 版より前には戻せない。長く残したい節目（大きな移行の前など）は、手元に暗号化されたまま保存しておく:
+- 7 日より前で、かつ新しい順に 21 番目より古い版には戻せない。長く残したい節目（大きな移行の前など）は、手元に暗号化されたまま保存しておく:
   `curl -s -u '<READ_USER>:<READ_PASSWORD>' https://tfstate.tools.riml4i.com/states/rimltools-production > state-backup.json`
   （暗号化されたままなので、パスフレーズが無ければ読めない）
 
@@ -73,7 +73,7 @@ Worker の許可リスト（`infra/tfstate/src/core/paths.ts`）からもその�
 
 ## 6. 最後の手段: D1 Time Travel
 
-§3 で戻せないとき（残っている 20 版がすべて悪い、表そのものが壊れた、誤って §5 を実行した）は、
+§3 で戻せないとき（残っている版がすべて悪い、表そのものが壊れた、誤って §5 を実行した）は、
 D1 の Time Travel で**データベース全体**を過去の時点に戻す。Free プランでも過去 7 日の任意の時点に戻せる。
 
 ```bash
@@ -88,3 +88,24 @@ bunx wrangler d1 time-travel restore rimltools-tfstate --timestamp='2026-09-22T0
   §4 の手順で plan を出し、実際のリソースとの差分を確かめてから apply する
 - 戻すと、restore の直前の状態を指すブックマークが出力される。やり直したいときはそれで戻せる
 - 7 日より前には戻せない。長く残したい節目は §補足の方法で手元に保存する
+
+## 7. 版の上限で書き込みを拒否された（507、アラート `tfstate-retention-limit`）
+
+7 日以内の版が 500 を超えた、または残す版の合計が 1 GiB を超えた。**普段の運用ではまず起きない**ので、
+書き込み用の資格情報で上書きを連打されている（漏洩）と疑う。この間、正規の plan / apply も止まる。
+
+1. `docs/runbooks/secret-leak.md` §2-3 で、書き込み用の資格情報を**先に**替える（連打を止める）
+2. §1 の SQL で版を並べ、どの時点から見覚えの無い版が続いているかを確かめる（`created` と `serial` を見る）
+3. §3 で最後の正しい版に戻す
+4. 見覚えの無い版を消して上限の下に戻す（新しい版から順に、戻した版より後のものだけ）:
+
+   ```bash
+   bunx wrangler d1 execute rimltools-tfstate --remote --command \
+     "DELETE FROM state_chunks WHERE path = '/states/<name>' AND version > <戻した version>;
+      DELETE FROM state_versions WHERE path = '/states/<name>' AND version > <戻した version>;"
+   ```
+
+5. §4 で plan を出して確かめる
+
+正規の理由で版が増えすぎた（大きな移行で 1 日に何百回も apply した など）ときは、§1 で確かめたうえで、
+7 日より前の不要な版を 4 と同じ SQL で消す。上限の値そのものは `infra/tfstate/src/core/retention.ts` にある。

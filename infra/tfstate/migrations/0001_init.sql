@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS states (
   updated_at INTEGER NOT NULL
 );
 
--- 版の一覧（直近 N 版だけ残す）。serial / lineage は暗号化されていない OpenTofu のメタデータ
+-- 版の一覧（直近 20 版と 7 日以内の版を残す。どれを消すかは src/core/retention.ts）。serial / lineage は暗号化されていない OpenTofu のメタデータ
 CREATE TABLE IF NOT EXISTS state_versions (
   path TEXT NOT NULL,
   version INTEGER NOT NULL,
