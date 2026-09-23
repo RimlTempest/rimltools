@@ -31,6 +31,8 @@ const page = (title: string, description: string, body: string): string =>
     '<meta name="color-scheme" content="light dark">',
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}">`,
+    // riml-ds のトークン（--rd-*）。styles.css の別名がこれを参照するので先に読む
+    '<link rel="stylesheet" href="/tokens.css">',
     '<link rel="stylesheet" href="/styles.css">',
     '<link rel="icon" href="/favicon.svg" type="image/svg+xml">',
     '</head>',
