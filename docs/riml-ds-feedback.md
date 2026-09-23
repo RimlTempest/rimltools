@@ -1,9 +1,18 @@
 # riml-ds への改善提案
 
-rimltools で riml-ds 0.3.0 に追従したときに見つかった点。riml-ds のリポジトリに持ち込むためのメモで、
-このリポジトリからは riml-ds に変更を加えていない。方針は [ADR-0013](adr/0013-riml-ds-adoption.md)。
+rimltools で riml-ds 0.3.0 に追従したときに見つかった点。方針は [ADR-0013](adr/0013-riml-ds-adoption.md)。
 
-## 1. 公開パッケージに `workspace:*` が残っている（最優先）
+**1 と 2 は riml-ds 0.3.1（2026-09-23）で解決済み。** 残っているのは 3 だけ。
+
+## 1. 公開パッケージに `workspace:*` が残っている（最優先）— 解決済み
+
+> **riml-ds 0.3.1 で解決。** publish の直前に `workspace:` を実際の版へ書き換える仕組み
+> （`scripts/prepare-publish.ts`。peer は `^<版>`）、tarball に `workspace:` が残っていたら落ちる検査
+> （`scripts/check-packed.ts`）、公開物をリポジトリ外の新しいプロジェクトに入れて描画まで確かめる smoke
+> （`scripts/install-smoke.ts`）が入った。壊れていた 0.2.0 / 0.3.0 は npm で非推奨にしてある。
+> **これで ADR-0013 の段階 4（部品の置き換え）に進める。**
+>
+> 以下は当時の記録。
 
 npm に公開された次のパッケージの `peerDependencies` に、monorepo の中でしか意味を持たない `workspace:*` が残っている。
 
@@ -29,7 +38,12 @@ npm でも `workspace:` プロトコルは解決できないので、どのパ�
 - CI に「`npm pack` した tarball の package.json に `workspace:` が含まれていたら失敗」の検査を足す。
 - 直した版を出したら、rimltools は ADR-0013 の段階 4（部品の置き換え）に進める。
 
-## 2. 来歴（provenance）付きで公開する
+## 2. 来歴（provenance）付きで公開する — 解決済み
+
+> **riml-ds 0.3.0 以降で解決。** GitHub Actions の trusted publishing（OIDC、`environment: npm`）で
+> 公開していて、`npm view @rimltempest/riml-ds-tokens@0.3.1 dist.attestations` で来歴を確認できる。
+>
+> 以下は当時の記録。
 
 0.2.0 / 0.3.0 は npm の provenance 無しで公開されている（riml-ds の docs に「初回の手動公開は `--provenance=false`」とある）。
 GitHub Actions からの trusted publishing（OIDC）で `--provenance` 付きにすると、利用側は

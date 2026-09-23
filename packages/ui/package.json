@@ -14,7 +14,7 @@
     "lint:html": "node ../../tools/markuplint/run.ts --config ../../.markuplintrc.json 'src/**/*.tsx'"
   },
   "dependencies": {
-    "@rimltempest/riml-ds-css": "^0.3.0"
+    "@rimltempest/riml-ds-css": "^0.3.1"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "20.14.5",
