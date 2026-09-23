@@ -36,6 +36,13 @@ describe('renderIndex', () => {
     expect(html).toContain('<link rel="stylesheet" href="/styles.css">')
   })
 
+  test('reads riml-ds のトークンを styles.css より先に読む（別名が解決できるように）', () => {
+    const tokens = html.indexOf('<link rel="stylesheet" href="/tokens.css">')
+    const styles = html.indexOf('<link rel="stylesheet" href="/styles.css">')
+    expect(tokens).toBeGreaterThan(-1)
+    expect(tokens).toBeLessThan(styles)
+  })
+
   test('links every listed tool to its host and hides unlisted ones', () => {
     expect(html).toContain('<a href="https://qrcc.tools.example.com/">')
     expect(html).toContain('<a href="https://noter.tools.example.com/">')

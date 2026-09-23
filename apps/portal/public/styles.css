@@ -1,17 +1,19 @@
 /*
- * RimlTools portal. Plain CSS, light/dark via light-dark().
- * Contrast (WCAG): text ≥ 15:1, links ≥ 7:1 in both schemes (AAA).
+ * RimlTools portal. Plain CSS.
+ * 色・角丸は riml-ds のトークン（tokens.css の --rd-*）を使う。ここの --bg などは
+ * その別名で、値を直接持たない（riml-ds の移行の段階 1。docs/migration.md）。
+ * ライト / ダークの切り替えも AAA（本文 7:1・非文字 3:1）も riml-ds 側が保証する。
  */
 :root {
   color-scheme: light dark;
-  --bg: light-dark(#fbfbfd, #121316);
-  --surface: light-dark(#ffffff, #1c1d22);
-  --border: light-dark(#d5d6dc, #3a3b42);
-  --text: light-dark(#1b1b1f, #e8e8ec);
-  --muted: light-dark(#4a4b53, #b9bac2);
-  --link: light-dark(#0842a0, #a8c7fa);
-  --focus: light-dark(#0842a0, #a8c7fa);
-  --radius: 12px;
+  --bg: var(--rd-color-surface-default);
+  --surface: var(--rd-color-surface-raised);
+  --border: var(--rd-color-border-default);
+  --text: var(--rd-color-text-default);
+  --muted: var(--rd-color-text-muted);
+  --link: var(--rd-color-accent-text);
+  --focus: var(--rd-color-focus-ring);
+  --radius: var(--rd-radius-md);
 }
 
 * {

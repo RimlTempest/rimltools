@@ -6,6 +6,7 @@
  */
 
 import { cp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 
 import { loadTools } from '../../../scripts/lib/tools.ts'
 import { renderIndex, renderNotFound } from '../src/render.ts'
@@ -24,6 +25,11 @@ const input = toPortalInput(registry.value)
 await rm(dist, { recursive: true, force: true })
 await mkdir(dist, { recursive: true })
 await cp(new URL('public/', root), dist, { recursive: true })
+// riml-ds のトークンは npm から取る（public/ にコピーを置かない＝版がずれない）
+await cp(
+  fileURLToPath(import.meta.resolve('@rimltempest/riml-ds-tokens/tokens.css')),
+  fileURLToPath(new URL('tokens.css', dist)),
+)
 await writeFile(new URL('index.html', dist), renderIndex(input))
 await writeFile(new URL('404.html', dist), renderNotFound(input))
 console.log(`portal: ${input.tools.filter((t) => t.listed).length} tools → dist/`)

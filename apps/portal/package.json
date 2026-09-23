@@ -11,5 +11,8 @@
     "fmt:check": "oxfmt --check .",
     "lint": "oxlint --type-aware",
     "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@rimltempest/riml-ds-tokens": "^0.3.1"
   }
 }

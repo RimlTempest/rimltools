@@ -266,6 +266,9 @@
     },
     "apps/portal": {
       "name": "@rimltools/portal",
+      "dependencies": {
+        "@rimltempest/riml-ds-tokens": "^0.3.1",
+      },
     },
     "apps/qrcc": {
       "name": "@rimltools/qrcc",
