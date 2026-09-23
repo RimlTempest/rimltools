@@ -2,40 +2,64 @@
   "name": "rimltools",
   "private": true,
   "workspaces": [
-    "products/*",
-    "products/*/apps/*",
-    "products/*/features/*",
-    "products/*/shared/*",
-    "products/*/e2e"
+    "apps/*",
+    "apps/*/services/*",
+    "apps/*/features/*",
+    "apps/*/shared/*",
+    "apps/*/e2e",
+    "packages/*",
+    "infra/tfstate"
   ],
   "type": "module",
   "scripts": {
-    "check": "bun run check:qrcc && bun run check:noter",
-    "check:qrcc": "bun run --cwd products/qrcc check",
-    "check:noter": "bun run --cwd products/noter check",
-    "test": "bun run test:qrcc && bun run test:noter",
-    "test:qrcc": "bun run --cwd products/qrcc test",
-    "test:noter": "bun run --cwd products/noter test",
-    "typecheck": "bun run --cwd products/qrcc typecheck && bun run --cwd products/noter typecheck",
-    "build": "bun run --cwd products/qrcc build && bun run --cwd products/noter build",
-    "dev:qrcc": "bun run --cwd products/qrcc dev",
-    "dev:noter": "bun run --cwd products/noter dev",
+    "check": "bun run check:root && bun run check:qrcc && bun run check:noter && bun run check:portal && bun run check:tfstate",
+    "check:root": "oxfmt --check . && bun scripts/check-no-js.ts && oxlint --type-aware && tsc -p tsconfig.json && bun scripts/check-versions.ts && tsc --build packages/ui packages/shell packages/sw && bun run --cwd packages/ui lint:html && bun run --cwd packages/shell lint:html",
+    "check:qrcc": "bun run --cwd apps/qrcc check",
+    "check:noter": "bun run --cwd apps/noter check",
+    "check:portal": "bun run --cwd apps/portal check",
+    "test": "bun run test:root && bun run test:qrcc && bun run test:noter && bun run test:portal && bun run test:tfstate",
+    "test:root": "bun test ./scripts ./tools/oxlint-plugin-rimltools ./packages --path-ignore-patterns='packages/ui/**' --path-ignore-patterns='packages/shell/**' && bun run --cwd packages/ui test && bun run --cwd packages/shell test",
+    "test:qrcc": "bun run --cwd apps/qrcc test",
+    "test:noter": "bun run --cwd apps/noter test",
+    "test:portal": "bun run --cwd apps/portal test",
+    "typecheck": "bun run --cwd apps/qrcc typecheck && bun run --cwd apps/noter typecheck",
+    "build": "bun run --cwd apps/qrcc build && bun run --cwd apps/noter build && bun run --cwd apps/portal build",
+    "lint": "oxlint --type-aware",
+    "fmt": "oxfmt .",
+    "fmt:check": "oxfmt --check .",
+    "dev:qrcc": "cd apps/qrcc/services/web && portless",
+    "dev:qrcc:oauth": "bun scripts/dev/oauth.ts qrcc",
+    "dev:noter": "cd apps/noter/services/web && portless",
+    "dev:noter:oauth": "bun scripts/dev/oauth.ts noter",
+    "dev:portal": "cd apps/portal && portless",
+    "ops:local:aliases": "portless alias grafana.rimltools 3000 && portless alias faro.rimltools 12347",
+    "ops:local:aliases:remove": "portless alias --remove grafana.rimltools && portless alias --remove faro.rimltools",
+    "audit": "bun audit --audit-level=high",
+    "wt": "./scripts/wt.sh",
+    "archify": "./scripts/archify.sh",
     "prepare": "lefthook install",
-    "postinstall": "bun run --cwd products/qrcc postinstall:markuplint && bun run --cwd products/noter postinstall:markuplint",
-    "clean": "find . -maxdepth 5 -name node_modules -type d -prune -exec rm -rf {} + && bun install"
+    "postinstall": "bun install --cwd tools/markuplint --frozen-lockfile",
+    "clean": "find . -maxdepth 6 -name node_modules -type d -not -path './.git/*' -not -path './.claude/worktrees/*' -prune -exec rm -rf {} + && bun install",
+    "check:tfstate": "bun run --cwd infra/tfstate check",
+    "test:tfstate": "bun run --cwd infra/tfstate test"
   },
   "devDependencies": {
-    "@types/bun": "1.4.0",
-    "lefthook": "2.1.12",
-    "oxfmt": "0.65.0",
-    "oxlint": "1.80.0",
+    "@socketsecurity/bun-security-scanner": "1.1.2",
+    "@types/bun": "1.4.2",
+    "lefthook": "2.1.14",
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
     "oxlint-tsgolint": "7.0.2001",
+    "portless": "0.15.6",
     "typescript": "7.0.2",
-    "wrangler": "4.127.1"
+    "wrangler": "4.131.2"
+  },
+  "overrides": {
+    "sharp": "0.35.4"
   },
   "engines": {
     "bun": ">=1.4.0",
     "node": ">=26"
   },
-  "packageManager": "bun@1.4.0"
+  "packageManager": "bun@1.4.2"
 }

@@ -1,0 +1,8 @@
+{
+  "apps": {
+    "apps/qrcc/services/web": { "name": "qrcc.rimltools" },
+    "apps/noter/services/web": { "name": "noter.rimltools" },
+    "apps/portal": { "name": "portal.rimltools" }
+  },
+  "turbo": false
+}

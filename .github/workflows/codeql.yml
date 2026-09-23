@@ -1,0 +1,45 @@
+name: CodeQL
+
+# SAST（docs/security.md の「CI」層）。public リポジトリは無料。
+# 結果は Security タブのコードスキャンに載る。high 以上の新規アラートは PR のチェックで止まる
+# （リポジトリ設定の Code scanning → Protection rules。Terraform で管理する）。
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  schedule:
+    - cron: '41 3 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # どれもビルド不要（build-mode: none）で解析できる
+        language: [javascript-typescript, actions, rust]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+          # 生成物（archify の HTML など）を解析対象から外す
+          config-file: ./.github/codeql/codeql-config.yml
+      - uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        with:
+          category: /language:${{ matrix.language }}

@@ -1,0 +1,81 @@
+name: Deploy production
+
+# main に入った瞬間が本番リリース（ADR-0002）。変更のあったツールだけを段階的に出す（ADR-0003）:
+#   upload → 0%（blue/green 検証）→ canary（tools.json の steps）→ 100% → smoke
+# 失敗は自動で直前の版へ戻る。判定に足るトラフィックが無ければ割合を保ったまま止まるので、
+# このワークフローを手動実行（action = resume / promote / rollback）して決着させる。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: ツール名（tools.json の name）
+        type: string
+        required: true
+      action:
+        description: resume = canary を続ける / promote = 指定版を 100% / rollback = 直前の版へ戻す
+        type: choice
+        options: [rollback, promote, resume]
+        required: true
+      worker:
+        description: Worker 名（resume は必須。promote は省略時 public Worker、rollback は省略時 全 Worker）
+        type: string
+        default: ''
+      version:
+        description: 版 ID（resume / promote は必須、rollback は省略時 直前の安定版）
+        type: string
+        default: ''
+
+permissions: {}
+
+jobs:
+  plan:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tools: ${{ steps.changed.outputs.tools }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          cache: true
+          install_args: bun
+      - id: changed
+        name: 変更のあったツールを選ぶ
+        run: RELEASE_BASE="$BEFORE" RELEASE_HEAD="$AFTER" bun scripts/release/release.ts changed
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+
+  release:
+    needs: plan
+    # Terraform が environment を用意するまでは RELEASE_ENVIRONMENTS に入らず、ここで止まる（docs/release.md）
+    if: github.event_name == 'push' && needs.plan.outputs.tools != '[]' && contains(fromJSON(vars.RELEASE_ENVIRONMENTS || '[]'), 'production')
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJSON(needs.plan.outputs.tools) }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/release.yml
+    with:
+      tool: ${{ matrix.tool }}
+      environment: production
+
+  manual:
+    if: github.event_name == 'workflow_dispatch' && contains(fromJSON(vars.RELEASE_ENVIRONMENTS || '[]'), 'production')
+    permissions:
+      contents: read
+    uses: ./.github/workflows/release.yml
+    with:
+      tool: ${{ inputs.tool }}
+      environment: production
+      action: ${{ inputs.action }}
+      worker: ${{ inputs.worker }}
+      version: ${{ inputs.version }}

@@ -1,0 +1,12 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "types": ["node"],
+    "composite": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true
+  },
+  "include": ["**/*.ts", "playwright.config.ts"]
+}

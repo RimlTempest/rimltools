@@ -1,0 +1,25 @@
+{
+  "name": "@rimltools/auth",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RimlTools 共通のサインイン（Better Auth: Google + ゲスト + アカウント昇格）の部品。Actor の型、設定の組み立て、セッション → Actor、D1 の入口、ブラウザ側の操作。better-auth は peer 依存で、版は全 workspace で揃える（scripts/check-versions.ts が CI で確かめる）。",
+  "type": "module",
+  "exports": {
+    "./contract": "./src/contract/index.ts",
+    "./server": "./src/server/index.ts",
+    "./ui": "./src/ui/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@rimltools/contract": "workspace:*"
+  },
+  "devDependencies": {
+    "better-auth": "1.7.5"
+  },
+  "peerDependencies": {
+    "better-auth": "1.7.5"
+  }
+}

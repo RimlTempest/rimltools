@@ -1,0 +1,125 @@
+/*
+ * デザイントークン。riml-ds（@rimltempest/riml-ds-tokens、themes/noter）の別名を張る層
+ * （docs/adr/0013-riml-ds-adoption.md の段階 2）。新しく書く CSS は --rd-* を直接使ってよい。
+ * コンポーネントは今までどおり --noter-* を参照する（名前は変えない）。
+ *
+ * コントラストは WCAG 2.2 AAA（本文 7:1 / 大きい文字 4.5:1 / UI 境界 3:1）を
+ * ライト・ダーク両方で満たす。値の正は riml-ds 側にあり、themes/noter を当てた状態で
+ * 本文 15.5:1（ライト）/ 18.9:1（ダーク）、補助テキスト 7.4:1 以上、フォーカス 5.9:1 以上を確かめた。
+ */
+:root {
+  color-scheme: light dark;
+
+  /* --- セマンティックカラー ------------------------------------------- */
+  --noter-surface: var(--rd-color-surface-default);
+  --noter-surface-raised: var(--rd-color-surface-raised);
+  --noter-surface-sunken: var(--rd-color-surface-sunken);
+  /*
+   * ポインタを載せたときの面。sunken を流用しない — ダークでは地の面より
+   * 暗くなり「押し込まれた」ように見えてしまう。
+   */
+  --noter-surface-hover: var(--rd-color-surface-hover);
+  /*
+   * エディタの地。surface より僅かに沈めて「書く場所」を面で示す（riml-ds に対応が無い）。
+   * ライトでは差を付けず紙のままにし、ダークでは地と sunken の中間に置く。
+   */
+  --noter-surface-editor: light-dark(
+    var(--rd-color-surface-default),
+    color-mix(in oklch, var(--rd-color-surface-default), var(--rd-color-surface-sunken))
+  );
+
+  --noter-text: var(--rd-color-text-default);
+  /* 補助テキストも 7:1 を割らない明度。「薄いグレー」で妥協しない */
+  --noter-text-muted: var(--rd-color-text-muted);
+
+  --noter-accent: var(--rd-color-accent-default);
+  /* ホバーは明度だけを動かす。色相を変えると別の意味の色に見える */
+  --noter-accent-hover: var(--rd-color-accent-hover);
+  --noter-on-accent: var(--rd-color-text-on-accent);
+  --noter-danger: var(--rd-color-status-danger-default);
+  --noter-danger-hover: var(--rd-color-status-danger-hover);
+  --noter-on-danger: var(--rd-color-text-on-status);
+  /* 再接続中・オフライン。danger と区別が付くよう色相の離れた warning を使う */
+  --noter-warning: var(--rd-color-status-warning-default);
+  --noter-success: var(--rd-color-status-success-default);
+
+  /*
+   * --- presence（参加者の色）-------------------------------------------
+   * riml-ds に対応が無いので noter が持つ。
+   * 同じ人には常に同じ色を割り当てる（actorId のハッシュ % 8）。
+   * **色だけで人を識別させない。** 必ず名前を併記する（DESIGN.md §2.2）。
+   * 名前ラベルの文字（--noter-on-presence）と 4.5:1 以上、riml-ds の面（default / raised）と
+   * 3:1 以上になる明度に揃えてある（最小: ライト 4.5:1 / ダーク 6.7:1）。
+   */
+  --noter-presence-0: light-dark(oklch(0.55 0.17 25), oklch(0.78 0.14 25));
+  --noter-presence-1: light-dark(oklch(0.55 0.15 60), oklch(0.8 0.13 70));
+  --noter-presence-2: light-dark(oklch(0.5 0.13 140), oklch(0.78 0.14 145));
+  --noter-presence-3: light-dark(oklch(0.5 0.12 190), oklch(0.8 0.11 195));
+  --noter-presence-4: light-dark(oklch(0.5 0.16 250), oklch(0.8 0.12 250));
+  --noter-presence-5: light-dark(oklch(0.5 0.18 300), oklch(0.8 0.13 300));
+  --noter-presence-6: light-dark(oklch(0.55 0.17 340), oklch(0.8 0.13 340));
+  --noter-presence-7: light-dark(oklch(0.45 0.05 265), oklch(0.75 0.04 265));
+  --noter-on-presence: light-dark(oklch(1 0 0), oklch(0.17 0.02 265));
+
+  --noter-border: var(--rd-color-border-default);
+  --noter-border-strong: var(--rd-color-border-strong);
+  --noter-focus-ring: var(--rd-color-focus-ring);
+
+  /* --- 寸法 ------------------------------------------------------------ */
+  --noter-space-1: var(--rd-space-1);
+  --noter-space-2: var(--rd-space-2);
+  --noter-space-3: var(--rd-space-3);
+  --noter-space-4: var(--rd-space-4);
+  --noter-space-6: var(--rd-space-6);
+  --noter-space-8: var(--rd-space-8);
+
+  --noter-radius: var(--rd-radius-md);
+  --noter-radius-sm: var(--rd-radius-sm);
+  /*
+   * 入れ子の角丸は「外側 = 内側 + padding」でないと目に留まる。
+   * カードは padding（space-4）の中に半径 --noter-radius の中身を入れるので、その和にする。
+   */
+  --noter-radius-lg: calc(var(--rd-radius-md) + var(--rd-space-4));
+
+  /* AAA 2.5.5: クリック対象は 44x44 CSS px 以上 */
+  --noter-target-min: var(--rd-sizing-target-min);
+  /* AAA 2.4.13: フォーカスインジケータは 2px 以上 */
+  --noter-focus-width: var(--rd-focus-ring-width);
+  --noter-focus-offset: var(--rd-focus-ring-offset);
+
+  /*
+   * AAA 1.4.8: 本文は 80 文字以内。riml-ds の --rd-sizing-measure-max（80ch）は上限なので、
+   * 長文を書き続けるエディタでは読みやすさを優先して 70ch に留める。
+   */
+  --noter-measure: 70ch;
+
+  /*
+   * 型スケール。役割で名前を付けて、ここ以外に文字サイズを書かない。
+   * riml-ds の型は画面幅に追従する（clamp）。見出しは段が下がるほど小さくなる。
+   */
+  --noter-text-sm: var(--rd-type-small-font-size);
+  --noter-text-base: var(--rd-type-body-font-size);
+  --noter-text-lg: var(--rd-type-heading-3-font-size);
+  --noter-text-xl: var(--rd-type-heading-2-font-size);
+  --noter-text-2xl: var(--rd-type-heading-1-font-size);
+
+  /* 等幅は同じ rem でも大きく見えるので、エディタ本文だけ一段落とす */
+  --noter-text-code: var(--rd-type-mono-font-size);
+  /* エディタは長い行を読み続けるので、本文と同じ行間にする（riml-ds の mono は 1.5） */
+  --noter-line-code: var(--rd-line-height-body);
+
+  --noter-font-sans: var(--rd-font-family-sans);
+  --noter-font-mono: var(--rd-font-family-mono);
+
+  /* ヘッダとツールバーの高さ。ワークスペースは残り（100dvb − この 2 つ）。noter のレイアウト固有 */
+  --noter-header-h: 3.5rem;
+  --noter-toolbar-h: 3rem;
+}
+
+/* ユーザーの明示選択は OS 設定を上書きする */
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}

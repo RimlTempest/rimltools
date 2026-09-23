@@ -1,0 +1,25 @@
+{
+  "name": "@qrcc/generate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./contract": "./contract/index.ts",
+    "./ui": "./ui/index.ts",
+    "./ui/generate.css": "./ui/generate.css",
+    "./ui/wiring": "./ui/generate-wiring.route.tsx"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@qrcc/contract": "workspace:*",
+    "@qrcc/ui": "workspace:*",
+    "@qrcc/wasm": "workspace:*",
+    "@qrcc/webmcp": "workspace:*",
+    "@rimltools/telemetry": "workspace:*",
+    "@tanstack/react-router": "1.170.36",
+    "@tanstack/react-start": "1.168.54"
+  }
+}

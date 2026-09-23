@@ -1,0 +1,83 @@
+name: ops
+
+# SRE の定期ジョブ（ADR-0007、docs/slo.md）。
+# - synthetic: 30 分ごとに本番を外から叩く。2 回連続で失敗したら incident Issue
+# - report:    6 時間ごとに SLO / エラーバジェット / 無料枠を集計してダッシュボード Issue を更新
+#
+# repo variables:
+#   OPS_ISSUES=true        Issue の起票・更新を有効にする（未設定なら結果を job summary に出すだけ）
+#   OPS_HOST_OVERRIDES     監視先の上書き（JSON）。新ドメインへの切替前は旧ホストを指定する
+# environment `ops`（読み取り専用。production の secret は使わない）:
+#   CLOUDFLARE_ANALYTICS_TOKEN  Account Analytics: Read だけのトークン
+#   CLOUDFLARE_ACCOUNT_ID
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 実行するジョブ
+        type: choice
+        options: [synthetic, report, both]
+        default: both
+
+permissions: {}
+
+jobs:
+  synthetic:
+    if: >-
+      github.event.schedule == '*/30 * * * *' ||
+      (github.event_name == 'workflow_dispatch' && inputs.job != 'report')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: ops-synthetic
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # 依存パッケージは不要（scripts/ops は bun の標準 API だけで動く）。bun だけ入れる
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          install_args: bun
+          cache: true
+      - name: synthetic 監視
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPS_ISSUES: ${{ vars.OPS_ISSUES }}
+          OPS_HOST_OVERRIDES: ${{ vars.OPS_HOST_OVERRIDES }}
+        run: bun run scripts/ops/synthetic-cli.ts
+
+  report:
+    if: >-
+      github.event.schedule == '17 */6 * * *' ||
+      (github.event_name == 'workflow_dispatch' && inputs.job != 'synthetic')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ops
+    concurrency:
+      group: ops-report
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          install_args: bun
+          cache: true
+      - name: SLO / 無料枠レポート
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPS_ISSUES: ${{ vars.OPS_ISSUES }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_ANALYTICS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: bun run scripts/ops/report-cli.ts

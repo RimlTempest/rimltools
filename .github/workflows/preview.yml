@@ -1,0 +1,130 @@
+name: Preview
+
+# develop 宛ての PR ごとに、staging の public Worker へ版を upload して preview URL を出す
+# （deploy はしない。誰の配信割合も変わらない）。URL は PR にコメントする。
+# - DB と下流 Worker は staging のもの。PR で足した D1 migration は develop に入るまで適用されない
+# - fork からの PR と Dependabot の PR には secret を渡さないので走らせない（ADR-0006）
+on:
+  pull_request:
+    branches: [develop]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  plan:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tools: ${{ steps.changed.outputs.tools }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          cache: true
+          install_args: bun
+      - id: changed
+        run: RELEASE_BASE="$BASE" RELEASE_HEAD="$HEAD" bun scripts/release/release.ts changed
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+
+  preview:
+    needs: plan
+    if: needs.plan.outputs.tools != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: preview
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJSON(needs.plan.outputs.tools) }}
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      TOOL: ${{ matrix.tool }}
+      RELEASE_VARS: ${{ toJSON(vars) }}
+    steps:
+      # Terraform が preview environment を用意するまでは、ビルドせずに黙って抜ける
+      - id: ready
+        name: preview environment が設定済みか
+        run: |
+          if [ -z "$RIMLTOOLS_ENV" ]; then
+            echo "::notice::preview environment is not configured yet (apply infra/terraform). Skipping."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          RIMLTOOLS_ENV: ${{ vars.RIMLTOOLS_ENV }}
+      - if: steps.ready.outputs.ok == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - if: steps.ready.outputs.ok == 'true'
+        id: tool
+        run: |
+          echo "rust=$(jq -r --arg t "$TOOL" '.tools[] | select(.name == $t) | .rust // false' tools.json)" >> "$GITHUB_OUTPUT"
+          echo "path=$(jq -r --arg t "$TOOL" '.tools[] | select(.name == $t) | .path' tools.json)" >> "$GITHUB_OUTPUT"
+      - if: steps.ready.outputs.ok == 'true'
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          cache: true
+          install_args: ${{ steps.tool.outputs.rust == 'true' && 'node bun rust' || 'node bun' }}
+      - if: steps.ready.outputs.ok == 'true' && steps.tool.outputs.rust == 'true'
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: ${{ steps.tool.outputs.path }}
+      - if: steps.ready.outputs.ok == 'true' && steps.tool.outputs.rust == 'true'
+        run: |
+          cargo install worker-build --locked
+          cargo install wasm-pack --locked
+      - if: steps.ready.outputs.ok == 'true'
+        run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
+      - if: steps.ready.outputs.ok == 'true'
+        run: bun run --cwd "$TOOL_PATH" build
+        env:
+          TOOL_PATH: ${{ steps.tool.outputs.path }}
+      - if: steps.ready.outputs.ok == 'true'
+        name: preview 版を upload
+        id: upload
+        run: |
+          bun scripts/release/release.ts prepare --tool "$TOOL"
+          bun scripts/release/release.ts preview --tool "$TOOL" --alias "pr-$PR"
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GRAFANA_OTLP_HEADERS: ${{ secrets.GRAFANA_OTLP_HEADERS }}
+          # staging / preview のアプリ secret（Terraform が書く。本番の environment には無い）。
+          # public Worker の版に --secrets-file で載せる（scripts/release/secrets.ts）
+          APP_SECRETS: ${{ secrets.APP_SECRETS }}
+      - if: steps.ready.outputs.ok == 'true'
+        name: PR に URL をコメント（同じコメントを更新）
+        run: |
+          marker="<!-- preview:$TOOL -->"
+          body="$marker
+          **$TOOL** の preview: $URL
+          （staging の DB と下流 Worker を使う。コミット $SHA）"
+          existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -1)
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$existing" -f body="$body" >/dev/null
+          else
+            gh api -X POST "repos/$REPO/issues/$PR/comments" -f body="$body" >/dev/null
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.upload.outputs.url }}
+          SHA: ${{ github.event.pull_request.head.sha }}

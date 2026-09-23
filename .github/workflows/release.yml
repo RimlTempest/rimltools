@@ -1,0 +1,185 @@
+name: Release (reusable)
+
+# 1 つのツールを 1 つの環境（staging / production）へ出す。呼び出し元は
+# deploy-staging.yml / deploy-production.yml。段階の中身は scripts/release（ADR-0003）:
+#   build → D1 migration（expand）→ upload → 0% で blue/green 検証 → canary → 100% → smoke
+# どこかで落ちれば直前の安定版を 100% に戻して失敗する。
+#
+# secrets と vars は GitHub environment（Terraform が設定。ADR-0005）から読む。
+# secrets は使うステップにだけ渡す（依存のビルドスクリプトに見せない）。
+on:
+  workflow_call:
+    inputs:
+      tool:
+        type: string
+        required: true
+      environment:
+        description: staging | production
+        type: string
+        required: true
+      action:
+        description: rollout | resume | promote | rollback
+        type: string
+        default: rollout
+      worker:
+        type: string
+        default: ''
+      version:
+        type: string
+        default: ''
+
+permissions: {}
+
+jobs:
+  release:
+    name: ${{ inputs.tool }} → ${{ inputs.environment }} (${{ inputs.action }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    environment:
+      name: ${{ inputs.environment }}
+    # 同じツール・同じ環境のリリースは直列にする。途中で止めると割合が中途半端に残るので取り消さない
+    concurrency:
+      group: release-${{ inputs.tool }}-${{ inputs.environment }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    env:
+      TOOL: ${{ inputs.tool }}
+      ACTION: ${{ inputs.action }}
+      WORKER: ${{ inputs.worker }}
+      VERSION: ${{ inputs.version }}
+      ENVIRONMENT: ${{ inputs.environment }}
+      RELEASE_VARS: ${{ toJSON(vars) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: ツールの情報を読む
+        id: tool
+        run: |
+          jq -e --arg t "$TOOL" '.tools[] | select(.name == $t)' tools.json >/dev/null \
+            || { echo "::error::unknown tool: $TOOL"; exit 1; }
+          q() { jq -r --arg t "$TOOL" ".tools[] | select(.name == \$t) | $1" tools.json; }
+          building=false
+          case "$ACTION" in rollout|resume) building=true ;; esac
+          cli=$(q .smoke.cli)
+          browser=$(q .smoke.browser)
+          # ブラウザ smoke がツールの CLI smoke と同じなら（portal）二度は走らせない
+          [ "$browser" = "$cli" ] && browser=''
+          {
+            echo "rust=$(q '.rust // false')"
+            echo "path=$(q .path)"
+            echo "e2e=$(q .smoke.e2ePackage)"
+            echo "smoke_cli=$cli"
+            echo "smoke_browser=$browser"
+            echo "build=$building"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          cache: true
+          # Rust（wasm）を使うツールだけ rust まで入れる
+          install_args: ${{ steps.tool.outputs.rust == 'true' && steps.tool.outputs.build == 'true' && 'node bun rust' || 'node bun' }}
+
+      - if: steps.tool.outputs.rust == 'true' && steps.tool.outputs.build == 'true'
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: ${{ steps.tool.outputs.path }}
+          # 疎通確認だけが落ちた回でも、10 分超かかる Rust ビルドのキャッシュは捨てない
+          cache-on-failure: true
+
+      - if: steps.tool.outputs.rust == 'true' && steps.tool.outputs.build == 'true'
+        name: wasm のビルドツールを入れる
+        run: |
+          cargo install worker-build --locked
+          cargo install wasm-pack --locked
+
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
+
+      - name: 公開ホストを決める（tools.ts の規則。apex のポータルを含む）
+        id: host
+        run: RIMLTOOLS_ENV="$ENVIRONMENT" bun scripts/release/release.ts host --tool "$TOOL"
+
+      # wasm(ブラウザ) → 下流 Worker → web の順はプロダクトの build スクリプトが持つ
+      - if: steps.tool.outputs.build == 'true'
+        name: ビルド
+        run: bun run --cwd "$TOOL_PATH" build
+        env:
+          TOOL_PATH: ${{ steps.tool.outputs.path }}
+
+      - if: steps.tool.outputs.build == 'true'
+        name: 環境向けに wrangler.json を書き換える
+        run: bun scripts/release/release.ts prepare --tool "$TOOL"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - if: inputs.action == 'rollout'
+        name: D1 マイグレーション（expand）を適用
+        run: bun scripts/release/release.ts migrate --tool "$TOOL"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: 段階リリース（${{ inputs.action }}）
+        id: release
+        run: |
+          set -- "$ACTION" --tool "$TOOL"
+          [ -n "$WORKER" ] && set -- "$@" --worker "$WORKER"
+          [ -n "$VERSION" ] && set -- "$@" --version "$VERSION"
+          bun scripts/release/release.ts "$@"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          # テレメトリの OTLP ヘッダ。送り先がある版にだけ --secrets-file で載せる（docs/ops/telemetry.md）
+          GRAFANA_OTLP_HEADERS: ${{ secrets.GRAFANA_OTLP_HEADERS }}
+          # staging / preview のアプリ secret（Terraform が書く。本番の environment には無い）。
+          # public Worker の版に --secrets-file で載せる（scripts/release/secrets.ts）
+          APP_SECRETS: ${{ secrets.APP_SECRETS }}
+
+      # 100% になったあと、プロダクト自身の smoke で「配信」と「実ブラウザで動くこと」を見る。
+      # staging は Cloudflare Access の内側なので、ここは本番だけ（staging は release.ts の smoke が
+      # service token 付きで見ている）。
+      - if: inputs.environment == 'production' && (inputs.action == 'rollout' || inputs.action == 'resume' || inputs.action == 'promote')
+        name: 疎通確認 1/2（プロダクトの smoke）
+        # コマンドはリポジトリ内の tools.json の値（smoke.cli）。プロダクト直下で URL を付けて実行する
+        run: cd "$TOOL_PATH" && $SMOKE_CLI "https://$HOST/"
+        env:
+          TOOL_PATH: ${{ steps.tool.outputs.path }}
+          HOST: ${{ steps.host.outputs.host }}
+          SMOKE_CLI: ${{ steps.tool.outputs.smoke_cli }}
+
+      - if: inputs.environment == 'production' && steps.tool.outputs.smoke_browser != '' && (inputs.action == 'rollout' || inputs.action == 'resume' || inputs.action == 'promote')
+        name: 疎通確認 2/2（実ブラウザ）
+        run: |
+          # playwright.prod.config.ts は <TOOL>_SMOKE_URL を読む
+          export "$(echo "$TOOL" | tr '[:lower:]-' '[:upper:]_')_SMOKE_URL=https://$HOST"
+          bun run --filter "$E2E" install-browsers
+          cd "$TOOL_PATH" && $SMOKE_BROWSER
+        env:
+          TOOL_PATH: ${{ steps.tool.outputs.path }}
+          HOST: ${{ steps.host.outputs.host }}
+          E2E: ${{ steps.tool.outputs.e2e }}
+          SMOKE_BROWSER: ${{ steps.tool.outputs.smoke_browser }}
+
+      # 100% の後で smoke だけが落ちた場合も、直前の版に戻す
+      - if: failure() && steps.release.outcome == 'success' && inputs.action != 'rollback'
+        name: 失敗したので直前の版に戻す
+        run: bun scripts/release/release.ts rollback --tool "$TOOL"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - if: failure()
+        name: 疎通確認の証跡を残す（落ちたときだけ）
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-${{ inputs.tool }}-${{ inputs.environment }}-${{ github.run_attempt }}
+          path: |
+            ${{ steps.tool.outputs.path }}/e2e/test-results
+            .release/
+          if-no-files-found: ignore
+          retention-days: 7

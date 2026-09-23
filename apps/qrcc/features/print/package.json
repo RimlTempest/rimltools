@@ -1,0 +1,23 @@
+{
+  "name": "@qrcc/print",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./contract": "./contract/index.ts",
+    "./core": "./core/index.ts",
+    "./ui": "./ui/index.ts",
+    "./ui/print.css": "./ui/print.css"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@qrcc/contract": "workspace:*",
+    "@qrcc/generate": "workspace:*",
+    "@qrcc/ui": "workspace:*",
+    "@qrcc/wasm": "workspace:*",
+    "@tanstack/react-router": "1.170.36"
+  }
+}

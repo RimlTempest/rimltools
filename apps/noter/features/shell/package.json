@@ -1,0 +1,34 @@
+{
+  "name": "@noter/shell",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./ui": "./ui/index.ts",
+    "./ui/shell.css": "./ui/shell.css"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@noter/contract": "workspace:*",
+    "@noter/ui": "workspace:*",
+    "@rimltools/shell": "workspace:*",
+    "@rimltools/telemetry": "workspace:*"
+  },
+  "devDependencies": {
+    "@tanstack/react-router": "1.170.36",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-router": "^1.170.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  }
+}

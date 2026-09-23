@@ -1,0 +1,62 @@
+name: Deploy staging
+
+# develop に入った変更を staging（<tool>-staging.tools.riml4i.com）へ出す（ADR-0002）。
+# 流れは本番と同じ（0% 検証 → 100%）。canary の段と bake は無し。
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: 出すツール（空なら全部）
+        type: string
+        default: ''
+
+permissions: {}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tools: ${{ steps.changed.outputs.tools }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          cache: true
+          install_args: bun
+      - id: changed
+        name: 変更のあったツールを選ぶ
+        run: |
+          if [ -n "$INPUT_TOOL" ]; then
+            echo "tools=[\"$INPUT_TOOL\"]" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT" = workflow_dispatch ]; then
+            bun scripts/release/release.ts changed
+          else
+            RELEASE_BASE="$BEFORE" RELEASE_HEAD="$AFTER" bun scripts/release/release.ts changed
+          fi
+        env:
+          INPUT_TOOL: ${{ inputs.tool }}
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+
+  release:
+    needs: plan
+    # Terraform が environment を用意するまでは RELEASE_ENVIRONMENTS に入らず、ここで止まる（docs/release.md）
+    if: needs.plan.outputs.tools != '[]' && contains(fromJSON(vars.RELEASE_ENVIRONMENTS || '[]'), 'staging')
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJSON(needs.plan.outputs.tools) }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/release.yml
+    with:
+      tool: ${{ matrix.tool }}
+      environment: staging

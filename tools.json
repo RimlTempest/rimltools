@@ -1,0 +1,129 @@
+{
+  "$comment": "RimlTools の台帳。CI・Terraform・監視・ポータルはこのファイルを読む（ADR-0001）。",
+  "domain": "tools.riml4i.com",
+  "zone": "riml4i.com",
+  "tools": [
+    {
+      "name": "qrcc",
+      "title": "QR・バーコード",
+      "description": "QR・バーコードの生成 / 読み取り / 管理 / 印刷",
+      "path": "apps/qrcc",
+      "subdomain": "qrcc",
+      "legacyHosts": ["qrcc.riml4i.com"],
+      "appSecrets": ["BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+      "fixedDevPort": 5173,
+      "rust": true,
+      "services": [
+        {
+          "name": "qrcc-api",
+          "role": "internal",
+          "buildConfig": "services/web/dist/qrcc_api/wrangler.json"
+        },
+        {
+          "name": "qrcc-web",
+          "role": "public",
+          "buildConfig": "services/web/dist/server/wrangler.json"
+        }
+      ],
+      "d1": [
+        {
+          "name": "qrcc",
+          "binding": "DB",
+          "migrationsConfig": "services/api/wrangler.jsonc"
+        }
+      ],
+      "release": {
+        "mode": "canary",
+        "steps": [10, 50, 100],
+        "bakeMinutes": 10
+      },
+      "slo": {
+        "availability": 99.5,
+        "windowDays": 28
+      },
+      "smoke": {
+        "cli": "bun run smoke",
+        "browser": "bun run smoke:browser",
+        "e2ePackage": "@qrcc/e2e"
+      }
+    },
+    {
+      "name": "noter",
+      "title": "noter",
+      "description": "リアルタイム共同編集エディタ",
+      "path": "apps/noter",
+      "subdomain": "noter",
+      "legacyHosts": ["noter.riml4i.com"],
+      "appSecrets": ["BETTER_AUTH_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+      "fixedDevPort": 5174,
+      "rust": false,
+      "services": [
+        {
+          "name": "noter-sync",
+          "role": "internal",
+          "durableObjects": true,
+          "buildConfig": "services/web/dist/noter_sync/wrangler.json"
+        },
+        {
+          "name": "noter-web",
+          "role": "public",
+          "buildConfig": "services/web/dist/server/wrangler.json"
+        }
+      ],
+      "d1": [
+        {
+          "name": "noter",
+          "binding": "DB",
+          "migrationsConfig": "services/web/wrangler.jsonc"
+        }
+      ],
+      "release": {
+        "mode": "canary",
+        "steps": [10, 50, 100],
+        "bakeMinutes": 10
+      },
+      "slo": {
+        "availability": 99.5,
+        "windowDays": 28
+      },
+      "smoke": {
+        "cli": "bun run smoke",
+        "browser": "bun run smoke:browser",
+        "e2ePackage": "@noter/e2e"
+      }
+    },
+    {
+      "name": "portal",
+      "title": "RimlTools",
+      "description": "ツール一覧（tools.riml4i.com）",
+      "path": "apps/portal",
+      "subdomain": "portal",
+      "apex": true,
+      "listed": false,
+      "legacyHosts": [],
+      "rust": false,
+      "services": [
+        {
+          "name": "rimltools-portal",
+          "role": "public",
+          "buildConfig": "wrangler.jsonc"
+        }
+      ],
+      "d1": [],
+      "release": {
+        "mode": "big-bang",
+        "steps": [100],
+        "bakeMinutes": 0
+      },
+      "slo": {
+        "availability": 99.5,
+        "windowDays": 28
+      },
+      "smoke": {
+        "cli": "bun run smoke",
+        "browser": "bun run smoke",
+        "e2ePackage": "@rimltools/portal"
+      }
+    }
+  ]
+}

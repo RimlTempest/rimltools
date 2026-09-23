@@ -1,9 +1,14 @@
 # rimltools toolchain (reproducible across worktrees / CI)
-# rust は products/qrcc の engine（wasm）用。
+# rust は apps/qrcc の engine（wasm）用。
 [tools]
-node = "26.8.1"
-bun = "1.4.0"
-rust = { version = "1.98.0", components = "rustfmt,clippy", targets = "wasm32-unknown-unknown" }
+node = "26.8.2"
+bun = "1.4.2"
+# opentofu / tflint は infra/terraform・infra/grafana 用、sops / age は infra/secrets 用（ADR-0005 / ADR-0009）
+opentofu = "1.12.6"
+tflint = "0.64.0"
+sops = "3.13.3"
+age = "1.3.2"
+rust = { version = "1.98.1", components = "rustfmt,clippy", targets = "wasm32-unknown-unknown" }
 
 [env]
 # Homebrew may put an older lefthook first on PATH; git hooks must use the

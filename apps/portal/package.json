@@ -1,0 +1,21 @@
+{
+  "name": "@rimltools/portal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run scripts/build.ts",
+    "test": "bun test ./src ./scripts",
+    "check": "bun run fmt:check && bun run lint && bun run typecheck",
+    "dev": "bun run build && rimltools-wrangler-dev",
+    "smoke": "bun run scripts/smoke.ts",
+    "fmt:check": "oxfmt --check .",
+    "lint": "oxlint --type-aware",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@rimltempest/riml-ds-tokens": "^0.3.1"
+  },
+  "devDependencies": {
+    "@rimltools/devtools": "workspace:*"
+  }
+}

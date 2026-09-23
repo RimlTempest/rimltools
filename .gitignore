@@ -2,3 +2,31 @@ node_modules/
 .DS_Store
 .claude/worktrees/
 *.tsbuildinfo
+dist/
+
+# scripts/release が環境ごとに書き出す wrangler 設定（docs/release.md）
+apps/*/wrangler.staging.json
+apps/*/wrangler.production.json
+apps/*/wrangler.preview.json
+.release/
+
+# terraform（infra/terraform）
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+*.auto.tfvars
+infra/terraform/tfplan
+infra/terraform/plan.txt
+infra/grafana/tfplan
+infra/grafana/plan.txt
+
+# tsconfig.base.json は emitDeclarationOnly なので、outDir の無い型検査が .ts の隣に .d.ts を出すことがある。
+# 手書きの型宣言（*/css.d.ts・wasm-url.d.ts など）以外の .d.ts はコミットしない（plan 001 段階 3）
+scripts/**/*.d.ts
+apps/portal/scripts/*.d.ts
+apps/portal/src/*.d.ts
+
+# Service Worker は src/sw/sw.ts から生成する（scripts/build-sw.ts）
+apps/*/services/web/public/sw.js

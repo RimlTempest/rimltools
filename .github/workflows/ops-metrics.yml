@@ -1,0 +1,45 @@
+name: Ops metrics
+
+# Cloudflare の GraphQL Analytics（Workers / D1）を Grafana Cloud（Mimir）へ転送する（ADR-0008）。
+# Workers は metrics を OTLP で export できないため、5 分ごとにここで補う。
+# - 取得はリクエストを消費しない（GraphQL）。Workers 100k req/日 の予算に影響しない
+# - GitHub の cron は遅れることがあるので、各回で直近 3 つの確定した 5 分窓を送り直す（冪等）
+# - 資格情報（environment `ops`、infra/terraform と infra/grafana が入れる）が無ければ何もしない
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: observability-push
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  push-metrics:
+    name: Cloudflare → Grafana metrics
+    if: vars.GRAFANA_METRICS_PUSH_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: ops
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          install_args: bun
+          cache: true
+      # 外部パッケージを使わないスクリプトなので bun install はしない
+      - name: 転送
+        env:
+          CLOUDFLARE_ANALYTICS_TOKEN: ${{ secrets.CLOUDFLARE_ANALYTICS_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GRAFANA_METRICS_PUSH_URL: ${{ secrets.GRAFANA_METRICS_PUSH_URL }}
+          GRAFANA_METRICS_PUSH_USER: ${{ secrets.GRAFANA_METRICS_PUSH_USER }}
+          GRAFANA_METRICS_PUSH_TOKEN: ${{ secrets.GRAFANA_METRICS_PUSH_TOKEN }}
+          D1_DATABASE_NAMES: ${{ vars.D1_DATABASE_NAMES }}
+        run: bun scripts/ops/push-metrics.ts

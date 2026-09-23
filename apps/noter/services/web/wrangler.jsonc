@@ -1,0 +1,41 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "noter-web",
+  "main": "./src/server.ts",
+  "compatibility_date": "2026-09-14",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "workers_dev": false,
+  // Custom Domain（noter.tools.riml4i.com）は Terraform の持ち物（ルート ADR-0005）。
+  // wrangler の routes に書くと versions deploy とは別経路で更新され、Terraform と取り合いになる。
+  // 環境ごとのホスト名と APP_ORIGIN は scripts/release が書き換えて出す（docs/release.md）。
+  // DocumentRoom は noter-sync（auxiliary Worker）が持つ。
+  // noter-sync は routes を持たないので、DO へは noter-web からしか届かない（ADR-0002）。
+  "durable_objects": {
+    "bindings": [
+      { "name": "DOCUMENT_ROOM", "class_name": "DocumentRoom", "script_name": "noter-sync" },
+    ],
+  },
+  // database_id は本番 D1 `noter`（2026-09-07 作成、APAC）。ローカル dev は Miniflare が別 DB を持つ。
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "noter",
+      "database_id": "91947d9a-2361-476b-b53e-fbb23e3b4c67",
+      "migrations_dir": "./migrations",
+    },
+  ],
+  // CF_VERSION_METADATA は span の cloudflare.worker.version_id に使う（段階リリースの版と突き合わせる）
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+
+  "vars": {
+    "APP_ORIGIN": "https://noter.riml4i.com",
+    // テレメトリ（docs/ops/telemetry.md）。空なら無効。本番・staging の値はリリース時に入れる。
+    // OTEL_EXPORTER_OTLP_HEADERS は secret（wrangler secret put）。
+    "OTEL_SERVICE_NAME": "noter-web",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "",
+    "FARO_URL": "",
+  },
+  // BETTER_AUTH_SECRET / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET は wrangler secret put で設定する。
+  // R2 と KV は使わない（ADR-0009）。
+}

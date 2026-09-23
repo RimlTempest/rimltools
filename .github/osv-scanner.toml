@@ -1,0 +1,12 @@
+# osv-scanner の除外（docs/security.md）。除外するときは理由と期限（ignoreUntil）を必ず書く。
+# 期限が切れると再び検出されるので、そのときに状況を見直す。
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0436"
+ignoreUntil = 2026-12-22
+reason = "paste は unmaintained の情報扱い（脆弱性ではない）。image → exr → pulp 経由の proc-macro で、ビルド時にしか動かない。上流（image）の置き換え待ち。"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0192"
+ignoreUntil = 2026-12-22
+reason = "ttf-parser は unmaintained の情報扱い（脆弱性ではない）。rxing → imageproc → ab_glyph 経由で、qrcc はフォント描画を使わない。上流（rxing / imageproc）の置き換え待ち。"

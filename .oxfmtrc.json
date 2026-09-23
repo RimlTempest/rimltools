@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "arrowParens": "always",
+  "experimentalOperatorPosition": "start",
+  "ignorePatterns": [
+    "**/dist/**",
+    // Service Worker の生成物（scripts/build-sw.ts）
+    "**/public/sw.js",
+    "**/node_modules/**",
+    "**/.output/**",
+    "**/target/**",
+    "**/routeTree.gen.ts",
+    "**/worker-configuration.d.ts",
+    "**/*.gen.ts",
+    "infra/**/.terraform/**",
+    ".agents/skills/**",
+    ".claude/skills/**",
+    "skills-lock.json",
+    "apps/*/.agents/skills/**",
+    "apps/*/.claude/skills/**",
+    "apps/*/docs/architecture/*.html",
+    "infra/secrets/*.sops.yaml",
+    "scripts/lib/fixtures/**",
+    "docs/architecture/*.html"
+  ]
+}

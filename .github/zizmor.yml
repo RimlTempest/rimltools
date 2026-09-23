@@ -1,0 +1,9 @@
+# zizmor の設定（docs/security.md）。無効化するときは必ず理由を書く。
+rules:
+  # GitHub は 2026-07 から `uses: $/...`（self-repository 構文）に対応したが、
+  # actionlint 1.7.12 がまだ解釈できずエラーにする。両方の検査を CI の必須に
+  # しているため当面は `./...` を使う。actionlint が対応したら有効に戻して移行する。
+  # なお `./` の reusable workflow 呼び出しはジョブ開始時に解決されるため、
+  # 同じジョブ内で後から clone したファイルに差し替えられる経路は無い。
+  self-repository:
+    disable: true

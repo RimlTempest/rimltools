@@ -1,0 +1,19 @@
+/*
+ * 共有の reset。ブラウザ差を潰すのは riml-ds（@rimltempest/riml-ds-css/reset.css）に任せる
+ * （docs/adr/0013-riml-ds-adoption.md の段階 3）。
+ *
+ * riml-ds の reset は自分で `@layer rd.reset { … }` に包まれている。アプリはこのファイルを
+ * `@import '@rimltools/ui/reset.css' layer(reset)` で読むので、中身は reset 層の中の
+ * 副層（reset.rd.reset）に入り、base や rd.components より前に並ぶ。
+ */
+@import '@rimltempest/riml-ds-css/reset.css';
+
+/*
+ * riml-ds の reset に無い分の補い。class を付けたリスト（ナビ・一覧など）は、行頭記号と
+ * 字下げを部品の側で決める。class の無いリスト（本文中の箇条書き）は既定のまま残す。
+ * riml-ds に入れてほしい点として docs/riml-ds-feedback.md に書いてある。
+ */
+:where(ul, ol):where([class]) {
+  padding-inline-start: 0;
+  list-style: none;
+}

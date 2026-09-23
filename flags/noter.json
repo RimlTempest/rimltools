@@ -1,0 +1,6 @@
+{
+  "$schema": "./schema.json",
+  "tool": "noter",
+  "flags": [],
+  "remove": []
+}

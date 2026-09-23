@@ -1,0 +1,29 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "qrcc-api",
+  "main": "build/worker/shim.mjs",
+  "compatibility_date": "2026-09-14",
+  "observability": { "enabled": true },
+
+  // ── ここに "routes" を追加してはならない（ADR-0002）─────────────────
+  // この Worker はインターネットに公開しない。qrcc-web からの service
+  // binding のみが到達経路であり、認可は qrcc-web が一元的に行う。
+  // 公開すると認可が二重化し、権限昇格の穴になる。CI の guard が検査する。
+  //
+  // workers_dev は**既定が true**。routes を書かなくても
+  // `qrcc-api.<subdomain>.workers.dev` で公開されてしまうので、明示的に切る。
+  // 実際に一度これで公開され、/rpc/health が外から 200 を返した。
+  // ────────────────────────────────────────────────────────────────
+  "workers_dev": false,
+
+  "build": { "command": "bun run build" },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "qrcc",
+      "database_id": "69c356fa-5d2f-4bfc-aa62-c528d1a73dcf",
+      "migrations_dir": "migrations",
+    },
+  ],
+}

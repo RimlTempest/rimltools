@@ -1,0 +1,125 @@
+name: CI
+
+# プロダクトの CI（product-ci.yml を tool ごとに）を、変更があったものだけ呼び出す入口。
+# ruleset の required check は最後の `gate` だけにする。paths で絞ったワークフローを
+# 直接 required にすると、走らなかった PR がマージできなくなるため（ADR-0002）。
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  # 手動実行では全プロダクトを走らせる
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      qrcc: ${{ steps.filter.outputs.qrcc }}
+      noter: ${{ steps.filter.outputs.noter }}
+      portal: ${{ steps.filter.outputs.portal }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          # ルートの共通設定が変わったら全プロダクトを走らせる
+          filters: |
+            root: &root
+              - 'package.json'
+              - 'bun.lock'
+              - 'bunfig.toml'
+              - 'mise.toml'
+              - 'tools.json'
+              - 'packages/**'
+              - 'tools/**'
+              - 'tsconfig.base.json'
+              - '.agents/skills/**'
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/product-ci.yml'
+              - '.oxlintrc.json'
+              - '.oxfmtrc.json'
+            qrcc:
+              - *root
+              - 'apps/qrcc/**'
+            noter:
+              - *root
+              - 'apps/noter/**'
+            portal:
+              - *root
+              - 'apps/portal/**'
+
+  # scripts/・packages/・tools.json などプロダクト外のコード。軽いので毎回走らせる
+  root:
+    name: root (fmt / lint / typecheck / test)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with: { cache: true }
+      - run: bun "$GITHUB_WORKSPACE/scripts/ci/bun-install.ts"
+      - run: bun run check:root
+      - run: bun run test:root
+      # infra/tfstate（OpenTofu の state 置き場の Worker、ADR-0009）も軽いので毎回
+      - run: bun run check:tfstate
+      - run: bun run test:tfstate
+
+  qrcc:
+    needs: changes
+    if: needs.changes.outputs.qrcc == 'true' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: ./.github/workflows/product-ci.yml
+    with:
+      tool: qrcc
+
+  noter:
+    needs: changes
+    if: needs.changes.outputs.noter == 'true' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: ./.github/workflows/product-ci.yml
+    with:
+      tool: noter
+
+  portal:
+    needs: changes
+    if: needs.changes.outputs.portal == 'true' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: ./.github/workflows/product-ci.yml
+    with:
+      tool: portal
+
+  # required check はこれ 1 本。スキップ（変更なし）は合格、失敗・取消は不合格。
+  gate:
+    if: always()
+    needs: [changes, root, qrcc, noter, portal]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: すべてのプロダクトの CI が通ったこと
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          if echo "$RESULTS" | jq -e 'to_entries | map(.value.result) | any(. == "failure" or . == "cancelled")' >/dev/null; then
+            echo "::error::A product CI failed or was cancelled."
+            exit 1
+          fi
