@@ -49,7 +49,7 @@ variable "github_repository" {
 variable "otlp_environments" {
   description = "Worker から OTLP を送る GitHub environment（infra/terraform が作る）。"
   type        = set(string)
-  default     = ["production", "staging"]
+  default     = ["production"]
 }
 
 variable "ops_environment" {

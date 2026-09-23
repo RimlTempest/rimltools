@@ -55,18 +55,18 @@ state は自前の http backend（`infra/tfstate`）の `/states/rimltools-obser
 
 ## 2. 契約（他のレーンとの受け渡し）
 
-| 置き場所                                       | 名前                                            | 中身                                                                   | 使う側                                                                                                    |
-| ---------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| environment `production` / `staging` の secret | `GRAFANA_OTLP_HEADERS`                          | `Authorization=Basic%20<base64(stack id:token)>`（URL エンコード済み） | Worker secret `OTEL_EXPORTER_OTLP_HEADERS` にそのまま注入（リリースレーン、docs/ops/grafana.md の対応表） |
-| 同 variable                                    | `GRAFANA_OTLP_ENDPOINT`                         | スタックの OTLP gateway（`…/otlp`）                                    | 同上。Worker 側は `/v1/traces` `/v1/logs` を足す                                                          |
-| environment `ops` の secret                    | `GRAFANA_METRICS_PUSH_URL` / `_USER` / `_TOKEN` | OTLP gateway、スタック ID、`metrics:write` のトークン                  | `.github/workflows/ops-metrics.yml`                                                                       |
-| repository variable                            | `FARO_URL_<TOOL>`                               | Faro の collector URL                                                  | 各プロダクトのビルド（Faro SDK の `url`）                                                                 |
-| repository variable                            | `GRAFANA_METRICS_PUSH_ENABLED`                  | `true` / `false`                                                       | `ops-metrics.yml` の実行可否                                                                              |
+| 置き場所                           | 名前                                            | 中身                                                                   | 使う側                                                                                                    |
+| ---------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| environment `production` の secret | `GRAFANA_OTLP_HEADERS`                          | `Authorization=Basic%20<base64(stack id:token)>`（URL エンコード済み） | Worker secret `OTEL_EXPORTER_OTLP_HEADERS` にそのまま注入（リリースレーン、docs/ops/grafana.md の対応表） |
+| 同 variable                        | `GRAFANA_OTLP_ENDPOINT`                         | スタックの OTLP gateway（`…/otlp`）                                    | 同上。Worker 側は `/v1/traces` `/v1/logs` を足す                                                          |
+| environment `ops` の secret        | `GRAFANA_METRICS_PUSH_URL` / `_USER` / `_TOKEN` | OTLP gateway、スタック ID、`metrics:write` のトークン                  | `.github/workflows/ops-metrics.yml`                                                                       |
+| repository variable                | `FARO_URL_<TOOL>`                               | Faro の collector URL                                                  | 各プロダクトのビルド（Faro SDK の `url`）                                                                 |
+| repository variable                | `GRAFANA_METRICS_PUSH_ENABLED`                  | `true` / `false`                                                       | `ops-metrics.yml` の実行可否                                                                              |
 
 テレメトリの属性（F1 `@rimltools/telemetry` と共有、変えない）:
 
 - resource: `service.name` = Worker 名（例 `qrcc-web`）、`service.namespace` = `rimltools`、
-  `deployment.environment.name` = `production|staging|preview`、`service.version` = git SHA、
+  `deployment.environment.name` = `production`、`service.version` = git SHA、
   `cloudflare.worker.version_id`
 - ログは `trace_id` / `span_id` を持つ（OTLP なら structured metadata、JSON 本文なら `"trace_id":"…"`）
 - Faro の `app.name` = ツール名

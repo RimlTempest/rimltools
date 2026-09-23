@@ -27,12 +27,6 @@ variable "github_repository" {
   default     = "rimltools"
 }
 
-variable "staging_domains_enabled" {
-  description = "Attach <tool>-staging.<domain> Custom Domains. Turn on after the first staging deploy."
-  type        = bool
-  default     = false
-}
-
 variable "pending_tools" {
   description = "Tools whose production host is not attached yet (no code deployed). Remove a name after its first production deploy."
   type        = list(string)
@@ -55,12 +49,6 @@ variable "legacy_hosts_mode" {
     condition     = contains(["attached", "detached", "redirect"], var.legacy_hosts_mode)
     error_message = "legacy_hosts_mode must be attached, detached or redirect."
   }
-}
-
-variable "access_emails" {
-  description = "Emails allowed through Cloudflare Access on staging hosts. Empty disables Access."
-  type        = list(string)
-  default     = []
 }
 
 variable "manage_zone_security_settings" {
@@ -119,19 +107,12 @@ variable "ops_token_permission_groups" {
 variable "release_environments" {
   description = "Environments whose secrets and variables are in place, so the deploy and flags workflows may run there (repo variable RELEASE_ENVIRONMENTS). Workflows skip any environment not listed."
   type        = list(string)
-  default     = ["staging", "production"]
+  default     = ["production"]
 
   validation {
-    condition     = alltrue([for e in var.release_environments : contains(["staging", "production", "preview"], e)])
-    error_message = "release_environments may only contain staging, production and preview."
+    condition     = alltrue([for e in var.release_environments : contains(["production"], e)])
+    error_message = "release_environments may only contain production."
   }
-}
-
-variable "google_oauth_staging_json" {
-  description = "Google OAuth client for staging as JSON ({\"client_id\": \"...\", \"client_secret\": \"...\"}). Passed only to apply, from the SOPS-encrypted infra/secrets/apply.sops.yaml (TF_VAR_google_oauth_staging_json). Empty in plan."
-  type        = string
-  default     = ""
-  sensitive   = true
 }
 
 variable "state_passphrase" {

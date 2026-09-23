@@ -5,7 +5,7 @@
  *   bun scripts/flags/cli.ts sync-sql <tool> <out.sql>
  *   bun scripts/flags/cli.ts kill-sql <flag> <out.sql>
  *   bun scripts/flags/cli.ts wrangler-config <tool> <out.json>
- *       環境変数 WORKER_SUFFIX（"" | "-staging"）と D1_<TOOL>_ID（例: D1_QRCC_ID）を読む
+ *       環境変数 D1_<TOOL>_ID（例: D1_QRCC_ID）を読む
  */
 import { Glob } from 'bun'
 

@@ -6,19 +6,18 @@
 ## 1. ブランチと流れ
 
 ```
-feature/* ──PR(squash)──▶ develop ──自動──▶ staging（<tool>-staging.tools.riml4i.com）
+feature/* ──PR(squash)──▶ develop
                              │
                              └─ Release PR（自動作成）──merge commit──▶ main ──自動──▶ production
 hotfix/* ──PR──▶ main ──自動──▶ production、その後 main → develop の back-merge PR が自動で立つ
 ```
 
-| いつ                   | 何が起きるか                                                                        | ワークフロー                            |
-| ---------------------- | ----------------------------------------------------------------------------------- | --------------------------------------- |
-| develop 宛て PR        | 変更のあったツールの preview 版を staging Worker に upload し、URL を PR にコメント | `preview.yml`                           |
-| develop / main 宛て PR | 出入口の検査（下記）と CI（`gate`）                                                 | `release-guard.yml` / `ci.yml`          |
-| develop に push        | staging へリリース、Release PR を作成・更新                                         | `deploy-staging.yml` / `release-pr.yml` |
-| main に push           | production へ段階リリース                                                           | `deploy-production.yml`                 |
-| main に hotfix が入る  | develop への back-merge PR                                                          | `backmerge.yml`                         |
+| いつ                   | 何が起きるか                        | ワークフロー                   |
+| ---------------------- | ----------------------------------- | ------------------------------ |
+| develop / main 宛て PR | 出入口の検査（下記）と CI（`gate`） | `release-guard.yml` / `ci.yml` |
+| develop に push        | Release PR を作成・更新             | `release-pr.yml`               |
+| main に push           | production へ段階リリース           | `deploy-production.yml`        |
+| main に hotfix が入る  | develop への back-merge PR          | `backmerge.yml`                |
 
 `release-guard` が落とすもの:
 
@@ -55,7 +54,6 @@ hotfix/* ──PR──▶ main ──自動──▶ production、その後 mai
 
 - `durableObjects: true` の Worker（noter-sync）は `wrangler deploy` で一括（DO はオブジェクトごとに同時 1 版しか動かず、DO の migration は versions upload で適用できない）
 - `release.mode: "big-bang"` のツールは 0% 検証 → 100%（canary 無し）
-- staging は 0% 検証 → 100%（canary 無し）。staging は Cloudflare Access の内側なので、smoke は service token（`CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET`）付き
 - internal Worker（qrcc-api など）は外から叩けないので 0% の smoke は省略。canary の判定は上流経由の実トラフィックだけ（少なければ `needs-human` で止まる）
 
 ## 3. ダークローンチ
@@ -110,17 +108,14 @@ bunx wrangler deployments list --name qrcc-web                  # 配信割合�
 
 ## 6. 環境の契約（Terraform が設定する）
 
-GitHub environment `staging` / `production` / `preview` ごとに:
+GitHub environment `production` に:
 
-| 種類                        | 名前                                             | 例                                    |
-| --------------------------- | ------------------------------------------------ | ------------------------------------- |
-| secret                      | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`  | 最小権限のトークン                    |
-| secret（staging / preview） | `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET` | Access の service token               |
-| secret（staging / preview） | `APP_SECRETS`                                    | `{"qrcc": {"BETTER_AUTH_SECRET": …}}` |
-| variable                    | `RIMLTOOLS_ENV`                                  | `staging` / `production` / `preview`  |
-| variable                    | `BASE_DOMAIN`, `CF_ZONE_ID`                      | `tools.riml4i.com`                    |
-| variable                    | `WORKER_SUFFIX`                                  | production は空、ほかは `-staging`    |
-| variable                    | `D1_<TOOL>_ID`                                   | `D1_QRCC_ID`                          |
+| 種類     | 名前                                            | 例                 |
+| -------- | ----------------------------------------------- | ------------------ |
+| secret   | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | 最小権限のトークン |
+| variable | `RIMLTOOLS_ENV`                                 | `production`       |
+| variable | `BASE_DOMAIN`, `CF_ZONE_ID`                     | `tools.riml4i.com` |
+| variable | `D1_<TOOL>_ID`                                  | `D1_QRCC_ID`       |
 
 ### CI 用 Cloudflare API トークンの権限
 
@@ -152,11 +147,9 @@ invocation log は `observability.enabled: true` で既定有効。`invocation_l
 
 どの secret が要るかは `tools.json` の `appSecrets`（public Worker が読むもの）。
 
-- **staging / preview**: Terraform が値を作り（`BETTER_AUTH_SECRET` は生成、Google OAuth は人が用意した
-  クライアント）、environment secret `APP_SECRETS` に書く。リリースは public Worker の版に
-  `versions upload --secrets-file` で載せる（`scripts/release/secrets.ts`）
-- **production**: 何も入れない。本番の Worker は自分の secret を持っていて、新しい版に引き継がれる。
-  本番で `APP_SECRETS` が渡されたら、リリースは上書きせず失敗する
+- **production**: environment には何も入れない。本番の Worker は自分の secret を持っていて、新しい版に
+  引き継がれる。`APP_SECRETS` が渡されたら、リリースは上書きせず失敗する（`scripts/release/secrets.ts`）。
+  staging / preview を廃止したので、`APP_SECRETS` を書く環境はもう無い
 
 **`--secrets-file` と既存 secret の引き継ぎ**: `wrangler versions upload`（wrangler 4.127 の
 `uploadWorkerVersion`）は常に `keepSecrets: true` で upload する。ソースのコメントは
@@ -172,7 +165,7 @@ wrangler を上げるときは、この挙動が変わっていないか `node_m
 
 ## デプロイ先が未設定の間の動き
 
-Deploy staging / Deploy production / Flags は、リポジトリ変数 `RELEASE_ENVIRONMENTS`（JSON の配列）に
+Deploy production / Flags は、リポジトリ変数 `RELEASE_ENVIRONMENTS`（JSON の配列）に
 含まれる environment にだけ出す。含まれていなければ、ビルドの前にジョブごとスキップする。
 この変数は Terraform（`infra/terraform` の `release_environments`）が、その environment の secret と
 variable を書き込んだあとに作る。Terraform を適用する前の push でワークフローが赤くならないのはこのため。

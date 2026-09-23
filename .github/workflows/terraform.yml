@@ -312,7 +312,7 @@ jobs:
   apply-grafana:
     name: tofu grafana apply
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # infra/terraform が作る environment（production / staging / ops）に secret を書くので後に回す
+    # infra/terraform が作る environment（production / ops）に secret を書くので後に回す
     needs: [static-grafana, apply]
     runs-on: ubuntu-latest
     environment: production

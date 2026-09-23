@@ -36,18 +36,8 @@ variable "production_domain_enabled" {
   default     = true
 }
 
-variable "staging_domains_enabled" {
-  description = "Attach <subdomain>-staging.<domain> to the staging public Worker. Enable after the first staging deploy (a Custom Domain needs a Worker with code)."
-  type        = bool
-}
-
 variable "legacy_hosts_attached" {
   description = "Keep legacy hosts attached to the production Worker as Custom Domains (migration period)."
   type        = bool
 }
 
-variable "access_policy_ids" {
-  description = "Cloudflare Access policies that guard staging hosts, in precedence order. Empty disables Access."
-  type        = list(string)
-  default     = []
-}

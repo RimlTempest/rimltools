@@ -5,8 +5,8 @@ import { noter, qrcc } from './fixtures.ts'
 
 describe('preparedPath', () => {
   test('writes next to the build output so relative paths keep working', () => {
-    expect(preparedPath('apps/qrcc', 'services/web/dist/server/wrangler.json', 'staging')).toBe(
-      'apps/qrcc/services/web/dist/server/wrangler.staging.json',
+    expect(preparedPath('apps/qrcc', 'services/web/dist/server/wrangler.json', 'production')).toBe(
+      'apps/qrcc/services/web/dist/server/wrangler.production.json',
     )
     // portal は wrangler.jsonc をそのまま使う（assets の相対パスが同じ場所から解決される）
     expect(preparedPath('apps/portal', 'wrangler.jsonc', 'production')).toBe(
@@ -20,20 +20,16 @@ describe('migrationConfigFor', () => {
     const configs = [
       {
         worker: 'qrcc-api',
-        path: 'apps/qrcc/services/web/dist/qrcc_api/wrangler.staging.json',
+        path: 'apps/qrcc/services/web/dist/qrcc_api/wrangler.production.json',
         json: {
-          d1_databases: [
-            { database_name: 'qrcc-staging', migrations_dir: '../../../api/migrations' },
-          ],
+          d1_databases: [{ database_name: 'qrcc', migrations_dir: '../../../api/migrations' }],
         },
       },
       {
         worker: 'qrcc-web',
-        path: 'apps/qrcc/services/web/dist/server/wrangler.staging.json',
+        path: 'apps/qrcc/services/web/dist/server/wrangler.production.json',
         json: {
-          d1_databases: [
-            { database_name: 'qrcc-staging', migrations_dir: '../../../api/migrations' },
-          ],
+          d1_databases: [{ database_name: 'qrcc', migrations_dir: '../../../api/migrations' }],
         },
       },
     ]
@@ -42,7 +38,7 @@ describe('migrationConfigFor', () => {
     const result = migrationConfigFor(qrcc, spec, configs)
     expect(result).toEqual({
       ok: true,
-      value: 'apps/qrcc/services/web/dist/qrcc_api/wrangler.staging.json',
+      value: 'apps/qrcc/services/web/dist/qrcc_api/wrangler.production.json',
     })
   })
 

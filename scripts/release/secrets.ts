@@ -3,7 +3,7 @@
  *
  * - OTLP のヘッダ（`GRAFANA_OTLP_HEADERS`）: 送り先が入っている Worker にだけ
  * - アプリの secret（environment secret `APP_SECRETS`、`{ "<tool>": { "<NAME>": "<value>" } }`）:
- *   そのツールの public Worker にだけ。Terraform が staging / preview にだけ書く
+ *   そのツールの public Worker にだけ。staging / preview を廃止したので、いまはどの環境にも書かれない
  *
  * `versions upload` は secrets-file に無い既存の secret を前の版から引き継ぐ（wrangler の
  * uploadWorkerVersion は常に keepSecrets: true）。本番の Worker が持つ secret は触らない。

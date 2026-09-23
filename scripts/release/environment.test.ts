@@ -3,10 +3,10 @@ import { describe, expect, test } from 'bun:test'
 import { accessHeaders, readEnvironment, readReleaseConfig } from './environment.ts'
 
 const base = {
-  RIMLTOOLS_ENV: 'staging',
+  RIMLTOOLS_ENV: 'production',
   BASE_DOMAIN: 'tools.example.com',
   CF_ZONE_ID: 'zone',
-  WORKER_SUFFIX: '-staging',
+  WORKER_SUFFIX: '',
   CLOUDFLARE_ACCOUNT_ID: 'acc',
   D1_QRCC_ID: 'id-q',
   D1_NOTER_ID: 'id-n',
@@ -58,8 +58,8 @@ describe('readEnvironment', () => {
     const result = readEnvironment(base, { hasApiToken: true })
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.value.name).toBe('staging')
-    expect(result.value.suffix).toBe('-staging')
+    expect(result.value.name).toBe('production')
+    expect(result.value.suffix).toBe('')
     expect(result.value.d1Id('qrcc')).toBe('id-q')
     expect(result.value.d1Id('missing')).toBeUndefined()
     // 実行時の設定に資格情報を持たない
@@ -67,10 +67,7 @@ describe('readEnvironment', () => {
   })
 
   test('production has an empty suffix', () => {
-    const result = readEnvironment(
-      { ...base, RIMLTOOLS_ENV: 'production', WORKER_SUFFIX: '' },
-      { hasApiToken: true },
-    )
+    const result = readEnvironment(base, { hasApiToken: true })
     expect(result.ok && result.value.suffix).toBe('')
   })
 
@@ -83,18 +80,18 @@ describe('readEnvironment', () => {
     expect(result.error).toContain('BASE_DOMAIN')
   })
 
-  test('production must not carry a suffix and staging must', () => {
-    expect(
-      readEnvironment({ ...base, RIMLTOOLS_ENV: 'production' }, { hasApiToken: true }).ok,
-    ).toBe(false)
-    expect(readEnvironment({ ...base, WORKER_SUFFIX: '' }, { hasApiToken: true }).ok).toBe(false)
+  test('production must not carry a suffix', () => {
+    // staging / preview を廃止したので、接尾辞の付いた Worker はもう無い
+    expect(readEnvironment({ ...base, WORKER_SUFFIX: '-staging' }, { hasApiToken: true }).ok).toBe(
+      false,
+    )
   })
 })
 
 describe('production without WORKER_SUFFIX', () => {
   test('treats an undefined suffix as empty (GitHub variables cannot be empty)', () => {
     const { WORKER_SUFFIX: _dropped, ...rest } = base
-    const result = readEnvironment({ ...rest, RIMLTOOLS_ENV: 'production' }, { hasApiToken: true })
+    const result = readEnvironment(rest, { hasApiToken: true })
     expect(result.ok && result.value.suffix).toBe('')
   })
 })
