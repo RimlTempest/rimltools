@@ -20,7 +20,7 @@
       "binding": "DB",
       "database_name": "rimltools-tfstate",
       // `wrangler d1 create rimltools-tfstate` の出力で置き換える（README §1）
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "d9b1233a-cfc2-40f8-986f-f7f805a750ed",
       "migrations_dir": "migrations",
     },
   ],

@@ -40,7 +40,7 @@
 
 3. **state の置き場所（tfstate Worker）を作る**: `infra/tfstate/README.md` のブートストラップ
    （D1 の作成 → migration → 資格情報 4 つを `wrangler secret put` → `wrangler deploy`）。
-   パスワードは `openssl rand -base64 48` で作る（32 文字未満だと Worker が全リクエストを拒否する）。
+   **ユーザー名も含めた 4 つとも 32 文字以上**にする（`openssl rand -hex 24` / `openssl rand -base64 48`）。1 つでも短いと Worker が全リクエストを 500 で拒否する。
    D1 の database_id を `infra/tfstate/wrangler.jsonc` に書いて PR でコミットする
 
 4. **Grafana Cloud**（Free、カード不要）
