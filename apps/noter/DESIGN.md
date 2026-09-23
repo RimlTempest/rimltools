@@ -1,49 +1,52 @@
 # DESIGN.md — noter デザインシステム
 
-qrcc のトークン体系（`--qrcc-*`）を `--noter-*` として移植し、エディタ向けの
-トークン（presence 8 色、エディタ面、診断色）を足したもの。
+見た目の正は riml-ds（`@rimltempest/riml-ds-tokens` の `themes/noter` と `riml-ds-css`）。
+`--noter-*` は `--rd-*` の別名で、riml-ds に対応が無いもの（presence 8 色、エディタ面、構文色、本文の幅、
+ヘッダ・ツールバーの高さ）だけを noter が持つ（ルートの `docs/adr/0013-riml-ds-adoption.md`）。
 **コンポーネントはセマンティックトークンだけを参照する。** 生の色・サイズを書かない。
 
 ## 1. 原則
 
-- **静かな道具。** 装飾は最小、コンテンツ（文書）が主役。UI はグレーと 1 色のアクセント。
+- **静かな道具。** 装飾は最小、コンテンツ（文書）が主役。UI はグレーと 1 色のアクセント（ティール）。
 - **AAA で設計する。** 本文 7:1、大きい文字 4.5:1、UI 境界 3:1、対象 44px、フォーカス 3px。
 - **ライト・ダーク同格。** `light-dark()` で 1 か所に両方を書く。片方だけ調整しない。
 - **等幅と可変幅の役割分担。** 本文（エディタ・コード・ID・時刻）は等幅、UI 文言は可変幅。
 
 ## 2. トークン（`shared/ui/src/styles/tokens.css`）
 
-色は oklch。ライト / ダークの値と、参考コントラスト（対 surface）。
+値は riml-ds（`themes/noter`）にある。下の比はその値で計算した参考コントラスト（対 `--noter-surface`）。
+`shared/ui/src/styles/tokens.test.ts` が「riml-ds に無い名前を参照していない」「noter 固有は決めたものだけ」を確かめる。
 
 ### 2.1 面と文字
 
-| トークン                     | Light                          | Dark                            | 用途                                                                                             |
-| ---------------------------- | ------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `--noter-surface`            | `oklch(1 0 0)`                 | `oklch(0.18 0.012 265)`         | ページ地                                                                                         |
-| `--noter-surface-raised`     | `oklch(0.975 0.002 265)`       | `oklch(0.24 0.014 265)`         | ヘッダ・ツールバー・ダイアログ                                                                   |
-| `--noter-surface-sunken`     | `oklch(0.945 0.004 265)`       | `oklch(0.14 0.01 265)`          | 問題パネル・コードブロック地                                                                     |
-| `--noter-surface-hover`      | `oklch(0.93 0.006 265)`        | `oklch(0.3 0.016 265)`          | 行・ボタンのホバー                                                                               |
-| `--noter-editor-active-line` | `oklch(0.97 0.006 265)`        | `oklch(0.3 0.016 265)`          | CodeMirror のカーソル行。`surface-hover`（0.93）だと JSON のキー・数値が 7:1 を割る（plan 006b） |
-| `--noter-surface-editor`     | `oklch(1 0 0)`                 | `oklch(0.16 0.012 265)`         | CodeMirror の地（surface より僅かに沈める）                                                      |
-| `--noter-text`               | `oklch(0.2 0.012 265)` 15.9:1  | `oklch(0.955 0.006 265)` 15.1:1 | 本文                                                                                             |
-| `--noter-text-muted`         | `oklch(0.415 0.012 265)` 7.4:1 | `oklch(0.79 0.012 265)` 7.6:1   | 補助（7:1 を割らない）                                                                           |
-| `--noter-accent`             | `oklch(0.44 0.16 255)`         | `oklch(0.83 0.13 250)`          | 主ボタン・リンク・選択                                                                           |
-| `--noter-accent-hover`       | `oklch(0.36 0.16 255)`         | `oklch(0.89 0.11 250)`          | 明度のみ動かす                                                                                   |
-| `--noter-on-accent`          | `oklch(1 0 0)`                 | `oklch(0.17 0.03 265)`          | accent 上の文字                                                                                  |
-| `--noter-danger`             | `oklch(0.44 0.19 25)`          | `oklch(0.83 0.14 25)`           | 削除・拒否・構文エラー                                                                           |
-| `--noter-danger-hover`       | `oklch(0.36 0.19 25)`          | `oklch(0.89 0.12 25)`           |                                                                                                  |
-| `--noter-on-danger`          | `oklch(1 0 0)`                 | `oklch(0.17 0.04 25)`           |                                                                                                  |
-| `--noter-warning`            | `oklch(0.5 0.13 75)`           | `oklch(0.85 0.12 80)`           | 再接続中・オフライン                                                                             |
-| `--noter-success`            | `oklch(0.42 0.13 150)`         | `oklch(0.83 0.13 150)`          | 同期済み                                                                                         |
-| `--noter-border`             | `oklch(0.72 0.01 265)` 3.1:1   | `oklch(0.48 0.014 265)` 3.2:1   | UI 境界                                                                                          |
-| `--noter-border-strong`      | `oklch(0.55 0.012 265)`        | `oklch(0.66 0.014 265)`         | 入力の枠                                                                                         |
-| `--noter-focus-ring`         | `oklch(0.44 0.2 255)`          | `oklch(0.86 0.16 250)`          | フォーカス                                                                                       |
+| トークン                     | riml-ds の対応                                       | 比（Light / Dark）      | 用途                                                         |
+| ---------------------------- | ---------------------------------------------------- | ----------------------- | ------------------------------------------------------------ |
+| `--noter-surface`            | `--rd-color-surface-default`                         |                         | ページ地                                                     |
+| `--noter-surface-raised`     | `--rd-color-surface-raised`                          |                         | ヘッダ・ツールバー・ダイアログ                               |
+| `--noter-surface-sunken`     | `--rd-color-surface-sunken`                          |                         | 問題パネル・コードブロック地                                 |
+| `--noter-surface-hover`      | `--rd-color-surface-hover`                           |                         | 行・ボタンのホバー                                           |
+| `--noter-surface-editor`     | ライトは地、ダークは地と sunken の中間（noter 固有） |                         | CodeMirror の地（surface より僅かに沈める）                  |
+| `--noter-editor-active-line` | noter 固有（`features/editor/ui/editor.css`）        |                         | CodeMirror のカーソル行。構文色が 7:1 を割らない明度（§4.3） |
+| `--noter-text`               | `--rd-color-text-default`                            | 15.5 / 18.9             | 本文                                                         |
+| `--noter-text-muted`         | `--rd-color-text-muted`                              | 9.7 / 10.4              | 補助（7:1 を割らない）                                       |
+| `--noter-accent`             | `--rd-color-accent-default`                          | 7.7 / 10.2              | 主ボタン・リンク・選択                                       |
+| `--noter-accent-hover`       | `--rd-color-accent-hover`                            |                         | 明度のみ動かす                                               |
+| `--noter-on-accent`          | `--rd-color-text-on-accent`                          | 7.7 / 10.2（対 accent） | accent 上の文字                                              |
+| `--noter-danger`             | `--rd-color-status-danger-default`                   | 8.3 / 8.7               | 削除・拒否・構文エラー                                       |
+| `--noter-danger-hover`       | `--rd-color-status-danger-hover`                     |                         |                                                              |
+| `--noter-on-danger`          | `--rd-color-text-on-status`                          |                         |                                                              |
+| `--noter-warning`            | `--rd-color-status-warning-default`                  | 7.7 / 9.6               | 再接続中・オフライン                                         |
+| `--noter-success`            | `--rd-color-status-success-default`                  | 7.2 / 10.1              | 同期済み                                                     |
+| `--noter-border`             | `--rd-color-border-default`                          | 4.7 / 4.0               | UI 境界                                                      |
+| `--noter-border-strong`      | `--rd-color-border-strong`                           |                         | 入力の枠                                                     |
+| `--noter-focus-ring`         | `--rd-color-focus-ring`                              | 7.7 / 10.2              | フォーカス                                                   |
 
 ### 2.2 presence（参加者の色）
 
 同じ人は常に同じ色（`actorId` のハッシュ % 8）。カーソル・名前ラベル・アバターで共用。
 **色だけで人を識別させない**（必ず名前を併記）。ライト/ダークで明度を変え、
-名前ラベル上の文字（`--noter-on-presence`）と 4.5:1 以上。
+名前ラベル上の文字（`--noter-on-presence`）と 4.5:1 以上、riml-ds の面（default / raised）と 3:1 以上
+（最小: ライト 4.5:1 / ダーク 6.7:1）。riml-ds に対応が無いので noter が持つ。
 
 | index | トークン              | Light                  | Dark                   |
 | ----- | --------------------- | ---------------------- | ---------------------- |
@@ -59,20 +62,20 @@ qrcc のトークン体系（`--qrcc-*`）を `--noter-*` として移植し、�
 
 ### 2.3 寸法・タイポ
 
-| トークン               | 値                                                                                      |
-| ---------------------- | --------------------------------------------------------------------------------------- |
-| `--noter-space-1..8`   | 0.25 / 0.5 / 0.75 / 1 / 1.5 / 2 rem                                                     |
-| `--noter-radius`       | 0.5rem（`-sm` 0.25rem、`-lg` 1.5rem）                                                   |
-| `--noter-target-min`   | 44px                                                                                    |
-| `--noter-focus-width`  | 3px（`-offset` 2px）                                                                    |
-| `--noter-measure`      | 70ch（プレビュー本文の最大幅）                                                          |
-| `--noter-text-sm..2xl` | 0.875 / 1 / 1.125 / 1.375 / 1.75 rem                                                    |
-| `--noter-text-code`    | 0.9375rem（エディタ。等幅は 1rem だと大きく見える）                                     |
-| `--noter-line-code`    | 1.6                                                                                     |
-| `--noter-font-sans`    | `system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic UI', sans-serif` |
-| `--noter-font-mono`    | `ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', monospace`                        |
-| `--noter-header-h`     | 3.5rem                                                                                  |
-| `--noter-toolbar-h`    | 3rem                                                                                    |
+| トークン               | riml-ds の対応・値                                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------------------------------- |
+| `--noter-space-1..8`   | `--rd-space-1..8`（0.25 / 0.5 / 0.75 / 1 / 1.5 / 2 rem）                                              |
+| `--noter-radius`       | `--rd-radius-md`（0.75rem。`-sm` は `--rd-radius-sm` 0.5rem、`-lg` は md + space-4 = 1.75rem）        |
+| `--noter-target-min`   | `--rd-sizing-target-min`（2.75rem = 44px）                                                            |
+| `--noter-focus-width`  | `--rd-focus-ring-width`（3px。`-offset` は 2px）                                                      |
+| `--noter-measure`      | 70ch（noter 固有。riml-ds の 80ch は上限で、エディタは読みやすさを優先）                              |
+| `--noter-text-sm..2xl` | `--rd-type-small` / `body` / `heading-3` / `heading-2` / `heading-1` の font-size（画面幅に追従する） |
+| `--noter-text-code`    | `--rd-type-mono-font-size`（0.9375rem。等幅は 1rem だと大きく見える）                                 |
+| `--noter-line-code`    | `--rd-line-height-body`（1.6。riml-ds の mono の 1.5 より、長い行を読み続けやすい）                   |
+| `--noter-font-sans`    | `--rd-font-family-sans`                                                                               |
+| `--noter-font-mono`    | `--rd-font-family-mono`                                                                               |
+| `--noter-header-h`     | 3.5rem（noter 固有）                                                                                  |
+| `--noter-toolbar-h`    | 3rem（noter 固有）                                                                                    |
 
 ### 2.4 テーマ切替
 
@@ -129,7 +132,7 @@ feature の CSS（`features/<name>/ui/<name>.css`）は `services/web/src/styles
 | LiveRegion     | `.noter-live-region`          | 常設 `role="status"`。`noter-visually-hidden`                |
 | ThemeToggle    | `.noter-theme-toggle`         | 3 状態（system / light / dark）の `<fieldset>` ラジオ        |
 | Table          | `.noter-table`                | `<table>` を維持し、狭幅は `display:grid` で見た目のみ       |
-| Avatar         | `.noter-avatar`               | イニシャル + `--noter-presence-N`。`aria-hidden`、名前は隣に |
+| Avatar         | `.rd-avatar`（riml-ds）       | イニシャル + `--noter-presence-N`。`aria-hidden`、名前は隣に |
 
 ### 4.2 エディタ（`features/editor/ui`）
 
@@ -174,6 +177,11 @@ EditorView.theme({
 構文ハイライトは `@lezer/highlight` の `HighlightStyle` で **6 色以内**、すべて 7:1 を満たす
 明度（ダークは `--noter-presence-*` と同じ彩度帯）。色相だけに意味を持たせない
 （キーワードは太字も併用）。
+
+7:1 は「エディタの地」と「カーソル行」の両方に対して要る。axe は画面に出た文字しか見ないので、
+`features/editor/ui/syntax-contrast.test.ts` が色の定義（`editor.css` と riml-ds の `themes/noter`）から計算して確かめる。
+riml-ds に寄せたとき、ダークのカーソル行の上で壊れた記述（danger）が 6.1:1 まで落ちたので、
+カーソル行の明度を 0.3 → 0.25 に下げた。
 
 ### 4.4 Mermaid
 

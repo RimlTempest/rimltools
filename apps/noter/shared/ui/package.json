@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@noter/contract": "workspace:*",
+    "@rimltempest/riml-ds-css": "^0.3.1",
+    "@rimltempest/riml-ds-tokens": "^0.3.1",
     "@rimltools/ui": "workspace:*"
   },
   "devDependencies": {

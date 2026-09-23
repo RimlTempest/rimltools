@@ -2,10 +2,23 @@
  * @noter/ui のスタイル。1 枚にまとめてあるので、アプリは link を 1 本張るだけでよい
  * （コンポーネントごとの CSS import は SSR/RSC で読み込み順が不安定になるため使わない）。
  *
+ * トークンは riml-ds（@rimltempest/riml-ds-tokens、themes/noter）。rd.tokens 層に --rd-* が入り、
+ * tokens 層の --noter-* はその別名（docs/adr/0013-riml-ds-adoption.md の段階 2）。
+ * 形を借りる riml-ds の部品（atoms.css の .rd-avatar など）は rd.components 層に入る。
+ *
+ * 層の順序（qrcc の styles/index.css と同じ）: riml-ds の CSS は自分で `@layer rd.* { … }` に
+ * 包まれている。`rd.*` は rd 層の中の副層なので、rd 層が最初に現れた位置で並ぶ。
+ * reset（riml-ds の reset を reset 層の中に取り込んだもの）と base が `.rd-*` に勝たないよう、
+ * rd は reset と base の**後**に置く。noter の components と utilities は `.rd-*` の上に重ねたいので
+ * rd の**後**。変数だけの rd.tokens / tokens は順序に意味が無い。
+ *
  * 方針: .claude/skills/rimltools-html-a11y/references/css-modern.md
  */
-@layer reset, tokens, base, components, utilities;
+@layer reset, base, rd.tokens, rd.components, tokens, components, utilities;
 
+@import '@rimltempest/riml-ds-tokens/tokens.css';
+@import '@rimltempest/riml-ds-tokens/themes/noter.css';
+@import '@rimltempest/riml-ds-css/atoms.css';
 @import './tokens.css' layer(tokens);
 @import '@rimltools/ui/reset.css' layer(reset);
 @import './base.css' layer(base);

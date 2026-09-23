@@ -240,6 +240,8 @@
       "version": "0.1.0",
       "dependencies": {
         "@noter/contract": "workspace:*",
+        "@rimltempest/riml-ds-css": "^0.3.1",
+        "@rimltempest/riml-ds-tokens": "^0.3.1",
         "@rimltools/ui": "workspace:*",
       },
       "devDependencies": {
@@ -534,6 +536,9 @@
     "packages/ui": {
       "name": "@rimltools/ui",
       "version": "0.1.0",
+      "dependencies": {
+        "@rimltempest/riml-ds-css": "^0.3.1",
+      },
       "devDependencies": {
         "@happy-dom/global-registrator": "20.14.5",
         "@testing-library/dom": "10.4.2",

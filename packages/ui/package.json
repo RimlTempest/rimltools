@@ -13,6 +13,9 @@
     "test": "bun test",
     "lint:html": "node ../../tools/markuplint/run.ts --config ../../.markuplintrc.json 'src/**/*.tsx'"
   },
+  "dependencies": {
+    "@rimltempest/riml-ds-css": "^0.3.1"
+  },
   "devDependencies": {
     "@happy-dom/global-registrator": "20.14.5",
     "@testing-library/dom": "10.4.2",
