@@ -1,5 +1,5 @@
 # Frontend Observability（Grafana Faro）。実利用者の Web Vitals（LCP / INP / CLS）と
-# フロントエンドのエラー・trace を集める。app はツールごと、staging と本番の両方のオリジンを許可する。
+# フロントエンドのエラー・trace を集める。app はツールごとに本番のオリジンを許可する。
 # collector URL は GitHub の repository variable FARO_URL_<TOOL> に入る（github.tf）。
 
 resource "grafana_frontend_o11y_app" "tool" {
@@ -9,7 +9,7 @@ resource "grafana_frontend_o11y_app" "tool" {
   name     = each.key
 
   allowed_origins = concat(
-    ["https://${each.value.host}", "https://${each.value.stagingHost}"],
+    ["https://${each.value.host}"],
     [for h in each.value.legacyHosts : "https://${h}"],
   )
 

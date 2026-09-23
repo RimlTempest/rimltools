@@ -9,7 +9,6 @@ export const qrcc: Tool = {
   apex: false,
   listed: true,
   host: 'qrcc.tools.example.com',
-  stagingHost: 'qrcc-staging.tools.example.com',
   legacyHosts: ['qrcc.example.com'],
   appSecrets: [],
   fixedDevPort: null,
@@ -40,7 +39,6 @@ export const noter: Tool = {
   path: 'apps/noter',
   subdomain: 'noter',
   host: 'noter.tools.example.com',
-  stagingHost: 'noter-staging.tools.example.com',
   rust: false,
   services: [
     {
@@ -68,7 +66,6 @@ export const portal: Tool = {
   apex: true,
   listed: false,
   host: 'tools.example.com',
-  stagingHost: 'staging.tools.example.com',
   legacyHosts: [],
   rust: false,
   services: [

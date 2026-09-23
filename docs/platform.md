@@ -9,7 +9,7 @@
 ## 1. 全体像
 
 ```
-feature/*  ──PR──▶  develop  ──(自動) staging へデプロイ
+feature/*  ──PR──▶  develop
                        │
                        └──Release PR──▶  main  ──(自動) production へ段階リリース
                                                   upload → 0%(blue/green 検証)
@@ -29,16 +29,16 @@ hotfix/*   ──PR──▶  main（develop へも取り込み直す）
 
 ## 2. 環境
 
-| 環境       | ブランチ  | URL                                                                        | D1               | 用途                      |
-| ---------- | --------- | -------------------------------------------------------------------------- | ---------------- | ------------------------- |
-| local      | 任意      | `localhost`                                                                | Miniflare        | 開発                      |
-| preview    | PR        | `pr-<N>-<worker>.<account>.workers.dev`（staging Worker の preview alias） | staging          | PR ごとの動作確認         |
-| staging    | `develop` | `<tool>-staging.tools.riml4i.com`                                          | `<tool>-staging` | 結合・E2E・リリース前確認 |
-| production | `main`    | `<tool>.tools.riml4i.com`                                                  | `<tool>`         | 本番                      |
+| 環境       | ブランチ | URL                       | D1        | 用途 |
+| ---------- | -------- | ------------------------- | --------- | ---- |
+| local      | 任意     | `localhost`               | Miniflare | 開発 |
+| production | `main`   | `<tool>.tools.riml4i.com` | `<tool>`  | 本番 |
+
+staging / preview は 2026-09-23 に廃止した。本番前の検証は段階リリース（0% での blue/green 検証 →
+canary 10% → 50% → 100%、悪化すれば自動ロールバック）が担う（§3、`docs/release.md`）。
 
 - ポータル: `tools.riml4i.com`（ツール一覧）。
 - 旧 URL（`qrcc.riml4i.com` / `noter.riml4i.com`）は 301 で新 URL へ（Single Redirect Rules、Terraform 管理）。
-- staging は Cloudflare Access（Zero Trust Free、50 ユーザーまで無料）で本人だけに閉じる。
 
 ## 3. リリース戦略（Workers の versions を使う）
 
@@ -77,7 +77,6 @@ OpenTofu が暗号化してから送る。秘密の入力値は SOPS（age）で
 | Worker の枠（`cloudflare_worker`）、Custom Domain、DNS          | コードの版（`versions upload`）とデプロイ（`versions deploy`） |
 | D1 データベースそのもの                                         | D1 の migration の適用                                         |
 | Transform / Redirect / WAF / Rate limit ルール                  | wrangler.jsonc の bindings                                     |
-| Cloudflare Access（staging）                                    |                                                                |
 | CI 用の Cloudflare API トークン（権限を最小化）                 |                                                                |
 | GitHub: リポジトリ設定・rulesets・environments・Actions secrets |                                                                |
 

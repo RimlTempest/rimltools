@@ -17,7 +17,7 @@ GitHub の [Private vulnerability reporting](https://github.com/RimlTempest/riml
 | 本番   | `qrcc.tools.riml4i.com`、`noter.tools.riml4i.com`、`tools.riml4i.com` |
 | コード | このリポジトリの `main` / `develop`                                   |
 
-staging（`*-staging.tools.riml4i.com`）への負荷試験・DoS、他の利用者のデータへのアクセス、
+負荷試験・DoS、他の利用者のデータへのアクセス、
 ソーシャルエンジニアリングは行わないでください。
 
 ## 対応しているバージョン

@@ -179,7 +179,7 @@ describe('rolloutWorker', () => {
     expect(w.calls).not.toContain('deploy old@100%')
   })
 
-  test('staging-style single step (100%) needs no analytics source', async () => {
+  test('a single step (100%) needs no analytics source', async () => {
     const w = world()
     const outcome = await rolloutWorker(
       { ...deps(w), stats: undefined },

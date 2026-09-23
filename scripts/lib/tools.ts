@@ -33,7 +33,6 @@ export type Tool = {
   /** 本番のホスト名（`<subdomain>.<domain>`、apex なら `<domain>`） */
   host: string
   /** staging のホスト名（`<subdomain>-staging.<domain>`、apex なら `staging.<domain>`） */
-  stagingHost: string
   legacyHosts: string[]
   /**
    * public Worker が必要とするアプリの secret の名前（例 BETTER_AUTH_SECRET）。
@@ -183,7 +182,6 @@ const parseTool = (
     apex,
     listed: bool(r, raw, 'listed', true),
     host: apex ? domain : `${subdomain}.${domain}`,
-    stagingHost: apex ? `staging.${domain}` : `${subdomain}-staging.${domain}`,
     legacyHosts: list(r, raw, 'legacyHosts').filter((h): h is string => typeof h === 'string'),
     appSecrets,
     fixedDevPort,

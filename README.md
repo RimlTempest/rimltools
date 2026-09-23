@@ -132,7 +132,7 @@ bun run --cwd apps/noter e2e
 
 ## 開発の流れ
 
-- 作業は `develop` から切ったブランチで行い、PR（squash）で `develop` に入れる。`develop` は staging に出る
+- 作業は `develop` から切ったブランチで行い、PR（squash）で `develop` に入れる
 - `develop` → `main` の Release PR は自動で作られる。**main へのマージが本番リリース**（段階リリース）
 - コミットと PR タイトルは Conventional Commits、レビューコメントは Conventional Comments で書く。CI が検査する
   （[`docs/conventions.md`](docs/conventions.md)）

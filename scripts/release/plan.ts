@@ -1,5 +1,4 @@
 import type { Tool, WorkerSpec } from '../lib/tools.ts'
-import type { EnvName } from './environment.ts'
 
 export type Strategy =
   /** 0% で並べて override で検証 → steps の割合で段階的に切り替える */
@@ -15,15 +14,14 @@ export type WorkerPlan = { worker: WorkerSpec; strategy: Strategy }
 const straight: Strategy = { kind: 'canary', steps: [100], bakeMinutes: 0 }
 
 /** 下流（internal）から順に出す。上流の新版は下流の旧版とも動く前提（ADR-0003） */
-export const planRollout = (tool: Tool, env: EnvName): WorkerPlan[] => {
+export const planRollout = (tool: Tool): WorkerPlan[] => {
   const ordered = [
     ...tool.services.filter((w) => w.role === 'internal'),
     ...tool.services.filter((w) => w.role === 'public'),
   ]
   return ordered.map((worker) => {
     if (worker.durableObjects) return { worker, strategy: { kind: 'direct' } }
-    if (env !== 'production' || tool.release.mode === 'big-bang')
-      return { worker, strategy: straight }
+    if (tool.release.mode === 'big-bang') return { worker, strategy: straight }
     return {
       worker,
       strategy: {

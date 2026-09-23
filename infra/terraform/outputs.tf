@@ -1,5 +1,5 @@
 output "hosts" {
-  description = "Production / staging hostnames per tool."
+  description = "Production hostnames per tool."
   value       = { for name, m in module.tool : name => m.hosts }
 }
 

@@ -8,7 +8,7 @@ import type { DeployEnv } from './environment.ts'
  * - D1 を環境の DB に差し替える
  * - routes を消す（Custom Domain は Terraform の持ち物。ADR-0005）
  * - APP_ORIGIN を環境のホストにし、本番では旧ホストを APP_LEGACY_ORIGINS に入れる
- * - preview URL は staging / preview の public Worker だけ開く（internal は ADR-0002 で非公開）
+ * - preview URL は開かない（staging / preview を廃止したので production だけ。ADR-0002）
  */
 export type RewriteContext = {
   tool: Tool
@@ -84,9 +84,6 @@ export const rewriteConfig = (config: unknown, ctx: RewriteContext): Result<Json
       error: `wrangler.json names "${String(name)}", which ${tool.name} does not own`,
     }
   }
-  const worker = tool.services.find((w) => w.name === name)
-  const isPublic = worker?.role === 'public'
-
   const errors: string[] = []
   // canary の判定は Workers Logs の invocation log を数えることがある（sources.ts）。
   // 既定では有効なので、明示的に切っている設定だけを止める
@@ -153,8 +150,8 @@ export const rewriteConfig = (config: unknown, ctx: RewriteContext): Result<Json
     ...rest,
     name: `${name}${env.suffix}`,
     workers_dev: false,
-    // staging / preview の public Worker だけ開く。設定で明示的に閉じているもの（portal）は閉じたまま
-    preview_urls: isPublic && env.name !== 'production' && config['preview_urls'] !== false,
+    // production だけになったので開かない（staging / preview の廃止。docs/release.md）
+    preview_urls: false,
   }
   if ('d1_databases' in config) out['d1_databases'] = d1
   if ('services' in config) out['services'] = services

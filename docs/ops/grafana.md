@@ -70,7 +70,7 @@ trace は 1 日 3k 件 × 8 span × 1 KB、Faro は 1 日 1k セッション × 
 
 series の内訳:
 
-- 転送（push-metrics）: Worker 8（本番 4 + staging 4）× 版 2 × status_class 2 × 指標 8 ≒ 256、D1 と当日合計 ≒ 10
+- 転送（push-metrics）: Worker 4（本番）× 版 2 × status_class 2 × 指標 8 ≒ 128、D1 と当日合計 ≒ 10
 - span metrics: 本番 4 service × span 名 10 × status 1.3 × histogram 約 17 bucket ≒ 900、calls / size などで +300
 - Synthetic: 3 チェック × 約 50
 - SLO の recording rule: 4 SLO × 約 20
@@ -83,17 +83,17 @@ series の内訳:
 `infra/grafana` が GitHub に入れる値と、Worker（PR #9 `@rimltools/telemetry`）が読む var / secret の対応。
 Worker への注入はリリース（`scripts/release/`）の後続作業。値の変換は不要にしてある。
 
-| Worker 側                     | 種類                              | 値の出どころ                                                           | 変換                                                                             |
-| ----------------------------- | --------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | var                               | environment（production / staging）の variable `GRAFANA_OTLP_ENDPOINT` | そのまま（`…/otlp`。`/v1/traces` などは Worker が足す）                          |
-| `OTEL_EXPORTER_OTLP_HEADERS`  | secret                            | environment の secret `GRAFANA_OTLP_HEADERS`                           | そのまま（`Authorization=Basic%20<base64(stack id:token)>`、URL エンコード済み） |
-| `DEPLOYMENT_ENV`              | var                               | environment の variable `RIMLTOOLS_ENV`（infra/terraform）             | そのまま（`production` / `staging`。PR の preview は `preview`）                 |
-| `GIT_SHA`                     | var                               | `github.sha`                                                           | そのまま（`service.version` になる）                                             |
-| `FARO_URL`                    | var（ブラウザ向けビルドにも渡す） | repository variable `FARO_URL_<TOOL 大文字>`                           | ツール名で選ぶ（例: qrcc → `FARO_URL_QRCC`）                                     |
+| Worker 側                     | 種類                              | 値の出どころ                                                 | 変換                                                                             |
+| ----------------------------- | --------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | var                               | environment（production）の variable `GRAFANA_OTLP_ENDPOINT` | そのまま（`…/otlp`。`/v1/traces` などは Worker が足す）                          |
+| `OTEL_EXPORTER_OTLP_HEADERS`  | secret                            | environment の secret `GRAFANA_OTLP_HEADERS`                 | そのまま（`Authorization=Basic%20<base64(stack id:token)>`、URL エンコード済み） |
+| `DEPLOYMENT_ENV`              | var                               | environment の variable `RIMLTOOLS_ENV`（infra/terraform）   | そのまま（`production`）                                                         |
+| `GIT_SHA`                     | var                               | `github.sha`                                                 | そのまま（`service.version` になる）                                             |
+| `FARO_URL`                    | var（ブラウザ向けビルドにも渡す） | repository variable `FARO_URL_<TOOL 大文字>`                 | ツール名で選ぶ（例: qrcc → `FARO_URL_QRCC`）                                     |
 
 - secret は `wrangler versions upload` に載らないので、版を上げる前に `wrangler versions secret put` などで入れる
   （段階リリースで新旧の版が同じ secret を共有する点に注意。トークンを入れ替えるときは両方の版で有効な期間を作る）。
-- 環境ごとにトークンが別（`otlp-write-production` / `otlp-write-staging`）なので、片方だけ失効できる。
+- 環境ごとにトークンが別（`otlp-write-production`）なので、必要なときに失効できる。
 
 ## 統合時の TODO
 

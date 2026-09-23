@@ -34,7 +34,6 @@ describe('parseTools', () => {
     const [tool] = result.value.tools
     expect(tool?.name).toBe('qrcc')
     expect(tool?.host).toBe('qrcc.tools.example.com')
-    expect(tool?.stagingHost).toBe('qrcc-staging.tools.example.com')
   })
 
   test('rejects a tool without exactly one public worker', () => {
@@ -83,7 +82,6 @@ describe('parseTools', () => {
     expect(qrcc?.listed).toBe(true)
     expect(parsedPortal?.listed).toBe(false)
     expect(parsedPortal?.host).toBe('tools.example.com')
-    expect(parsedPortal?.stagingHost).toBe('staging.tools.example.com')
   })
 
   test('accepts a tool without D1 databases', () => {
