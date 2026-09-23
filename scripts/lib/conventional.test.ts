@@ -3,10 +3,27 @@ import { describe, expect, test } from 'bun:test'
 import {
   checkComment,
   checkCommitMessage,
+  checksEveryCommit,
   maxHeaderFor,
   parseReviewItems,
   reviewFindings,
 } from './conventional.ts'
+
+describe('checksEveryCommit', () => {
+  test('develop 宛ての PR は 1 コミットずつ見る', () => {
+    expect(checksEveryCommit('develop')).toBe(true)
+  })
+
+  test('main 宛て（develop → main のリリース）は見ない', () => {
+    // develop に入るときに検査済みのものを並べ直すだけ。ここで再検査すると、
+    // 過去に 1 件でも違反があると以後のリリースが全部止まる
+    expect(checksEveryCommit('main')).toBe(false)
+  })
+
+  test('base が取れないときは見る（安全側）', () => {
+    expect(checksEveryCommit('')).toBe(true)
+  })
+})
 
 describe('checkCommitMessage (Conventional Commits 1.0.0)', () => {
   test.each([

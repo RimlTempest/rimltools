@@ -10,6 +10,7 @@ import { $ } from 'bun'
 
 import {
   checkCommitMessage,
+  checksEveryCommit,
   maxHeaderFor,
   parseReviewItems,
   reviewFindings,
@@ -43,7 +44,7 @@ const pr = async (): Promise<number> => {
 
   const base = env('BASE_SHA')
   const head = env('HEAD_SHA')
-  if (base !== '' && head !== '') {
+  if (checksEveryCommit(env('PR_BASE_REF')) && base !== '' && head !== '') {
     // マージコミット（develop の取り込み等）は GitHub が作るので対象外
     const log = await $`git log --no-merges --format=%H%x1f%B%x1e ${base}..${head}`.text()
     for (const entry of log.split('\x1e')) {

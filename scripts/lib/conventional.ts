@@ -54,6 +54,15 @@ const DEPENDABOT_MAX_HEADER = 120
 export const maxHeaderFor = (author: string): number =>
   author === DEPENDABOT_LOGIN ? DEPENDABOT_MAX_HEADER : MAX_HEADER
 
+/**
+ * PR の中の 1 コミットずつを検査するか。
+ *
+ * `develop` → `main` のリリース PR は、develop に入るときに検査済みのコミットを
+ * まとめて出すだけなので見ない（PR タイトルは引き続き検査する）。ここで再検査すると、
+ * 過去に 1 件でも違反があるとそれ以降のリリースが全部止まってしまう。
+ */
+export const checksEveryCommit = (baseRef: string): boolean => baseRef !== 'main'
+
 export type CommitCheckOptions = { maxHeader?: number }
 
 const ok: Result<void, string> = { ok: true, value: undefined }
