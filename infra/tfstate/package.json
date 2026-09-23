@@ -16,6 +16,6 @@
     "@rimltools/telemetry": "workspace:*"
   },
   "devDependencies": {
-    "wrangler": "4.129.0"
+    "wrangler": "4.131.2"
   }
 }

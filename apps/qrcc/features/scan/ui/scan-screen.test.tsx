@@ -465,3 +465,73 @@ describe('ScanScreen の区画', () => {
     expect(screen.getByRole('heading', { level: 3, name: '読み取った内容' })).toBeDefined()
   })
 })
+
+/**
+ * 遅い端末では、サーバが描いた HTML が見えてから React がつながるまでに間がある。
+ * その間に選んだ画像は change イベントが React に届かず、何も起きなかった
+ * （並列の e2e で読み取りが不定期に失敗した原因）。つながった時点で拾うこと。
+ */
+describe('ハイドレーション前に選ばれた画像', () => {
+  test('React がつながった時点で読み取る', async () => {
+    const { renderToString } = await import('react-dom/server')
+    const { hydrateRoot } = await import('react-dom/client')
+    const decoded: File[] = []
+    const decodeImageFile = async (file: File) => {
+      decoded.push(file)
+      return { ok: true, value: { detections: [found('https://example.com/early')] } } as const
+    }
+    const element = (
+      <ScanScreen
+        startCamera={undefined}
+        decodeImageFile={decodeImageFile}
+        copyText={async () => true}
+      />
+    )
+
+    const container = document.createElement('div')
+    container.innerHTML = renderToString(element)
+    document.body.append(container)
+
+    // React がつながる前に、利用者が画像を選んだ状態
+    const input = container.querySelector('input[type="file"]')
+    expect(input).not.toBeNull()
+    const file = pngFile()
+    if (input !== null) Object.defineProperty(input, 'files', { value: [file] })
+
+    await act(async () => {
+      hydrateRoot(container, element)
+    })
+
+    await waitFor(() => expect(decoded).toEqual([file]))
+    expect(await within(container).findByText('https://example.com/early')).toBeDefined()
+    container.remove()
+  })
+
+  test('何も選ばれていなければ読み取らない', async () => {
+    const { renderToString } = await import('react-dom/server')
+    const { hydrateRoot } = await import('react-dom/client')
+    const decoded: File[] = []
+    const decodeImageFile = async (file: File) => {
+      decoded.push(file)
+      return neverDecodes()
+    }
+    const element = (
+      <ScanScreen
+        startCamera={undefined}
+        decodeImageFile={decodeImageFile}
+        copyText={async () => true}
+      />
+    )
+
+    const container = document.createElement('div')
+    container.innerHTML = renderToString(element)
+    document.body.append(container)
+
+    await act(async () => {
+      hydrateRoot(container, element)
+    })
+
+    expect(decoded).toEqual([])
+    container.remove()
+  })
+})

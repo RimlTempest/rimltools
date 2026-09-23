@@ -2,7 +2,7 @@
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "qrcc-web",
   "main": "./src/server.ts",
-  "compatibility_date": "2026-08-31",
+  "compatibility_date": "2026-09-14",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
 

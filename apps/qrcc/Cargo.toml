@@ -31,7 +31,6 @@ qrcc-manage-worker = { path = "features/manage/worker" }
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1", default-features = false, features = ["alloc"] }
 thiserror = { version = "2", default-features = false }
-base64 = { version = "0.22", default-features = false, features = ["alloc"] }
 
 # 生成 / デコード / 印刷
 qrcode = { version = "0.14", default-features = false }
