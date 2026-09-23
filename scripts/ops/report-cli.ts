@@ -21,7 +21,7 @@ import { dateRange } from './config.ts'
 import { decideFreeze, decideQuotaIssue } from './incident.ts'
 import { docsBase, env, summary } from './lib/env.ts'
 import { type Github, githubClient } from './lib/github.ts'
-import { cfGraphql } from './lib/graphql.ts'
+import { createCloudflare } from '../lib/cloudflare.ts'
 import { quotaStatus } from './quota.ts'
 import { DASHBOARD_MARKER, DASHBOARD_TITLE, renderDashboard, renderFreeze } from './report.ts'
 import { errorBudget } from './slo.ts'
@@ -50,10 +50,10 @@ const main = async (): Promise<number> => {
   const window = dateRange(now, windowDays)
   const recent = dateRange(now, 2)
 
-  const cf = { fetch, token }
+  const cf = createCloudflare({ apiToken: token, fetch })
   const [workersJson, d1Json] = await Promise.all([
-    cfGraphql(cf, WORKERS_QUERY, { accountTag: account, start: window.start, end: window.end }),
-    cfGraphql(cf, D1_QUERY, { accountTag: account, start: recent.start, end: recent.end }),
+    cf.graphql(WORKERS_QUERY, { accountTag: account, start: window.start, end: window.end }),
+    cf.graphql(D1_QUERY, { accountTag: account, start: recent.start, end: recent.end }),
   ])
   if (!workersJson.ok) return fail(workersJson.error)
   if (!d1Json.ok) return fail(d1Json.error)

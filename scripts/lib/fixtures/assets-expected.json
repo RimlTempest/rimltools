@@ -1,0 +1,114 @@
+{
+  "qrcc-home": {
+    "smoke": [
+      "/assets/app-IB7244dr.css",
+      "/assets/contract-2jVnmtbP.js",
+      "/assets/contract-CRUKTXu2.js",
+      "/assets/createServerFn-CPGcB7cY.js",
+      "/assets/home.route-CFxJZV1C.js",
+      "/assets/index-K0A-81an.js",
+      "/assets/link-B1tU_FPc.js",
+      "/assets/manage-wiring.route-5RQOPcSh.js",
+      "/assets/src-Cbg7VMR0.js",
+      "/assets/src-DdBQJ9yP.js",
+      "/assets/src-b-J3Kcq3.js",
+      "/assets/ui-BJ5d4sNF.js"
+    ],
+    "release": [
+      "https://tool.example/assets/app-IB7244dr.css",
+      "https://tool.example/assets/index-K0A-81an.js",
+      "https://tool.example/assets/src-b-J3Kcq3.js",
+      "https://tool.example/assets/createServerFn-CPGcB7cY.js",
+      "https://tool.example/assets/link-B1tU_FPc.js",
+      "https://tool.example/assets/contract-2jVnmtbP.js",
+      "https://tool.example/assets/manage-wiring.route-5RQOPcSh.js",
+      "https://tool.example/assets/home.route-CFxJZV1C.js",
+      "https://tool.example/assets/src-Cbg7VMR0.js",
+      "https://tool.example/assets/contract-CRUKTXu2.js",
+      "https://tool.example/assets/ui-BJ5d4sNF.js",
+      "https://tool.example/assets/src-DdBQJ9yP.js",
+      "https://tool.example/manifest.webmanifest",
+      "https://tool.example/icon.svg"
+    ],
+    "ops": [
+      "https://tool.example/assets/app-IB7244dr.css",
+      "https://tool.example/assets/index-K0A-81an.js",
+      "https://tool.example/assets/src-b-J3Kcq3.js",
+      "https://tool.example/assets/createServerFn-CPGcB7cY.js",
+      "https://tool.example/assets/link-B1tU_FPc.js",
+      "https://tool.example/assets/contract-2jVnmtbP.js",
+      "https://tool.example/assets/manage-wiring.route-5RQOPcSh.js",
+      "https://tool.example/assets/home.route-CFxJZV1C.js",
+      "https://tool.example/assets/src-Cbg7VMR0.js",
+      "https://tool.example/assets/contract-CRUKTXu2.js",
+      "https://tool.example/assets/ui-BJ5d4sNF.js",
+      "https://tool.example/assets/src-DdBQJ9yP.js"
+    ]
+  },
+  "noter-home": {
+    "smoke": [
+      "/assets/app-CxY39nRH.css",
+      "/assets/createServerFn-C4L4RHSx.js",
+      "/assets/documents-wiring.route-De-UyUCL.js",
+      "/assets/home.route-CwwdcVLd.js",
+      "/assets/index-qFaPPXrk.js",
+      "/assets/preload-helper-Czpn1I53.js",
+      "/assets/rolldown-runtime-hePW80VL.js",
+      "/assets/src-CGa7BbB7.js",
+      "/assets/src-Curn7_JI.js",
+      "/assets/ui-BQ6eO2xC.js"
+    ],
+    "release": [
+      "https://tool.example/assets/app-CxY39nRH.css",
+      "https://tool.example/assets/index-qFaPPXrk.js",
+      "https://tool.example/assets/rolldown-runtime-hePW80VL.js",
+      "https://tool.example/assets/src-CGa7BbB7.js",
+      "https://tool.example/assets/createServerFn-C4L4RHSx.js",
+      "https://tool.example/assets/documents-wiring.route-De-UyUCL.js",
+      "https://tool.example/assets/preload-helper-Czpn1I53.js",
+      "https://tool.example/assets/home.route-CwwdcVLd.js",
+      "https://tool.example/assets/ui-BQ6eO2xC.js",
+      "https://tool.example/assets/src-Curn7_JI.js",
+      "https://tool.example/icon.svg",
+      "https://tool.example/manifest.webmanifest"
+    ],
+    "ops": [
+      "https://tool.example/assets/app-CxY39nRH.css",
+      "https://tool.example/assets/index-qFaPPXrk.js",
+      "https://tool.example/assets/rolldown-runtime-hePW80VL.js",
+      "https://tool.example/assets/src-CGa7BbB7.js",
+      "https://tool.example/assets/createServerFn-C4L4RHSx.js",
+      "https://tool.example/assets/documents-wiring.route-De-UyUCL.js",
+      "https://tool.example/assets/preload-helper-Czpn1I53.js",
+      "https://tool.example/assets/home.route-CwwdcVLd.js",
+      "https://tool.example/assets/ui-BQ6eO2xC.js",
+      "https://tool.example/assets/src-Curn7_JI.js"
+    ]
+  },
+  "assets-edge": {
+    "smoke": [
+      "/assets/app.css",
+      "/assets/clip.webm",
+      "/assets/font.woff2",
+      "/assets/logo.png",
+      "/assets/main.js?v=2",
+      "/assets/manual.pdf"
+    ],
+    "release": [
+      "https://tool.example/assets/app.css",
+      "https://tool.example/assets/entry.js",
+      "https://tool.example/assets/font.woff2",
+      "https://tool.example/icon.svg",
+      "https://tool.example/manifest.webmanifest",
+      "https://tool.example/assets/main.js?v=2",
+      "https://tool.example/assets/logo.png",
+      "https://tool.example/images/photo.jpg"
+    ],
+    "ops": [
+      "https://tool.example/assets/app.css",
+      "https://tool.example/assets/entry.js",
+      "https://tool.example/assets/font.woff2",
+      "https://tool.example/assets/main.js?v=2"
+    ]
+  }
+}

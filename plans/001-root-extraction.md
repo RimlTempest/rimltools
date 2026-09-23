@@ -49,9 +49,9 @@
    guard（不変条件）と Rust ジョブだけ。`tools.json` に `rust` / guard の定義を持たせ、matrix で回す。
 6. **smoke スクリプトの共通化** — ✅ 段階 3c。ページと `/assets/` の確認・表示・CLI を `scripts/smoke/`（`page.ts` / `cli.ts`）に集め、
    noter は WebSocket の入口（426）の確認をその上に足す。両プロダクトの `smoke.test.ts` は無変更で通り、本番に向けた実行の出力も
-   共通化の前後で一致。**release（`scripts/release/smoke.ts`）と ops（`scripts/ops/synthetic.ts`）の資産抽出とは寄せていない**:
-   release はデプロイ時にアイコン・manifest・画像まで確かめ、ops は 30 分ごとなので最小限に絞っている。1 つにすると
-   どちらかの挙動が変わる。
+   共通化の前後で一致。資産抽出は、release（`scripts/release/smoke.ts`）と ops（`scripts/ops/synthetic.ts`）も含めて
+   `scripts/lib/html-assets.ts` の 1 つに寄せた（✅ `refactor/scripts-dedupe`）。見る範囲の違い（release はアイコン・manifest・画像まで、
+   ops は最小限、プロダクトの smoke は `/assets/` だけ）は `ASSET_SCOPES` で渡す。本番ページの fixture で、3 つとも統合前と同じ出力。
 7. **archify** — ✅ 段階 3c。`--repo-root` に git のトップを渡し、仕様の `sources[].path` を `apps/<tool>/...` に書き換えた
    （仕様の `repository.url` も rimltools に）。両プロダクトで validate / deliver / PNG 書き出しまで通る。
    あわせて lefthook の markuplint ジョブが archify の生成 HTML を拾って空振り防止のガード（#22）に落とされていたのを直した。
@@ -99,4 +99,5 @@
   `account_issuer_account_id_unique` を消す（先頭に `-- contract:`、index を先に消してから列。
   https://better-auth.com/docs/guides/1-7-upgrade-guide#account-identity-keeps-the-provider-key）。
   消したら `schema.test.ts` の `PENDING_CONTRACT` から外す
-- `scripts/release/smoke.ts` と `scripts/ops/synthetic.ts` の資産抽出（上の 6）
+- ~~`scripts/release/smoke.ts` と `scripts/ops/synthetic.ts` の資産抽出（上の 6）~~ → `scripts/lib/html-assets.ts` に統合
+- ~~Cloudflare の GraphQL クライアントの二重実装~~ → `scripts/lib/cloudflare.ts` に統合（`scripts/ops/lib/graphql.ts` を削除）

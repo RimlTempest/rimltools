@@ -1,4 +1,5 @@
 import type { Result } from '../lib/tools.ts'
+import { ASSET_SCOPES, extractAssets } from '../lib/html-assets.ts'
 
 /**
  * 汎用 smoke: HTML が 200 で返り、参照している同一オリジンのアセットが全数 200。
@@ -15,29 +16,9 @@ export const overrideHeader = (worker: string, versionId: string): Record<string
   'Cloudflare-Workers-Version-Overrides': `${worker}="${versionId}"`,
 })
 
-const attr = /\s(?:src|href)\s*=\s*["']([^"']+)["']/i
-const tagPattern = /<(script|link|img)\b[^>]*>/gi
-const relPattern = /\srel\s*=\s*["']([^"']+)["']/i
-const assetRels = new Set(['stylesheet', 'modulepreload', 'preload', 'icon', 'manifest'])
-
-export const referencedAssets = (html: string, pageUrl: string): string[] => {
-  const origin = new URL(pageUrl).origin
-  const out: string[] = []
-  for (const match of html.matchAll(tagPattern)) {
-    const tag = match[0]
-    const kind = (match[1] ?? '').toLowerCase()
-    if (kind === 'link') {
-      const rel = relPattern.exec(tag)?.[1]?.toLowerCase() ?? ''
-      if (!rel.split(/\s+/).some((r) => assetRels.has(r))) continue
-    }
-    const ref = attr.exec(tag)?.[1]
-    if (ref === undefined || ref.startsWith('data:')) continue
-    const url = new URL(ref, pageUrl)
-    if (url.origin !== origin) continue
-    if (!out.includes(url.href)) out.push(url.href)
-  }
-  return out
-}
+/** 新しい版が参照している同一オリジンの資産（範囲は scripts/lib/html-assets.ts の release） */
+export const referencedAssets = (html: string, pageUrl: string): string[] =>
+  extractAssets(html, pageUrl, ASSET_SCOPES.release)
 
 export const runSmoke = async (
   pageUrl: string,
