@@ -102,7 +102,6 @@ const cloudflareToken = (): string => process.env['CLOUDFLARE_API_TOKEN'] ?? ''
  */
 const withVersionSecrets = async <T>(
   tool: Tool,
-  deployEnv: DeployEnv,
   configPath: string,
   run: (extraArgs: string[]) => Promise<T>,
 ): Promise<Result<T, string>> => {
@@ -114,11 +113,8 @@ const withVersionSecrets = async <T>(
     && !Array.isArray(parsed.value)
       ? Object.fromEntries(Object.entries(parsed.value))
       : {}
-  const publicWorker = tool.services.find((w) => w.role === 'public')
   const secrets = versionSecrets({
-    env: deployEnv.name,
     tool: tool.name,
-    publicWorkerName: `${publicWorker?.name ?? ''}${deployEnv.suffix}`,
     config,
     otlpHeaders: process.env['GRAFANA_OTLP_HEADERS'] ?? '',
     appSecretsJson: process.env['APP_SECRETS'] ?? '',
@@ -347,7 +343,7 @@ const makeDeps = (tool: Tool, deployEnv: DeployEnv, stats?: RolloutDeps['stats']
   return {
     log: say,
     upload: async (configPath, meta) => {
-      const attached = await withVersionSecrets(tool, deployEnv, configPath, (extra) =>
+      const attached = await withVersionSecrets(tool, configPath, (extra) =>
         wrangler(
           [
             'versions',
@@ -387,7 +383,7 @@ const makeDeps = (tool: Tool, deployEnv: DeployEnv, stats?: RolloutDeps['stats']
         `versions deploy ${specs.join(' ')}`,
       ),
     deployDirect: async (configPath, message) => {
-      const attached = await withVersionSecrets(tool, deployEnv, configPath, (extra) =>
+      const attached = await withVersionSecrets(tool, configPath, (extra) =>
         wrangler(['deploy', '-c', configPath, '--message', message, ...extra], deployEnv),
       )
       if (!attached.ok) return attached
@@ -711,7 +707,7 @@ const stepPreview = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promis
   const worker = tool.services.find((w) => w.role === 'public')
   if (worker === undefined) return fail(`${tool.name} has no public worker`)
   const config = preparedPath(tool.path, worker.buildConfig, deployEnv.name)
-  const attached = await withVersionSecrets(tool, deployEnv, config, (extra) =>
+  const attached = await withVersionSecrets(tool, config, (extra) =>
     wrangler(
       [
         'versions',
