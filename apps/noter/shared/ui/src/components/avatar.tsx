@@ -14,11 +14,14 @@ const initialOf = (name: string): string => {
 /**
  * 参加者を表す小さな丸（`DESIGN.md` §4.1）。
  *
+ * 形は riml-ds の `.rd-avatar`（atoms.css）。参加者の色と縁は noter の CSS が
+ * `data-presence` で重ねる（docs/adr/0013-riml-ds-adoption.md の段階 3）。
+ *
  * **装飾として扱う。** 読み上げは隣に置く名前が担当するので `aria-hidden`。
  * 色は情報を持たない（同じ人を追いやすくするためだけの手掛かり）。
  */
 export const Avatar = ({ name, colorIndex }: AvatarProps) => (
-  <span className="noter-avatar" data-presence={colorIndex} aria-hidden="true">
+  <span className="rd-avatar" data-presence={colorIndex} aria-hidden="true">
     {initialOf(name)}
   </span>
 )
