@@ -58,7 +58,7 @@ pre-commit:
         jobs:
           - name: root-oxfmt
             glob: '*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,css,md,yaml,yml}'
-            run: bunx oxfmt {staged_files}
+            run: bunx oxfmt --no-error-on-unmatched-pattern {staged_files}
             stage_fixed: true
 
           - name: root-oxlint

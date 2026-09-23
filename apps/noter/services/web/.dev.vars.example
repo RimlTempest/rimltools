@@ -1,14 +1,13 @@
-# cp .dev.vars.example .dev.vars して埋める。.dev.vars はコミットしない。
-BETTER_AUTH_SECRET=""
-GOOGLE_CLIENT_ID=""
-GOOGLE_CLIENT_SECRET=""
+BETTER_AUTH_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 
 # ローカルの LGTM（ops/local/README.md）に trace・ログ・Faro を送るとき（任意）。
 # docker compose -f ops/local/compose.yaml up -d と bun run ops:local:aliases を先に。未設定なら何も送らない。
 # OTLP は Worker からのサーバ間通信なので 127.0.0.1 のまま（workerd は portless の CA を信頼しない）。
-# OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:4318"
+# OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
 # Faro の送り先。portless を使わないなら http://127.0.0.1:12347/collect
-# FARO_URL="https://faro.rimltools.localhost/collect"
-# DEPLOYMENT_ENV="local"
-# OTEL_TRACES_SAMPLER_ARG="1"
-# FARO_SAMPLE_RATE="1"
+# FARO_URL=https://faro.rimltools.localhost/collect
+# DEPLOYMENT_ENV=local
+# OTEL_TRACES_SAMPLER_ARG=1
+# FARO_SAMPLE_RATE=1

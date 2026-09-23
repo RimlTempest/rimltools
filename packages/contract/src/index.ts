@@ -18,6 +18,8 @@ export {
   prefixedIdParser,
   previewReceived,
 } from './id.ts'
+export type { LocalDevOriginError } from './origin.ts'
+export { parseLocalDevOrigin, resolvePublicOrigin, resolvePublicOriginFromEnv } from './origin.ts'
 export type { Err, Ok, Result } from './result.ts'
 export { collectResults, err, flatMapResult, isErr, isOk, mapResult, ok } from './result.ts'
 export type {

@@ -102,8 +102,12 @@ cmd_new() {
   [ -f "$ROOT/Cargo.toml" ] && ( cd "$path/$REL" && mise exec -- cargo fetch >/dev/null 2>&1 || true )
   ( cd "$path" && mise exec -- bunx lefthook install >/dev/null )
 
-  for f in .dev.vars .env.local; do
-    [ -f "$ROOT/$f" ] && cp "$ROOT/$f" "$path/$REL/$f" && info "copied $f"
+  # .dev.vars は Worker の設定の隣（services/web/ など）にある。アプリ配下を探し、
+  # 同じ相対パスへ写す（値は表示しない。どちらも gitignore 済み）
+  ( cd "$ROOT" && find . -maxdepth 3 \( -name .dev.vars -o -name .env.local \) \
+      -not -path '*/node_modules/*' -type f ) | while read -r f; do
+    mkdir -p "$(dirname "$path/$REL/$f")"
+    cp "$ROOT/$f" "$path/$REL/$f" && chmod 600 "$path/$REL/$f" && info "copied ${f#./}"
   done
 
   write_lane_md "$b" "$path"
