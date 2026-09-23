@@ -1,177 +1,79 @@
-# デプロイ手順
+# qrcc のデプロイ
 
-## 1. 初回セットアップ（1 回だけ）
+**デプロイは手で行わない。** `main` へのマージで段階リリースが動き、インフラは OpenTofu が管理する。
+このページには qrcc に固有のことだけを書く。手順はルートの docs にある。
 
-### Cloudflare リソースを作る
+| やりたいこと                                   | 見るところ                                                                                                   |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 本番に出す・止める・戻す                       | [docs/release.md](../../../docs/release.md)、[docs/runbooks/rollback.md](../../../docs/runbooks/rollback.md) |
+| 本番を最初に立ち上げる（D1・ドメイン・secret） | [docs/bootstrap.md](../../../docs/bootstrap.md)                                                              |
+| 監視・アラート・SLO                            | [docs/ops/README.md](../../../docs/ops/README.md)                                                            |
+| ローカルで動かす                               | ルートの [README.md](../../../README.md)「立ち上げ方法」                                                     |
 
-```bash
-bunx wrangler d1 create qrcc
-bunx wrangler kv namespace create CACHE
-bunx wrangler r2 bucket create qrcc-artifacts
-```
+## 構成
 
-出力された ID を次の 2 ファイルの `REPLACE_ME` に書き込む。
+| Worker     | 役割                               | 公開                                                                                                     |
+| ---------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `qrcc-web` | 画面（SSR）と API の入口           | Custom Domain（OpenTofu が管理）                                                                         |
+| `qrcc-api` | 保存・共有などのサーバ処理（Rust） | **しない**。`qrcc-web` の service binding からだけ届く（[ADR-0002](adr/0002-auxiliary-worker-split.md)） |
 
-- `services/web/wrangler.jsonc`
-- `services/api/wrangler.jsonc`
+- D1 は `qrcc` の 1 つで、2 つの Worker が共有する。migration は `services/api/migrations/` にある
+- Cloudflare のリソースは D1 だけを使う。**R2 と KV は使わない**（[ADR-0009](adr/0009-stay-on-workers-free.md)）
+- リリースは下流の `qrcc-api` から先に出す。`qrcc-api` は外から叩けないので、0% での smoke は省く（[docs/release.md](../../../docs/release.md) §2）
+- 生成と読み取りはブラウザの wasm で動く。サーバのバンドル予算は [bundle.md](bundle.md)、無料枠の見積もりは [free-tier-budget.md](free-tier-budget.md)
 
-**D1 の `database_id` は両方で同じもの**を指す（同一 DB を 2 つの Worker から使う）。
+## secret
 
-### R2 と KV は作らない
+| キー                                        | 置き場所   | 用途             |
+| ------------------------------------------- | ---------- | ---------------- |
+| `BETTER_AUTH_SECRET`                        | `qrcc-web` | セッションの署名 |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | `qrcc-web` | Google ログイン  |
 
-**R2 を有効化してはならない**（[ADR-0009](adr/0009-stay-on-workers-free.md)）。
-R2 だけは利用上限を設定できず、超過分が従量課金される。有効化には支払い方法の
-登録が要るので、**登録しない限り構造的に課金されない**。KV も用途が無いので作らない。
+- 本番の値は Worker に入っていて、新しい版に引き継がれる（[docs/release.md](../../../docs/release.md) §6「アプリの secret」）
+- staging の値は OpenTofu が用意し、リリースが版と一緒に載せる
+- 本番の値は、通常は触らない。差し替えるのは漏洩したときだけ（下の「secret の差し替え」）
+- Google の資格情報が無い環境では、Google のボタンを出さずにゲストだけになる。ローカル開発はこの状態で困らない
+- Google Cloud Console のリダイレクト URI は `https://<ホスト>/api/auth/callback/google`。登録するホストの一覧は [docs/bootstrap.md](../../../docs/bootstrap.md) §1
 
-必要なのは **D1 だけ**。
+### secret の差し替え（漏洩したときだけ）
 
-### D1 のマイグレーション
-
-`database_id` を書き込んだら、本番の D1 にスキーマを当てる。
-
-```bash
-bunx wrangler d1 migrations apply qrcc --remote --config services/api/wrangler.jsonc
-```
-
-ローカル（Miniflare）側は **e2e の起動手順に組み込まれている**ので手で当てる必要はない
-（`e2e/playwright.config.ts` の `webServer` が `bun run --filter @qrcc/web db:local` を実行する）。
-手で当てたい場合は:
-
-```bash
-cd services/web && bunx wrangler d1 migrations apply qrcc --local
-```
-
-> マイグレーションを手順書に頼ると「CI では落ちるが手元では通る」差が生まれる。
-> 一度当てた手元だけ通ってしまうため、起動手順に含めてある。
-
-### シークレット
+判断と全体の流れは [docs/runbooks/secret-leak.md](../../../docs/runbooks/secret-leak.md)。値は**必ず標準入力から**渡す。
 
 ```bash
-bunx wrangler secret put BETTER_AUTH_SECRET   --config services/web/wrangler.jsonc
-bunx wrangler secret put GOOGLE_CLIENT_ID     --config services/web/wrangler.jsonc
-bunx wrangler secret put GOOGLE_CLIENT_SECRET --config services/web/wrangler.jsonc
+printf '%s' "$VALUE" | bunx wrangler secret put BETTER_AUTH_SECRET --name qrcc-web
 ```
 
-`BETTER_AUTH_SECRET` は `openssl rand -base64 32` などで生成する。
+- `wrangler secret put` は値をプロンプトで尋ねる。非対話の端末で実行すると、**値を入力しないまま成功扱いで登録される**。登録済みの値は API から読み出せないので、空で入ったことに後から気づけない
+- `wrangler secret put` は新しい版を作って**すぐに 100% に出す**（段階リリースを通らない）。漏洩への対応でだけ使う
+- `BETTER_AUTH_SECRET` を差し替えると、既存のセッションはすべて無効になる（全員ログアウト）
 
-> **端末が対話的でないときは値を渡せない。** `wrangler secret put` は値を
-> プロンプトで訊くので、非対話で実行すると**値を入力しないまま成功扱いで
-> 登録される**（ワーカー作成の確認だけが既定の yes で答えられる）。
-> 登録済みの値は API から読み出せないため、空で入ったことに後から気づけない。
-> 非対話で入れるときは標準入力から渡す:
->
-> ```bash
-> printf '%s' "$VALUE" | bunx wrangler secret put NAME --config services/web/wrangler.jsonc
-> ```
+## デプロイ後の確認（smoke）
 
-> **初回デプロイ前に `secret put` すると、空のワーカーが先に作られる。**
-> ルートは付かないので公開はされないが、順番としてはデプロイを先にするほうが素直。
-
-Google OAuth の設定（Google Cloud Console）:
-
-- 承認済みリダイレクト URI: `https://qrcc.riml4i.com/api/auth/callback/google`
-- ローカル用（`vite dev`）: `http://localhost:5173/api/auth/callback/google`
-- ローカル用（`vite preview` / e2e）: `e2e/playwright.config.ts` が決めるポート
-
-**Google の資格情報が未設定の環境では、Google のボタンを出さずゲストのみになる**
-（実装済みのフォールバック）。開発中はそのままで困らない。
-
-### 未実装の運用タスク
-
-- 期限切れゲストの掃除（[ADR-0004](adr/0004-auth-guest-and-google.md) の Cron）。
-  `session.expires_at` にインデックスは張ってあるので、Cron トリガーを足すときに使う。
-
-### カスタムドメイン
-
-`qrcc.riml4i.com` を `qrcc-web` の custom domain として登録する
-（`services/web/wrangler.jsonc` の `routes` に定義済み）。
-DNS は Cloudflare が自動で CNAME を作る。
-
-### GitHub Actions
-
-リポジトリの Secrets に登録する。
-
-| Secret                  | 内容                                                 |
-| ----------------------- | ---------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Workers Scripts:Edit / D1:Edit 権限（R2・KV は不要） |
-| `CLOUDFLARE_ACCOUNT_ID` | アカウント ID                                        |
-
-登録後、`.github/workflows/deploy.yml` の `push` トリガーのコメントを外す。
-
-### デプロイ後の疎通確認
-
-**デプロイしたら必ず走らせること。**
+リリースのワークフローが自動で走らせる。手元からも同じものを流せる。
 
 ```bash
-bun run smoke                      # 本番（既定）
-bun run smoke http://localhost:5173/   # 任意のオリジン
+bun run smoke                              # 本番（既定）
+bun run smoke https://<オリジン>/            # 任意のオリジン
+bun run smoke:browser                      # 実ブラウザ（本番）
+QRCC_SMOKE_URL=https://<オリジン> bun run smoke:browser
 ```
 
-HTML を取得し、そこから参照されている `/assets/*` を**全数** GET して、
-1 本でも 200 以外・または中身が空なら終了コード 1 で落ちる。
+- `smoke`: HTML が参照する `/assets/*` を**全数**取得する。1 本でも 200 以外か空なら失敗し、資産が 1 本も見つからないときも失敗する
+- `smoke:browser`: JavaScript が動いた結果を見る。ハイドレーション、ブラウザの wasm での生成と読み取り、Google の選択肢、`qrcc-api` に外から届かないこと
+- **本番のデータを変えない。** どちらもサインインしない（ゲストの user と session が D1 に増えるため）
 
-> **なぜ必要か。** 一度、**エントリチャンクだけが 500 を返して**クライアント
-> JS が丸ごと動かない状態が本番に残った。HTML は 200 で返り、SSR のぶんは
-> 表示されるので、トップを開くだけでは気づけない。生成のライブプレビューも
-> カメラも保存も動かず、`load` イベントが永久に完了しないため Lighthouse の
-> 指標も壊れる。原因は Cloudflare 側のアセット配信で、再デプロイで直った。
->
-> 資産が 1 本も見つからない場合も落とす。「HTML は返るがビルド成果物が
-> 繋がっていない」状態を、200 だけ見て見逃さないため。
+全数を確かめるのには理由がある。一度、エントリのチャンクだけが 500 を返し、クライアントの JS が丸ごと動かない状態が本番に残った。HTML は 200 で返り SSR の部分は表示されるので、トップを開くだけでは気づけなかった。
 
-さらに、実ブラウザでの確認も用意してある。
+## D1 の migration
 
-```bash
-bun run smoke:browser                                    # 本番
-QRCC_SMOKE_URL=http://localhost:5173 bun run smoke:browser   # 任意のオリジン
-```
+- リリースが本番の D1 に自動で当てる。手で `--remote` に当てない
+- 新旧の版が同時に動くので、**列や表の削除・改名は 2 回のリリースに分ける**（expand → contract。[docs/release.md](../../../docs/release.md) §4）
+- ローカル（Miniflare）には `bun run --filter @qrcc/web db:local` で当てる。e2e は起動時に自動で当てる
 
-HTTP 版が「配信されているか」までなのに対し、こちらは**JavaScript が動いた
-結果**を見る（ハイドレーション・ブラウザ内 wasm での生成と読み取り・
-Google の選択肢が出ること・qrcc-api が外から叩けないこと）。4 本で数秒。
+## 未実装の運用
 
-> **本番のデータを変えない。** サインインするとゲストの user と session が
-> D1 に増えるので、この spec では一切サインインしない。読み取り専用。
+- 期限切れゲストの掃除（[ADR-0004](adr/0004-auth-guest-and-google.md) の Cron）。`session.expires_at` にインデックスは張ってある
 
-設定は `e2e/playwright.prod.config.ts`。通常の e2e と違い `webServer` を
-持たず、既に動いているオリジンを外から叩くだけ。
+## 経緯
 
-`.github/workflows/deploy.yml` のデプロイ直後に、両方が入っている。
-
-## 2. 通常のデプロイ
-
-`main` にマージすると Deploy ワークフローが動く（上記を有効化後）。
-手動実行は Actions タブの「Deploy」→ Run workflow。
-
-手元から直接デプロイする場合:
-
-```bash
-bun run build
-bunx wrangler d1 migrations apply qrcc --remote --config services/api/wrangler.jsonc
-bunx wrangler deploy --config services/web/wrangler.jsonc
-```
-
-`qrcc-api` は auxiliary Worker なので、**entry Worker (`qrcc-web`) のデプロイに
-含まれる**。個別にデプロイしない（ADR-0002）。
-
-## 3. ロールバック
-
-```bash
-bunx wrangler deployments list --name qrcc-web
-bunx wrangler rollback --name qrcc-web --message "理由"
-```
-
-D1 のマイグレーションは前方移行のみ運用しているため、
-スキーマを戻す必要が出た場合は「打ち消すマイグレーションを追加する」。
-
-## 4. 運用監視
-
-両 Worker とも `observability.enabled = true`。
-
-```bash
-bunx wrangler tail --name qrcc-web
-bunx wrangler tail --name qrcc-api
-```
-
-無料枠の消費状況は Cloudflare ダッシュボードの Workers → Metrics で確認し、
-`docs/free-tier-budget.md` の閾値を超えたら縮退フラグを立てる。
+統合前（qrcc2）は、手元の `wrangler deploy` と `wrangler secret put` で本番に出していた。2026-09 に RimlTools へ統合し、段階リリース（Workers の versions）と OpenTofu + SOPS に移った。旧手順は使わない。

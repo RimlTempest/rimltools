@@ -90,7 +90,8 @@
 残課題:
 
 - `docs/free-tier-budget.md` / `docs/deployment.md`（プロダクト）の共通部分を `docs/platform.md` / `docs/release.md` に寄せる。
-  `deployment.md` は `wrangler deploy` 時代の手順が残っており、`docs/release.md` と食い違う
+  `deployment.md` は `wrangler deploy` 時代の手順が残っており、`docs/release.md` と食い違っていた（解消済み: 各プロダクトの
+  `deployment.md` はプロダクト固有の情報だけを残し、手順はルートの docs へリンクする形にした）
 - qrcc ADR-0004 / noter ADR-0010（認証）、qrcc ADR-0009 / noter ADR-0009（Workers Free）、qrcc ADR-0010 / noter ADR-0012（WebMCP）は
   方針が近いが対象が違うので統合していない。3 つ目のツールで同じ判断が出たらルートに上げる
 - ~~better-auth の版ずれ~~ → 1.7.5 に揃えた（`refactor/align-better-auth`）。`scripts/check-versions.ts` が以後のずれを CI で止める
