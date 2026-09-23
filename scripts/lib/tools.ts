@@ -41,6 +41,12 @@ export type Tool = {
    * 本番の Worker は自分の secret を持っているので、ここからは入れない（docs/release.md）
    */
   appSecrets: string[]
+  /**
+   * portless を通さずに Google ログインを試すときの固定ポート（`bun run dev:<tool>:oauth`）。
+   * Google は `*.localhost` のリダイレクト URI を受け付けず `http://localhost:<port>` だけを
+   * 許すので、ここだけはポートを固定する（docs/local-dev.md）。認証の無いツールは null
+   */
+  fixedDevPort: number | null
   rust: boolean
   services: WorkerSpec[]
   d1: D1Spec[]
@@ -119,6 +125,15 @@ const parseMode = (r: Reader, value: string): ReleaseMode => {
   return 'big-bang'
 }
 
+const parseFixedDevPort = (r: Reader, value: unknown): number | null => {
+  if (value === undefined) return null
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 1024 && value <= 65_535) {
+    return value
+  }
+  r.errors.push(`${r.path}.fixedDevPort: expected an integer between 1024 and 65535`)
+  return null
+}
+
 const parseTool = (
   errors: string[],
   domain: string,
@@ -129,6 +144,7 @@ const parseTool = (
   const name = str(r, raw, 'name')
   const subdomain = str(r, raw, 'subdomain')
   const apex = bool(r, raw, 'apex')
+  const fixedDevPort = parseFixedDevPort(r, raw['fixedDevPort'])
 
   const services = records(r, raw, 'services').map((w) => ({
     name: str(r, w, 'name'),
@@ -170,6 +186,7 @@ const parseTool = (
     stagingHost: apex ? `staging.${domain}` : `${subdomain}-staging.${domain}`,
     legacyHosts: list(r, raw, 'legacyHosts').filter((h): h is string => typeof h === 'string'),
     appSecrets,
+    fixedDevPort,
     rust: bool(r, raw, 'rust'),
     services,
     d1: records(r, raw, 'd1').map((d) => ({
@@ -203,6 +220,16 @@ export const parseTools = (raw: unknown): Result<Registry, string> => {
   for (const tool of tools) {
     if (seen.has(tool.name)) errors.push(`duplicate tool name: ${tool.name}`)
     seen.add(tool.name)
+  }
+
+  const ports = new Map<number, string>()
+  for (const tool of tools) {
+    if (tool.fixedDevPort === null) continue
+    const owner = ports.get(tool.fixedDevPort)
+    if (owner !== undefined) {
+      errors.push(`fixedDevPort ${tool.fixedDevPort} is used by both ${owner} and ${tool.name}`)
+    }
+    ports.set(tool.fixedDevPort, tool.name)
   }
 
   if (errors.length > 0) return { ok: false, error: errors.join('\n') }

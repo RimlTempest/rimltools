@@ -8,7 +8,7 @@
  */
 import type { DB } from '@better-auth/drizzle-adapter'
 import type { RandomBytes, Result, UserId } from '@noter/contract'
-import { ok } from '@noter/contract'
+import { ok, resolvePublicOriginFromEnv } from '@noter/contract'
 import type { PromotionIoError } from '../core/promote-account.ts'
 import type { Auth } from './auth.ts'
 import { makeAuth } from './auth.ts'
@@ -68,6 +68,17 @@ export const readLegacyOrigins = (env: unknown): string[] =>
     .filter((value) => URL.canParse(value) && new URL(value).protocol === 'https:')
     .map((value) => new URL(value).origin)
 
+/**
+ * `makeAuthFromEnv` が使う baseURL。portless の dev では、プロキシの後ろの Worker は
+ * http を受けるので、ブラウザが見ている https のオリジン（`DEV_PUBLIC_ORIGIN`、
+ * `.localhost` に限る）を最優先にする（docs/local-dev.md）。それ以外は `resolveBaseURL`。
+ */
+export const authBaseURL = (env: unknown, requestOrigin: string): string => {
+  const devOrigin = resolvePublicOriginFromEnv(env, '')
+  if (devOrigin !== '') return devOrigin
+  return resolveBaseURL(readEnvString(env, 'APP_ORIGIN'), requestOrigin, readLegacyOrigins(env))
+}
+
 export type AuthFromEnvDeps = {
   /** `() => drizzle(env.DB)`。 */
   readonly makeDb: () => DB
@@ -94,11 +105,7 @@ export const makeAuthFromEnv = (env: unknown, deps: AuthFromEnvDeps): Auth =>
   makeAuth({
     db: deps.makeDb(),
     sql: deps.sql,
-    baseURL: resolveBaseURL(
-      readEnvString(env, 'APP_ORIGIN'),
-      deps.requestOrigin,
-      readLegacyOrigins(env),
-    ),
+    baseURL: authBaseURL(env, deps.requestOrigin),
     secret: readEnvString(env, 'BETTER_AUTH_SECRET'),
     google: isGoogleConfigured(env)
       ? {

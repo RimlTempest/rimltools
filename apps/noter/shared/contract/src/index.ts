@@ -32,6 +32,11 @@ export {
 } from './limits.ts'
 export type { Role, RoleParseError } from './role.ts'
 export { ROLES, higherRole, parseRole } from './role.ts'
+export {
+  parseLocalDevOrigin,
+  resolvePublicOrigin,
+  resolvePublicOriginFromEnv,
+} from '@rimltools/contract'
 export type { Err, Ok, Result } from '@rimltools/contract'
 export { collectResults, err, flatMapResult, isErr, isOk, mapResult, ok } from '@rimltools/contract'
 export type {

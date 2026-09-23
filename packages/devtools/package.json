@@ -1,0 +1,19 @@
+{
+  "name": "@rimltools/devtools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ローカル開発の補助（portless が渡す PORT / HOST / PORTLESS_URL を Vite と wrangler に伝える）。Node / Bun 側でだけ使う。",
+  "bin": {
+    "rimltools-wrangler-dev": "./src/wrangler-dev.ts"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@rimltools/contract": "workspace:*"
+  }
+}

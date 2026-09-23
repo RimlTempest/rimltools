@@ -11,6 +11,7 @@
         "oxfmt": "0.68.0",
         "oxlint": "1.83.0",
         "oxlint-tsgolint": "7.0.2001",
+        "portless": "0.15.6",
         "typescript": "7.0.2",
         "wrangler": "4.131.2",
       },
@@ -219,6 +220,7 @@
       },
       "devDependencies": {
         "@cloudflare/vite-plugin": "1.54.9",
+        "@rimltools/devtools": "workspace:*",
         "@tanstack/router-cli": "1.167.36",
         "@tanstack/virtual-file-routes": "1.162.0",
         "@types/react": "19.3.0",
@@ -270,6 +272,9 @@
       "name": "@rimltools/portal",
       "dependencies": {
         "@rimltempest/riml-ds-tokens": "^0.3.1",
+      },
+      "devDependencies": {
+        "@rimltools/devtools": "workspace:*",
       },
     },
     "apps/qrcc": {
@@ -394,6 +399,7 @@
       },
       "devDependencies": {
         "@cloudflare/vite-plugin": "1.54.9",
+        "@rimltools/devtools": "workspace:*",
         "@tanstack/router-cli": "1.167.36",
         "@tanstack/virtual-file-routes": "1.162.0",
         "@types/react": "19.3.0",
@@ -482,6 +488,16 @@
     "packages/contract": {
       "name": "@rimltools/contract",
       "version": "0.1.0",
+    },
+    "packages/devtools": {
+      "name": "@rimltools/devtools",
+      "version": "0.1.0",
+      "bin": {
+        "rimltools-wrangler-dev": "./src/wrangler-dev.ts",
+      },
+      "dependencies": {
+        "@rimltools/contract": "workspace:*",
+      },
     },
     "packages/flags": {
       "name": "@rimltools/flags",
@@ -1024,6 +1040,8 @@
     "@rimltools/auth": ["@rimltools/auth@workspace:packages/auth"],
 
     "@rimltools/contract": ["@rimltools/contract@workspace:packages/contract"],
+
+    "@rimltools/devtools": ["@rimltools/devtools@workspace:packages/devtools"],
 
     "@rimltools/flags": ["@rimltools/flags@workspace:packages/flags"],
 
@@ -1580,6 +1598,8 @@
     "points-on-curve": ["points-on-curve@0.2.0", "", {}, "sha512-0mYKnYYe9ZcqMCWhUjItv/oHjvgEsfKvnUTg8sAtnHr3GVy7rGkXCb6d5cSyqrWqL4k81b9CPg3urd+T7aop3A=="],
 
     "points-on-path": ["points-on-path@0.2.1", "", { "dependencies": { "path-data-parser": "0.1.0", "points-on-curve": "0.2.0" } }, "sha512-25ClnWWuw7JbWZcgqY/gJ4FQWadKxGWk+3kR/7kD0tCaDtPPMj7oHu2ToLaVhfpnHrZzYby2w6tUA0eOIuUg8g=="],
+
+    "portless": ["portless@0.15.6", "", { "os": [ "linux", "win32", "darwin", ], "bin": { "portless": "dist/cli.js" } }, "sha512-uOAwWLF32rmyEGFASzSO0VOaqb/AQxFCCzyZbPGd82UNNOfIEvc09zy92nroNibE5HNfzV4oVB0ObKbPXgkM9A=="],
 
     "postcss": ["postcss@8.5.28", "", { "dependencies": { "nanoid": "^3.3.18", "picocolors": "^1.1.1", "source-map-js": "^1.2.1" } }, "sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A=="],
 

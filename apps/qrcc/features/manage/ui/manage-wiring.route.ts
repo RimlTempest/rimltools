@@ -19,7 +19,7 @@ import { getRequest } from '@tanstack/react-start/server'
 import { env } from 'cloudflare:workers'
 import { traced } from '@rimltools/telemetry/worker'
 import type { CommonRpcError, Result } from '@qrcc/contract'
-import { newCodeId, newFolderId } from '@qrcc/contract'
+import { newCodeId, newFolderId, resolvePublicOriginFromEnv } from '@qrcc/contract'
 import { parseActorWire } from '@qrcc/auth/contract'
 import { apiActorOptions } from '@qrcc/auth/server'
 import { currentActorWire } from '@qrcc/auth/ui/auth-env'
@@ -47,7 +47,8 @@ export const manageContextFn = createServerFn({ method: 'GET' }).handler(
     const request = getRequest()
     return {
       actor: await currentActorWire(env, request),
-      origin: new URL(request.url).origin,
+      // 共有リンクの URL。portless の dev ではブラウザが見ている https のオリジン（docs/local-dev.md）
+      origin: resolvePublicOriginFromEnv(env, new URL(request.url).origin),
     }
   },
 )

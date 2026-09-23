@@ -139,6 +139,18 @@
       "skillPath": "skills/modern-web-guidance/SKILL.md",
       "computedHash": "c75f98ef13e63bcf0c074f6e7651ecb567ffcd78f2527d085a7cddd530073c4f"
     },
+    "oauth": {
+      "source": "vercel-labs/portless",
+      "sourceType": "github",
+      "skillPath": "skills/oauth/SKILL.md",
+      "computedHash": "141fa84182bbe56650fc7c8f86e1d109bb1582e8bb8b844d1866daccc1ff8caf"
+    },
+    "portless": {
+      "source": "vercel-labs/portless",
+      "sourceType": "github",
+      "skillPath": "skills/portless/SKILL.md",
+      "computedHash": "c97d5a9840cee601a9f71a1241c014d756d03225a0e9bf54cc849160fa952df8"
+    },
     "rust-best-practices": {
       "source": "apollographql/skills",
       "sourceType": "github",

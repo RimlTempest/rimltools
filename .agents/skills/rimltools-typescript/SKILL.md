@@ -5,7 +5,7 @@ description: RimlTools（qrcc・noter ほか全プロダクト共通）の TypeS
 
 # RimlTools TypeScript 規約
 
-全プロダクト（`products/*`）と `scripts/`・`packages/` に共通の規約。
+全プロダクト（`apps/*`）と `scripts/`・`packages/` に共通の規約。
 コード例は qrcc のドメインで書いてある。プロダクト固有の例外・レイヤ・例は
 `<tool>-conventions` skill の `references/typescript.md`（例: `noter-conventions`）を併せて読む。
 

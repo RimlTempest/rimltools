@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'bun:test'
-import { isGoogleConfigured, readEnvString, readLegacyOrigins, resolveBaseURL } from './from-env.ts'
+import {
+  authBaseURL,
+  isGoogleConfigured,
+  readEnvString,
+  readLegacyOrigins,
+  resolveBaseURL,
+} from './from-env.ts'
 
 describe('env の読み出し', () => {
   test('文字列でなければ空文字として扱う', () => {
@@ -64,5 +70,37 @@ describe('旧オリジンの読み出し', () => {
     ).toEqual(['https://noter.riml4i.com', 'https://a.example'])
     expect(readLegacyOrigins({ APP_LEGACY_ORIGINS: 'http://x.example,not a url,' })).toEqual([])
     expect(readLegacyOrigins({})).toEqual([])
+  })
+})
+
+describe('authBaseURL（portless の dev）', () => {
+  test('DEV_PUBLIC_ORIGIN（.localhost の https）があれば、それを最優先にする', () => {
+    expect(
+      authBaseURL(
+        {
+          DEV_PUBLIC_ORIGIN: 'https://noter.rimltools.localhost',
+          APP_ORIGIN: 'https://noter.riml4i.com',
+        },
+        'http://noter.rimltools.localhost',
+      ),
+    ).toBe('https://noter.rimltools.localhost')
+  })
+
+  test('無ければ resolveBaseURL と同じ（本番は APP_ORIGIN、ループバックは実オリジン）', () => {
+    expect(authBaseURL({ APP_ORIGIN: 'https://noter.riml4i.com' }, 'https://evil.example')).toBe(
+      'https://noter.riml4i.com',
+    )
+    expect(authBaseURL({ APP_ORIGIN: 'https://noter.riml4i.com' }, 'http://localhost:5173')).toBe(
+      'http://localhost:5173',
+    )
+  })
+
+  test('.localhost 以外の DEV_PUBLIC_ORIGIN は信用せず、本番の APP_ORIGIN に固定する', () => {
+    expect(
+      authBaseURL(
+        { DEV_PUBLIC_ORIGIN: 'https://evil.example', APP_ORIGIN: 'https://noter.riml4i.com' },
+        'https://evil.example',
+      ),
+    ).toBe('https://noter.riml4i.com')
   })
 })

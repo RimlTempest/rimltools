@@ -18,7 +18,8 @@ Worker（wrangler / vite dev）─ OTLP/HTTP ─▶ :4318 ─┘   ├ OTel Coll
 ```bash
 docker compose -f ops/local/compose.yaml up -d   # colima 等で docker-compose なら docker-compose -f ...
 bun scripts/ops/local-smoke.ts                   # trace / log / span metrics / recording rule / Faro を確かめる
-open http://127.0.0.1:3000                                  # 匿名で閲覧できる（Explore も可）。編集は admin / admin
+bun run ops:local:aliases                        # 初回だけ。Grafana と Faro の受け口に portless の名前を付ける
+open https://grafana.rimltools.localhost          # 匿名で閲覧できる（Explore も可）。編集は admin / admin。portless 無しなら http://127.0.0.1:3000
 docker compose -f ops/local/compose.yaml down -v  # 片付け（-v でデータも消す）
 ```
 
@@ -27,17 +28,19 @@ docker compose -f ops/local/compose.yaml down -v  # 片付け（-v でデータ�
 各アプリの `.dev.vars`（`.dev.vars.example` を写して作る。コミットしない）で、コメントアウトしてある
 次の行を有効にしてから `bun run dev` する。未設定なら何も送らない。
 
-| 変数                          | 値                               | 意味                                                                          |
-| ----------------------------- | -------------------------------- | ----------------------------------------------------------------------------- |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://127.0.0.1:4318`          | Worker の trace と log の送り先。ヘッダ（`OTEL_EXPORTER_OTLP_HEADERS`）は不要 |
-| `FARO_URL`                    | `http://127.0.0.1:12347/collect` | ブラウザ（Faro）の送り先                                                      |
-| `DEPLOYMENT_ENV`              | `local`                          | ダッシュボードの環境で `local` を選ぶと見える                                 |
-| `OTEL_TRACES_SAMPLER_ARG`     | `1`                              | 全リクエストを送る（本番の既定は 0.1）                                        |
-| `FARO_SAMPLE_RATE`            | `1`                              | 全セッションで Faro を動かす（本番の既定は 0.2）                              |
+| 変数                          | 値                                         | 意味                                                                               |
+| ----------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://127.0.0.1:4318`                    | Worker の trace と log の送り先。ヘッダ（`OTEL_EXPORTER_OTLP_HEADERS`）は不要      |
+| `FARO_URL`                    | `https://faro.rimltools.localhost/collect` | ブラウザ（Faro）の送り先。portless を使わないなら `http://127.0.0.1:12347/collect` |
+| `DEPLOYMENT_ENV`              | `local`                                    | ダッシュボードの環境で `local` を選ぶと見える                                      |
+| `OTEL_TRACES_SAMPLER_ARG`     | `1`                                        | 全リクエストを送る（本番の既定は 0.1）                                             |
+| `FARO_SAMPLE_RATE`            | `1`                                        | 全セッションで Faro を動かす（本番の既定は 0.2）                                   |
 
 送り先は原則 https だけを受け付け、`127.0.0.1` / `localhost` / `[::1]` に限って http を許す
-（`@rimltools/telemetry` の `isAllowedCollectorUrl`）。Faro の受け口は `localhost:5173` / `4173`
-（vite dev / preview）からのリクエストだけを許可している。
+（`@rimltools/telemetry` の `isAllowedCollectorUrl`）。Faro の受け口は、portless の名前付き URL
+（`https://*.rimltools.localhost`。worktree の前置きを含む）と、Google ログイン用の固定ポート・vite preview
+からのリクエストだけを許可している（`alloy/config.alloy`）。OTLP は Worker からのサーバ間通信なので
+`127.0.0.1:4318` のまま（workerd は portless の CA を信頼しない）。
 
 ## 本番との違い
 

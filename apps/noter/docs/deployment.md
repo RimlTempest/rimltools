@@ -60,6 +60,9 @@ bun run smoke:browser                       # 実ブラウザ（本番）
 NOTER_SMOKE_URL=https://<オリジン> bun run smoke:browser
 ```
 
+> ローカル（portless）のオリジンを叩くときは `NODE_EXTRA_CA_CERTS=~/.portless/ca.pem` を付ける
+> （[docs/local-dev.md](../../../docs/local-dev.md)）。
+
 - `smoke`: HTML が参照する `/assets/*` を**全数**取得し、1 本でも 200 以外か空なら失敗する。あわせて `GET /ws/doc_000…` が `426`（Upgrade 無し）を返すことで、WebSocket の経路がつながっていることを確かめる
 - `smoke:browser`: JavaScript が動いた結果を見る。ハイドレーション、サインイン画面に「ゲストのまま続ける」が出ること、`/ws/` が 426 を返すこと
 - **本番のデータを変えない。** どちらもサインインせず、文書も作らない

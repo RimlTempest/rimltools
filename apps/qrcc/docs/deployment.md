@@ -58,6 +58,9 @@ bun run smoke:browser                      # 実ブラウザ（本番）
 QRCC_SMOKE_URL=https://<オリジン> bun run smoke:browser
 ```
 
+> ローカル（portless）のオリジンを叩くときは `NODE_EXTRA_CA_CERTS=~/.portless/ca.pem` を付ける
+> （[docs/local-dev.md](../../../docs/local-dev.md)）。
+
 - `smoke`: HTML が参照する `/assets/*` を**全数**取得する。1 本でも 200 以外か空なら失敗し、資産が 1 本も見つからないときも失敗する
 - `smoke:browser`: JavaScript が動いた結果を見る。ハイドレーション、ブラウザの wasm での生成と読み取り、Google の選択肢、`qrcc-api` に外から届かないこと
 - **本番のデータを変えない。** どちらもサインインしない（ゲストの user と session が D1 に増えるため）

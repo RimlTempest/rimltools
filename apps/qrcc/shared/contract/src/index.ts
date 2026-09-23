@@ -30,6 +30,11 @@ export {
   parseSpecHash,
   parseUserId,
 } from './id.ts'
+export {
+  parseLocalDevOrigin,
+  resolvePublicOrigin,
+  resolvePublicOriginFromEnv,
+} from '@rimltools/contract'
 export type { Err, Ok, Result } from '@rimltools/contract'
 export { collectResults, err, flatMapResult, isErr, isOk, mapResult, ok } from '@rimltools/contract'
 export type { CommonRpcError, RpcDecodeError } from './rpc.ts'
