@@ -12,6 +12,7 @@
  *   D1_DATABASE_NAMES           … 任意。{"<database id>":"<name>"} の JSON
  */
 
+import { createCloudflare } from '../lib/cloudflare.ts'
 import { loadTools, type Registry, type Result } from '../lib/tools.ts'
 import {
   BASIC_FIELDS,
@@ -32,8 +33,6 @@ import {
   workersQueryVariables,
 } from './metrics.ts'
 import { toOtlpMetrics } from './otlp.ts'
-
-const CLOUDFLARE_GRAPHQL = 'https://api.cloudflare.com/client/v4/graphql'
 
 export type Env = Record<string, string | undefined>
 
@@ -94,37 +93,33 @@ export const readConfig = (env: Env): Result<Config, string[]> => {
   }
 }
 
-const graphql = async (
+// GraphQL のエラー本文（スキーマに無いフィールドなど）を解釈したいので、ステータスに関わらず本文を受け取る
+const graphql = (
   deps: Deps,
   config: Config,
   query: string,
   variables: Record<string, string>,
-): Promise<unknown> => {
-  const response = await deps.fetch(CLOUDFLARE_GRAPHQL, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${config.cloudflareToken}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({ query, variables }),
-  })
-  return response.json()
-}
+): Promise<Result<unknown, string>> =>
+  createCloudflare({ apiToken: config.cloudflareToken, fetch: deps.fetch }).graphqlBody(
+    query,
+    variables,
+  )
 
 const queryWorkers = async (
   deps: Deps,
   config: Config,
   fields: FieldSet,
   window: Window,
-): Promise<Result<WorkersGroup[], QueryFailure>> =>
-  parseWorkersGroups(
-    await graphql(
-      deps,
-      config,
-      buildWorkersQuery(fields),
-      workersQueryVariables(config.accountId, window),
-    ),
+): Promise<Result<WorkersGroup[], QueryFailure>> => {
+  const raw = await graphql(
+    deps,
+    config,
+    buildWorkersQuery(fields),
+    workersQueryVariables(config.accountId, window),
   )
+  if (!raw.ok) return { ok: false, error: { schema: false, message: raw.error } }
+  return parseWorkersGroups(raw.value)
+}
 
 /** 拡張フィールドで取り、スキーマに無いと言われたら docs で確認済みのフィールドで取り直す。 */
 const workersForWindows = async (
@@ -174,7 +169,11 @@ const d1Today = async (deps: Deps, config: Config, now: Date): Promise<Sample[]>
     accountTag: config.accountId,
     date: now.toISOString().slice(0, 10),
   })
-  const result = parseD1Groups(raw)
+  if (!raw.ok) {
+    deps.log(`d1: ${raw.error}`)
+    return []
+  }
+  const result = parseD1Groups(raw.value)
   if (!result.ok) {
     deps.log(`d1: ${result.error.message}`)
     return []

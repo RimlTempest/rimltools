@@ -1,3 +1,5 @@
+import { ASSET_SCOPES, extractAssets } from '../lib/html-assets.ts'
+
 /**
  * デプロイ後の疎通確認のうち、プロダクトに依らない部分（qrcc / noter 共通、plan 001 段階 3）。
  *
@@ -35,15 +37,14 @@ export type SmokeVerdict =
  * `/assets/` に限るのは、外部 CDN やファビコンまで叩くと**他人の障害でデプロイが落ちる**ため。
  * ここで見たいのは「自分がアップロードしたものが配信されているか」だけ。
  */
-export const referencedAssets = (html: string): readonly string[] => {
-  const matches = html.matchAll(/(?:href|src)="(\/assets\/[^"]+)"/g)
-  const seen = new Set<string>()
-  for (const match of matches) {
-    const path = match[1]
-    if (path !== undefined) seen.add(path)
-  }
-  return [...seen].toSorted()
-}
+export const referencedAssets = (html: string): readonly string[] =>
+  // 相対パスだけを見たいので、仮のオリジンで解決して path + query に戻す
+  extractAssets(html, 'https://page.invalid/', ASSET_SCOPES.deployedAssets)
+    .map((href) => {
+      const url = new URL(href)
+      return `${url.pathname}${url.search}`
+    })
+    .toSorted()
 
 /** ページと資産についての不合格の理由（プロダクト固有の理由はこの後ろに足す）。 */
 export const pageReasons = (result: PageSmoke): string[] => {
