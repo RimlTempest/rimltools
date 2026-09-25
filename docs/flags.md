@@ -8,7 +8,6 @@
 ```
 flags/<tool>.json（正本・PR でレビュー）
    │  .github/workflows/flags.yml
-   ├─ develop へ push → staging の D1 `feature_flags`
    └─ main へ push    → production の D1 `feature_flags`
                             │  Cache API に 60 秒
                             ▼

@@ -63,7 +63,7 @@ export type WranglerConfig = {
 
 /**
  * 同期専用の最小 wrangler 設定。プロダクトの wrangler.jsonc は本番 D1 を指しているので使わず、
- * 環境（staging / production）ごとの D1 を明示して `wrangler d1 execute DB --remote` する。
+ * production の D1 を明示して `wrangler d1 execute DB --remote` する。
  */
 export const buildWranglerConfig = (input: {
   tool: string

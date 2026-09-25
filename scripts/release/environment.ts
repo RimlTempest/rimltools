@@ -1,10 +1,13 @@
 import type { Result } from '../lib/tools.ts'
 
 /**
- * GitHub environment（staging / production / preview）の契約。
+ * GitHub environment（production だけ）の契約。
  * 値は Terraform が environment の secrets / variables に書き込む（ADR-0005）。
+ *
+ * staging / preview は 2026-09-23 に廃止した。検証は本番の段階リリース
+ * （0% で smoke → 10% → 50% → 100%、悪化で自動ロールバック）が担う（docs/release.md）。
  */
-export type EnvName = 'staging' | 'production' | 'preview'
+export type EnvName = 'production'
 
 export type DeployEnv = {
   name: EnvName
@@ -16,8 +19,7 @@ export type DeployEnv = {
   d1Id: (tool: string) => string | undefined
 }
 
-const isEnvName = (value: string): value is EnvName =>
-  value === 'staging' || value === 'production' || value === 'preview'
+const isEnvName = (value: string): value is EnvName => value === 'production'
 
 export const faroUrlVariable = (tool: string): string =>
   `FARO_URL_${tool.toUpperCase().replaceAll('-', '_')}`

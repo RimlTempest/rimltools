@@ -102,7 +102,6 @@ const cloudflareToken = (): string => process.env['CLOUDFLARE_API_TOKEN'] ?? ''
  */
 const withVersionSecrets = async <T>(
   tool: Tool,
-  deployEnv: DeployEnv,
   configPath: string,
   run: (extraArgs: string[]) => Promise<T>,
 ): Promise<Result<T, string>> => {
@@ -114,11 +113,8 @@ const withVersionSecrets = async <T>(
     && !Array.isArray(parsed.value)
       ? Object.fromEntries(Object.entries(parsed.value))
       : {}
-  const publicWorker = tool.services.find((w) => w.role === 'public')
   const secrets = versionSecrets({
-    env: deployEnv.name,
     tool: tool.name,
-    publicWorkerName: `${publicWorker?.name ?? ''}${deployEnv.suffix}`,
     config,
     otlpHeaders: process.env['GRAFANA_OTLP_HEADERS'] ?? '',
     appSecretsJson: process.env['APP_SECRETS'] ?? '',
@@ -198,8 +194,7 @@ const wranglerResult = (run: WranglerRun, what: string): Result<undefined, strin
 
 // ── 設定の読み書き ────────────────────────────────────────────────────
 
-const hostFor = (tool: Tool, deployEnv: DeployEnv): string =>
-  deployEnv.name === 'production' ? tool.host : tool.stagingHost
+const hostFor = (tool: Tool): string => tool.host
 
 const loadPrepared = async (
   tool: Tool,
@@ -348,7 +343,7 @@ const makeDeps = (tool: Tool, deployEnv: DeployEnv, stats?: RolloutDeps['stats']
   return {
     log: say,
     upload: async (configPath, meta) => {
-      const attached = await withVersionSecrets(tool, deployEnv, configPath, (extra) =>
+      const attached = await withVersionSecrets(tool, configPath, (extra) =>
         wrangler(
           [
             'versions',
@@ -388,7 +383,7 @@ const makeDeps = (tool: Tool, deployEnv: DeployEnv, stats?: RolloutDeps['stats']
         `versions deploy ${specs.join(' ')}`,
       ),
     deployDirect: async (configPath, message) => {
-      const attached = await withVersionSecrets(tool, deployEnv, configPath, (extra) =>
+      const attached = await withVersionSecrets(tool, configPath, (extra) =>
         wrangler(['deploy', '-c', configPath, '--message', message, ...extra], deployEnv),
       )
       if (!attached.ok) return attached
@@ -522,7 +517,7 @@ const stepPrepare = async (tool: Tool, deployEnv: DeployEnv): Promise<number> =>
       },
       tool,
       env: deployEnv,
-      host: hostFor(tool, deployEnv),
+      host: hostFor(tool),
     })
     if (!rewritten.ok) return fail(rewritten.error)
     const target = preparedPath(tool.path, worker.buildConfig, deployEnv.name)
@@ -602,7 +597,7 @@ const runPlans = async (
     const outcome = await rolloutWorker(deps, {
       workerName,
       configPath: config.path,
-      url: plan.worker.role === 'public' ? `https://${hostFor(tool, deployEnv)}/` : undefined,
+      url: plan.worker.role === 'public' ? `https://${hostFor(tool)}/` : undefined,
       strategy: plan.strategy,
       commit: env['GITHUB_SHA'] ?? 'local',
       runId: env['GITHUB_RUN_ID'] ?? 'local',
@@ -641,7 +636,7 @@ const runPlans = async (
 }
 
 const stepRollout = async (tool: Tool, deployEnv: DeployEnv, dryRun: boolean): Promise<number> => {
-  const plans = planRollout(tool, deployEnv.name)
+  const plans = planRollout(tool)
   for (const p of plans)
     say(`plan: ${p.worker.name}${deployEnv.suffix} → ${JSON.stringify(p.strategy)}`)
   if (dryRun) return 0
@@ -651,7 +646,7 @@ const stepRollout = async (tool: Tool, deployEnv: DeployEnv, dryRun: boolean): P
 const stepResume = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promise<number> => {
   if (args.worker === undefined || args.version === undefined)
     return fail('resume needs --worker and --version')
-  const plans = planRollout(tool, deployEnv.name)
+  const plans = planRollout(tool)
   const index = plans.findIndex((p) => p.worker.name === args.worker)
   if (index < 0) return fail(`${tool.name} has no worker ${args.worker}`)
   return runPlans(tool, deployEnv, plans.slice(index), {
@@ -674,7 +669,7 @@ const stepPromote = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promis
     `promote ${args.version}`,
   )
   if (!res.ok) return fail(res.error)
-  const url = `https://${hostFor(tool, deployEnv)}/`
+  const url = `https://${hostFor(tool)}/`
   const smoke = await deps.smoke(url, {})
   return smoke.ok ? 0 : fail(`promoted, but smoke failed: ${smoke.error}. Consider rollback.`)
 }
@@ -712,7 +707,7 @@ const stepPreview = async (tool: Tool, deployEnv: DeployEnv, args: Args): Promis
   const worker = tool.services.find((w) => w.role === 'public')
   if (worker === undefined) return fail(`${tool.name} has no public worker`)
   const config = preparedPath(tool.path, worker.buildConfig, deployEnv.name)
-  const attached = await withVersionSecrets(tool, deployEnv, config, (extra) =>
+  const attached = await withVersionSecrets(tool, config, (extra) =>
     wrangler(
       [
         'versions',
@@ -755,8 +750,7 @@ const main = async (): Promise<number> => {
     // workflow が smoke 先を知るため（apex のポータルなどの規則を tools.ts に一本化する）
     const found = findTool(registry.value, args.value.tool ?? '')
     if (!found.ok) return fail(found.error)
-    const production = env['RIMLTOOLS_ENV'] === 'production'
-    await setOutput('host', production ? found.value.host : found.value.stagingHost)
+    await setOutput('host', found.value.host)
     return 0
   }
 

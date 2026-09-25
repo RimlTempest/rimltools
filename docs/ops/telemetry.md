@@ -46,13 +46,13 @@ browser ──traceparent──▶ *-web (root span) ──traceparent──▶ 
 | `OTEL_SERVICE_NAME`           | var        | wrangler.jsonc に固定     | Worker 名（`qrcc-web` など）                                                           |
 | `OTEL_TRACES_SAMPLER_ARG`     | var        | `0.1`                     | head sampling の確率                                                                   |
 | `OTEL_SLOW_MS`                | var        | `1000`                    | これ以上かかったリクエストは必ず送る                                                   |
-| `DEPLOYMENT_ENV`              | var        | `production`              | `production` / `staging` / `preview`                                                   |
+| `DEPLOYMENT_ENV`              | var        | `production`              | `production`                                                                           |
 | `GIT_SHA`                     | var        | —                         | `service.version`                                                                      |
 | `FARO_URL`                    | var        | 空（無効）                | Faro collector の URL（公開値）                                                        |
 | `FARO_SAMPLE_RATE`            | var        | `0.2`                     | ブラウザのセッションのサンプリング率                                                   |
 | `CF_VERSION_METADATA`         | binding    | wrangler.jsonc で宣言済み | `cloudflare.worker.version_id`（段階リリースの版と突き合わせる）                       |
 
-- wrangler.jsonc には **空の値だけ**を置いている。本番・staging の値はリリースで入れる
+- wrangler.jsonc には **空の値だけ**を置いている。本番の値はリリースで入れる
   （段階リリースでは `wrangler versions upload --var`、secret は `wrangler versions secret put`。
   `wrangler secret put` は新しい版を即 100% にするので使わない）。
 - 値が無い・空なら **完全に何もしない**（ローカル・テスト・未設定の環境）。
@@ -65,7 +65,7 @@ browser ──traceparent──▶ *-web (root span) ──traceparent──▶ 
 | resource                  | `service.name`                                                                                          | Worker 名（`qrcc-web` / `noter-web`）                      |
 | resource                  | `service.namespace`                                                                                     | `rimltools`                                                |
 | resource                  | `service.version`                                                                                       | git SHA                                                    |
-| resource                  | `deployment.environment.name`                                                                           | `production` / `staging` / `preview`                       |
+| resource                  | `deployment.environment.name`                                                                           | `production`                                               |
 | resource                  | `cloudflare.worker.version_id`                                                                          | Workers の version id                                      |
 | resource                  | `cloud.provider` / `cloud.platform`                                                                     | `cloudflare` / `cloudflare_workers`                        |
 | span                      | `http.request.method` `http.route` `http.response.status_code` `url.path` `url.scheme` `server.address` | HTTP semantic conventions。`http.route` は明示したときだけ |

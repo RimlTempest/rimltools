@@ -1,14 +1,13 @@
 name: Flags
 
 # feature flag の正本（flags/<tool>.json）を各環境の D1 へ同期する（ADR-0004 / docs/flags.md）。
-#   PR                 → 検証だけ
-#   develop への push  → staging の D1 へ同期
-#   main への push     → production の D1 へ同期
-#   手動（kill）       → 1 つの flag を即座に無効化（あとで正本 JSON にも反映すること）
+#   PR              → 検証だけ
+#   main への push   → production の D1 へ同期
+#   手動（kill）     → 1 つの flag を即座に無効化（あとで正本 JSON にも反映すること）
 #
-# secrets / vars は environment（staging / production）に Terraform が書く:
+# secrets / vars は environment（production）に Terraform が書く:
 #   secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
-#   vars:    WORKER_SUFFIX（"" | "-staging"）, D1_<TOOL>_ID（例: D1_QRCC_ID）
+#   vars:    D1_<TOOL>_ID（例: D1_QRCC_ID）
 on:
   pull_request:
     branches: [develop, main]
@@ -20,7 +19,7 @@ on:
       - 'tools.json'
       - '.github/workflows/flags.yml'
   push:
-    branches: [develop, main]
+    branches: [main]
     paths: *paths
   workflow_dispatch:
     inputs:
@@ -29,11 +28,6 @@ on:
         type: choice
         options: [kill, sync]
         default: kill
-      environment:
-        description: 'production は main から実行したときだけ通る（environment の保護）'
-        type: choice
-        options: [staging, production]
-        default: production
       tool:
         description: 'tools.json のツール名（kill のとき必須）'
         type: string
@@ -68,17 +62,17 @@ jobs:
           echo "tools=$tools" >> "$GITHUB_OUTPUT"
 
   sync:
-    name: sync ${{ matrix.tool }} → ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'production' || 'staging') }}
+    name: sync ${{ matrix.tool }} → production
     needs: validate
     # 同期先の environment が未設定（Terraform 適用前）なら RELEASE_ENVIRONMENTS に入らず、ここで止まる
     if: >-
       (github.event_name == 'push'
       || (github.event_name == 'workflow_dispatch' && inputs.action == 'sync'))
-      && contains(fromJSON(vars.RELEASE_ENVIRONMENTS || '[]'), (github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'production' || 'staging')))
+      && contains(fromJSON(vars.RELEASE_ENVIRONMENTS || '[]'), 'production')
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'production' || 'staging') }}
+    environment: production
     concurrency:
-      group: flags-${{ github.event_name == 'workflow_dispatch' && inputs.environment || github.ref_name }}-${{ matrix.tool }}
+      group: flags-production-${{ matrix.tool }}
       cancel-in-progress: false
     permissions:
       contents: read
@@ -113,13 +107,13 @@ jobs:
           --file "$RUNNER_TEMP/flags.sql"
 
   kill:
-    name: kill ${{ inputs.tool }}/${{ inputs.flag }} (${{ inputs.environment }})
+    name: kill ${{ inputs.tool }}/${{ inputs.flag }} (production)
     # 緊急停止は、正本 JSON の検証が落ちていても止めない
-    if: github.event_name == 'workflow_dispatch' && inputs.action == 'kill' && contains(fromJSON(vars.RELEASE_ENVIRONMENTS || '[]'), inputs.environment)
+    if: github.event_name == 'workflow_dispatch' && inputs.action == 'kill' && contains(fromJSON(vars.RELEASE_ENVIRONMENTS || '[]'), 'production')
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: production
     concurrency:
-      group: flags-${{ inputs.environment }}-${{ inputs.tool }}
+      group: flags-production-${{ inputs.tool }}
       cancel-in-progress: false
     permissions:
       contents: read

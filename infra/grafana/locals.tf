@@ -9,7 +9,6 @@ locals {
       name        = t.name
       apex        = try(t.apex, false)
       host        = try(t.apex, false) ? local.domain : "${t.subdomain}.${local.domain}"
-      stagingHost = try(t.apex, false) ? "staging.${local.domain}" : "${t.subdomain}-staging.${local.domain}"
       legacyHosts = try(t.legacyHosts, [])
       workers     = [for w in t.services : w.name]
       slo         = t.slo

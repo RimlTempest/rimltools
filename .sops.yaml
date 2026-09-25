@@ -9,7 +9,7 @@
 creation_rules:
   - path_regex: ^infra/secrets/plan\.sops\.yaml$
     age: >-
-      age1replacewithplanpublickey000000000000000000000000000000000,
-      age1replacewithapplypublickey00000000000000000000000000000000
+      age1wgsvwnh93mtsfgn6y0t9vk29lgqfug5wqdvqvzr34yzlf2jrtvsqqhagaf,
+      age1glx00d4clsx93jwh8hnmp95ayuykgxs034df49ua67xhfd025ahs4us44y
   - path_regex: ^infra/secrets/apply\.sops\.yaml$
-    age: age1replacewithapplypublickey00000000000000000000000000000000
+    age: age1glx00d4clsx93jwh8hnmp95ayuykgxs034df49ua67xhfd025ahs4us44y

@@ -178,8 +178,7 @@ resource "github_repository_environment" "this" {
   repository  = github_repository.this.name
   environment = each.key
 
-  # branch が決まっている環境（staging=develop, production=main）はそのブランチからしか使えない。
-  # preview は PR ごとなので制限しない（ただし staging の資格情報しか持たない）。
+  # branch が決まっている環境（production=main）はそのブランチからしか使えない。
   dynamic "deployment_branch_policy" {
     for_each = each.value.branch == null ? [] : [1]
     content {
@@ -198,8 +197,7 @@ resource "github_repository_environment_deployment_policy" "this" {
 }
 
 locals {
-  # preview は staging のトークンを使う
-  token_for_environment = { production = "production", staging = "staging", preview = "staging" }
+  token_for_environment = { production = "production" }
 
   # D1 を持たないツール（ポータルなど）は変数を作らない
   d1_variables = merge([

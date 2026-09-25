@@ -38,8 +38,9 @@ bunx wrangler d1 create rimltools-tfstate
 bunx wrangler d1 migrations apply rimltools-tfstate --remote
 
 # 2. 資格情報を作って Worker の secret に入れる（値はパスワードマネージャーにも控える）
-#    ユーザー名は推測されにくい文字列に、パスワードは 32 文字以上に（Worker は短い値を拒否する）
-openssl rand -hex 12     # READ_USER / WRITE_USER 用
+#    ユーザー名も含めて 4 つとも 32 文字以上（src/core/auth.ts の MIN_SECRET_LENGTH）。
+#    1 つでも短いと Worker は全リクエストを 500 backend credentials are not configured で拒否する
+openssl rand -hex 24     # READ_USER / WRITE_USER 用（48 文字）
 openssl rand -base64 48  # READ_PASSWORD / WRITE_PASSWORD 用（64 文字）
 printf '%s' '<値>' | bunx wrangler secret put READ_USER
 printf '%s' '<値>' | bunx wrangler secret put READ_PASSWORD

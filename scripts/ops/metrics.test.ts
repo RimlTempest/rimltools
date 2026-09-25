@@ -33,7 +33,6 @@ const registry: Registry = {
       apex: false,
       listed: true,
       host: 'qrcc.tools.example.com',
-      stagingHost: 'qrcc-staging.tools.example.com',
       legacyHosts: [],
       appSecrets: [],
       fixedDevPort: null,

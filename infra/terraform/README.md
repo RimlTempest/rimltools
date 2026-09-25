@@ -5,16 +5,16 @@ state は自前の http backend（`infra/tfstate` の Worker、D1 に保存）�
 plan / apply は GitHub Actions（`.github/workflows/terraform.yml`）の runner で行い、資格情報は SOPS で
 暗号化した `infra/secrets/*.sops.yaml` から渡す。
 
-| ファイル                     | 中身                                                                                                                       |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `tools.tf` + `modules/tool/` | ツールごとの D1（本番 / staging）、Worker の枠、Custom Domain、staging の Access。ポータル（`apex: true`）も同じモジュール |
-| `zone.tf`                    | version affinity の Transform Rule、WAF（Free Managed Ruleset + custom rule）、rate limiting、TLS 設定                     |
-| `redirects.tf`               | 旧ホスト（`qrcc.riml4i.com` など）の 301                                                                                   |
-| `ops.tf`                     | ops（SLO・synthetic・無料枠の監視）用の environment、Analytics 専用トークン、repo variable                                 |
-| `tokens.tf`                  | CI 用 Cloudflare API トークン（production / staging）                                                                      |
-| `github.tf`                  | リポジトリ設定、rulesets、environments、Actions の secret / variable                                                       |
-| `imports.tf`                 | 既存リソースの取り込み（名前 → ID を data source で引く）                                                                  |
-| `terraform.tfvars`           | 秘密でない切り替え（staging ドメイン、ポータル、旧ホストの扱い）                                                           |
+| ファイル                     | 中身                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `tools.tf` + `modules/tool/` | ツールごとの D1、Worker の枠、Custom Domain。ポータル（`apex: true`）も同じモジュール                  |
+| `zone.tf`                    | version affinity の Transform Rule、WAF（Free Managed Ruleset + custom rule）、rate limiting、TLS 設定 |
+| `redirects.tf`               | 旧ホスト（`qrcc.riml4i.com` など）の 301                                                               |
+| `ops.tf`                     | ops（SLO・synthetic・無料枠の監視）用の environment、Analytics 専用トークン、repo variable             |
+| `tokens.tf`                  | CI 用 Cloudflare API トークン（production）                                                            |
+| `github.tf`                  | リポジトリ設定、rulesets、environments、Actions の secret / variable                                   |
+| `imports.tf`                 | 既存リソースの取り込み（名前 → ID を data source で引く）                                              |
+| `terraform.tfvars`           | 秘密でない切り替え（ポータル、旧ホストの扱い）                                                         |
 
 コードの版（`wrangler versions upload`）と配信割合（`wrangler versions deploy`）は wrangler が持つ。
 Terraform は Worker の「枠」だけを作り、observability・workers.dev・preview URL の差分は無視する（wrangler.jsonc が正本）。
@@ -22,7 +22,7 @@ Terraform は Worker の「枠」だけを作り、observability・workers.dev�
 ## ブートストラップ（1 回だけ、人の手で）
 
 **GitHub に登録する secret は age の秘密鍵 2 本だけ**。それ以外の資格情報（state backend・Cloudflare・GitHub・
-Grafana のトークン、state の暗号化パスフレーズ、staging の Google OAuth）は、SOPS で暗号化してリポジトリに置く。
+Grafana のトークン、state の暗号化パスフレーズ）は、SOPS で暗号化してリポジトリに置く。
 
 | ファイル                        | 中身                   | 開ける鍵           | 鍵の置き場所                                                      |
 | ------------------------------- | ---------------------- | ------------------ | ----------------------------------------------------------------- |
@@ -71,7 +71,6 @@ Cloudflare ダッシュボード → My Profile → API Tokens → Create Custom
 | Account            | Workers Scripts: Read / D1: Read / Account API Tokens: Read / Access: Apps and Policies: Read / Account Settings: Read                                                  |
 | Zone（riml4i.com） | Zone: Read / DNS: Read / Workers Routes: Read / Transform Rules: Read / Zone WAF: Read / Dynamic URL Redirects: Read / Zone Settings: Read / SSL and Certificates: Read |
 
-> Cloudflare Access（staging の保護）を使う場合は、先に Zero Trust の組織を一度作っておく
 > （ダッシュボード → Zero Trust。Free プラン、50 ユーザーまで無料）。
 
 GitHub の fine-grained PAT は <https://github.com/settings/personal-access-tokens/new> で、どちらも対象を `RimlTempest/rimltools` だけにする。
@@ -129,8 +128,8 @@ gh variable set TF_VAR_ACCESS_EMAILS -R RimlTempest/rimltools --body '["<あな�
       Custom Domain 2 つ（qrcc.riml4i.com / noter.riml4i.com）、GitHub のリポジトリ・ruleset 2 つ・`production` environment
 - [ ] 取り込んだリソースに **`must be replaced` / `destroy` が無い**（本番の D1 と Worker には `prevent_destroy` がある）
 - [ ] 取り込んだ zone ruleset（ダッシュボードで作ったルールがあれば）で、消えるルールが無いか
-- [ ] 新規作成が期待どおり: staging の D1・Worker、`<tool>.tools.riml4i.com` の Custom Domain、CI トークン 2 本、
-      environments（staging / preview）と secret / variable、ポータルの Worker 枠（`rimltools-portal` / `-staging`）
+- [ ] 新規作成が期待どおり: `<tool>.tools.riml4i.com` の Custom Domain、CI トークン、
+      environment（production）と secret / variable、ポータルの Worker 枠（`rimltools-portal`）
 - [ ] ops: environment `ops`（develop のみ）、Analytics Read だけのトークン → secret `CLOUDFLARE_ANALYTICS_TOKEN` /
       `CLOUDFLARE_ACCOUNT_ID`、repo variable `OPS_HOST_OVERRIDES` / `OPS_ISSUES`。**これらは手で登録しない**（Terraform が作る）
 - [ ] ruleset の required checks: develop = `gate`, `security-gate`, `conventional` / main = 左記 + `release-guard`
@@ -153,7 +152,7 @@ sops exec-env ../secrets/plan.sops.yaml 'tofu init && tofu plan -lock=false'
 
 1. **新ドメインを足す**（初回 apply で自動）: `qrcc.tools.riml4i.com` / `noter.tools.riml4i.com` が本番 Worker に付く。旧ドメインもそのまま動く
 2. **OAuth のリダイレクト URI を足す**（手作業）: Google Cloud Console の OAuth クライアントに
-   `https://<tool>.tools.riml4i.com/api/auth/callback/google`（staging を使うなら `-staging` も）を**追加**する。旧 URI はまだ消さない
+   `https://<tool>.tools.riml4i.com/api/auth/callback/google` を**追加**する。旧 URI はまだ消さない
 3. **アプリの BASE URL を新ドメインにする**（C レーン: 各プロダクトの wrangler.jsonc / 環境変数）→ リリース
 4. **旧ホストを外す**: `legacy_hosts_mode = "detached"`。旧 URL は一時的に解決しなくなるので、4 と 5 は続けて行う
 5. **301 にする**: `legacy_hosts_mode = "redirect"`（proxied の DNS レコード + Single Redirect Rule、パスとクエリを保持）
@@ -166,31 +165,17 @@ sops exec-env ../secrets/plan.sops.yaml 'tofu init && tofu plan -lock=false'
 
 | 変数                            | 既定         | いつ変えるか                                                                           |
 | ------------------------------- | ------------ | -------------------------------------------------------------------------------------- |
-| `staging_domains_enabled`       | `false`      | staging への初回デプロイの後（Custom Domain はコードのある Worker にしか付かない）     |
 | `pending_tools`                 | `["portal"]` | 初回の本番デプロイの後にそのツール名を消す（本番ドメインが付き、ops の監視対象になる） |
 | `legacy_hosts_mode`             | `attached`   | ドメイン移行の 4・5                                                                    |
 | `ops_issues_enabled`            | `false`      | ops ワークフローに Issue の起票を許すとき（repo variable `OPS_ISSUES`）                |
 | `manage_zone_security_settings` | `true`       | ゾーン内に HTTP しか話せないホストがある場合だけ `false`                               |
-
-## service token の更新（staging の smoke）
-
-`TF_VAR_ACCESS_EMAILS` を設定して staging を Access で守ると、Terraform は CI 用の service token
-（`rimltools-ci-staging-smoke`、有効期限 1 年）と、それだけを通す `non_identity` の policy を作り、
-値を staging / preview の `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET` に書く。
-期限が近づいたら（または漏洩時は）作り直す:
-
-```bash
-sops exec-env ../secrets/apply.sops.yaml "tofu apply -replace='cloudflare_zero_trust_access_service_token.ci[0]'"
-```
-
-（手元で apply 鍵を使う。apply 鍵を手元に出したくなければ、`-replace` を含む一時的な変更を PR にして Release PR で apply する）
 
 ## 制約・既知の限界
 
 - PR の plan には Google OAuth の JSON を渡さないので、`APP_SECRETS` は plan のたびに
   「変更あり」（sensitive）と表示される。apply では正しい値が入る
 
-- CI 用トークン（`cloudflare_account_token`）の account 権限はアカウント単位までしか絞れない。production / staging で分けているのは、漏洩時に片方だけ失効させるため。
+- CI 用トークン（`cloudflare_account_token`）の account 権限はアカウント単位までしか絞れない。
   zone 権限（`ci_token_zone_permission_groups`、既定は `Workers Routes Read`）は別のポリシーにして、ツールのゾーンだけに絞っている
 - `Workers Observability Write` を CI トークンに付けている。段階リリースの判定が使う Observability API は、読み取りでも Write を要求するため
 - `ci_token_permission_groups` / `ci_token_zone_permission_groups` の名前は、権限グループ API が返す名前（ダッシュボードの表示名と異なることがある）。

@@ -30,7 +30,6 @@
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | `qrcc-web` | Google ログイン  |
 
 - 本番の値は Worker に入っていて、新しい版に引き継がれる（[docs/release.md](../../../docs/release.md) §6「アプリの secret」）
-- staging の値は OpenTofu が用意し、リリースが版と一緒に載せる
 - 本番の値は、通常は触らない。差し替えるのは漏洩したときだけ（下の「secret の差し替え」）
 - Google の資格情報が無い環境では、Google のボタンを出さずにゲストだけになる。ローカル開発はこの状態で困らない
 - Google Cloud Console のリダイレクト URI は `https://<ホスト>/api/auth/callback/google`。登録するホストの一覧は [docs/bootstrap.md](../../../docs/bootstrap.md) §1

@@ -1,8 +1,8 @@
 # Grafana の書き込み先と資格情報を GitHub Actions に渡す（リリース・メトリクス転送との契約）。
-# environment（production / staging / ops）は infra/terraform が作る。先にあちらを apply する。
+# environment（production / ops）は infra/terraform が作る。先にあちらを apply する。
 #
 # 契約（docs/ops/grafana.md §契約）:
-#   environment production / staging:
+#   environment production:
 #     secret   GRAFANA_OTLP_HEADERS   "Authorization=Basic%20<base64(stack id:token)>"
 #              （OTEL_EXPORTER_OTLP_HEADERS の形。OTel の仕様どおり値は URL エンコード済み = 空白は %20）
 #     variable GRAFANA_OTLP_ENDPOINT  スタックの OTLP gateway（…/otlp。/v1/traces などはクライアントが足す）

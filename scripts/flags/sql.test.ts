@@ -63,7 +63,7 @@ describe('buildWranglerConfig', () => {
     const { buildWranglerConfig } = await import('./sql.ts')
     const result = buildWranglerConfig({
       tool: 'qrcc',
-      databaseName: 'qrcc-staging',
+      databaseName: 'qrcc',
       databaseId: '00000000-0000-4000-8000-000000000000',
     })
     expect(result).toEqual({
@@ -74,7 +74,7 @@ describe('buildWranglerConfig', () => {
         d1_databases: [
           {
             binding: 'DB',
-            database_name: 'qrcc-staging',
+            database_name: 'qrcc',
             database_id: '00000000-0000-4000-8000-000000000000',
           },
         ],

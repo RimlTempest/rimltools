@@ -3,6 +3,8 @@ import { describe, expect, test } from 'bun:test'
 import { needsOtlpSecret, parseJsonc, rewriteConfig } from './rewrite.ts'
 import { noter, portal, qrcc } from './fixtures.ts'
 
+const production = { name: 'production', suffix: '', d1Id: () => 'prod-id' } as const
+
 const webConfig = {
   name: 'qrcc-web',
   main: 'index.js',
@@ -24,42 +26,8 @@ const webConfig = {
   durable_objects: { bindings: [] },
 }
 
-const staging = { name: 'staging', suffix: '-staging', d1Id: () => 'stg-id' } as const
-
 describe('rewriteConfig', () => {
-  test('renames the worker and its tool-internal references for staging', () => {
-    const result = rewriteConfig(webConfig, { tool: qrcc, env: staging, host: 'qrcc-staging.t' })
-    expect(result.ok).toBe(true)
-    if (!result.ok) return
-    const out = result.value
-    expect(out['name']).toBe('qrcc-web-staging')
-    expect(out['routes']).toBeUndefined()
-    expect(out['d1_databases']).toEqual([
-      { binding: 'DB', database_name: 'qrcc-staging', database_id: 'stg-id' },
-    ])
-    expect(out['services']).toEqual([
-      { binding: 'API', service: 'qrcc-api-staging' },
-      { binding: 'EXT', service: 'someone-else' },
-    ])
-    // staging には旧ホストが無い
-    expect(out['vars']).toEqual({
-      APP_ORIGIN: 'https://qrcc-staging.t',
-      APP_LEGACY_ORIGINS: '',
-      OTHER: 'x',
-      OTEL_SERVICE_NAME: 'qrcc-web',
-      OTEL_EXPORTER_OTLP_ENDPOINT: '',
-      FARO_URL: '',
-      DEPLOYMENT_ENV: 'staging',
-      GIT_SHA: 'local',
-    })
-    expect(out['version_metadata']).toEqual({ binding: 'CF_VERSION_METADATA' })
-    expect(out['workers_dev']).toBe(false)
-    // staging の public Worker だけ preview URL を開く（PR プレビュー用）
-    expect(out['preview_urls']).toBe(true)
-  })
-
   test('keeps production names but still strips routes and closes preview URLs', () => {
-    const production = { name: 'production', suffix: '', d1Id: () => 'prod-id' } as const
     const result = rewriteConfig(webConfig, { tool: qrcc, env: production, host: 'qrcc.t' })
     expect(result.ok).toBe(true)
     if (!result.ok) return
@@ -81,7 +49,7 @@ describe('rewriteConfig', () => {
 
   test('never opens preview URLs on an internal worker (ADR-0002)', () => {
     const api = { name: 'qrcc-api', workers_dev: false, d1_databases: [] }
-    const result = rewriteConfig(api, { tool: qrcc, env: staging, host: 'h' })
+    const result = rewriteConfig(api, { tool: qrcc, env: production, host: 'h' })
     expect(result.ok && result.value['preview_urls']).toBe(false)
   })
 
@@ -93,22 +61,22 @@ describe('rewriteConfig', () => {
       },
       d1_databases: [{ binding: 'DB', database_name: 'noter', database_id: 'p' }],
     }
-    const result = rewriteConfig(web, { tool: noter, env: staging, host: 'h' })
+    const result = rewriteConfig(web, { tool: noter, env: production, host: 'h' })
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.value['durable_objects']).toEqual({
-      bindings: [{ name: 'ROOM', class_name: 'DocumentRoom', script_name: 'noter-sync-staging' }],
+      bindings: [{ name: 'ROOM', class_name: 'DocumentRoom', script_name: 'noter-sync' }],
     })
   })
 
   test('fails when the D1 id for the environment is unknown', () => {
-    const env = { name: 'staging', suffix: '-staging', d1Id: () => undefined } as const
+    const env = { name: 'production', suffix: '', d1Id: () => undefined } as const
     const result = rewriteConfig(webConfig, { tool: qrcc, env, host: 'h' })
     expect(result.ok).toBe(false)
   })
 
   test('fails when the config names a worker the tool does not own', () => {
-    const result = rewriteConfig({ name: 'other' }, { tool: qrcc, env: staging, host: 'h' })
+    const result = rewriteConfig({ name: 'other' }, { tool: qrcc, env: production, host: 'h' })
     expect(result.ok).toBe(false)
   })
 
@@ -119,13 +87,13 @@ describe('rewriteConfig', () => {
     ]) {
       const result = rewriteConfig(
         { ...webConfig, observability },
-        { tool: qrcc, env: staging, host: 'h' },
+        { tool: qrcc, env: production, host: 'h' },
       )
       expect(result.ok).toBe(false)
     }
     const enabled = rewriteConfig(
       { ...webConfig, observability: { enabled: true } },
-      { tool: qrcc, env: staging, host: 'h' },
+      { tool: qrcc, env: production, host: 'h' },
     )
     expect(enabled.ok).toBe(true)
   })
@@ -138,10 +106,10 @@ describe('rewriteConfig', () => {
       preview_urls: false,
       assets: { directory: './dist', not_found_handling: '404-page' },
     }
-    const result = rewriteConfig(config, { tool: portal, env: staging, host: 'staging.t' })
+    const result = rewriteConfig(config, { tool: portal, env: production, host: 'portal.t' })
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.value['name']).toBe('rimltools-portal-staging')
+    expect(result.value['name']).toBe('rimltools-portal')
     expect(result.value['assets']).toEqual(config.assets)
     expect(result.value['d1_databases']).toBeUndefined()
     expect(result.value['services']).toBeUndefined()
@@ -178,7 +146,7 @@ describe('parseJsonc', () => {
   test('fills telemetry vars for workers that declare them (docs/ops/telemetry.md)', () => {
     const result = rewriteConfig(webConfig, {
       tool: qrcc,
-      env: staging,
+      env: production,
       host: 'h',
       telemetry: {
         otlpEndpoint: 'https://otlp.example/otlp',
@@ -192,7 +160,7 @@ describe('parseJsonc', () => {
       OTEL_SERVICE_NAME: 'qrcc-web',
       OTEL_EXPORTER_OTLP_ENDPOINT: 'https://otlp.example/otlp',
       FARO_URL: 'https://faro.example/collect',
-      DEPLOYMENT_ENV: 'staging',
+      DEPLOYMENT_ENV: 'production',
       GIT_SHA: 'abc123',
     })
   })
@@ -201,7 +169,7 @@ describe('parseJsonc', () => {
     const api = { name: 'qrcc-api', vars: {} }
     const result = rewriteConfig(api, {
       tool: qrcc,
-      env: staging,
+      env: production,
       host: 'h',
       telemetry: { otlpEndpoint: 'https://otlp.example/otlp', faroUrl: undefined, gitSha: 'abc' },
     })

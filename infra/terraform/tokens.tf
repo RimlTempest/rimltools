@@ -2,7 +2,7 @@
 # 値は Terraform から GitHub の environment secret に直接書き込む。人は値を見ない（ADR-0005）。
 #
 # 制約: account-owned token の resources は「アカウント単位」までしか絞れない。
-# production と staging でトークンを分けるのは、漏洩時に片方だけ失効させるため。
+# 環境ごとにトークンを分けるのは、漏洩時にその環境だけ失効させるため。
 
 locals {
   account_scope = "com.cloudflare.api.account"
@@ -23,7 +23,7 @@ locals {
 
   ci_zone_permission_group_names_found = distinct([for g in local.ci_zone_permission_groups : g.name])
 
-  ci_token_environments = toset(["production", "staging"])
+  ci_token_environments = toset(["production"])
 }
 
 check "ci_token_permission_groups_exist" {

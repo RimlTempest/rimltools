@@ -15,17 +15,14 @@ locals {
   ]...)
 
   tool_hosts      = [for m in module.tool : m.hosts.production]
-  staging_hosts   = [for m in module.tool : m.hosts.staging]
-  rimltools_hosts = distinct(concat([local.domain], local.tool_hosts, local.staging_hosts, keys(local.legacy_hosts)))
+  rimltools_hosts = distinct(concat([local.domain], local.tool_hosts, keys(local.legacy_hosts)))
 
   # Cloudflare Rules の式で使う host の集合: {"a" "b"}
   rimltools_hosts_expr = join(" ", [for h in local.rimltools_hosts : jsonencode(h)])
 
+  # staging / preview は 2026-09-23 に廃止した。検証は本番の段階リリースが担う（docs/release.md）
   environments = {
     production = { suffix = "", branch = "main", d1 = "production" }
-    staging    = { suffix = "-staging", branch = "develop", d1 = "staging" }
-    # PR ごとの preview は staging の Worker と D1 を使う
-    preview = { suffix = "-staging", branch = null, d1 = "staging" }
   }
 
   # ops（SLO・synthetic・無料枠の監視）。cron は既定ブランチ（develop）で動く
