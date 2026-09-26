@@ -136,18 +136,19 @@ resource "cloudflare_ruleset" "rate_limit" {
 }
 
 # --- edge challenges ------------------------------------------------------------
-# Browser Integrity Check は「ブラウザらしくない」リクエストにチャレンジを返す。state backend
-# （tfstate.tools.riml4i.com）は機械しか呼ばないので、GitHub Actions からの plan / apply が
-# 403（cf-mitigated: challenge）で止まり、OpenTofu は "invalid auth" と表示する。Free プランの
-# BIC はゾーン単位でしか切り替えられないため、ゾーン全体で off にする。
-# 代わりの守り: WAF マネージドルール（waf_managed）、スキャナ向けパスの block（waf_custom）、
-# 認証 API のレート制限（rate_limit）、tfstate は Basic 認証 + state 自体の暗号化（ADR-0009）。
+# Browser Integrity Check はゾーン全体では on のまま。state backend（tfstate.tools.riml4i.com）
+# だけ waf_custom の skip_edge_challenges_for_tfstate で外す。
+# 一方 Bot Fight Mode は off にしてある。BFM はデータセンターの ASN からのリクエストに
+# チャレンジを返し、WAF の skip でも外せないため、GitHub Actions からの plan / apply が
+# 403（cf-mitigated: challenge）で止まる（OpenTofu の表示は "invalid auth"）。Free プランでは
+# ゾーン単位のトグルしか無く、Terraform の cloudflare_bot_management は Bot Management の
+# 契約が要るのでコードには持てない。ダッシュボードの Security → Bots で管理する（docs/security.md）。
 
 resource "cloudflare_zone_setting" "browser_check" {
   count      = var.manage_zone_security_settings ? 1 : 0
   zone_id    = data.cloudflare_zone.this.id
   setting_id = "browser_check"
-  value      = "off"
+  value      = "on"
 }
 
 # --- TLS ------------------------------------------------------------------------
