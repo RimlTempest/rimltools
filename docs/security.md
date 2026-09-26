@@ -85,6 +85,14 @@ RimlTools のセキュリティ対策を、**攻撃が通る経路の順に並�
 | 内部 Worker に routes を持たせない（`workers_dev: false`）     | 認可をすり抜けた直接アクセス             | 各プロダクトの ADR-0002、CI の guard |
 | セキュリティヘッダ（CSP / HSTS / X-Content-Type-Options など） | XSS・ダウングレード・MIME スニッフィング | 今後の plan（プロダクトごとに実装）  |
 
+**Browser Integrity Check は意図して off**（`cloudflare_zone_setting.browser_check`）。
+BIC は「ブラウザらしくない」リクエストにチャレンジを返すので、state backend
+（`tfstate.tools.riml4i.com`）への GitHub Actions からの plan / apply が 403
+（`cf-mitigated: challenge`）で止まる。Free プランの BIC はゾーン単位でしか切り替えられず、
+WAF の skip でも外せない。代わりの守りは上の表の WAF マネージドルール・スキャナ向けパスの
+block・認証 API のレート制限、そして tfstate 自体の Basic 認証（32 文字以上の秘密・
+定時間比較）と state の暗号化（ADR-0009）。
+
 ## 7. 監視
 
 | 対策                                                 | 止めるもの                                     | 設定場所                     |
