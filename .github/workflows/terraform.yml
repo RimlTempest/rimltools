@@ -123,7 +123,7 @@ jobs:
         if: steps.creds.outputs.configured == 'true'
         run: |
           # 資格情報は sops exec-env でこのコマンドの環境変数にだけ渡す（ファイルにもログにも書かない）
-          sops exec-env "$SECRETS_FILE" 'tofu init -input=false -no-color && tofu plan -lock=false -no-color -detailed-exitcode -out=tfplan > plan.txt 2>&1; echo $? > plan.exit' || true
+          sops exec-env "$SECRETS_FILE" 'tofu init -input=false -lock=false -no-color && tofu plan -lock=false -no-color -detailed-exitcode -out=tfplan > plan.txt 2>&1; echo $? > plan.exit' || true
           code=$(cat plan.exit 2>/dev/null || echo 1)
           cat plan.txt
           echo "exitcode=$code" >> "$GITHUB_OUTPUT"
@@ -286,7 +286,7 @@ jobs:
         if: steps.creds.outputs.configured == 'true'
         run: |
           # 資格情報は sops exec-env でこのコマンドの環境変数にだけ渡す（ファイルにもログにも書かない）
-          sops exec-env "$SECRETS_FILE" 'tofu init -input=false -no-color && tofu plan -lock=false -no-color -detailed-exitcode -out=tfplan > plan.txt 2>&1; echo $? > plan.exit' || true
+          sops exec-env "$SECRETS_FILE" 'tofu init -input=false -lock=false -no-color && tofu plan -lock=false -no-color -detailed-exitcode -out=tfplan > plan.txt 2>&1; echo $? > plan.exit' || true
           code=$(cat plan.exit 2>/dev/null || echo 1)
           cat plan.txt
           echo "exitcode=$code" >> "$GITHUB_OUTPUT"
