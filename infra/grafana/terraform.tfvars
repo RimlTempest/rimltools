@@ -1,6 +1,7 @@
 # 秘密でない既定値。資格情報は GitHub Actions が TF_VAR_* で渡す（README §3）。
 
-stack_slug   = "rimltools"
+# サインアップ時に自動生成された slug。作成後は変更できないので Terraform 側を合わせる
+stack_slug   = "jollymistletoe1097"
 create_stack = false
 
 # 新ドメインへ切り替えるまでは旧ホストを監視する。ポータルは公開まで監視しない

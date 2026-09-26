@@ -43,7 +43,8 @@
    D1 の database_id を `infra/tfstate/wrangler.jsonc` に書いて PR でコミットする
 
 4. **Grafana Cloud**（Free、カード不要）
-   - サインアップ時にできるスタックの slug を `rimltools` にする（違う名前にしたら `infra/grafana/terraform.tfvars` の `stack_slug` を直す）
+   - サインアップ時にスタックが 1 つできる。**slug は自動生成で、作成後は変更できない**（URL が `https://<slug>.grafana.net`）。
+     できた slug を `infra/grafana/terraform.tfvars` の `stack_slug` に書く
 
 5. **Google Cloud Console**（既存の OAuth クライアント）
    - 承認済みのリダイレクト URI に、次を**追加**する（既存の URI は消さない）
@@ -62,6 +63,10 @@ PR のコードが動く plan に書き込み権限を渡さないため（`infr
 | Cloudflare                                        | 読み取り専用トークン                                            | 書き込みトークン              | `infra/terraform/README.md` §3 |
 | GitHub（fine-grained PAT、対象は rimltools だけ） | Read-only                                                       | Read and write                | `infra/terraform/README.md` §3 |
 | Grafana Cloud（access policy）                    | plan 用                                                         | apply 用                      | `infra/grafana/README.md` §1   |
+
+> **Grafana は後回しにできる**（§9）。その場合は access policy を作らず、secrets ファイルから
+> `TF_VAR_grafana_cloud_access_policy_token` の**行ごと消す**。空文字は sops が暗号化しないので、
+> 残すと `bun scripts/check-secrets.ts` が「平文が残っている」と判定して落ちる。
 
 ```bash
 cp infra/secrets/plan.example.yaml  infra/secrets/plan.sops.yaml
@@ -164,6 +169,17 @@ plan が「SOPS age key ... is not set up yet」で飛ばされたら、§2 の�
 4. 数週間後、Google の旧リダイレクト URI を消す
 
 ## 9. 監視を仕上げる
+
+Grafana は監視の層なので、デプロイが動くまで後回しにできる。`infra/grafana` の 3 ジョブは
+リポジトリ変数 `GRAFANA_ENABLED` が `true` のときだけ走る（既定は無効）。
+
+0. Grafana Cloud の access policy 2 本（§2 の表）を作り、`infra/secrets` の各ファイルに
+   `TF_VAR_grafana_cloud_access_policy_token: '<トークン>'` の行を**足して**暗号化し直す
+   （`sops infra/secrets/apply.sops.yaml` で開くと、保存時に暗号化される）。そのうえで有効にする:
+
+   ```bash
+   gh variable set GRAFANA_ENABLED -R RimlTempest/rimltools --body true
+   ```
 
 1. Grafana → Observability → Application →「Enable metrics generation」（Terraform では設定できない）
 2. `infra/grafana/terraform.tfvars` で `metrics_push_enabled = true` → Release PR → apply（5 分ごとの転送と「転送停止」アラートが有効になる）
