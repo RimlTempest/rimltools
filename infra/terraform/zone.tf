@@ -116,6 +116,21 @@ resource "cloudflare_ruleset" "rate_limit" {
   }]
 }
 
+# --- edge challenges ------------------------------------------------------------
+# Browser Integrity Check は「ブラウザらしくない」リクエストにチャレンジを返す。state backend
+# （tfstate.tools.riml4i.com）は機械しか呼ばないので、GitHub Actions からの plan / apply が
+# 403（cf-mitigated: challenge）で止まり、OpenTofu は "invalid auth" と表示する。Free プランの
+# BIC はゾーン単位でしか切り替えられないため、ゾーン全体で off にする。
+# 代わりの守り: WAF マネージドルール（waf_managed）、スキャナ向けパスの block（waf_custom）、
+# 認証 API のレート制限（rate_limit）、tfstate は Basic 認証 + state 自体の暗号化（ADR-0009）。
+
+resource "cloudflare_zone_setting" "browser_check" {
+  count      = var.manage_zone_security_settings ? 1 : 0
+  zone_id    = data.cloudflare_zone.this.id
+  setting_id = "browser_check"
+  value      = "off"
+}
+
 # --- TLS ------------------------------------------------------------------------
 # ゾーン内のほかのホストにも効くため、HSTS の includeSubDomains / preload は付けない。
 
