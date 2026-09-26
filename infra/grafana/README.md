@@ -21,7 +21,7 @@ state は自前の http backend（`infra/tfstate`）の `/states/rimltools-obser
 ## 1. ブートストラップ（人が 1 回だけ行う）
 
 1. **Grafana Cloud のアカウントを作る**（Free、カード不要）。サインアップ時にスタックが 1 つできる。
-   slug を `terraform.tfvars` の `stack_slug` に合わせる（既定 `rimltools`）。
+   **slug は自動生成で変更できない**ので、できた slug を `terraform.tfvars` の `stack_slug` に書く。
    新しく作らせたいなら `create_stack = true`、`stack_region` を指定する。
 2. **Cloud access policy を 2 つ作る**（Grafana Cloud Portal → Access Policies、realm は組織全体）。
    - `rimltools-terraform-apply`: `stacks:read` `stacks:write` `accesspolicies:read` `accesspolicies:write`

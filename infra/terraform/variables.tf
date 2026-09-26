@@ -52,7 +52,7 @@ variable "legacy_hosts_mode" {
 }
 
 variable "manage_zone_security_settings" {
-  description = "Manage zone-wide TLS settings (always HTTPS, TLS 1.2+, HSTS). They affect every host in the zone."
+  description = "Manage zone-wide security settings (always HTTPS, TLS 1.2+, HSTS, browser integrity check). They affect every host in the zone."
   type        = bool
   default     = true
 }
