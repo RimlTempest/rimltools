@@ -4,6 +4,10 @@
 
 locals {
   hosts_in = "http.host in {${local.rimltools_hosts_expr}}"
+
+  # OpenTofu の state backend（infra/tfstate の Worker）。tools.json の台帳には載らないので
+  # ここで組み立てる。エッジ機能の例外を絞るためだけに使う
+  tfstate_host = "tfstate.${local.domain}"
 }
 
 # --- version affinity (ADR-0003) -------------------------------------------------
@@ -79,6 +83,21 @@ resource "cloudflare_ruleset" "waf_custom" {
   phase       = "http_request_firewall_custom"
 
   rules = [{
+    # state backend は機械しか呼ばない。security level の IP 評価チャレンジが
+    # GitHub Actions（Azure）からの plan / apply を 403（cf-mitigated: challenge）で
+    # 止めるので、このホストだけ外す。守りは Basic 認証（32 文字以上の秘密・定時間比較）と
+    # state 自体の暗号化が担う（ADR-0009）
+    ref         = "skip_edge_challenges_for_tfstate"
+    description = "tfstate is a machine-only API: no reputation challenges"
+    expression  = "http.host eq ${jsonencode(local.tfstate_host)}"
+    action      = "skip"
+    action_parameters = {
+      products = ["bic", "securityLevel", "hot", "uaBlock", "zoneLockdown", "waf"]
+    }
+    logging = {
+      enabled = true
+    }
+    }, {
     ref         = "block_scanner_paths"
     description = "RimlTools serves no PHP, WordPress or dotfiles"
     expression = join(" ", [
@@ -114,6 +133,22 @@ resource "cloudflare_ruleset" "rate_limit" {
       mitigation_timeout  = 10
     }
   }]
+}
+
+# --- edge challenges ------------------------------------------------------------
+# Browser Integrity Check はゾーン全体では on のまま。state backend（tfstate.tools.riml4i.com）
+# だけ waf_custom の skip_edge_challenges_for_tfstate で外す。
+# 一方 Bot Fight Mode は off にしてある。BFM はデータセンターの ASN からのリクエストに
+# チャレンジを返し、WAF の skip でも外せないため、GitHub Actions からの plan / apply が
+# 403（cf-mitigated: challenge）で止まる（OpenTofu の表示は "invalid auth"）。Free プランでは
+# ゾーン単位のトグルしか無く、Terraform の cloudflare_bot_management は Bot Management の
+# 契約が要るのでコードには持てない。ダッシュボードの Security → Bots で管理する（docs/security.md）。
+
+resource "cloudflare_zone_setting" "browser_check" {
+  count      = var.manage_zone_security_settings ? 1 : 0
+  zone_id    = data.cloudflare_zone.this.id
+  setting_id = "browser_check"
+  value      = "on"
 }
 
 # --- TLS ------------------------------------------------------------------------
