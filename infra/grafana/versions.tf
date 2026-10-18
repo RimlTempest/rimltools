@@ -35,7 +35,7 @@ terraform {
   required_providers {
     grafana = {
       source  = "grafana/grafana"
-      version = "4.46.0"
+      version = "4.49.0"
     }
     github = {
       source  = "integrations/github"
